@@ -1,0 +1,12 @@
+{
+  "name": "printform-js",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "clean": "node scripts/build.js --clean",
+    "check": "node --check dist/printform.js"
+  }
+}
+
