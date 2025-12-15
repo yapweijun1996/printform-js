@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Sample Printform</title>
+		<style>
+			body {
+				margin: 0px;
+				font-family: Arial, sans-serif;
+				padding: 0px;
+			}
+			.paper_width{
+				width:396px;
+			}
+			td{
+				line-height:18px;
+			}
+		</style>
+		
+		<script>
+			var papersize_width = 396; // 795px is A4 width, 6.35mm is 24px
+			var papersize_height = 550;
+			var height_of_dummy_row_item = 27;
+			
+			var repeat_header                                                = "y";
+			var repeat_docinfo                                               = "y";
+			var repeat_rowheader                                             = "y";
+			var repeat_footer                                                = "n";
+			var repeat_footer_logo                                           = "y";
+			var insert_dummy_row_item_while_format_table                     = "y";
+			var insert_dummy_row_while_format_table                          = "y";
+			var insert_footer_spacer_while_format_table                      = "y";
+			var insert_footer_spacer_with_dummy_row_item_while_format_table  = "y";
+			var custom_dummy_row_item_content                                = ``;
+		</script>
+	</head>
+	<body>
+		
+		<div class="paper_width printform">
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<img src="./img/letterhead_logo.jpg" style="height: auto; width: 100%;">
+						<font style="font-weight:600;font-size: 20px;">Sample Company Name</font><br>
+						<font style="font-size: 15px;">Address 1</font><br>
+						<font style="font-size: 15px;">Address 2</font><br>
+						<font style="font-size: 15px;">12345 Singapore</font><br>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<font style="font-weight:600;font-size: 20px;">Invoice</font><br>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Sender</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Payment To</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Invoice Number</font>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+							</tr>
+							<tr style="height:10px;"></tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Receiver</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Payment Method</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Invoice Date</font>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Description</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">Qty</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">UOM</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">Price</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem tb_page_break_before">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<!-- repeat prowitem [start] -->
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">samplesamplesamplesample</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			<!-- repeat prowitem [start] -->
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;border-top:1px solid black;" rowspan="3" valign="top">
+								<div style="padding:3px 3px 3px 0px;font-weight:600;">Remarks : </div>
+								<div style="font-size:13px;line-height: 13px;">
+									this is a test and sample text to let us do testing.
+								</div>
+								</td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;border-top:1px solid black;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Subtotal</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;border-top:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">1233.44</div></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">GST</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;">12.33</div></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Total</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;font-weight:600;">1245.77</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<!-- footer logo -->
+						<img src="./img/footer_logo.jpg" style="height: auto; width: 100%;">
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+		</div>
+		<script src="./js/printform.js"></script>
+		
+		<!-- extra tools [start] -->
+		<style>
+		@media print {
+			.etools {
+				display: none;
+			}
+		}
+		</style>
+		<script>
+			function go_to_page(url) {
+				window.location.replace(url);
+			}
+		</script>
+		<div class="extra_tools" style="">
+			<input type="button" class="etools" value="Print" onclick="window.print();" style="position: fixed; top: 10px; right: 14px;">
+			<input type="button" class="etools" value="Sample 003" onclick="go_to_page('./index003.html');" style="position: fixed; top: 40px; right: 14px;">
+		</div>
+		<!-- extra tools [end  ] -->
+	</body>
+</html>
