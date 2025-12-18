@@ -1,20 +1,9 @@
 /* eslint-disable no-console */
 
-(function(global) {
-  if (global && global.__printFormTextLoaded__) {
-    return;
-  }
-  if (global) {
-    global.__printFormTextLoaded__ = true;
-  }
+export const ROW_SELECTOR = ".prowitem, .ptac-rowitem, .paddt-rowitem";
 
-  const PrintForm = global.PrintForm = global.PrintForm || {};
-  const Internal = PrintForm._internal = PrintForm._internal || {};
-
-  const ROW_SELECTOR = ".prowitem, .ptac-rowitem, .paddt-rowitem";
-
-  var PTAC_MAX_WORDS_PER_SEGMENT = 200;
-  var PADDT_MAX_WORDS_PER_SEGMENT = 200;
+export const PTAC_MAX_WORDS_PER_SEGMENT = 200;
+export const PADDT_MAX_WORDS_PER_SEGMENT = 200;
 
   function convertWordsToHtml(node, words) {
     var clone = node.cloneNode(false);
@@ -56,9 +45,4 @@
     return splitParagraphIntoHtmlChunks(node, maxWords);
   }
 
-  Internal.ROW_SELECTOR = ROW_SELECTOR;
-  Internal.PTAC_MAX_WORDS_PER_SEGMENT = PTAC_MAX_WORDS_PER_SEGMENT;
-  Internal.PADDT_MAX_WORDS_PER_SEGMENT = PADDT_MAX_WORDS_PER_SEGMENT;
-  Internal.splitParagraphIntoHtmlChunks = splitParagraphIntoHtmlChunks;
-  Internal.splitPaddtParagraphIntoHtmlChunks = splitPaddtParagraphIntoHtmlChunks;
-})(typeof window !== "undefined" ? window : this);
+export { splitParagraphIntoHtmlChunks, splitPaddtParagraphIntoHtmlChunks };

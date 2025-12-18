@@ -10,7 +10,7 @@
 python3 -m http.server 8000
 ```
 
-或使用内建的 Node dev server：
+或使用 Vite dev server：
 
 ```bash
 npm run dev
@@ -30,10 +30,10 @@ npm run dev
 npm run build
 ```
 
-调试时可选用 watch 自动重建产物：
+需要预览生产构建时可用：
 
 ```bash
-npm run dev:watch
+npm run preview
 ```
 
 在页面末尾引入：
@@ -54,6 +54,11 @@ npm run dev:watch
 ## 配置（data-*）
 
 通过 `.printform` 节点上的 `data-*` 覆盖默认值；默认值定义在 `js/printform/config.js`，同时暴露为 `window.PrintForm.DEFAULT_CONFIG` 与 `window.PrintForm.DEFAULT_PADDT_CONFIG` 便于查阅。
+
+纸张尺寸（混合策略，向后兼容）：
+- 最高优先级：手动像素 `data-papersize-width` / `data-papersize-height`（或 legacy 全局变量 `papersize_width` / `papersize_height`）
+- 次优先级：预设 `data-paper-size="A4|A5|Letter|Legal"`（可配合 `data-orientation="portrait|landscape"`、`data-dpi="96"`）
+- 回退：默认值 `papersizeWidth=750`、`papersizeHeight=1050`
 
 常用新增参数：
 - `data-n-up="2"`：开启 N-up（一个物理页内排多个“逻辑页”，默认 `1`）。

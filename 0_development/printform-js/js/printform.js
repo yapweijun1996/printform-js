@@ -1,25 +1,8 @@
 /* eslint-disable no-console */
 
-(function(global) {
-  if (global && global.__printFormScriptLoaded__) {
-    return;
-  }
-
-  const PrintForm = global.PrintForm = global.PrintForm || {};
-  const Internal = PrintForm._internal = PrintForm._internal || {};
-
-  const getPrintformConfig = Internal.getPrintformConfig;
-  const PrintFormFormatter = Internal.PrintFormFormatter;
-  const DomHelpers = Internal.DomHelpers;
-
-  if (!getPrintformConfig || !PrintFormFormatter || !DomHelpers) {
-    throw new Error(
-      "printform.js requires js/printform/*.js modules to be loaded first."
-    );
-  }
-  if (global) {
-    global.__printFormScriptLoaded__ = true;
-  }
+import { DEFAULT_CONFIG, DEFAULT_PADDT_CONFIG, getPrintformConfig } from "./printform/config.js";
+import { DomHelpers } from "./printform/dom.js";
+import { PrintFormFormatter } from "./printform/formatter.js";
 
   function pauseInMilliseconds(time) {
     return new Promise((resolve, reject) => {
@@ -32,16 +15,17 @@
   }
 
   async function formatAllPrintForms(overrides = {}) {
-    if (global.__printFormProcessing) {
+    const globalScope = typeof window !== "undefined" ? window : globalThis;
+    if (globalScope.__printFormProcessing) {
       return;
     }
-    if (!overrides.force && global.__printFormProcessed) {
+    if (!overrides.force && globalScope.__printFormProcessed) {
       return;
     }
-    global.__printFormProcessing = true;
+    globalScope.__printFormProcessing = true;
 
     try {
-      const doc = global.document;
+      const doc = globalScope.document;
       if (!doc) return;
 
       const forms = Array.from(doc.querySelectorAll(".printform"));
@@ -64,9 +48,9 @@
         }
       }
 
-      global.__printFormProcessed = true;
+      globalScope.__printFormProcessed = true;
     } finally {
-      global.__printFormProcessing = false;
+      globalScope.__printFormProcessing = false;
     }
   }
 
@@ -76,13 +60,28 @@
     return formatter.format();
   }
 
-  PrintForm.formatAll = formatAllPrintForms;
-  PrintForm.format = formatSinglePrintForm;
+  const api = {
+    formatAll: formatAllPrintForms,
+    format: formatSinglePrintForm,
+    DEFAULT_CONFIG,
+    DEFAULT_PADDT_CONFIG
+  };
 
-  const doc = global.document;
-  if (doc && doc.addEventListener) {
-    doc.addEventListener("DOMContentLoaded", () => {
-      formatAllPrintForms();
-    });
+  const globalScope = typeof window !== "undefined" ? window : null;
+  if (globalScope) {
+    if (globalScope.__printFormScriptLoaded__) {
+      globalScope.PrintForm = globalScope.PrintForm || api;
+    } else {
+      globalScope.__printFormScriptLoaded__ = true;
+      globalScope.PrintForm = globalScope.PrintForm || {};
+      Object.assign(globalScope.PrintForm, api);
+      const doc = globalScope.document;
+      if (doc && doc.addEventListener) {
+        doc.addEventListener("DOMContentLoaded", () => {
+          formatAllPrintForms();
+        });
+      }
+    }
   }
-})(typeof window !== "undefined" ? window : this);
+
+  export default api;

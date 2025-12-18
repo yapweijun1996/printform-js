@@ -1,61 +1,11 @@
 /* eslint-disable no-console */
 
-(function(global) {
-  if (global && global.__printFormFormatterLoaded__) {
-    return;
-  }
+import { normalizeHeight, updatePageNumberContent, updatePhysicalPageNumberContent } from "./helpers.js";
+import { getPaddtConfig, DOCINFO_VARIANTS, FOOTER_VARIANTS, FOOTER_LOGO_VARIANT, FOOTER_PAGENUM_VARIANT } from "./config.js";
+import { DomHelpers, applyDummyRowItemsStep, applyDummyRowStep, applyFooterSpacerWithDummyStep, applyFooterSpacerStep } from "./dom.js";
+import { ROW_SELECTOR, PTAC_MAX_WORDS_PER_SEGMENT, PADDT_MAX_WORDS_PER_SEGMENT, splitParagraphIntoHtmlChunks, splitPaddtParagraphIntoHtmlChunks } from "./text.js";
 
-  const PrintForm = global.PrintForm = global.PrintForm || {};
-  const Internal = PrintForm._internal = PrintForm._internal || {};
-
-  const normalizeHeight = Internal.normalizeHeight;
-  const updatePageNumberContent = Internal.updatePageNumberContent;
-  const updatePhysicalPageNumberContent = Internal.updatePhysicalPageNumberContent;
-  const getPaddtConfig = Internal.getPaddtConfig;
-  const DomHelpers = Internal.DomHelpers;
-
-  const DOCINFO_VARIANTS = Internal.DOCINFO_VARIANTS;
-  const FOOTER_VARIANTS = Internal.FOOTER_VARIANTS;
-  const FOOTER_LOGO_VARIANT = Internal.FOOTER_LOGO_VARIANT;
-  const FOOTER_PAGENUM_VARIANT = Internal.FOOTER_PAGENUM_VARIANT;
-
-  const ROW_SELECTOR = Internal.ROW_SELECTOR || ".prowitem, .ptac-rowitem, .paddt-rowitem";
-  var PTAC_MAX_WORDS_PER_SEGMENT = Internal.PTAC_MAX_WORDS_PER_SEGMENT || 200;
-  var PADDT_MAX_WORDS_PER_SEGMENT = Internal.PADDT_MAX_WORDS_PER_SEGMENT || 200;
-  const splitParagraphIntoHtmlChunks = Internal.splitParagraphIntoHtmlChunks;
-  const splitPaddtParagraphIntoHtmlChunks = Internal.splitPaddtParagraphIntoHtmlChunks;
-
-  const applyDummyRowItemsStep = Internal.applyDummyRowItemsStep;
-  const applyDummyRowStep = Internal.applyDummyRowStep;
-  const applyFooterSpacerWithDummyStep = Internal.applyFooterSpacerWithDummyStep;
-  const applyFooterSpacerStep = Internal.applyFooterSpacerStep;
-
-  if (
-    !normalizeHeight ||
-    !updatePageNumberContent ||
-    !updatePhysicalPageNumberContent ||
-    !getPaddtConfig ||
-    !DomHelpers ||
-    !DOCINFO_VARIANTS ||
-    !FOOTER_VARIANTS ||
-    !FOOTER_LOGO_VARIANT ||
-    !FOOTER_PAGENUM_VARIANT ||
-    !splitParagraphIntoHtmlChunks ||
-    !splitPaddtParagraphIntoHtmlChunks ||
-    !applyDummyRowItemsStep ||
-    !applyDummyRowStep ||
-    !applyFooterSpacerWithDummyStep ||
-    !applyFooterSpacerStep
-  ) {
-    throw new Error(
-      "printform/formatter.js requires helpers/config/dom/text modules to be loaded first."
-    );
-  }
-  if (global) {
-    global.__printFormFormatterLoaded__ = true;
-  }
-
-class PrintFormFormatter {
+export class PrintFormFormatter {
   constructor(formEl, config) {
     this.formEl = formEl;
     this.config = config;
@@ -964,6 +914,3 @@ class PrintFormFormatter {
     return container;
   }
 }
-
-  Internal.PrintFormFormatter = PrintFormFormatter;
-})(typeof window !== "undefined" ? window : this);

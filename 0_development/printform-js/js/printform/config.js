@@ -1,23 +1,6 @@
 /* eslint-disable no-console */
 
-(function(global) {
-  if (global && global.__printFormConfigLoaded__) {
-    return;
-  }
-
-  const PrintForm = global.PrintForm = global.PrintForm || {};
-  const Internal = PrintForm._internal = PrintForm._internal || {};
-
-  const parseBooleanFlag = Internal.parseBooleanFlag;
-  const parseNumber = Internal.parseNumber;
-  const parseString = Internal.parseString;
-
-  if (!parseBooleanFlag || !parseNumber || !parseString) {
-    throw new Error("printform/config.js requires js/printform/helpers.js to be loaded first.");
-  }
-  if (global) {
-    global.__printFormConfigLoaded__ = true;
-  }
+import { parseBooleanFlag, parseNumber, parseString, resolvePaperDimensions } from "./helpers.js";
 
   /**
    * @typedef {Object} ConfigDescriptor
@@ -29,9 +12,12 @@
    */
 
   // Every config option lives here to unify defaults, legacy globals, and dataset parsing.
-  const CONFIG_DESCRIPTORS = [
+  export const CONFIG_DESCRIPTORS = [
     { key: "papersizeWidth", datasetKey: "papersizeWidth", legacyKey: "papersize_width", defaultValue: 750, parser: parseNumber },
     { key: "papersizeHeight", datasetKey: "papersizeHeight", legacyKey: "papersize_height", defaultValue: 1050, parser: parseNumber },
+    { key: "paperSize", datasetKey: "paperSize", legacyKey: "paper_size", defaultValue: "", parser: parseString },
+    { key: "orientation", datasetKey: "orientation", legacyKey: "orientation", defaultValue: "portrait", parser: parseString },
+    { key: "dpi", datasetKey: "dpi", legacyKey: "dpi", defaultValue: 96, parser: parseNumber },
     { key: "nUp", datasetKey: "nUp", legacyKey: "n_up", defaultValue: 1, parser: parseNumber },
     {
       key: "showLogicalPageNumber",
@@ -120,7 +106,7 @@
     { key: "debug", datasetKey: "debug", legacyKey: "debug_printform", defaultValue: false, parser: parseBooleanFlag }
   ];
 
-  const DOCINFO_VARIANTS = [
+  export const DOCINFO_VARIANTS = [
     { key: "docInfo", className: "pdocinfo", repeatFlag: "repeatDocinfo" },
     { key: "docInfo002", className: "pdocinfo002", repeatFlag: "repeatDocinfo002" },
     { key: "docInfo003", className: "pdocinfo003", repeatFlag: "repeatDocinfo003" },
@@ -128,7 +114,7 @@
     { key: "docInfo005", className: "pdocinfo005", repeatFlag: "repeatDocinfo005" }
   ];
 
-  const FOOTER_VARIANTS = [
+  export const FOOTER_VARIANTS = [
     { key: "footer", className: "pfooter", repeatFlag: "repeatFooter" },
     { key: "footer002", className: "pfooter002", repeatFlag: "repeatFooter002" },
     { key: "footer003", className: "pfooter003", repeatFlag: "repeatFooter003" },
@@ -136,16 +122,16 @@
     { key: "footer005", className: "pfooter005", repeatFlag: "repeatFooter005" }
   ];
 
-  const FOOTER_LOGO_VARIANT = { key: "footerLogo", className: "pfooter_logo", repeatFlag: "repeatFooterLogo" };
-  const FOOTER_PAGENUM_VARIANT = { key: "footerPagenum", className: "pfooter_pagenum", repeatFlag: "repeatFooterPagenum" };
+  export const FOOTER_LOGO_VARIANT = { key: "footerLogo", className: "pfooter_logo", repeatFlag: "repeatFooterLogo" };
+  export const FOOTER_PAGENUM_VARIANT = { key: "footerPagenum", className: "pfooter_pagenum", repeatFlag: "repeatFooterPagenum" };
 
-  const DEFAULT_CONFIG = CONFIG_DESCRIPTORS.reduce((accumulator, descriptor) => {
+  export const DEFAULT_CONFIG = CONFIG_DESCRIPTORS.reduce((accumulator, descriptor) => {
     accumulator[descriptor.key] = descriptor.defaultValue;
     return accumulator;
   }, {});
 
   function readConfigFromLegacy(descriptors) {
-    const source = global && typeof global === "object" ? global : {};
+    const source = typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : {});
     return descriptors.reduce((config, descriptor) => {
       if (!descriptor.legacyKey) return config;
       const value = source[descriptor.legacyKey];
@@ -183,7 +169,7 @@
     return fallback;
   }
 
-  function getPrintformConfig(formEl, overrides = {}) {
+  export function getPrintformConfig(formEl, overrides = {}) {
     const legacy = getLegacyConfig();
     const datasetConfig = getDatasetConfig(formEl.dataset || {});
     const merged = {
@@ -204,19 +190,29 @@
       merged.nUp = DEFAULT_CONFIG.nUp;
     }
     merged.nUp = Math.floor(merged.nUp);
-    merged.showLogicalPageNumber = parseBooleanFlag(
-      merged.showLogicalPageNumber,
-      DEFAULT_CONFIG.showLogicalPageNumber
-    );
-    merged.showPhysicalPageNumber = parseBooleanFlag(
-      merged.showPhysicalPageNumber,
-      DEFAULT_CONFIG.showPhysicalPageNumber
-    );
+    merged.showLogicalPageNumber = parseBooleanFlag(merged.showLogicalPageNumber, DEFAULT_CONFIG.showLogicalPageNumber);
+    merged.showPhysicalPageNumber = parseBooleanFlag(merged.showPhysicalPageNumber, DEFAULT_CONFIG.showPhysicalPageNumber);
+    merged.papersizeWidth = parseNumber(merged.papersizeWidth, DEFAULT_CONFIG.papersizeWidth);
+    merged.papersizeHeight = parseNumber(merged.papersizeHeight, DEFAULT_CONFIG.papersizeHeight);
+    merged.paperSize = parseString(merged.paperSize, DEFAULT_CONFIG.paperSize);
+    merged.orientation = parseString(merged.orientation, DEFAULT_CONFIG.orientation);
+    merged.dpi = parseNumber(merged.dpi, DEFAULT_CONFIG.dpi);
+    if (!Number.isFinite(merged.dpi) || merged.dpi <= 0) merged.dpi = DEFAULT_CONFIG.dpi;
+    const overrideHas = (key) => Object.prototype.hasOwnProperty.call(overrides, key) && overrides[key] !== "";
+    const manualWidthProvided = Object.prototype.hasOwnProperty.call(legacy, "papersizeWidth") || Object.prototype.hasOwnProperty.call(datasetConfig, "papersizeWidth") || overrideHas("papersizeWidth");
+    const manualHeightProvided = Object.prototype.hasOwnProperty.call(legacy, "papersizeHeight") || Object.prototype.hasOwnProperty.call(datasetConfig, "papersizeHeight") || overrideHas("papersizeHeight");
+    if (!manualWidthProvided && !manualHeightProvided) {
+      const resolved = resolvePaperDimensions({ paperSize: merged.paperSize, orientation: merged.orientation, dpi: merged.dpi });
+      if (resolved) {
+        merged.papersizeWidth = resolved.width;
+        merged.papersizeHeight = resolved.height;
+      }
+    }
     return merged;
   }
 
   // ===== PADDT configuration (独立配置) =====
-  const PADDT_CONFIG_DESCRIPTORS = [
+  export const PADDT_CONFIG_DESCRIPTORS = [
     { key: "repeatPaddt", datasetKey: "repeatPaddt", legacyKey: "repeat_paddt", defaultValue: true, parser: parseBooleanFlag },
     { key: "insertPaddtDummyRowItems", datasetKey: "insertPaddtDummyRowItems", legacyKey: "insert_paddt_dummy_row_items", defaultValue: true, parser: parseBooleanFlag },
     { key: "paddtMaxWordsPerSegment", datasetKey: "paddtMaxWordsPerSegment", legacyKey: "paddt_max_words_per_segment", defaultValue: 200, parser: parseNumber },
@@ -231,7 +227,7 @@
     { key: "repeatPaddtDocinfo005", datasetKey: "repeatPaddtDocinfo005", legacyKey: "repeat_paddt_docinfo005", defaultValue: true, parser: parseBooleanFlag }
   ];
 
-  const DEFAULT_PADDT_CONFIG = PADDT_CONFIG_DESCRIPTORS.reduce(function(acc, d) {
+  export const DEFAULT_PADDT_CONFIG = PADDT_CONFIG_DESCRIPTORS.reduce(function(acc, d) {
     acc[d.key] = d.defaultValue;
     return acc;
   }, {});
@@ -244,10 +240,10 @@
     return readConfigFromDataset(PADDT_CONFIG_DESCRIPTORS, dataset);
   }
 
-  /**
+   /**
    * 获取 paddt 配置（与主配置独立）(中文解释: paddt 独立配置读取)
    */
-  function getPaddtConfig(formEl, overrides) {
+  export function getPaddtConfig(formEl, overrides) {
     overrides = overrides || {};
     var legacy = getPaddtLegacyConfig();
     var datasetConfig = getPaddtDatasetConfig((formEl && formEl.dataset) || {});
@@ -263,17 +259,3 @@
     }
     return merged;
   }
-
-  Internal.CONFIG_DESCRIPTORS = CONFIG_DESCRIPTORS;
-  Internal.DEFAULT_CONFIG = DEFAULT_CONFIG;
-  Internal.DOCINFO_VARIANTS = DOCINFO_VARIANTS;
-  Internal.FOOTER_VARIANTS = FOOTER_VARIANTS;
-  Internal.FOOTER_LOGO_VARIANT = FOOTER_LOGO_VARIANT;
-  Internal.FOOTER_PAGENUM_VARIANT = FOOTER_PAGENUM_VARIANT;
-  Internal.getPrintformConfig = getPrintformConfig;
-  Internal.DEFAULT_PADDT_CONFIG = DEFAULT_PADDT_CONFIG;
-  Internal.getPaddtConfig = getPaddtConfig;
-
-  PrintForm.DEFAULT_CONFIG = DEFAULT_CONFIG;
-  PrintForm.DEFAULT_PADDT_CONFIG = DEFAULT_PADDT_CONFIG;
-})(typeof window !== "undefined" ? window : this);

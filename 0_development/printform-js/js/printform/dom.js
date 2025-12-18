@@ -1,20 +1,6 @@
 /* eslint-disable no-console */
 
-(function(global) {
-  if (global && global.__printFormDomLoaded__) {
-    return;
-  }
-
-  const PrintForm = global.PrintForm = global.PrintForm || {};
-  const Internal = PrintForm._internal = PrintForm._internal || {};
-
-  const normalizeHeight = Internal.normalizeHeight;
-  if (!normalizeHeight) {
-    throw new Error("printform/dom.js requires js/printform/helpers.js to be loaded first.");
-  }
-  if (global) {
-    global.__printFormDomLoaded__ = true;
-  }
+import { normalizeHeight } from "./helpers.js";
 
   function createDummyRowTable(config, height) {
     const table = document.createElement("table");
@@ -155,7 +141,7 @@
     }
   }
 
-  const DomHelpers = {
+  export const DomHelpers = {
     markAsProcessed,
     measureHeight,
     createPageBreakDivider,
@@ -163,9 +149,4 @@
     appendRowItem
   };
 
-  Internal.DomHelpers = DomHelpers;
-  Internal.applyDummyRowItemsStep = applyDummyRowItemsStep;
-  Internal.applyDummyRowStep = applyDummyRowStep;
-  Internal.applyFooterSpacerWithDummyStep = applyFooterSpacerWithDummyStep;
-  Internal.applyFooterSpacerStep = applyFooterSpacerStep;
-})(typeof window !== "undefined" ? window : this);
+  export { applyDummyRowItemsStep, applyDummyRowStep, applyFooterSpacerWithDummyStep, applyFooterSpacerStep };
