@@ -39,7 +39,7 @@ flowchart TD
 
         CheckSpace -- 换页/溢出 --> FillRemainder[填充 Dummy 行 + Spacer]
         FillRemainder --> AddRepeatFooter[追加重复页脚]
-        AddRepeatFooter --> NewPage[创建新逻辑页（N-Up 需要时新建物理页）]
+        AddRepeatFooter --> NewPage["创建新逻辑页（N-Up 需要时新建物理页）"]
         NewPage --> AddRepeatHeader[追加重复页眉/文档信息/表头]
         AddRepeatHeader --> LoopRows
 

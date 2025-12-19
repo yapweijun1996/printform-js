@@ -39,7 +39,7 @@ flowchart TD
 
         CheckSpace -- Break/Overflow --> FillRemainder[Dummy rows + spacer]
         FillRemainder --> AddRepeatFooter[Append repeating footers]
-        AddRepeatFooter --> NewPage[Create new logical page (N-Up creates new physical wrapper as needed)]
+        AddRepeatFooter --> NewPage["Create new logical page (N-Up creates new physical wrapper as needed)"]
         NewPage --> AddRepeatHeader[Append repeated header/docinfo/rowheader]
         AddRepeatHeader --> LoopRows
 
