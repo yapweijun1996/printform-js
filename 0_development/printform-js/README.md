@@ -43,11 +43,11 @@ flowchart TD
         NewPage --> AddRepeatHeader[Append repeated header/docinfo/rowheader]
         AddRepeatHeader --> LoopRows
 
-        LoopRows -- No (Done) --> FinalizeMain[Fill remainder + append final footers]
+        LoopRows -- "No (Done)" --> FinalizeMain[Fill remainder + append final footers]
         FinalizeMain --> PaddtCheck{Has PADDT rows?}
         PaddtCheck -- No --> UpdatePageNum[Update page number totals]
         PaddtCheck -- Yes --> NewPhysical[Start new physical page for PADDT]
-        NewPhysical --> RenderPaddt[Render PADDT rows (only logo + page number footers)]
+        NewPhysical --> RenderPaddt["Render PADDT rows (only logo + page number footers)"]
         RenderPaddt --> FinalizePaddt[Finalize PADDT pages]
         FinalizePaddt --> UpdatePageNum
         UpdatePageNum --> Finish(Done)

@@ -43,11 +43,11 @@ flowchart TD
         NewPage --> AddRepeatHeader[追加重复页眉/文档信息/表头]
         AddRepeatHeader --> LoopRows
 
-        LoopRows -- 否 (完成) --> FinalizeMain[填充剩余空间 + 追加最终页脚]
+        LoopRows -- "否 (完成)" --> FinalizeMain[填充剩余空间 + 追加最终页脚]
         FinalizeMain --> PaddtCheck{有 PADDT 行?}
         PaddtCheck -- 否 --> UpdatePageNum[更新页码总数]
         PaddtCheck -- 是 --> NewPhysical[PADDT 新起物理页]
-        NewPhysical --> RenderPaddt[渲染 PADDT 行（仅 Logo + 页码页脚）]
+        NewPhysical --> RenderPaddt["渲染 PADDT 行（仅 Logo + 页码页脚）"]
         RenderPaddt --> FinalizePaddt[完成 PADDT 页]
         FinalizePaddt --> UpdatePageNum
         UpdatePageNum --> Finish(完成)
