@@ -143,6 +143,46 @@ npm run dev
 | `data-show-logical-page-number`| `y` / `n` | 是否显示页码 (如 "Page 1 of 3")。 |
 | `data-n-up` | `1` / `2` | **N-Up 打印**：一张纸打印几页逻辑页 (例如设为 2 可实现双联单)。 |
 
+### 行与页脚控制
+
+| 属性 (Data Attribute) | 值示例 | 说明 |
+| :--- | :--- | :--- |
+| `data-height-of-dummy-row-item` | `26` | 空白行 item 的高度，用于填充剩余空间。 |
+| `data-repeat-docinfo` | `y` / `n` | 是否重复 `.pdocinfo`。 |
+| `data-repeat-docinfo002` | `y` / `n` | 是否重复 `.pdocinfo002`。 |
+| `data-repeat-docinfo003` | `y` / `n` | 是否重复 `.pdocinfo003`。 |
+| `data-repeat-docinfo004` | `y` / `n` | 是否重复 `.pdocinfo004`。 |
+| `data-repeat-docinfo005` | `y` / `n` | 是否重复 `.pdocinfo005`。 |
+| `data-repeat-rowheader` | `y` / `n` | 是否重复 `.prowheader`。 |
+| `data-repeat-ptac-rowheader` | `y` / `n` | PTAC 页面是否重复 `.prowheader`。 |
+| `data-repeat-footer` | `y` / `n` | 是否每页重复 `.pfooter`（最终页会包含所有页脚）。 |
+| `data-repeat-footer002` | `y` / `n` | 是否每页重复 `.pfooter002`。 |
+| `data-repeat-footer003` | `y` / `n` | 是否每页重复 `.pfooter003`。 |
+| `data-repeat-footer004` | `y` / `n` | 是否每页重复 `.pfooter004`。 |
+| `data-repeat-footer005` | `y` / `n` | 是否每页重复 `.pfooter005`。 |
+| `data-repeat-footer-logo` | `y` / `n` | 是否每页重复 `.pfooter_logo`。 |
+| `data-repeat-footer-pagenum` | `y` / `n` | 是否每页重复 `.pfooter_pagenum`。 |
+| `data-insert-dummy-row-item-while-format-table` | `y` / `n` | 是否插入空白行 item 来填充高度。 |
+| `data-insert-ptac-dummy-row-items` | `y` / `n` | PTAC 页面是否插入空白行 item。 |
+| `data-insert-dummy-row-while-format-table` | `y` / `n` | 是否插入单个空白行块来填充剩余空间。 |
+| `data-insert-footer-spacer-while-format-table` | `y` / `n` | 是否插入页脚 spacer 将页脚顶到底部。 |
+| `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | 是否用空白行 item 作为 footer spacer。 |
+
+### PADDT 控制
+
+| 属性 (Data Attribute) | 值示例 | 说明 |
+| :--- | :--- | :--- |
+| `data-repeat-paddt` | `y` / `n` | PADDT 复用开关（当前保留未使用）。 |
+| `data-repeat-paddt-rowheader` | `y` / `n` | PADDT 页面是否重复 `.prowheader`。 |
+| `data-insert-paddt-dummy-row-items` | `y` / `n` | PADDT 页面是否插入空白行 item。 |
+| `data-paddt-max-words-per-segment` | `180` | PADDT 段落拆分的单段最大词数。 |
+| `data-paddt-debug` | `y` / `n` | 是否开启 PADDT 调试日志。 |
+| `data-repeat-paddt-docinfo` | `y` / `n` | PADDT 页面是否重复 `.pdocinfo`。 |
+| `data-repeat-paddt-docinfo002` | `y` / `n` | PADDT 页面是否重复 `.pdocinfo002`。 |
+| `data-repeat-paddt-docinfo003` | `y` / `n` | PADDT 页面是否重复 `.pdocinfo003`。 |
+| `data-repeat-paddt-docinfo004` | `y` / `n` | PADDT 页面是否重复 `.pdocinfo004`。 |
+| `data-repeat-paddt-docinfo005` | `y` / `n` | PADDT 页面是否重复 `.pdocinfo005`。 |
+
 ### 示例
 ```html
 <div class="printform"

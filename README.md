@@ -15,39 +15,49 @@ flowchart TD
     subgraph Raw_Input [Raw HTML Input]
         RawContainer[".printform Container"]
         Header[".pheader (Header)"]
-        DocInfo[".pdocinfo (Document Info)"]
+        DocInfo[".pdocinfo / .pdocinfo002... (Document Info)"]
         RowHeader[".prowheader (Table Header)"]
         RowItems[".prowitem (Data Rows 1..N)"]
-        Footer[".pfooter (Footer)"]
+        Ptac[".ptac (Terms Paragraphs)"]
+        Paddt[".paddt (Additional Paragraphs)"]
+        Footer[".pfooter / .pfooter002... (Business Footers)"]
+        FooterLogo[".pfooter_logo (Footer Logo)"]
+        FooterPagenum[".pfooter_pagenum (Footer Page Number)"]
     end
 
     subgraph Processing [PrintForm.js Logic]
-        Start(Start Formatting) --> InitPage[Create Page 1]
-        InitPage --> AddHeader[Insert Header & DocInfo & RowHeader]
-        AddHeader --> LoopRows{More rows?}
-        
-        LoopRows -- Yes --> CheckSpace{Fits in current page?}
-        
-        CheckSpace -- Yes --> AppendRow[Append .prowitem]
-        AppendRow --> UpdateHeight[Update current height]
-        UpdateHeight --> LoopRows
-        
-        CheckSpace -- No --> FillDummy[Fill Dummy Rows]
-        FillDummy --> AddFooter[Insert Footer .pfooter]
-        AddFooter --> NewPage[Create Page N+1]
-        NewPage --> AddHeaderRepeat[Insert Repeated Header & RowHeader]
-        AddHeaderRepeat --> LoopRows
-        
-        LoopRows -- No (Done) --> FillDummyFinal[Fill Remaining Dummy Rows]
-        FillDummyFinal --> AddFooterFinal[Insert Final Footer]
-        AddFooterFinal --> Finish(Done)
+        Start(Start Formatting) --> ExpandSeg[Expand .ptac/.paddt into row segments]
+        ExpandSeg --> Collect[Collect Sections & Rows]
+        Collect --> Measure[Measure Section Heights]
+        Measure --> ComputeLayout[Compute Height/Page & Footer State]
+        ComputeLayout --> InitPage[Create Logical Page 1]
+        InitPage --> LoopRows{More main rows?}
+
+        LoopRows -- Yes --> CheckSpace{Row fits or forced break?}
+        CheckSpace -- Fits --> AppendRow[Append row item]
+        AppendRow --> LoopRows
+
+        CheckSpace -- Break/Overflow --> FillRemainder[Dummy rows + spacer]
+        FillRemainder --> AddRepeatFooter[Append repeating footers]
+        AddRepeatFooter --> NewPage[Create new logical page (N-Up creates new physical wrapper as needed)]
+        NewPage --> AddRepeatHeader[Append repeated header/docinfo/rowheader]
+        AddRepeatHeader --> LoopRows
+
+        LoopRows -- No (Done) --> FinalizeMain[Fill remainder + append final footers]
+        FinalizeMain --> PaddtCheck{Has PADDT rows?}
+        PaddtCheck -- No --> UpdatePageNum[Update page number totals]
+        PaddtCheck -- Yes --> NewPhysical[Start new physical page for PADDT]
+        NewPhysical --> RenderPaddt[Render PADDT rows (only logo + page number footers)]
+        RenderPaddt --> FinalizePaddt[Finalize PADDT pages]
+        FinalizePaddt --> UpdatePageNum
+        UpdatePageNum --> Finish(Done)
     end
 
     subgraph Output_Result [Print Output]
-        Page1["Page 1 (A4)"]
-        PageBreak["Page Break"]
-        Page2["Page 2 (A4)"]
-        PageN["..."]
+        Physical1["Physical Page 1 (A4)"]
+        Logical1["Logical Page 1"]
+        Logical2["Logical Page 2 (N-Up)"]
+        PhysicalN["Physical Page N"]
     end
 
     RawContainer --> Start
@@ -142,6 +152,46 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | `data-repeat-footer` | `y` / `n` | Repeat footer on every page (Default `n`). |
 | `data-show-logical-page-number`| `y` / `n` | Show page numbers (e.g. "Page 1 of 3"). |
 | `data-n-up` | `1` / `2` | **N-Up Printing**: Multiple logical pages per physical sheet. |
+
+### Row / Footer Controls
+
+| Attribute | Example | Description |
+| :--- | :--- | :--- |
+| `data-height-of-dummy-row-item` | `26` | Height for each dummy row item used to fill remaining space. |
+| `data-repeat-docinfo` | `y` / `n` | Repeat `.pdocinfo` on every page. |
+| `data-repeat-docinfo002` | `y` / `n` | Repeat `.pdocinfo002` on every page. |
+| `data-repeat-docinfo003` | `y` / `n` | Repeat `.pdocinfo003` on every page. |
+| `data-repeat-docinfo004` | `y` / `n` | Repeat `.pdocinfo004` on every page. |
+| `data-repeat-docinfo005` | `y` / `n` | Repeat `.pdocinfo005` on every page. |
+| `data-repeat-rowheader` | `y` / `n` | Repeat `.prowheader` on every page. |
+| `data-repeat-ptac-rowheader` | `y` / `n` | Repeat `.prowheader` on PTAC-only pages. |
+| `data-repeat-footer` | `y` / `n` | Repeat `.pfooter` on every page (final page always includes all footers). |
+| `data-repeat-footer002` | `y` / `n` | Repeat `.pfooter002` on every page. |
+| `data-repeat-footer003` | `y` / `n` | Repeat `.pfooter003` on every page. |
+| `data-repeat-footer004` | `y` / `n` | Repeat `.pfooter004` on every page. |
+| `data-repeat-footer005` | `y` / `n` | Repeat `.pfooter005` on every page. |
+| `data-repeat-footer-logo` | `y` / `n` | Repeat `.pfooter_logo` on every page. |
+| `data-repeat-footer-pagenum` | `y` / `n` | Repeat `.pfooter_pagenum` on every page. |
+| `data-insert-dummy-row-item-while-format-table` | `y` / `n` | Insert repeated dummy row items to fill height. |
+| `data-insert-ptac-dummy-row-items` | `y` / `n` | Insert dummy row items on PTAC pages. |
+| `data-insert-dummy-row-while-format-table` | `y` / `n` | Insert a single dummy row block to fill remaining space. |
+| `data-insert-footer-spacer-while-format-table` | `y` / `n` | Insert a footer spacer to push footers down. |
+| `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | Use dummy row items as the footer spacer. |
+
+### PADDT Controls
+
+| Attribute | Example | Description |
+| :--- | :--- | :--- |
+| `data-repeat-paddt` | `y` / `n` | Reserved toggle for PADDT repeat behavior (currently unused). |
+| `data-repeat-paddt-rowheader` | `y` / `n` | Repeat `.prowheader` on PADDT pages. |
+| `data-insert-paddt-dummy-row-items` | `y` / `n` | Insert dummy row items on PADDT pages. |
+| `data-paddt-max-words-per-segment` | `180` | Max words per PADDT segment when splitting paragraphs. |
+| `data-paddt-debug` | `y` / `n` | Enable PADDT debug logs. |
+| `data-repeat-paddt-docinfo` | `y` / `n` | Repeat `.pdocinfo` on PADDT pages only. |
+| `data-repeat-paddt-docinfo002` | `y` / `n` | Repeat `.pdocinfo002` on PADDT pages only. |
+| `data-repeat-paddt-docinfo003` | `y` / `n` | Repeat `.pdocinfo003` on PADDT pages only. |
+| `data-repeat-paddt-docinfo004` | `y` / `n` | Repeat `.pdocinfo004` on PADDT pages only. |
+| `data-repeat-paddt-docinfo005` | `y` / `n` | Repeat `.pdocinfo005` on PADDT pages only. |
 
 ### Example
 ```html
