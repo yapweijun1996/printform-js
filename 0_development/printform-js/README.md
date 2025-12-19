@@ -44,10 +44,10 @@ flowchart TD
     end
 
     subgraph Output_Result [Print Output]
-        Page1[Page 1 (A4)]
-        PageBreak[Page Break]
-        Page2[Page 2 (A4)]
-        PageN[...]
+        Page1["Page 1 (A4)"]
+        PageBreak["Page Break"]
+        Page2["Page 2 (A4)"]
+        PageN["..."]
     end
 
     RawContainer --> Start
