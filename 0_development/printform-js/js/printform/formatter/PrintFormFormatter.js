@@ -140,7 +140,8 @@ export class PrintFormFormatter {
     allPages.forEach((page, index) => {
       this.finalizePageHeight(page);
       if (this.debug) {
-        console.log(`[printform]   Page ${index + 1}: height set to ${page.style.height}`);
+        const heightStyle = page.style.height || "(auto)";
+        console.log(`[printform]   Page ${index + 1}: height style = ${heightStyle}`);
       }
     });
 
