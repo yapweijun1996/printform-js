@@ -132,6 +132,7 @@ export class PrintFormFormatter {
 
     this.updatePageNumberTotals();
 
+    container.classList.remove("printform_formatter");
     container.classList.add("printform_formatter_processed");
     this.formEl.remove();
     return container;

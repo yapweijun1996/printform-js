@@ -1,0 +1,16 @@
+{
+  "name": "printform-js",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
+  "scripts": {
+    "build": "node scripts/run-vite.js build && node scripts/postbuild-generate-preview.js",
+    "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist/printform.js',{force:true}); fs.rmSync('dist/printform.iife.js',{force:true}); fs.rmSync('dist/assets',{recursive:true,force:true}); fs.rmSync('dist/index.html',{force:true}); fs.rmSync('dist/footer_logo.jpg',{force:true}); fs.rmSync('dist/img',{recursive:true,force:true});\"",
+    "check": "node --check dist/printform.js",
+    "dev": "node scripts/run-vite.js",
+    "preview": "node scripts/run-vite.js preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintForm.js 配置参考</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #34495e; margin-top: 40px; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; }
+    h3 { color: #7f8c8d; margin-top: 30px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 600;
+    }
+    tr:nth-child(even) { background-color: #f8f9fa; }
+    tr:hover { background-color: #e8f4f8; }
+    code {
+      background-color: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Courier New", monospace;
+      font-size: 0.9em;
+    }
+    pre {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-left: 4px solid #3498db;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+    .info-box {
+      background-color: #e8f4f8;
+      border-left: 4px solid #3498db;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .timestamp {
+      color: #7f8c8d;
+      font-size: 0.9em;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>PrintForm.js 配置参考</h1>
+  <p class="timestamp">自动生成于: 2026/1/16 22:35:17</p>
+  
+  <div class="info-box">
+    <strong>使用说明:</strong> 所有配置属性都应用在 <code>.printform</code> 容器元素上。
+  </div>
+
+  <h2>主要配置</h2>
+
+  <h3>N-Up 打印</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-n-up</code></td>
+        <td>Number</td>
+        <td><code>1</code></td>
+        <td>每个物理页面包含的逻辑页面数量</td>
+      </tr>
+      <tr>
+        <td><code>data-show-logical-page-number</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>显示逻辑页码 (Page 1 of 3)</td>
+      </tr>
+      <tr>
+        <td><code>data-show-physical-page-number</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>显示物理页码 (Sheet 1 of 2)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>纸张尺寸</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-papersize-width</code></td>
+        <td>Number</td>
+        <td><code>750</code></td>
+        <td>页面宽度(像素),打印目标应 <= 750px</td>
+      </tr>
+      <tr>
+        <td><code>data-papersize-height</code></td>
+        <td>Number</td>
+        <td><code>1050</code></td>
+        <td>页面高度(像素)</td>
+      </tr>
+      <tr>
+        <td><code>data-paper-size</code></td>
+        <td>String</td>
+        <td><code>""</code></td>
+        <td>预设纸张大小 (A4, A5, LETTER, LEGAL)</td>
+      </tr>
+      <tr>
+        <td><code>data-orientation</code></td>
+        <td>String</td>
+        <td><code>portrait</code></td>
+        <td>纸张方向</td>
+      </tr>
+      <tr>
+        <td><code>data-dpi</code></td>
+        <td>Number</td>
+        <td><code>96</code></td>
+        <td>DPI 设置,用于从预设纸张大小计算像素尺寸</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>虚拟行填充</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-height-of-dummy-row-item</code></td>
+        <td>Number</td>
+        <td><code>18</code></td>
+        <td>虚拟行项目的高度(像素)</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-dummy-row-item-while-format-table</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>插入虚拟行项目填充剩余空间</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-dummy-row-while-format-table</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>插入单个完整高度虚拟表格</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-footer-spacer-while-format-table</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>在页脚前插入间隔符</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>调试</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-debug</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>启用详细控制台日志</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>重复元素</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-repeat-header</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pheader 头部</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-docinfo</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pdocinfo 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-rowheader</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .prowheader 表格行头</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter 页脚</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer-logo</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter_logo 页脚 Logo</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer-pagenum</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter_pagenum 页码区域</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>PADDT 配置</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>HTML 属性</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>data-repeat-paddt</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>重复 PADDT (保留,暂未使用)</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-paddt-dummy-row-items</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面允许虚拟行项目</td>
+      </tr>
+      <tr>
+        <td><code>data-paddt-max-words-per-segment</code></td>
+        <td>Number</td>
+        <td><code>200</code></td>
+        <td>每个 PADDT 段落的最大单词数</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-rowheader</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复行头</td>
+      </tr>
+      <tr>
+        <td><code>data-paddt-debug</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>启用 PADDT 调试日志</td>
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+</html>

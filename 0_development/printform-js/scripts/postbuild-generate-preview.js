@@ -37,7 +37,7 @@ const FALLBACK_HTML = `<!doctype html>
       table { border-collapse: collapse; border-spacing: 0; width: 100%; }
       th, td { border: 1px solid #333; padding: 4px 8px; text-align: left; }
       .hint { color: #666; margin: 8px 0 16px; }
-      .printform_formatter { margin-bottom: 24px; }
+      .printform_formatter, .printform_formatter_processed { margin-bottom: 24px; }
     </style>
   </head>
   <body>
