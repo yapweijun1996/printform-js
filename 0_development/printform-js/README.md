@@ -24,7 +24,6 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 |--------------|-----------|
 | **Understand the code structure** | [Code Structure](CODE_STRUCTURE.md) - File organization, data flow |
 | **Develop and extend** | [Developer Handbook](DEVELOPER_BOOK.md) - Development guide |
-| **Review all attributes** | [Data Attributes Review](DATA_ATTRIBUTES_REVIEW.md) - Complete attribute list |
 | **Learn about auto-docs** | [Auto Documentation Guide](docs/AUTO_DOC_GENERATION_GUIDE.md) - How docs are generated |
 
 ### 🔧 Reference
