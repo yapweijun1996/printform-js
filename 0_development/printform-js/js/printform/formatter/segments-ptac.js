@@ -25,46 +25,29 @@ export function attachPtacSegmentMethods(FormatterClass) {
         return;
       }
 
-      const allParagraphs = Array.from(contentWrapper.querySelectorAll("p"));
-      var headingNode = null;
-      if (allParagraphs.length > 1) {
-        headingNode = allParagraphs.shift();
-      }
-      const paragraphs = allParagraphs;
+      const allChildren = Array.from(contentWrapper.children);
 
-      if (paragraphs.length === 0) {
-        ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
-        ptacRoot.dataset.ptacSegment = "true";
-        return;
-      }
-
-      const headingHTML = headingNode ? headingNode.outerHTML : "";
-      const paragraphHTML = paragraphs.reduce(function(accumulator, node) {
-        const chunks = splitParagraphIntoHtmlChunks(node, PTAC_MAX_WORDS_PER_SEGMENT);
-        return accumulator.concat(chunks);
-      }, []);
-
-      if (paragraphHTML.length === 0) {
-        contentWrapper.innerHTML = headingHTML;
+      if (allChildren.length === 0) {
         ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
         ptacRoot.dataset.ptacSegment = "true";
         return;
       }
 
       const segments = [];
-      if (headingHTML) {
-        segments.push(headingHTML + paragraphHTML[0]);
-        for (var segIndex = 1; segIndex < paragraphHTML.length; segIndex += 1) {
-          segments.push(paragraphHTML[segIndex]);
+
+      // Iterate through all children
+      allChildren.forEach(child => {
+        if (child.tagName.toLowerCase() === 'p') {
+          // It's a paragraph, check if it needs splitting
+          const chunks = splitParagraphIntoHtmlChunks(child, PTAC_MAX_WORDS_PER_SEGMENT);
+          chunks.forEach(chunk => segments.push(chunk));
+        } else {
+          // It's not a paragraph (e.g., h2, h3, div, etc.), keep it as is
+          segments.push(child.outerHTML);
         }
-      } else {
-        for (var segIndexAlt = 0; segIndexAlt < paragraphHTML.length; segIndexAlt += 1) {
-          segments.push(paragraphHTML[segIndexAlt]);
-        }
-      }
+      });
 
       if (segments.length === 0) {
-        contentWrapper.innerHTML = headingHTML;
         ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
         ptacRoot.dataset.ptacSegment = "true";
         return;
@@ -77,6 +60,7 @@ export function attachPtacSegmentMethods(FormatterClass) {
       var lastNode = ptacRoot;
       for (var index = 1; index < segments.length; index += 1) {
         const clone = ptacRoot.cloneNode(true);
+        clone.classList.remove("tb_page_break_before");
         clone.dataset.ptacSegment = "true";
         const cloneWrapper = clone.querySelector("td > div") || clone.querySelector("td");
         if (cloneWrapper) {

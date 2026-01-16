@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 002 - Construction Purchase Order</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 00px;
+            background-color: #f5f5f5;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .paper_width {
+            width: 750px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Construction Theme Colors */
+        :root {
+            --primary-color: #2c3e50;
+            /* Dark Blue-Grey */
+            --accent-color: #f39c12;
+            /* Construction Yellow/Orange */
+            --border-color: #bdc3c7;
+            --header-bg: #eceff1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        /* Printform Sections */
+        .pheader {
+            padding: 20px 40px;
+            border-bottom: 3px solid var(--accent-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section svg {
+            width: 60px;
+            height: 60px;
+            fill: var(--primary-color);
+        }
+
+        .company-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .pdocinfo,
+        .pdocinfo002,
+        .pdocinfo003 {
+            padding: 10px 40px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-size: 13px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        .prowheader {
+            padding: 10px 40px 0 40px;
+        }
+
+        .prowitem {
+            padding: 0 40px;
+            /* Remove bottom margin to let rows stack tightly */
+        }
+
+        .prowitem table tr td {
+            border-top: none;
+            /* Merge borders visually */
+        }
+
+        .prowitem:last-child table tr td {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ptac {
+            padding: 20px 40px;
+            font-size: 11px;
+            color: #555;
+            line-height: 1.4;
+            text-align: justify;
+        }
+
+        .ptac h3 {
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 5px;
+            margin-top: 15px;
+            color: var(--primary-color);
+        }
+
+        .pfooter {
+            padding: 15px 40px;
+            font-size: 12px;
+            border-top: 2px solid var(--primary-color);
+            margin-top: auto;
+            /* Push to bottom if flex */
+        }
+
+        .pfooter_logo {
+            text-align: right;
+            padding: 5px 40px;
+        }
+
+        .pfooter_logo svg {
+            width: 30px;
+            height: 30px;
+            opacity: 0.6;
+            vertical-align: middle;
+        }
+
+        .pfooter_pagenum {
+            text-align: center;
+            font-size: 10px;
+            padding-bottom: 10px;
+            color: #999;
+        }
+
+        /* Helper for preview */
+        @media screen {
+            .printform {
+                margin-bottom: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="printform paper_width" data-debug="y" data-papersize-width="750" data-papersize-height="1050"
+        data-repeat-header="y" data-repeat-rowheader="y" data-repeat-footer="y" data-repeat-footer-logo="y"
+        data-repeat-footer-pagenum="y" data-repeat-docinfo="y" data-repeat-docinfo002="n" data-repeat-docinfo003="n"
+        data-repeat-ptac-rowheader="n" data-insert-dummy-row-item-while-format-table="n"
+        data-insert-dummy-row-while-format-table="y"
+        data-height-of-dummy-row-item="33">
+
+        <!-- 1. Header with SVG Logo -->
+        <div class="pheader">
+            <div class="logo-section">
+                <!-- Construction Icon SVG -->
+                <svg width="60" height="60" viewBox="0 0 24 24">
+                    <path
+                        d="M12,3L2,12H5V20H19V12H22L12,3M12,7.7C14.1,7.7 15.8,9.4 15.8,11.5C15.8,13.6 14.1,15.3 12,15.3C9.9,15.3 8.2,13.6 8.2,11.5C8.2,9.4 9.9,7.7 12,7.7M12,9.7C11,9.7 10.2,10.5 10.2,11.5C10.2,12.5 11,13.3 12,13.3C13,13.3 13.8,12.5 13.8,11.5C13.8,10.5 13,9.7 12,9.7Z" />
+                </svg>
+            </div>
+            <div style="text-align: right;">
+                <div class="company-title">Apex Construction Ltd.</div>
+                <div>High-Rise Specialists</div>
+            </div>
+        </div>
+
+        <!-- 2. Doc Info 1: PO Details -->
+        <div class="pdocinfo">
+            <div style="background: #f0f0f0; padding: 10px; margin-bottom: 5px;">
+                <h2 style="margin: 0; color: var(--primary-color);">PURCHASE ORDER</h2>
+            </div>
+            <div class="info-grid">
+                <div>
+                    <span class="info-label">PO Number:</span> PO-2026-8801<br>
+                    <span class="info-label">Date:</span> Jan 17, 2026<br>
+                    <span class="info-label">Vendor:</span> MegaSteel Supplies Inc.
+                </div>
+                <div style="text-align: right;">
+                    <span class="info-label">Project:</span> Skyline Tower Block A<br>
+                    <span class="info-label">Ref:</span> REQ-9921
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Doc Info 2: Addresses -->
+        <div class="pdocinfo002">
+            <div class="info-grid">
+                <div>
+                    <div class="info-label">Bill To:</div>
+                    Apex Construction Ltd.<br>
+                    Finance Dept, Level 5<br>
+                    100 Construction Ave.<br>
+                </div>
+                <div>
+                    <div class="info-label">Ship To:</div>
+                    Skyline Tower Site Office<br>
+                    Gate 3, Receive Dock<br>
+                    200 Downtown Blvd.<br>
+                    Contact: Site Manager (012-3456789)
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Doc Info 3: Terms -->
+        <div class="pdocinfo003">
+            <table style="width: 100%; border: none;">
+                <tr style="background-color: var(--header-bg);">
+                    <td style="border: none; width: 33%;"><strong>Payment Terms:</strong> Net 60 Days</td>
+                    <td style="border: none; width: 33%;"><strong>Shipping Method:</strong> Flatbed Truck</td>
+                    <td style="border: none; width: 33%;"><strong>Required Date:</strong> Feb 01, 2026</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 5. Row Header -->
+        <div class="prowheader">
+            <table style="border-bottom: none;">
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 45%;">Description</th>
+                    <th style="width: 10%;">Unit</th>
+                    <th style="width: 10%;">Qty</th>
+                    <th style="width: 15%;">Rate ($)</th>
+                    <th style="width: 15%;">Amount ($)</th>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 6. 34 Rows of Items -->
+        <!-- Row 1 -->
+        <div class="prowitem">
+            <table style="border-top: none; border-bottom: none;">
+                <tr>
+                    <td style="width: 5%;">1</td>
+                    <td style="width: 45%;">Portland Cement Type I (50kg Bag)</td>
+                    <td style="width: 10%;">Bag</td>
+                    <td style="width: 10%;">500</td>
+                    <td style="width: 15%;">8.50</td>
+                    <td style="width: 15%;">4,250.00</td>
+                </tr>
+            </table>
+        </div>
+        <!-- Row 2 -->
+        <div class="prowitem">
+            <table style="border-top: none; border-bottom: none;">
+                <tr>
+                    <td style="width: 5%;">2</td>
+                    <td style="width: 45%;">Steel Rebar #4 (1/2 inch) - 20ft length</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">1000</td>
+                    <td style="width: 15%;">12.00</td>
+                    <td style="width: 15%;">12,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <!-- Row 3 -->
+        <div class="prowitem">
+            <table style="border-top: none; border-bottom: none;">
+                <tr>
+                    <td style="width: 5%;">3</td>
+                    <td style="width: 45%;">Red Clay Bricks (Standard Size)</td>
+                    <td style="width: 10%;">Pallet</td>
+                    <td style="width: 10%;">50</td>
+                    <td style="width: 15%;">250.00</td>
+                    <td style="width: 15%;">12,500.00</td>
+                </tr>
+            </table>
+        </div>
+        <!-- Row 4 -->
+        <div class="prowitem">
+            <table style="border-top: none; border-bottom: none;">
+                <tr>
+                    <td style="width: 5%;">4</td>
+                    <td style="width: 45%;">Concrete Sand (Fine)</td>
+                    <td style="width: 10%;">Ton</td>
+                    <td style="width: 10%;">200</td>
+                    <td style="width: 15%;">45.00</td>
+                    <td style="width: 15%;">9,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <!-- Row 5 -->
+        <div class="prowitem">
+            <table style="border-top: none; border-bottom: none;">
+                <tr>
+                    <td style="width: 5%;">5</td>
+                    <td style="width: 45%;">Gravel 3/4 inch aggregate</td>
+                    <td style="width: 10%;">Ton</td>
+                    <td style="width: 10%;">150</td>
+                    <td style="width: 15%;">50.00</td>
+                    <td style="width: 15%;">7,500.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">6</td>
+                    <td style="width: 45%;">Safety Helmets (Yellow, ANSI Certified)</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">50</td>
+                    <td style="width: 15%;">15.00</td>
+                    <td style="width: 15%;">750.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">7</td>
+                    <td style="width: 45%;">High-Vis Vests (Orange, XL)</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">100</td>
+                    <td style="width: 15%;">5.00</td>
+                    <td style="width: 15%;">500.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">8</td>
+                    <td style="width: 45%;">Work Gloves (Heavy Duty Leather)</td>
+                    <td style="width: 10%;">Pair</td>
+                    <td style="width: 10%;">200</td>
+                    <td style="width: 15%;">8.00</td>
+                    <td style="width: 15%;">1,600.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">9</td>
+                    <td style="width: 45%;">Plywood Sheets (4x8 ft, 3/4 inch)</td>
+                    <td style="width: 10%;">Sheet</td>
+                    <td style="width: 10%;">300</td>
+                    <td style="width: 15%;">40.00</td>
+                    <td style="width: 15%;">12,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">10</td>
+                    <td style="width: 45%;">Lumber 2x4 (10ft length, Treated)</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">500</td>
+                    <td style="width: 15%;">10.00</td>
+                    <td style="width: 15%;">5,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">11</td>
+                    <td style="width: 45%;">Drywall Panels (Various Sizes)</td>
+                    <td style="width: 10%;">Sheet</td>
+                    <td style="width: 10%;">200</td>
+                    <td style="width: 15%;">15.00</td>
+                    <td style="width: 15%;">3,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">12</td>
+                    <td style="width: 45%;">Joint Compound (5 Gal Bucket)</td>
+                    <td style="width: 10%;">Bucket</td>
+                    <td style="width: 10%;">50</td>
+                    <td style="width: 15%;">20.00</td>
+                    <td style="width: 15%;">1,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">13</td>
+                    <td style="width: 45%;">Insulation Rolls (R-19 Fiberglass)</td>
+                    <td style="width: 10%;">Roll</td>
+                    <td style="width: 10%;">100</td>
+                    <td style="width: 15%;">55.00</td>
+                    <td style="width: 15%;">5,500.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">14</td>
+                    <td style="width: 45%;">Roofing Shingles (Asphalt, Black)</td>
+                    <td style="width: 10%;">Bundle</td>
+                    <td style="width: 10%;">120</td>
+                    <td style="width: 15%;">35.00</td>
+                    <td style="width: 15%;">4,200.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">15</td>
+                    <td style="width: 45%;">Nails (Common 3 inch, 50lb Box)</td>
+                    <td style="width: 10%;">Box</td>
+                    <td style="width: 10%;">20</td>
+                    <td style="width: 15%;">60.00</td>
+                    <td style="width: 15%;">1,200.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">16</td>
+                    <td style="width: 45%;">Screws (Drywall 1.5 inch, 50lb Box)</td>
+                    <td style="width: 10%;">Box</td>
+                    <td style="width: 10%;">15</td>
+                    <td style="width: 15%;">45.00</td>
+                    <td style="width: 15%;">675.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">17</td>
+                    <td style="width: 45%;">Concrete Anchor Bolts (1/2 x 6)</td>
+                    <td style="width: 10%;">Box</td>
+                    <td style="width: 10%;">30</td>
+                    <td style="width: 15%;">80.00</td>
+                    <td style="width: 15%;">2,400.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">18</td>
+                    <td style="width: 45%;">PVC Pipe (4 inch, Schedule 40)</td>
+                    <td style="width: 10%;">Length</td>
+                    <td style="width: 10%;">200</td>
+                    <td style="width: 15%;">25.00</td>
+                    <td style="width: 15%;">5,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">19</td>
+                    <td style="width: 45%;">Copper Pipe (Type L, 3/4 inch)</td>
+                    <td style="width: 10%;">Length</td>
+                    <td style="width: 10%;">100</td>
+                    <td style="width: 15%;">40.00</td>
+                    <td style="width: 15%;">4,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">20</td>
+                    <td style="width: 45%;">Electrical Wire (12/2 NM-B, 250ft)</td>
+                    <td style="width: 10%;">Roll</td>
+                    <td style="width: 10%;">50</td>
+                    <td style="width: 15%;">120.00</td>
+                    <td style="width: 15%;">6,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">21</td>
+                    <td style="width: 45%;">Outlet Boxes (Gang 1, Plastic)</td>
+                    <td style="width: 10%;">Box</td>
+                    <td style="width: 10%;">20</td>
+                    <td style="width: 15%;">30.00</td>
+                    <td style="width: 15%;">600.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">22</td>
+                    <td style="width: 45%;">Circuit Breakers (20 Amp)</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">80</td>
+                    <td style="width: 15%;">8.00</td>
+                    <td style="width: 15%;">640.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">23</td>
+                    <td style="width: 45%;">Paint (Interior Latex, White, 5 Gal)</td>
+                    <td style="width: 10%;">Tubs</td>
+                    <td style="width: 10%;">60</td>
+                    <td style="width: 15%;">150.00</td>
+                    <td style="width: 15%;">9,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">24</td>
+                    <td style="width: 45%;">Primer (PVA Drywall, 5 Gal)</td>
+                    <td style="width: 10%;">Tubs</td>
+                    <td style="width: 10%;">40</td>
+                    <td style="width: 15%;">80.00</td>
+                    <td style="width: 15%;">3,200.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">25</td>
+                    <td style="width: 45%;">Floor Tiles (Ceramic 12x12, White)</td>
+                    <td style="width: 10%;">Box</td>
+                    <td style="width: 10%;">300</td>
+                    <td style="width: 15%;">25.00</td>
+                    <td style="width: 15%;">7,500.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">26</td>
+                    <td style="width: 45%;">Tile Grout (Sanded, Grey, 25lb)</td>
+                    <td style="width: 10%;">Bag</td>
+                    <td style="width: 10%;">50</td>
+                    <td style="width: 15%;">18.00</td>
+                    <td style="width: 15%;">900.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">27</td>
+                    <td style="width: 45%;">Door Frames (Metal, Standard)</td>
+                    <td style="width: 10%;">Set</td>
+                    <td style="width: 10%;">40</td>
+                    <td style="width: 15%;">120.00</td>
+                    <td style="width: 15%;">4,800.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">28</td>
+                    <td style="width: 45%;">Solid Wood Doors (Oak Finish)</td>
+                    <td style="width: 10%;">Pcs</td>
+                    <td style="width: 10%;">40</td>
+                    <td style="width: 15%;">200.00</td>
+                    <td style="width: 15%;">8,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">29</td>
+                    <td style="width: 45%;">Door Hardware (Locksets, Hinges)</td>
+                    <td style="width: 10%;">Set</td>
+                    <td style="width: 10%;">40</td>
+                    <td style="width: 15%;">50.00</td>
+                    <td style="width: 15%;">2,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">30</td>
+                    <td style="width: 45%;">Windows (Double Hung, Vinyl)</td>
+                    <td style="width: 10%;">Unit</td>
+                    <td style="width: 10%;">60</td>
+                    <td style="width: 15%;">250.00</td>
+                    <td style="width: 15%;">15,000.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">31</td>
+                    <td style="width: 45%;">Sealant / Caulk (High Grade)</td>
+                    <td style="width: 10%;">Tube</td>
+                    <td style="width: 10%;">200</td>
+                    <td style="width: 15%;">6.00</td>
+                    <td style="width: 15%;">1,200.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">32</td>
+                    <td style="width: 45%;">Scaffolding Rental (Per Section)</td>
+                    <td style="width: 10%;">Week</td>
+                    <td style="width: 10%;">20</td>
+                    <td style="width: 15%;">30.00</td>
+                    <td style="width: 15%;">600.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">33</td>
+                    <td style="width: 45%;">Dumpster Rental (20 Yard)</td>
+                    <td style="width: 10%;">Load</td>
+                    <td style="width: 10%;">5</td>
+                    <td style="width: 15%;">450.00</td>
+                    <td style="width: 15%;">2,250.00</td>
+                </tr>
+            </table>
+        </div>
+        <div class="prowitem">
+            <table>
+                <tr>
+                    <td style="width: 5%;">34</td>
+                    <td style="width: 45%;">Site Cleaning Services</td>
+                    <td style="width: 10%;">Hrs</td>
+                    <td style="width: 10%;">100</td>
+                    <td style="width: 15%;">25.00</td>
+                    <td style="width: 15%;">2,500.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 7. Footer Sections -->
+        <div class="pfooter">
+            <table style="width: 100%; border: none;">
+                <tr>
+                    <td style="border: none; width: 60%;">
+                        <strong>Authorized Signature:</strong><br><br>
+                        ______________________________________<br>
+                        John Doe, Project Manager<br>
+                        Apex Construction Ltd.
+                    </td>
+                    <td style="border: none; width: 40%; text-align: right;">
+                        <strong>Accepted By Vendor:</strong><br><br>
+                        ______________________________________<br>
+                        Date: __________________
+                    </td>
+                </tr>
+            </table>
+            <div style="border-top: 1px solid #ddd; margin-top: 10px; padding-top: 5px; color: #777;">
+                This Purchase Order is subject to the attached Terms and Conditions. Please quote PO number on all
+                invoices.
+            </div>
+        </div>
+
+        <div class="pfooter_logo">
+            <!-- ISO Logo SVG -->
+            <svg width="30" height="30" viewBox="0 0 24 24">
+                <path
+                    d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
+            </svg>
+            <span style="vertical-align: top; margin-left: 5px; font-weight: bold; color: var(--accent-color);">ISO
+                9001:2015 Certified</span>
+        </div>
+
+        <div class="pfooter_pagenum">
+            Page <span data-page-number></span> of <span data-page-total></span>
+        </div>
+
+        <!-- 8. Terms and Conditions (TAC) - ~3 Pages worth -->
+        <table class="paper_width ptac tb_page_break_before">
+            <tr>
+                <td>
+                    <div style="padding: 10px;">
+                        <h2>SECTION A: GENERAL PURCHASE CONDITIONS</h2>
+
+                        <h3>1. AGREEMENT</h3>
+                        <p>This Purchase Order ("PO") constitutes an offer by Apex Construction Ltd. ("Buyer") to
+                            purchase the goods and/or services described herein from the addressee ("Seller").
+                            Acceptance of this PO is limited to the terms and conditions contained herein. Any
+                            additional or different terms proposed by Seller are objected to and rejected unless
+                            expressly agreed to in writing by Buyer.</p>
+
+                        <h3>2. PRICE AND PAYMENT</h3>
+                        <p>Unless otherwise specified, the price stated includes all charges for packing, hauling,
+                            storage, transportation to the point of delivery, and taxes. Payment will be made
+                            according
+                            to the terms specified on the face of this PO. If no terms are specified, payment shall
+                            be
+                            Net 60 days from the date of receipt of a valid and correct invoice or receipt of
+                            goods/services, whichever is later. Buyer reserves the right to withhold payment for
+                            defective goods or services.</p>
+
+                        <h3>3. DELIVERY</h3>
+                        <p>Time is of the essence. Seller shall deliver the goods and perform services on the dates
+                            specified. If delivery is delayed, Seller must immediately notify Buyer. Buyer may, at
+                            its
+                            option, cancel this PO in whole or in part without liability if delivery is not made on
+                            time. Seller shall be liable for any additional costs incurred by Buyer due to late
+                            delivery, including but not limited to expedited shipping charges and standby costs for
+                            construction crews.</p>
+
+                        <h3>4. INSPECTION AND REJECTION</h3>
+                        <p>All goods and services are subject to Buyer's final inspection and acceptance at the
+                            destination. Payment for goods or services shall not constitute acceptance. Buyer
+                            reserves
+                            the right to reject any goods or services that do not conform to specifications,
+                            drawings,
+                            samples, or other descriptions. Rejected goods will be returned to Seller at Seller's
+                            risk
+                            and expense.</p>
+
+                        <h3>5. WARRANTY</h3>
+                        <p>Seller warrants that all goods and services furnished hereunder will be free from defects
+                            in
+                            design, material, and workmanship; will conform to applicable specifications, drawings,
+                            and
+                            samples; will be merchantable and fit for their intended purpose; and will be free of
+                            any
+                            liens or encumbrances. This warranty shall survive inspection, acceptance, and payment
+                            and
+                            shall run to Buyer, its successors, assigns, and customers.</p>
+
+                        <h3>6. INDEMNIFICATION</h3>
+                        <p>Seller agrees to indemnify, defend, and hold harmless Buyer, its officers, directors,
+                            employees, agents, and customers from and against any and all claims, liabilities,
+                            damages,
+                            losses, costs, and expenses (including reasonable attorneys' fees) arising out of or
+                            resulting from: (a) any defect in the goods or services; (b) any act or omission of
+                            Seller,
+                            its agents, or employees; (c) any infringement of third-party intellectual property
+                            rights;
+                            or (d) Seller's failure to comply with applicable laws and regulations.</p>
+
+                        <h3>7. SAFETY AND JOB SITE RULES</h3>
+                        <p>If Seller provides services on Buyer's job site, Seller and its personnel shall comply
+                            with
+                            all applicable safety laws, regulations, and Buyer's site-specific safety policies.
+                            Seller
+                            shall ensure that its employees are properly trained and equipped with necessary
+                            personal
+                            protective equipment (PPE). Buyer reserves the right to remove any of Seller's personnel
+                            from the site for safety violations.</p>
+
+                        <h2>SECTION B: SPECIAL CONSTRUCTION TERMS</h2>
+
+                        <h3>8. CHANGES</h3>
+                        <p>Buyer may at any time, by written order, make changes within the general scope of this
+                            PO. If
+                            any such change causes an increase or decrease in the cost of, or the time required for,
+                            performance of any part of the work, an equitable adjustment shall be made in the PO
+                            price
+                            or delivery schedule, or both, and the PO shall be modified in writing accordingly.</p>
+
+                        <h3>9. INSURANCE</h3>
+                        <p>Seller shall maintain, at its own expense, comprehensive general liability insurance,
+                            workers' compensation insurance, and automobile liability insurance with limits
+                            satisfactory
+                            to Buyer. Upon request, Seller shall provide Buyer with a certificate of insurance
+                            naming
+                            Buyer as an additional insured.</p>
+
+                        <h3>10. TERMINATION FOR CONVENIENCE</h3>
+                        <p>Buyer may terminate this PO, in whole or in part, at any time for its convenience upon
+                            written notice to Seller. In such event, Seller shall be paid a reasonable termination
+                            charge consisting of a percentage of the PO price reflecting the percentage of the work
+                            performed prior to termination, plus actual direct costs resulting from termination.
+                            Seller
+                            shall not be paid for any work performed or costs incurred which reasonably could have
+                            been
+                            avoided.</p>
+
+                        <h3>11. COMPLIANCE WITH LAWS</h3>
+                        <p>Seller represents and warrants that in the performance of this PO, it will comply with
+                            all
+                            applicable laws, ordinances, rules, and regulations of federal, state, and local
+                            authorities, including but not limited to labor laws, environmental regulations, and
+                            anti-corruption laws.</p>
+
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
+                            ut
+                            labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                            ullamco
+                            laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit
+                            in
+                            voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+                            cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                        <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
+                            laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi
+                            architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas
+                            sit
+                            aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione
+                            voluptatem sequi nesciunt.</p>
+                        <p>Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci
+                            velit,
+                            sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam
+                            quaerat
+                            voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis
+                            suscipit
+                            laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure
+                            reprehenderit
+                            qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem
+                            eum
+                            fugiat quo voluptas nulla pariatur?</p>
+
+                        <h3>12. FORCE MAJEURE</h3>
+                        <p>Neither party shall be liable for delays or failure to perform under this PO resulting
+                            from
+                            acts of God, war, strikes, fire, flood, or other causes beyond their reasonable control.
+                            The
+                            party affected by such an event shall notify the other party immediately and shall use
+                            reasonable efforts to mitigate the impact of the event.</p>
+
+                        <h3>13. GOVERNING LAW</h3>
+                        <p>This PO shall be governed by and construed in accordance with the laws of the
+                            jurisdiction in
+                            which the job site is located, without regard to its conflict of law principles.</p>
+
+                        <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium
+                            voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint
+                            occaecati
+                            cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi,
+                            id
+                            est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.
+                            Nam
+                            libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id
+                            quod
+                            maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.
+                        </p>
+
+                        <h3>14. ENTIRE AGREEMENT</h3>
+                        <p>This PO, together with any attachments or documents incorporated by reference,
+                            constitutes
+                            the entire agreement between the parties with respect to the subject matter hereof and
+                            supersedes all prior agreements, understandings, negotiations, and discussions, whether
+                            oral
+                            or written.</p>
+                        <p>Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet
+                            ut
+                            et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic
+                            tenetur a
+                            sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut
+                            perferendis
+                            doloribus asperiores repellat.</p>
+
+                        <!-- Expanding text to ensure 3 pages of TAC -->
+                        <h3>15. SUPPLEMENTARY PROVISIONS</h3>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+                            ut
+                            labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                            ullamco
+                            laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit
+                            in
+                            voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                        <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
+                            anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem
+                            accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore
+                            veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+                        <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+                            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro
+                            quisquam
+                            est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non
+                            numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat
+                            voluptatem.
+                        </p>
+                        <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,
+                            nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in
+                            ea
+                            voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat
+                            quo
+                            voluptas nulla pariatur?</p>
+                        <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium
+                            voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint
+                            occaecati
+                            cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi,
+                            id
+                            est laborum et dolorum fuga.</p>
+
+                        <h3>16. DISPUTE RESOLUTION</h3>
+                        <p>Any dispute arising out of or in connection with this PO shall be referred to and finally
+                            resolved by arbitration in accordance with the Construction Industry Arbitration Rules
+                            of
+                            the American Arbitration Association. The seat of arbitration shall be the city where
+                            the
+                            project is located. The language of the arbitration shall be English.</p>
+
+                        <h3>17. CONFIDENTIALITY</h3>
+                        <p>Seller shall keep confidential all information, drawings, specifications, and data
+                            furnished
+                            by Buyer or prepared by Seller in connection with this PO. Seller shall not disclose
+                            such
+                            information to any third party without Buyer's prior written consent, except as required
+                            by
+                            law or as necessary for the performance of this PO.</p>
+
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.
+                            Aliquam
+                            erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed. Lorem ipsum
+                            dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat
+                            volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+    <!-- Script Import -->
+    <script src="./dist/printform.js"></script>
+
+    <!-- Custom Footer Height Adjustment template if needed -->
+    <template class="custom-dummy-row-item-content">
+        <tr style="height: 33px;">
+            <td style="border: 1px solid transparent;"></td>
+            <td style="border: 1px solid transparent;"></td>
+            <td style="border: 1px solid transparent;"></td>
+            <td style="border: 1px solid transparent;"></td>
+            <td style="border: 1px solid transparent;"></td>
+            <td style="border: 1px solid transparent;"></td>
+        </tr>
+    </template>
+</body>
+
+</html>
