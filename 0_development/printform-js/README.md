@@ -6,6 +6,37 @@
 
 Its core function is: **automatically splitting a long HTML container (`.printform`) into multiple pages that fit the print paper size**. It handles headers, footers, repeated table headers, page number updates, and dummy row filling automatically.
 
+---
+
+## 📚 Documentation Navigator
+
+### 🚀 Getting Started
+
+| I want to... | Read this |
+|--------------|-----------|
+| **Understand the project** | [Project Overview](PROJECT_OVERVIEW.md) - Architecture, concepts, tech stack |
+| **Start using in 5 minutes** | [Quick Start Guide](QUICK_START.md) - Step-by-step tutorial |
+| **See all configuration options** | [Configuration Reference](docs/CONFIGURATION.md) - All `data-*` attributes |
+
+### 💻 Development
+
+| I want to... | Read this |
+|--------------|-----------|
+| **Understand the code structure** | [Code Structure](CODE_STRUCTURE.md) - File organization, data flow |
+| **Develop and extend** | [Developer Handbook](DEVELOPER_BOOK.md) - Development guide |
+| **Review all attributes** | [Data Attributes Review](DATA_ATTRIBUTES_REVIEW.md) - Complete attribute list |
+| **Learn about auto-docs** | [Auto Documentation Guide](docs/AUTO_DOC_GENERATION_GUIDE.md) - How docs are generated |
+
+### 🔧 Reference
+
+| Document | Description |
+|----------|-------------|
+| [CONFIGURATION.md](docs/CONFIGURATION.md) | Auto-generated config reference (Markdown) |
+| [configuration.html](docs/configuration.html) | Auto-generated config reference (HTML, view in browser) |
+| [config-reference.json](docs/config-reference.json) | Auto-generated config reference (JSON, for tools) |
+
+---
+
 ## Logic Diagram
 
 To help understand how `printform.js` works, please refer to the flowchart below:
