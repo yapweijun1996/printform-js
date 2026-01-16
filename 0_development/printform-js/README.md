@@ -177,6 +177,7 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | `data-insert-dummy-row-while-format-table` | `y` / `n` | Insert a single dummy row block to fill remaining space. |
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | Insert a footer spacer to push footers down. |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | Use dummy row items as the footer spacer. |
+| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto the generated `.div_page_break_before` nodes (forces inline `page-break-before: always` for legacy HTML-to-PDF engines). |
 
 ### PADDT Controls
 
@@ -217,7 +218,14 @@ If a page is not full, PrintForm automatically inserts empty rows to push the fo
 </template>
 ```
 
-### 2. JS API
+### 2. Hide Row Header On A Specific Page
+If you need a page to start without the repeating `.prowheader`, add `without_prowheader` (or `tb_without_rowheader`) on the row that starts that page.
+
+```html
+<table class="prowitem tb_page_break_before without_prowheader">...</table>
+```
+
+### 3. JS API
 The script runs automatically on load. If you generate content dynamically (e.g. AJAX), trigger formatting manually:
 
 ```javascript
@@ -229,7 +237,7 @@ const myForm = document.querySelector('#invoice-1');
 PrintForm.format(myForm);
 ```
 
-### 3. Build for Production
+### 4. Build for Production
 If you modify the source (`js/` directory), rebuild:
 
 ```bash

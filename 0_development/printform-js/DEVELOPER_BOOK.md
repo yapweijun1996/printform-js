@@ -32,6 +32,7 @@
   ```
 - `expandPtacSegments()` (`js/printform/formatter.js`) clones the PTAC for every content paragraph (splitting long paragraphs into ~200-word chunks), leaves the heading on the first block, and flags each clone as a `.ptac-rowitem`. Pagination then treats PTAC segments like any other row while keeping their class distinct.
 - For a forced break, give the relevant clone (or upstream block) the `tb_page_break_before` class.
+- To suppress `.prowheader` on a specific page, add `without_prowheader` (or `tb_without_rowheader`) on the row that starts that page (commonly paired with `tb_page_break_before`).
 - If PTAC is absent the formatter skips expansion; no additional config is necessary.
 - Set `data-repeat-ptac-rowheader="n"` when PTAC blocks should appear without the repeating `.prowheader`; pair it with `data-insert-ptac-dummy-row-items="n"` to suppress dummy fillers on PTAC-only pages. Leave both at `y` to retain legacy row layout (each `.ptac-rowitem` will inherit `.prowheader` just like `.prowitem`).
 

@@ -174,11 +174,26 @@ import { normalizeHeight } from "./helpers.js";
     return normalizeHeight(baseHeight + marginTop + marginBottom);
   }
 
-  function createPageBreakDivider() {
+  function createPageBreakDivider(extraClassNames) {
     const div = document.createElement("div");
     div.classList.add("div_page_break_before");
-    div.style.pageBreakBefore = "always";
-    div.style.height = "0px";
+    // Some external HTML-to-PDF engines only accept the legacy inline CSS name:
+    // `page-break-before: always` (and may reject `break-before: page`).
+    // IMPORTANT: do not touch `div.style.*` here, as browsers may normalize the style attribute
+    // and rewrite it to `break-before: page` when serializing.
+    div.setAttribute("style", "page-break-before: always; font-size: 0pt; height: 0px;");
+    const globalScope = typeof window !== "undefined" ? window : globalThis;
+    const resolvedClassNames = typeof extraClassNames === "string" && extraClassNames.trim()
+      ? extraClassNames
+      : (globalScope && typeof globalScope.__printFormDividerClassAppend === "string"
+        ? globalScope.__printFormDividerClassAppend
+        : "");
+    if (resolvedClassNames) {
+      resolvedClassNames
+        .split(/\s+/)
+        .filter(Boolean)
+        .forEach((className) => div.classList.add(className));
+    }
     return div;
   }
 

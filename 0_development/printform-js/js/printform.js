@@ -4,6 +4,20 @@ import { DEFAULT_CONFIG, DEFAULT_PADDT_CONFIG, getPrintformConfig } from "./prin
 import { DomHelpers } from "./printform/dom.js";
 import { PrintFormFormatter } from "./printform/formatter.js";
 
+  function withDividerClassAppend(globalScope, classAppend, fn) {
+    const prior = globalScope.__printFormDividerClassAppend;
+    globalScope.__printFormDividerClassAppend = typeof classAppend === "string" ? classAppend : "";
+    try {
+      return fn();
+    } finally {
+      if (prior === undefined) {
+        delete globalScope.__printFormDividerClassAppend;
+      } else {
+        globalScope.__printFormDividerClassAppend = prior;
+      }
+    }
+  }
+
   function pauseInMilliseconds(time) {
     return new Promise((resolve, reject) => {
       if (typeof time === "number" && time > 0) {
@@ -31,17 +45,27 @@ import { PrintFormFormatter } from "./printform/formatter.js";
       const forms = Array.from(doc.querySelectorAll(".printform"));
       for (let index = 0; index < forms.length; index += 1) {
         const formEl = forms[index];
-        const config = getPrintformConfig(formEl, overrides);
+        const perFormOverrides = { ...overrides };
+        if (perFormOverrides.divPageBreakBeforeClassAppend === undefined && formEl && formEl.dataset) {
+          const datasetValue = formEl.dataset.divPageBreakBeforeClassAppend;
+          if (typeof datasetValue === "string" && datasetValue.trim()) {
+            perFormOverrides.divPageBreakBeforeClassAppend = datasetValue.trim();
+          }
+        }
+        const dividerClassAppend = perFormOverrides.divPageBreakBeforeClassAppend;
+        const config = getPrintformConfig(formEl, perFormOverrides);
         try {
           await pauseInMilliseconds(1);
         } catch (error) {
           console.error("pauseInMilliseconds error", error);
         }
         try {
-          const formatter = new PrintFormFormatter(formEl, config);
-          const formatted = formatter.format();
+          const formatted = withDividerClassAppend(globalScope, dividerClassAppend, () => {
+            const formatter = new PrintFormFormatter(formEl, config);
+            return formatter.format();
+          });
           if (index > 0 && formatted && formatted.parentNode) {
-            formatted.parentNode.insertBefore(DomHelpers.createPageBreakDivider(), formatted);
+            formatted.parentNode.insertBefore(DomHelpers.createPageBreakDivider(dividerClassAppend), formatted);
           }
         } catch (error) {
           console.error("printform format error", error);
@@ -55,9 +79,20 @@ import { PrintFormFormatter } from "./printform/formatter.js";
   }
 
   function formatSinglePrintForm(formEl, overrides = {}) {
-    const config = getPrintformConfig(formEl, overrides);
-    const formatter = new PrintFormFormatter(formEl, config);
-    return formatter.format();
+    const globalScope = typeof window !== "undefined" ? window : globalThis;
+    const perFormOverrides = { ...overrides };
+    if (perFormOverrides.divPageBreakBeforeClassAppend === undefined && formEl && formEl.dataset) {
+      const datasetValue = formEl.dataset.divPageBreakBeforeClassAppend;
+      if (typeof datasetValue === "string" && datasetValue.trim()) {
+        perFormOverrides.divPageBreakBeforeClassAppend = datasetValue.trim();
+      }
+    }
+    const dividerClassAppend = perFormOverrides.divPageBreakBeforeClassAppend;
+    const config = getPrintformConfig(formEl, perFormOverrides);
+    return withDividerClassAppend(globalScope, dividerClassAppend, () => {
+      const formatter = new PrintFormFormatter(formEl, config);
+      return formatter.format();
+    });
   }
 
   const api = {
