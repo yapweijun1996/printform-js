@@ -89,7 +89,7 @@ export class PrintFormFormatter {
         docInfo004: this.paddtConfig.repeatPaddtDocinfo004,
         docInfo005: this.paddtConfig.repeatPaddtDocinfo005
       };
-      var paddtDocInfos = sections.docInfos.filter(function(di) {
+      var paddtDocInfos = sections.docInfos.filter(function (di) {
         var flag = paddtDocinfoFlags[di.key];
         return flag === undefined ? true : !!flag;
       });
@@ -131,6 +131,18 @@ export class PrintFormFormatter {
     }
 
     this.updatePageNumberTotals();
+
+    // Finalize all page heights with precise calculations instead of min-height
+    const allPages = container.querySelectorAll('.printform_page');
+    if (this.debug) {
+      console.log(`[printform] Finalizing heights for ${allPages.length} pages...`);
+    }
+    allPages.forEach((page, index) => {
+      this.finalizePageHeight(page);
+      if (this.debug) {
+        console.log(`[printform]   Page ${index + 1}: height set to ${page.style.height}`);
+      }
+    });
 
     container.classList.remove("printform_formatter");
     container.classList.add("printform_formatter_processed");

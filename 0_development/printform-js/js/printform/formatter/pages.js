@@ -48,7 +48,7 @@ export function attachPageMethods(FormatterClass) {
     const page = document.createElement("div");
     page.classList.add("printform_page");
     page.style.width = `${this.config.papersizeWidth}px`;
-    page.style.minHeight = `${this.config.papersizeHeight}px`;
+    // Note: min-height removed - height will be calculated precisely by JavaScript
     this.currentPhysicalWrapper.appendChild(page);
     this.currentPageContainer = page;
     this.pagesInCurrentPhysical += 1;
@@ -58,6 +58,69 @@ export function attachPageMethods(FormatterClass) {
 
   FormatterClass.prototype.getCurrentPageContainer = function getCurrentPageContainer(outputContainer) {
     return this.ensureCurrentPageContainer(outputContainer);
+  };
+
+  /**
+   * Finalize the height of a page by calculating its actual content height
+   * and setting it precisely instead of relying on min-height.
+   * This ensures accurate page dimensions for printing.
+   */
+  FormatterClass.prototype.finalizePageHeight = function finalizePageHeight(pageContainer) {
+    if (!pageContainer) return;
+
+    const configuredHeight = this.config.papersizeHeight;
+
+    if (this.debug) {
+      console.log(`\n[printform] ========== PAGE HEIGHT CALCULATION ==========`);
+      console.log(`[printform] Configured page height: ${configuredHeight}px`);
+      console.log(`[printform] -------------------------------------------`);
+
+      // Show each child element's height with chain reasoning
+      const children = Array.from(pageContainer.children);
+      let cumulativeHeight = 0;
+
+      console.log(`[printform] Elements breakdown (${children.length} elements):`);
+      children.forEach((child, index) => {
+        const childHeight = DomHelpers.measureHeight(child);
+        cumulativeHeight += childHeight;
+        const className = child.className || '(no class)';
+        const tagName = child.tagName.toLowerCase();
+
+        console.log(`[printform]   ${index + 1}. <${tagName}.${className}>`);
+        console.log(`[printform]      Height: ${childHeight}px`);
+        console.log(`[printform]      Cumulative: ${cumulativeHeight}px`);
+        console.log(`[printform]      Remaining: ${Math.max(0, configuredHeight - cumulativeHeight)}px`);
+
+        // Show warning if element is unexpectedly tall
+        if (childHeight > configuredHeight * 0.5) {
+          console.log(`[printform]      ⚠️  WARNING: Element height is > 50% of page height`);
+        }
+      });
+
+      console.log(`[printform] -------------------------------------------`);
+      console.log(`[printform] Total content height: ${cumulativeHeight}px`);
+
+      if (cumulativeHeight < configuredHeight) {
+        const shortfall = configuredHeight - cumulativeHeight;
+        console.log(`[printform] ✓ Content fits (${shortfall}px under limit)`);
+      } else if (cumulativeHeight > configuredHeight) {
+        const overflow = cumulativeHeight - configuredHeight;
+        console.log(`[printform] ⚠️  Content overflow (${overflow}px over limit)`);
+      } else {
+        console.log(`[printform] ✓ Perfect fit (exactly matches configured height)`);
+      }
+    }
+
+    // Note: We do NOT set height here - let the content determine natural height
+    // pageContainer.style.height is intentionally not set
+
+    if (this.debug) {
+      const actualHeight = DomHelpers.measureHeight(pageContainer);
+      console.log(`[printform] -------------------------------------------`);
+      console.log(`[printform] Actual measured height: ${actualHeight}px`);
+      console.log(`[printform] ℹ️  Height NOT set - using natural content height`);
+      console.log(`[printform] ===============================================\n`);
+    }
   };
 }
 
