@@ -42,36 +42,64 @@ import { normalizeHeight } from "./helpers.js";
     target.appendChild(createDummyRowTable(config, remaining));
   }
 
-  function applyDummyRowItemsStep(config, container, heightPerPage, currentHeight) {
+  function applyDummyRowItemsStep(config, container, heightPerPage, currentHeight, debug) {
     if (!config.insertDummyRowItemWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyDummyRowItemsStep: SKIPPED (insertDummyRowItemWhileFormatTable=false)`);
+      }
       return normalizeHeight(currentHeight);
     }
     const remaining = normalizeHeight(heightPerPage - currentHeight);
+    if (debug) {
+      console.log(`[printform] applyDummyRowItemsStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px, itemHeight: ${config.heightOfDummyRowItem}px`);
+    }
     if (remaining > 0) {
       appendDummyRowItems(config, container, remaining);
       const itemHeight = normalizeHeight(config.heightOfDummyRowItem);
       if (itemHeight > 0) {
+        const count = Math.floor(remaining / itemHeight);
         const remainder = normalizeHeight(remaining % itemHeight);
-        return normalizeHeight(heightPerPage - remainder);
+        const newHeight = normalizeHeight(heightPerPage - remainder);
+        if (debug) {
+          console.log(`[printform]   inserted ${count} dummy_row_items (${count} x ${itemHeight}px = ${count * itemHeight}px)`);
+          console.log(`[printform]   remainder: ${remainder}px, newHeight: ${newHeight}px`);
+        }
+        return newHeight;
       }
     }
     return normalizeHeight(currentHeight);
   }
 
-  function applyDummyRowStep(config, container, heightPerPage, currentHeight) {
+  function applyDummyRowStep(config, container, heightPerPage, currentHeight, debug) {
     if (!config.insertDummyRowWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyDummyRowStep: SKIPPED (insertDummyRowWhileFormatTable=false)`);
+      }
       return normalizeHeight(currentHeight);
     }
     const remaining = normalizeHeight(heightPerPage - currentHeight);
+    if (debug) {
+      console.log(`[printform] applyDummyRowStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px`);
+    }
     if (remaining > 0) {
       appendDummyRow(config, container, remaining);
+      if (debug) {
+        console.log(`[printform]   inserted 1 dummy_row with height: ${remaining}px`);
+      }
       return normalizeHeight(currentHeight + remaining);
     }
     return normalizeHeight(currentHeight);
   }
 
-  function applyFooterSpacerWithDummyStep(config, container, heightPerPage, currentHeight, skipDummyRowItems) {
+  function applyFooterSpacerWithDummyStep(config, container, heightPerPage, currentHeight, skipDummyRowItems, debug) {
     if (!config.insertFooterSpacerWithDummyRowItemWhileFormatTable || skipDummyRowItems) {
+      if (debug) {
+        console.log(`[printform] applyFooterSpacerWithDummyStep: SKIPPED (flag=${config.insertFooterSpacerWithDummyRowItemWhileFormatTable}, skipDummy=${skipDummyRowItems})`);
+      }
       return {
         currentHeight: normalizeHeight(currentHeight),
         skipFooterSpacer: false
@@ -79,12 +107,21 @@ import { normalizeHeight } from "./helpers.js";
     }
     const remaining = normalizeHeight(heightPerPage - currentHeight);
     let workingHeight = normalizeHeight(currentHeight);
+    if (debug) {
+      console.log(`[printform] applyFooterSpacerWithDummyStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px`);
+    }
     if (remaining > 0) {
       appendDummyRowItems(config, container, remaining);
       const itemHeight = normalizeHeight(config.heightOfDummyRowItem);
       if (itemHeight > 0) {
+        const count = Math.floor(remaining / itemHeight);
         const remainder = normalizeHeight(remaining % itemHeight);
         workingHeight = normalizeHeight(heightPerPage - remainder);
+        if (debug) {
+          console.log(`[printform]   inserted ${count} spacer dummy_row_items, remainder: ${remainder}px`);
+        }
       }
     }
     return {
@@ -93,15 +130,28 @@ import { normalizeHeight } from "./helpers.js";
     };
   }
 
-  function applyFooterSpacerStep(config, container, heightPerPage, currentHeight, footerState, spacerTemplate) {
-    if (!config.insertFooterSpacerWhileFormatTable) return;
+  function applyFooterSpacerStep(config, container, heightPerPage, currentHeight, footerState, spacerTemplate, debug) {
+    if (!config.insertFooterSpacerWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyFooterSpacerStep: SKIPPED (insertFooterSpacerWhileFormatTable=false)`);
+      }
+      return;
+    }
     const clone = spacerTemplate.cloneNode(true);
     let remaining = normalizeHeight(heightPerPage - currentHeight);
-    if (footerState && footerState.nonRepeating) {
-      remaining -= normalizeHeight(footerState.nonRepeating);
+    const nonRepeating = footerState && footerState.nonRepeating ? normalizeHeight(footerState.nonRepeating) : 0;
+    if (nonRepeating > 0) {
+      remaining -= nonRepeating;
     }
-    clone.style.height = `${Math.max(0, remaining)}px`;
+    const spacerHeight = Math.max(0, remaining);
+    clone.style.height = `${spacerHeight}px`;
     container.appendChild(clone);
+    if (debug) {
+      console.log(`[printform] applyFooterSpacerStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   nonRepeatingFooter: ${nonRepeating}px`);
+      console.log(`[printform]   pfooter_spacer height: ${spacerHeight}px`);
+    }
   }
 
   function markAsProcessed(element, baseClass) {
@@ -112,7 +162,16 @@ import { normalizeHeight } from "./helpers.js";
   }
 
   function measureHeight(element) {
-    return element ? normalizeHeight(element.offsetHeight || element.getBoundingClientRect().height) : 0;
+    if (!element) return 0;
+    const baseHeight = element.offsetHeight || element.getBoundingClientRect().height;
+    const view = (element.ownerDocument && element.ownerDocument.defaultView) || (typeof window !== "undefined" ? window : null);
+    if (!view || !view.getComputedStyle) {
+      return normalizeHeight(baseHeight);
+    }
+    const style = view.getComputedStyle(element);
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+    return normalizeHeight(baseHeight + marginTop + marginBottom);
   }
 
   function createPageBreakDivider() {

@@ -24,6 +24,12 @@ export class PrintFormFormatter {
     this.logicalPageNumberClones = [];
     this.physicalPageNumberClones = [];
     this.logicalPageToPhysicalPage = [];
+    // 初始化时输出 debug 状态
+    if (this.debug) {
+      console.log(`[printform] ===== PrintFormFormatter initialized =====`);
+      console.log(`[printform] debug mode: ON`);
+      console.log(`[printform] config.debug raw value: ${config.debug}`);
+    }
   }
 
   log(message) {
@@ -550,6 +556,10 @@ export class PrintFormFormatter {
   renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
     let currentHeight = 0;
     const pageContext = this.initializePageContext(heightPerPage);
+    if (this.debug) {
+      console.log(`[printform] ===== renderRows START =====`);
+      console.log(`[printform] Total rows: ${sections.rows.length}, heightPerPage: ${heightPerPage}px`);
+    }
     sections.rows.forEach((row, index) => {
       const rowHeight = DomHelpers.measureHeight(row);
       const baseClass = this.getRowBaseClass(row);
@@ -570,12 +580,21 @@ export class PrintFormFormatter {
           logFn,
           pageContext.skipRowHeader
         );
+        if (this.debug) {
+          console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${currentHeight}px, pageLimit=${pageContext.limit}px`);
+        }
       }
 
       currentHeight += rowHeight;
+      if (this.debug) {
+        console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+      }
       DomHelpers.markAsProcessed(row, baseClass);
 
       if (row.classList.contains("tb_page_break_before")) {
+        if (this.debug) {
+          console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${index}]`);
+        }
         currentHeight -= rowHeight;
         const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
         const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
@@ -594,6 +613,9 @@ export class PrintFormFormatter {
         const container = this.getCurrentPageContainer(outputContainer);
         DomHelpers.appendRowItem(container, row, logFn, index, baseClass);
         currentHeight = rowHeight;
+        if (this.debug) {
+          console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+        }
         if (!isPtacRow) {
           pageContext.isPtacPage = false;
         }
@@ -610,6 +632,9 @@ export class PrintFormFormatter {
           pageContext.isPaddtPage = false;
         }
       } else {
+        if (this.debug) {
+          console.log(`[printform]   >> PAGE OVERFLOW at row[${index}]: ${currentHeight}px > limit ${pageContext.limit}px`);
+        }
         currentHeight -= rowHeight;
         const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
         const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
@@ -628,6 +653,9 @@ export class PrintFormFormatter {
         const container = this.getCurrentPageContainer(outputContainer);
         DomHelpers.appendRowItem(container, row, logFn, index, baseClass);
         currentHeight = rowHeight;
+        if (this.debug) {
+          console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+        }
         if (!isPtacRow) {
           pageContext.isPtacPage = false;
         }
@@ -636,6 +664,9 @@ export class PrintFormFormatter {
         }
       }
     });
+    if (this.debug) {
+      console.log(`[printform] ===== renderRows END (page ${this.currentPage}, finalHeight=${currentHeight}px) =====`);
+    }
     return {
       currentHeight,
       pageLimit: pageContext.limit,
@@ -678,16 +709,22 @@ export class PrintFormFormatter {
   applyRemainderSpacing(container, heightPerPage, currentHeight, footerState, spacerTemplate, options) {
     const skipDummyRowItems = options && options.skipDummyRowItems;
     let workingHeight = normalizeHeight(currentHeight);
-    if (!skipDummyRowItems) {
-      workingHeight = applyDummyRowItemsStep(this.config, container, heightPerPage, workingHeight);
+    if (this.debug) {
+      console.log(`[printform] ----- applyRemainderSpacing (page ${this.currentPage}) -----`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   skipDummyRowItems: ${skipDummyRowItems}`);
     }
-    workingHeight = applyDummyRowStep(this.config, container, heightPerPage, workingHeight);
+    if (!skipDummyRowItems) {
+      workingHeight = applyDummyRowItemsStep(this.config, container, heightPerPage, workingHeight, this.debug);
+    }
+    workingHeight = applyDummyRowStep(this.config, container, heightPerPage, workingHeight, this.debug);
     const spacerState = applyFooterSpacerWithDummyStep(
       this.config,
       container,
       heightPerPage,
       workingHeight,
-      skipDummyRowItems
+      skipDummyRowItems,
+      this.debug
     );
     workingHeight = spacerState.currentHeight;
     if (!spacerState.skipFooterSpacer) {
@@ -697,35 +734,70 @@ export class PrintFormFormatter {
         heightPerPage,
         workingHeight,
         footerState,
-        spacerTemplate
+        spacerTemplate,
+        this.debug
       );
+    }
+    if (this.debug) {
+      console.log(`[printform]   finalHeight after spacing: ${workingHeight}px`);
+      console.log(`[printform] -----------------------------------------`);
     }
     return normalizeHeight(workingHeight);
   }
 
   computeHeightPerPage(sections, heights) {
     let available = this.config.papersizeHeight;
+    if (this.debug) {
+      console.log(`[printform] ===== computeHeightPerPage =====`);
+      console.log(`[printform] papersizeHeight (config): ${this.config.papersizeHeight}px`);
+      console.log(`[printform] papersizeWidth (config): ${this.config.papersizeWidth}px`);
+    }
     if (this.config.repeatHeader && sections.header) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatHeader: ${heights.header}px`);
+      }
       available -= heights.header;
     }
     sections.docInfos.forEach((docInfo) => {
       if (this.config[docInfo.repeatFlag]) {
-        available -= heights.docInfos[docInfo.key] || 0;
+        const h = heights.docInfos[docInfo.key] || 0;
+        if (this.debug) {
+          console.log(`[printform]   - repeat ${docInfo.className}: ${h}px`);
+        }
+        available -= h;
       }
     });
     if (this.config.repeatRowheader && sections.rowHeader) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatRowheader: ${heights.rowHeader}px`);
+      }
       available -= heights.rowHeader;
     }
     sections.footerVariants.forEach((footer) => {
       if (this.config[footer.repeatFlag]) {
-        available -= heights.footerVariants[footer.key] || 0;
+        const h = heights.footerVariants[footer.key] || 0;
+        if (this.debug) {
+          console.log(`[printform]   - repeat ${footer.className}: ${h}px`);
+        }
+        available -= h;
       }
     });
     if (this.config.repeatFooterLogo && sections.footerLogo) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatFooterLogo: ${heights.footerLogo}px`);
+      }
       available -= heights.footerLogo;
     }
     if (this.config.repeatFooterPagenum && sections.footerPagenum) {
-      available -= heights.footerPagenum || 0;
+      const h = heights.footerPagenum || 0;
+      if (this.debug) {
+        console.log(`[printform]   - repeatFooterPagenum: ${h}px`);
+      }
+      available -= h;
+    }
+    if (this.debug) {
+      console.log(`[printform] heightPerPage (available for content): ${Math.max(0, available)}px`);
+      console.log(`[printform] ================================`);
     }
     return Math.max(0, available);
   }
