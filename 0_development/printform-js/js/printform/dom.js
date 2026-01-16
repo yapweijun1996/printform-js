@@ -220,7 +220,8 @@ import { normalizeHeight } from "./helpers.js";
     measureHeight,
     createPageBreakDivider,
     appendClone,
-    appendRowItem
+    appendRowItem,
+    createDummyRowTable
   };
 
   export { applyDummyRowItemsStep, applyDummyRowStep, applyFooterSpacerWithDummyStep, applyFooterSpacerStep };

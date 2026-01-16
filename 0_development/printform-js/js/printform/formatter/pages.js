@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 
+import { FOOTER_LOGO_VARIANT, FOOTER_PAGENUM_VARIANT, FOOTER_VARIANTS } from "../config.js";
 import { DomHelpers } from "../dom.js";
 
 export function attachPageMethods(FormatterClass) {
@@ -69,6 +70,30 @@ export function attachPageMethods(FormatterClass) {
     if (!pageContainer) return;
 
     const configuredHeight = this.config.papersizeHeight;
+    const fillPageHeightAfterFooter = this.config.fillPageHeightAfterFooter !== false;
+    let appendedSpacerHeight = 0;
+
+    if (fillPageHeightAfterFooter) {
+      const currentHeight = DomHelpers.measureHeight(pageContainer);
+      const remaining = Math.max(0, configuredHeight - currentHeight);
+      if (remaining > 0) {
+        const spacer = DomHelpers.createDummyRowTable(this.config, remaining);
+        spacer.classList.add("dummy_spacer");
+        const footerSelectors = FOOTER_VARIANTS
+          .map((variant) => `.${variant.className}_processed`)
+          .concat([
+            `.${FOOTER_LOGO_VARIANT.className}_processed`,
+            `.${FOOTER_PAGENUM_VARIANT.className}_processed`
+          ]);
+        const firstFooter = pageContainer.querySelector(footerSelectors.join(", "));
+        if (firstFooter && firstFooter.parentNode === pageContainer) {
+          pageContainer.insertBefore(spacer, firstFooter);
+        } else {
+          pageContainer.appendChild(spacer);
+        }
+        appendedSpacerHeight = remaining;
+      }
+    }
 
     if (this.debug) {
       console.log(`\n[printform] ========== PAGE HEIGHT CALCULATION ==========`);
@@ -109,6 +134,9 @@ export function attachPageMethods(FormatterClass) {
       } else {
         console.log(`[printform] ✓ Perfect fit (exactly matches configured height)`);
       }
+      if (appendedSpacerHeight > 0) {
+        console.log(`[printform] ✓ Final spacer appended: ${appendedSpacerHeight}px`);
+      }
     }
 
     // Note: We do NOT set height here - let the content determine natural height
@@ -123,4 +151,3 @@ export function attachPageMethods(FormatterClass) {
     }
   };
 }
-

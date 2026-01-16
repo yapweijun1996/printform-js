@@ -62,6 +62,13 @@ import { parseBooleanFlag, parseNumber, parseString, resolvePaperDimensions } fr
     { key: "repeatFooterLogo", datasetKey: "repeatFooterLogo", legacyKey: "repeat_footer_logo", defaultValue: false, parser: parseBooleanFlag },
     { key: "repeatFooterPagenum", datasetKey: "repeatFooterPagenum", legacyKey: "repeat_footer_pagenum", defaultValue: false, parser: parseBooleanFlag },
     {
+      key: "fillPageHeightAfterFooter",
+      datasetKey: "fillPageHeightAfterFooter",
+      legacyKey: "fill_page_height_after_footer",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
       key: "insertDummyRowItemWhileFormatTable",
       datasetKey: "insertDummyRowItemWhileFormatTable",
       legacyKey: "insert_dummy_row_item_while_format_table",
