@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-16T14:35:17.900Z",
+  "generatedAt": "2026-01-18T05:22:21.276Z",
   "version": "1.0",
   "mainConfig": [
     {
@@ -113,6 +113,42 @@
       "description": "每页重复 .pdocinfo 文档信息"
     },
     {
+      "key": "repeatDocinfo002",
+      "datasetKey": "repeatDocinfo002",
+      "htmlAttr": "data-repeat-docinfo002",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "重复元素",
+      "description": "每页重复 .pdocinfo002 文档信息"
+    },
+    {
+      "key": "repeatDocinfo003",
+      "datasetKey": "repeatDocinfo003",
+      "htmlAttr": "data-repeat-docinfo003",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "重复元素",
+      "description": "每页重复 .pdocinfo003 文档信息"
+    },
+    {
+      "key": "repeatDocinfo004",
+      "datasetKey": "repeatDocinfo004",
+      "htmlAttr": "data-repeat-docinfo004",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "重复元素",
+      "description": "每页重复 .pdocinfo004 文档信息"
+    },
+    {
+      "key": "repeatDocinfo005",
+      "datasetKey": "repeatDocinfo005",
+      "htmlAttr": "data-repeat-docinfo005",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "重复元素",
+      "description": "每页重复 .pdocinfo005 文档信息"
+    },
+    {
       "key": "repeatRowheader",
       "datasetKey": "repeatRowheader",
       "htmlAttr": "data-repeat-rowheader",
@@ -122,6 +158,15 @@
       "description": "每页重复 .prowheader 表格行头"
     },
     {
+      "key": "repeatPtacRowheader",
+      "datasetKey": "repeatPtacRowheader",
+      "htmlAttr": "data-repeat-ptac-rowheader",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "重复元素",
+      "description": "PTAC 页面重复 .prowheader 表格行头"
+    },
+    {
       "key": "repeatFooter",
       "datasetKey": "repeatFooter",
       "htmlAttr": "data-repeat-footer",
@@ -129,6 +174,42 @@
       "defaultValue": false,
       "category": "重复元素",
       "description": "每页重复 .pfooter 页脚"
+    },
+    {
+      "key": "repeatFooter002",
+      "datasetKey": "repeatFooter002",
+      "htmlAttr": "data-repeat-footer002",
+      "type": "Boolean",
+      "defaultValue": false,
+      "category": "重复元素",
+      "description": "每页重复 .pfooter002 页脚"
+    },
+    {
+      "key": "repeatFooter003",
+      "datasetKey": "repeatFooter003",
+      "htmlAttr": "data-repeat-footer003",
+      "type": "Boolean",
+      "defaultValue": false,
+      "category": "重复元素",
+      "description": "每页重复 .pfooter003 页脚"
+    },
+    {
+      "key": "repeatFooter004",
+      "datasetKey": "repeatFooter004",
+      "htmlAttr": "data-repeat-footer004",
+      "type": "Boolean",
+      "defaultValue": false,
+      "category": "重复元素",
+      "description": "每页重复 .pfooter004 页脚"
+    },
+    {
+      "key": "repeatFooter005",
+      "datasetKey": "repeatFooter005",
+      "htmlAttr": "data-repeat-footer005",
+      "type": "Boolean",
+      "defaultValue": false,
+      "category": "重复元素",
+      "description": "每页重复 .pfooter005 页脚"
     },
     {
       "key": "repeatFooterLogo",
@@ -149,6 +230,15 @@
       "description": "每页重复 .pfooter_pagenum 页码区域"
     },
     {
+      "key": "fillPageHeightAfterFooter",
+      "datasetKey": "fillPageHeightAfterFooter",
+      "htmlAttr": "data-fill-page-height-after-footer",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "虚拟行填充",
+      "description": "页脚之后补齐页面高度"
+    },
+    {
       "key": "insertDummyRowItemWhileFormatTable",
       "datasetKey": "insertDummyRowItemWhileFormatTable",
       "htmlAttr": "data-insert-dummy-row-item-while-format-table",
@@ -156,6 +246,15 @@
       "defaultValue": true,
       "category": "虚拟行填充",
       "description": "插入虚拟行项目填充剩余空间"
+    },
+    {
+      "key": "insertPtacDummyRowItems",
+      "datasetKey": "insertPtacDummyRowItems",
+      "htmlAttr": "data-insert-ptac-dummy-row-items",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "虚拟行填充",
+      "description": "PTAC 页面允许虚拟行项目"
     },
     {
       "key": "insertDummyRowWhileFormatTable",
@@ -174,6 +273,24 @@
       "defaultValue": true,
       "category": "虚拟行填充",
       "description": "在页脚前插入间隔符"
+    },
+    {
+      "key": "insertFooterSpacerWithDummyRowItemWhileFormatTable",
+      "datasetKey": "insertFooterSpacerWithDummyRowItemWhileFormatTable",
+      "htmlAttr": "data-insert-footer-spacer-with-dummy-row-item-while-format-table",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "虚拟行填充",
+      "description": "使用虚拟行项目填充页脚间隔"
+    },
+    {
+      "key": "customDummyRowItemContent",
+      "datasetKey": "customDummyRowItemContent",
+      "htmlAttr": "data-custom-dummy-row-item-content",
+      "type": "String",
+      "defaultValue": "",
+      "category": "虚拟行填充",
+      "description": "自定义虚拟行项目 HTML 内容"
     },
     {
       "key": "debug",
@@ -230,6 +347,51 @@
       "defaultValue": false,
       "category": "PADDT",
       "description": "启用 PADDT 调试日志"
+    },
+    {
+      "key": "repeatPaddtDocinfo",
+      "datasetKey": "repeatPaddtDocinfo",
+      "htmlAttr": "data-repeat-paddt-docinfo",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "PADDT",
+      "description": "PADDT 页面重复 .pdocinfo 文档信息"
+    },
+    {
+      "key": "repeatPaddtDocinfo002",
+      "datasetKey": "repeatPaddtDocinfo002",
+      "htmlAttr": "data-repeat-paddt-docinfo002",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "PADDT",
+      "description": "PADDT 页面重复 .pdocinfo002 文档信息"
+    },
+    {
+      "key": "repeatPaddtDocinfo003",
+      "datasetKey": "repeatPaddtDocinfo003",
+      "htmlAttr": "data-repeat-paddt-docinfo003",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "PADDT",
+      "description": "PADDT 页面重复 .pdocinfo003 文档信息"
+    },
+    {
+      "key": "repeatPaddtDocinfo004",
+      "datasetKey": "repeatPaddtDocinfo004",
+      "htmlAttr": "data-repeat-paddt-docinfo004",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "PADDT",
+      "description": "PADDT 页面重复 .pdocinfo004 文档信息"
+    },
+    {
+      "key": "repeatPaddtDocinfo005",
+      "datasetKey": "repeatPaddtDocinfo005",
+      "htmlAttr": "data-repeat-paddt-docinfo005",
+      "type": "Boolean",
+      "defaultValue": true,
+      "category": "PADDT",
+      "description": "PADDT 页面重复 .pdocinfo005 文档信息"
     }
   ]
 }

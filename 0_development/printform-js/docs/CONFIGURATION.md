@@ -1,6 +1,6 @@
 # PrintForm.js 配置参考
 
-> 自动生成于: 2026-01-16T14:35:17.881Z
+> 自动生成于: 2026-01-18T05:22:21.254Z
 > 来源: js/printform/config.js
 
 ## 使用说明
@@ -8,8 +8,8 @@
 所有配置属性都应用在 `.printform` 容器元素上:
 
 ```html
-<div class="printform" 
-     data-papersize-width="750" 
+<div class="printform"
+     data-papersize-width="750"
      data-papersize-height="1050"
      data-repeat-header="y">
   <!-- 内容 -->
@@ -50,9 +50,13 @@
 | HTML 属性 | 类型 | 默认值 | 说明 |
 |-----------|------|--------|------|
 | `data-height-of-dummy-row-item` | Number | 18 | 虚拟行项目的高度(像素) |
+| `data-fill-page-height-after-footer` | Boolean | true | 页脚之后补齐页面高度 |
 | `data-insert-dummy-row-item-while-format-table` | Boolean | true | 插入虚拟行项目填充剩余空间 |
+| `data-insert-ptac-dummy-row-items` | Boolean | true | PTAC 页面允许虚拟行项目 |
 | `data-insert-dummy-row-while-format-table` | Boolean | false | 插入单个完整高度虚拟表格 |
 | `data-insert-footer-spacer-while-format-table` | Boolean | true | 在页脚前插入间隔符 |
+| `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | Boolean | true | 使用虚拟行项目填充页脚间隔 |
+| `data-custom-dummy-row-item-content` | String | "" | 自定义虚拟行项目 HTML 内容 |
 
 ### 调试
 
@@ -66,8 +70,17 @@
 |-----------|------|--------|------|
 | `data-repeat-header` | Boolean | true | 每页重复 .pheader 头部 |
 | `data-repeat-docinfo` | Boolean | true | 每页重复 .pdocinfo 文档信息 |
+| `data-repeat-docinfo002` | Boolean | true | 每页重复 .pdocinfo002 文档信息 |
+| `data-repeat-docinfo003` | Boolean | true | 每页重复 .pdocinfo003 文档信息 |
+| `data-repeat-docinfo004` | Boolean | true | 每页重复 .pdocinfo004 文档信息 |
+| `data-repeat-docinfo005` | Boolean | true | 每页重复 .pdocinfo005 文档信息 |
 | `data-repeat-rowheader` | Boolean | true | 每页重复 .prowheader 表格行头 |
+| `data-repeat-ptac-rowheader` | Boolean | true | PTAC 页面重复 .prowheader 表格行头 |
 | `data-repeat-footer` | Boolean | false | 每页重复 .pfooter 页脚 |
+| `data-repeat-footer002` | Boolean | false | 每页重复 .pfooter002 页脚 |
+| `data-repeat-footer003` | Boolean | false | 每页重复 .pfooter003 页脚 |
+| `data-repeat-footer004` | Boolean | false | 每页重复 .pfooter004 页脚 |
+| `data-repeat-footer005` | Boolean | false | 每页重复 .pfooter005 页脚 |
 | `data-repeat-footer-logo` | Boolean | false | 每页重复 .pfooter_logo 页脚 Logo |
 | `data-repeat-footer-pagenum` | Boolean | false | 每页重复 .pfooter_pagenum 页码区域 |
 
@@ -82,6 +95,11 @@
 | `data-paddt-max-words-per-segment` | Number | 200 | 每个 PADDT 段落的最大单词数 |
 | `data-repeat-paddt-rowheader` | Boolean | true | PADDT 页面重复行头 |
 | `data-paddt-debug` | Boolean | false | 启用 PADDT 调试日志 |
+| `data-repeat-paddt-docinfo` | Boolean | true | PADDT 页面重复 .pdocinfo 文档信息 |
+| `data-repeat-paddt-docinfo002` | Boolean | true | PADDT 页面重复 .pdocinfo002 文档信息 |
+| `data-repeat-paddt-docinfo003` | Boolean | true | PADDT 页面重复 .pdocinfo003 文档信息 |
+| `data-repeat-paddt-docinfo004` | Boolean | true | PADDT 页面重复 .pdocinfo004 文档信息 |
+| `data-repeat-paddt-docinfo005` | Boolean | true | PADDT 页面重复 .pdocinfo005 文档信息 |
 
 ---
 

@@ -16,6 +16,10 @@ export default defineConfig({
         inlineDynamicImports: true
       }
     }
+  },
+  test: {
+    environment: "jsdom",
+    include: ["tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"]
   }
 });
 

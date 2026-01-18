@@ -64,8 +64,8 @@
 </head>
 <body>
   <h1>PrintForm.js 配置参考</h1>
-  <p class="timestamp">自动生成于: 2026/1/16 22:35:17</p>
-  
+  <p class="timestamp">自动生成于: 2026/1/18 13:22:21</p>
+
   <div class="info-box">
     <strong>使用说明:</strong> 所有配置属性都应用在 <code>.printform</code> 容器元素上。
   </div>
@@ -166,10 +166,22 @@
         <td>虚拟行项目的高度(像素)</td>
       </tr>
       <tr>
+        <td><code>data-fill-page-height-after-footer</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>页脚之后补齐页面高度</td>
+      </tr>
+      <tr>
         <td><code>data-insert-dummy-row-item-while-format-table</code></td>
         <td>Boolean</td>
         <td><code>true</code></td>
         <td>插入虚拟行项目填充剩余空间</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-ptac-dummy-row-items</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PTAC 页面允许虚拟行项目</td>
       </tr>
       <tr>
         <td><code>data-insert-dummy-row-while-format-table</code></td>
@@ -182,6 +194,18 @@
         <td>Boolean</td>
         <td><code>true</code></td>
         <td>在页脚前插入间隔符</td>
+      </tr>
+      <tr>
+        <td><code>data-insert-footer-spacer-with-dummy-row-item-while-format-table</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>使用虚拟行项目填充页脚间隔</td>
+      </tr>
+      <tr>
+        <td><code>data-custom-dummy-row-item-content</code></td>
+        <td>String</td>
+        <td><code>""</code></td>
+        <td>自定义虚拟行项目 HTML 内容</td>
       </tr>
     </tbody>
   </table>
@@ -230,16 +254,70 @@
         <td>每页重复 .pdocinfo 文档信息</td>
       </tr>
       <tr>
+        <td><code>data-repeat-docinfo002</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pdocinfo002 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-docinfo003</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pdocinfo003 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-docinfo004</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pdocinfo004 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-docinfo005</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>每页重复 .pdocinfo005 文档信息</td>
+      </tr>
+      <tr>
         <td><code>data-repeat-rowheader</code></td>
         <td>Boolean</td>
         <td><code>true</code></td>
         <td>每页重复 .prowheader 表格行头</td>
       </tr>
       <tr>
+        <td><code>data-repeat-ptac-rowheader</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PTAC 页面重复 .prowheader 表格行头</td>
+      </tr>
+      <tr>
         <td><code>data-repeat-footer</code></td>
         <td>Boolean</td>
         <td><code>false</code></td>
         <td>每页重复 .pfooter 页脚</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer002</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter002 页脚</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer003</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter003 页脚</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer004</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter004 页脚</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-footer005</code></td>
+        <td>Boolean</td>
+        <td><code>false</code></td>
+        <td>每页重复 .pfooter005 页脚</td>
       </tr>
       <tr>
         <td><code>data-repeat-footer-logo</code></td>
@@ -296,6 +374,36 @@
         <td>Boolean</td>
         <td><code>false</code></td>
         <td>启用 PADDT 调试日志</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-docinfo</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复 .pdocinfo 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-docinfo002</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复 .pdocinfo002 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-docinfo003</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复 .pdocinfo003 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-docinfo004</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复 .pdocinfo004 文档信息</td>
+      </tr>
+      <tr>
+        <td><code>data-repeat-paddt-docinfo005</code></td>
+        <td>Boolean</td>
+        <td><code>true</code></td>
+        <td>PADDT 页面重复 .pdocinfo005 文档信息</td>
       </tr>
     </tbody>
   </table>
