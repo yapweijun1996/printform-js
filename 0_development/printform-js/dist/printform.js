@@ -67,7 +67,8 @@ var PrintForm = function() {
   function normalizeHeight(value) {
     const num = Number(value);
     if (!Number.isFinite(num)) return 0;
-    return Math.max(0, Math.round(num));
+    const epsilon = 1e-6;
+    return Math.max(0, Math.ceil(num - epsilon));
   }
   function ensurePageNumberPlaceholder(element) {
     if (!element) return null;
@@ -540,11 +541,9 @@ var PrintForm = function() {
   function measureHeight(element) {
     if (!element) return 0;
     element.offsetHeight;
-    let baseHeight = element.offsetHeight;
-    if (baseHeight === 0 && element.getBoundingClientRect) {
-      const rect = element.getBoundingClientRect();
-      baseHeight = rect.height;
-    }
+    const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+    const rectHeight = rect && Number.isFinite(rect.height) ? rect.height : 0;
+    let baseHeight = rectHeight > 0 ? rectHeight : element.offsetHeight;
     if (baseHeight === 0) {
       const originalDisplay = element.style.display;
       const originalVisibility = element.style.visibility;
@@ -552,7 +551,9 @@ var PrintForm = function() {
       element.style.display = "block";
       element.style.visibility = "hidden";
       element.style.position = "absolute";
-      baseHeight = element.offsetHeight || (element.getBoundingClientRect ? element.getBoundingClientRect().height : 0);
+      const tempRect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+      const tempRectHeight = tempRect && Number.isFinite(tempRect.height) ? tempRect.height : 0;
+      baseHeight = tempRectHeight > 0 ? tempRectHeight : element.offsetHeight || 0;
       element.style.display = originalDisplay;
       element.style.visibility = originalVisibility;
       element.style.position = originalPosition;

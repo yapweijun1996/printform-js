@@ -168,13 +168,10 @@ function measureHeight(element) {
   element.offsetHeight; // 触发 reflow
 
   // 尝试多种方法获取高度
-  let baseHeight = element.offsetHeight;
-
-  // 如果 offsetHeight 为 0,尝试 getBoundingClientRect (移动端可能更可靠)
-  if (baseHeight === 0 && element.getBoundingClientRect) {
-    const rect = element.getBoundingClientRect();
-    baseHeight = rect.height;
-  }
+  // iOS/Android 上 offsetHeight 会丢失小数像素，优先使用 getBoundingClientRect() 的 sub-pixel 高度
+  const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+  const rectHeight = rect && Number.isFinite(rect.height) ? rect.height : 0;
+  let baseHeight = rectHeight > 0 ? rectHeight : element.offsetHeight;
 
   // 仍然为 0,可能是隐藏元素,尝试临时显示
   if (baseHeight === 0) {
@@ -186,7 +183,9 @@ function measureHeight(element) {
     element.style.visibility = 'hidden';
     element.style.position = 'absolute';
 
-    baseHeight = element.offsetHeight || (element.getBoundingClientRect ? element.getBoundingClientRect().height : 0);
+    const tempRect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+    const tempRectHeight = tempRect && Number.isFinite(tempRect.height) ? tempRect.height : 0;
+    baseHeight = tempRectHeight > 0 ? tempRectHeight : (element.offsetHeight || 0);
 
     element.style.display = originalDisplay;
     element.style.visibility = originalVisibility;

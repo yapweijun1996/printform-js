@@ -76,7 +76,12 @@ export function resolvePaperDimensions(options) {
 export function normalizeHeight(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return 0;
-  return Math.max(0, Math.round(num));
+  // On iOS/Android browsers (especially WebKit), layout measurements often include
+  // fractional pixels. Rounding down can accumulate and cause content to overflow
+  // the configured page height (leading to unexpected extra page breaks).
+  // We bias upward (ceil) with a tiny epsilon to avoid floating point noise.
+  const epsilon = 1e-6;
+  return Math.max(0, Math.ceil(num - epsilon));
 }
 
 function ensurePageNumberPlaceholder(element) {
