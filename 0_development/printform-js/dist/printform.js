@@ -1,3 +1,1781 @@
-var PrintForm=function(){"use strict";const j=new Set(["y","yes","true","1"]),X=new Set(["n","no","false","0"]);function u(r,o){if(r==null||r==="")return o;if(typeof r=="boolean")return r;if(typeof r=="number")return r!==0;const e=String(r).trim().toLowerCase();return j.has(e)?!0:X.has(e)?!1:o}function _(r,o){if(r==null||r==="")return o;const e=Number(r);return Number.isFinite(e)?e:o}function C(r,o){return r==null||r===""?o:String(r)}function Z(r){const o=String(r||"").trim().toLowerCase();return o==="landscape"?"landscape":o==="portrait"?"portrait":""}function J(r){const o=String(r||"").trim();if(!o)return"";const e=o.toUpperCase();return e==="A4"||e==="A5"||e==="LETTER"||e==="LEGAL"?e:e==="US_LETTER"||e==="USLETTER"?"LETTER":e==="US_LEGAL"||e==="USLEGAL"?"LEGAL":""}function A(r,o){const e=Number(r),t=Number(o);return!Number.isFinite(e)||!Number.isFinite(t)||t<=0?0:Math.round(e/25.4*t)}const Q={A4:{widthMm:210,heightMm:297},A5:{widthMm:148,heightMm:210},LETTER:{widthMm:215.9,heightMm:279.4},LEGAL:{widthMm:215.9,heightMm:355.6}};function Y(r){const o=J(r&&r.paperSize);if(!o)return null;const e=Q[o];if(!e)return null;const t=Number(r&&r.dpi),a=A(e.widthMm,t),i=A(e.heightMm,t);return!a||!i?null:(Z(r&&r.orientation)||"portrait")==="landscape"?{width:i,height:a}:{width:a,height:i}}function m(r){const o=Number(r);return Number.isFinite(o)?Math.max(0,Math.round(o)):0}function ee(r){if(!r)return null;if(r.__pageNumberPlaceholder)return r.__pageNumberPlaceholder;const o=r.ownerDocument||(typeof document<"u"?document:null);if(!o)return null;let e=r.querySelector("[data-page-number-container]");e||(e=r.querySelector("td:last-child")||r.querySelector("td")||r);const t=o.createElement("span");return t.className="printform_page_number_placeholder",e.appendChild(t),r.__pageNumberPlaceholder=t,t}function te(r){if(!r)return null;if(r.__physicalPageNumberPlaceholder)return r.__physicalPageNumberPlaceholder;const o=r.ownerDocument||(typeof document<"u"?document:null);if(!o)return null;let e=r.querySelector("[data-physical-page-number-container]");e||(e=r.querySelector("td:last-child")||r.querySelector("td")||r);const t=o.createElement("span");return t.className="printform_physical_page_number_placeholder",e.appendChild(t),r.__physicalPageNumberPlaceholder=t,t}function I(r,o,e){if(!r)return;const t=r.querySelectorAll("[data-page-number]");t.length>0&&t.forEach(function(n){n.textContent=o});const a=r.querySelectorAll("[data-page-total]"),i=e??"";if(a.length>0&&a.forEach(function(n){n.textContent=i}),t.length===0&&a.length===0){const n=ee(r);n&&(n.textContent=e!=null?"Page "+o+" of "+e:"Page "+o)}}function V(r,o,e){if(!r)return;const t=r.querySelectorAll("[data-physical-page-number]");t.length>0&&t.forEach(function(n){n.textContent=o});const a=r.querySelectorAll("[data-physical-page-total]"),i=e??"";if(a.length>0&&a.forEach(function(n){n.textContent=i}),t.length===0&&a.length===0){const n=te(r);n&&(n.textContent=e!=null?"Sheet "+o+" of "+e:"Sheet "+o)}}const x=[{key:"papersizeWidth",datasetKey:"papersizeWidth",legacyKey:"papersize_width",defaultValue:750,parser:_},{key:"papersizeHeight",datasetKey:"papersizeHeight",legacyKey:"papersize_height",defaultValue:1050,parser:_},{key:"paperSize",datasetKey:"paperSize",legacyKey:"paper_size",defaultValue:"",parser:C},{key:"orientation",datasetKey:"orientation",legacyKey:"orientation",defaultValue:"portrait",parser:C},{key:"dpi",datasetKey:"dpi",legacyKey:"dpi",defaultValue:96,parser:_},{key:"nUp",datasetKey:"nUp",legacyKey:"n_up",defaultValue:1,parser:_},{key:"showLogicalPageNumber",datasetKey:"showLogicalPageNumber",legacyKey:"show_logical_page_number",defaultValue:!0,parser:u},{key:"showPhysicalPageNumber",datasetKey:"showPhysicalPageNumber",legacyKey:"show_physical_page_number",defaultValue:!1,parser:u},{key:"heightOfDummyRowItem",datasetKey:"heightOfDummyRowItem",legacyKey:"height_of_dummy_row_item",defaultValue:18,parser:_},{key:"repeatHeader",datasetKey:"repeatHeader",legacyKey:"repeat_header",defaultValue:!0,parser:u},{key:"repeatDocinfo",datasetKey:"repeatDocinfo",legacyKey:"repeat_docinfo",defaultValue:!0,parser:u},{key:"repeatDocinfo002",datasetKey:"repeatDocinfo002",legacyKey:"repeat_docinfo002",defaultValue:!0,parser:u},{key:"repeatDocinfo003",datasetKey:"repeatDocinfo003",legacyKey:"repeat_docinfo003",defaultValue:!0,parser:u},{key:"repeatDocinfo004",datasetKey:"repeatDocinfo004",legacyKey:"repeat_docinfo004",defaultValue:!0,parser:u},{key:"repeatDocinfo005",datasetKey:"repeatDocinfo005",legacyKey:"repeat_docinfo005",defaultValue:!0,parser:u},{key:"repeatRowheader",datasetKey:"repeatRowheader",legacyKey:"repeat_rowheader",defaultValue:!0,parser:u},{key:"repeatPtacRowheader",datasetKey:"repeatPtacRowheader",legacyKey:"repeat_ptac_rowheader",defaultValue:!0,parser:u},{key:"repeatFooter",datasetKey:"repeatFooter",legacyKey:"repeat_footer",defaultValue:!1,parser:u},{key:"repeatFooter002",datasetKey:"repeatFooter002",legacyKey:"repeat_footer002",defaultValue:!1,parser:u},{key:"repeatFooter003",datasetKey:"repeatFooter003",legacyKey:"repeat_footer003",defaultValue:!1,parser:u},{key:"repeatFooter004",datasetKey:"repeatFooter004",legacyKey:"repeat_footer004",defaultValue:!1,parser:u},{key:"repeatFooter005",datasetKey:"repeatFooter005",legacyKey:"repeat_footer005",defaultValue:!1,parser:u},{key:"repeatFooterLogo",datasetKey:"repeatFooterLogo",legacyKey:"repeat_footer_logo",defaultValue:!1,parser:u},{key:"repeatFooterPagenum",datasetKey:"repeatFooterPagenum",legacyKey:"repeat_footer_pagenum",defaultValue:!1,parser:u},{key:"fillPageHeightAfterFooter",datasetKey:"fillPageHeightAfterFooter",legacyKey:"fill_page_height_after_footer",defaultValue:!0,parser:u},{key:"insertDummyRowItemWhileFormatTable",datasetKey:"insertDummyRowItemWhileFormatTable",legacyKey:"insert_dummy_row_item_while_format_table",defaultValue:!0,parser:u},{key:"insertPtacDummyRowItems",datasetKey:"insertPtacDummyRowItems",legacyKey:"insert_ptac_dummy_row_items",defaultValue:!0,parser:u},{key:"insertDummyRowWhileFormatTable",datasetKey:"insertDummyRowWhileFormatTable",legacyKey:"insert_dummy_row_while_format_table",defaultValue:!1,parser:u},{key:"insertFooterSpacerWhileFormatTable",datasetKey:"insertFooterSpacerWhileFormatTable",legacyKey:"insert_footer_spacer_while_format_table",defaultValue:!0,parser:u},{key:"insertFooterSpacerWithDummyRowItemWhileFormatTable",datasetKey:"insertFooterSpacerWithDummyRowItemWhileFormatTable",legacyKey:"insert_footer_spacer_with_dummy_row_item_while_format_table",defaultValue:!0,parser:u},{key:"customDummyRowItemContent",datasetKey:"customDummyRowItemContent",legacyKey:"custom_dummy_row_item_content",defaultValue:"",parser:C},{key:"debug",datasetKey:"debug",legacyKey:"debug_printform",defaultValue:!1,parser:u}],re=[{key:"docInfo",className:"pdocinfo",repeatFlag:"repeatDocinfo"},{key:"docInfo002",className:"pdocinfo002",repeatFlag:"repeatDocinfo002"},{key:"docInfo003",className:"pdocinfo003",repeatFlag:"repeatDocinfo003"},{key:"docInfo004",className:"pdocinfo004",repeatFlag:"repeatDocinfo004"},{key:"docInfo005",className:"pdocinfo005",repeatFlag:"repeatDocinfo005"}],v=[{key:"footer",className:"pfooter",repeatFlag:"repeatFooter"},{key:"footer002",className:"pfooter002",repeatFlag:"repeatFooter002"},{key:"footer003",className:"pfooter003",repeatFlag:"repeatFooter003"},{key:"footer004",className:"pfooter004",repeatFlag:"repeatFooter004"},{key:"footer005",className:"pfooter005",repeatFlag:"repeatFooter005"}],D={className:"pfooter_logo"},L={className:"pfooter_pagenum"},w=x.reduce((r,o)=>(r[o.key]=o.defaultValue,r),{});function M(r){const o=typeof window<"u"?window:typeof globalThis<"u"?globalThis:{};return r.reduce((e,t)=>{if(!t.legacyKey)return e;const a=o[t.legacyKey];return a==null||a===""||(e[t.key]=t.parser(a,t.defaultValue)),e},{})}function W(r,o){const e=o||{};return r.reduce((t,a)=>{if(!a.datasetKey||!Object.prototype.hasOwnProperty.call(e,a.datasetKey))return t;const i=e[a.datasetKey];return i==null||i===""||(t[a.key]=a.parser(i,a.defaultValue)),t},{})}function ae(){return M(x)}function oe(r){return W(x,r)}function ie(r,o){const e=r.querySelector("template.custom-dummy-row-item-content");return e?e.innerHTML.trim():o}function z(r,o={}){const e=ae(),t=oe(r.dataset||{}),a={...w,...e,...t,...o};a.customDummyRowItemContent=ie(r,o.customDummyRowItemContent!==void 0?o.customDummyRowItemContent:a.customDummyRowItemContent),a.debug=u(a.debug,w.debug),a.nUp=_(a.nUp,w.nUp),(!Number.isFinite(a.nUp)||a.nUp<1)&&(a.nUp=w.nUp),a.nUp=Math.floor(a.nUp),a.showLogicalPageNumber=u(a.showLogicalPageNumber,w.showLogicalPageNumber),a.showPhysicalPageNumber=u(a.showPhysicalPageNumber,w.showPhysicalPageNumber),a.papersizeWidth=_(a.papersizeWidth,w.papersizeWidth),a.papersizeHeight=_(a.papersizeHeight,w.papersizeHeight),a.paperSize=C(a.paperSize,w.paperSize),a.orientation=C(a.orientation,w.orientation),a.dpi=_(a.dpi,w.dpi),(!Number.isFinite(a.dpi)||a.dpi<=0)&&(a.dpi=w.dpi);const i=l=>Object.prototype.hasOwnProperty.call(o,l)&&o[l]!=="",n=Object.prototype.hasOwnProperty.call(e,"papersizeWidth")||Object.prototype.hasOwnProperty.call(t,"papersizeWidth")||i("papersizeWidth"),s=Object.prototype.hasOwnProperty.call(e,"papersizeHeight")||Object.prototype.hasOwnProperty.call(t,"papersizeHeight")||i("papersizeHeight");if(!n&&!s){const l=Y({paperSize:a.paperSize,orientation:a.orientation,dpi:a.dpi});l&&(a.papersizeWidth=l.width,a.papersizeHeight=l.height)}return a}const $=[{key:"repeatPaddt",datasetKey:"repeatPaddt",legacyKey:"repeat_paddt",defaultValue:!0,parser:u},{key:"insertPaddtDummyRowItems",datasetKey:"insertPaddtDummyRowItems",legacyKey:"insert_paddt_dummy_row_items",defaultValue:!0,parser:u},{key:"paddtMaxWordsPerSegment",datasetKey:"paddtMaxWordsPerSegment",legacyKey:"paddt_max_words_per_segment",defaultValue:200,parser:_},{key:"repeatPaddtRowheader",datasetKey:"repeatPaddtRowheader",legacyKey:"repeat_paddt_rowheader",defaultValue:!0,parser:u},{key:"paddtDebug",datasetKey:"paddtDebug",legacyKey:"paddt_debug",defaultValue:!1,parser:u},{key:"repeatPaddtDocinfo",datasetKey:"repeatPaddtDocinfo",legacyKey:"repeat_paddt_docinfo",defaultValue:!0,parser:u},{key:"repeatPaddtDocinfo002",datasetKey:"repeatPaddtDocinfo002",legacyKey:"repeat_paddt_docinfo002",defaultValue:!0,parser:u},{key:"repeatPaddtDocinfo003",datasetKey:"repeatPaddtDocinfo003",legacyKey:"repeat_paddt_docinfo003",defaultValue:!0,parser:u},{key:"repeatPaddtDocinfo004",datasetKey:"repeatPaddtDocinfo004",legacyKey:"repeat_paddt_docinfo004",defaultValue:!0,parser:u},{key:"repeatPaddtDocinfo005",datasetKey:"repeatPaddtDocinfo005",legacyKey:"repeat_paddt_docinfo005",defaultValue:!0,parser:u}],N=$.reduce(function(r,o){return r[o.key]=o.defaultValue,r},{});function ne(){return M($)}function se(r){return W($,r)}function pe(r,o){o=o||{};var e=ne(),t=se(r&&r.dataset||{}),a={};for(var i in N)Object.prototype.hasOwnProperty.call(N,i)&&(a[i]=N[i]);for(var n in e)Object.prototype.hasOwnProperty.call(e,n)&&(a[n]=e[n]);for(var s in t)Object.prototype.hasOwnProperty.call(t,s)&&(a[s]=t[s]);for(var l in o)Object.prototype.hasOwnProperty.call(o,l)&&(a[l]=o[l]);return a.paddtDebug=u(a.paddtDebug,N.paddtDebug),a.paddtMaxWordsPerSegment=_(a.paddtMaxWordsPerSegment,N.paddtMaxWordsPerSegment),(!Number.isFinite(a.paddtMaxWordsPerSegment)||a.paddtMaxWordsPerSegment<=0)&&(a.paddtMaxWordsPerSegment=N.paddtMaxWordsPerSegment),a}function O(r,o){const e=document.createElement("table");return e.className="dummy_row",e.setAttribute("width",`${r.papersizeWidth}px`),e.setAttribute("cellspacing","0"),e.setAttribute("cellpadding","0"),e.innerHTML=`<tr style="height:${m(o)}px;"><td style="border:0px solid black;"></td></tr>`,e}function le(r){const o=document.createElement("table");return o.className="dummy_row_item",o.setAttribute("width",`${r.papersizeWidth}px`),o.setAttribute("cellspacing","0"),o.setAttribute("cellpadding","0"),r.customDummyRowItemContent?o.innerHTML=r.customDummyRowItemContent:o.innerHTML=`<tr style="height:${m(r.heightOfDummyRowItem)}px;"><td style="border:0px solid black;"></td></tr>`,o}function B(r,o,e){const t=m(r.heightOfDummyRowItem),a=m(e);if(t<=0||a<=0)return;const i=Math.floor(a/t);for(let n=0;n<i;n+=1)o.appendChild(le(r))}function ce(r,o,e){const t=m(e);t<=0||o.appendChild(O(r,t))}function de(r,o,e,t,a){if(!r.insertDummyRowItemWhileFormatTable)return a&&console.log("[printform] applyDummyRowItemsStep: SKIPPED (insertDummyRowItemWhileFormatTable=false)"),m(t);const i=m(e-t);if(a&&(console.log("[printform] applyDummyRowItemsStep:"),console.log(`[printform]   heightPerPage: ${e}px, currentHeight: ${t}px`),console.log(`[printform]   remaining: ${i}px, itemHeight: ${r.heightOfDummyRowItem}px`)),i>0){B(r,o,i);const n=m(r.heightOfDummyRowItem);if(n>0){const s=Math.floor(i/n),l=m(i%n),p=m(e-l);return a&&(console.log(`[printform]   inserted ${s} dummy_row_items (${s} x ${n}px = ${s*n}px)`),console.log(`[printform]   remainder: ${l}px, newHeight: ${p}px`)),p}}return m(t)}function ue(r,o,e,t,a){if(!r.insertDummyRowWhileFormatTable)return a&&console.log("[printform] applyDummyRowStep: SKIPPED (insertDummyRowWhileFormatTable=false)"),m(t);const i=m(e-t);return a&&(console.log("[printform] applyDummyRowStep:"),console.log(`[printform]   heightPerPage: ${e}px, currentHeight: ${t}px`),console.log(`[printform]   remaining: ${i}px`)),i>0?(ce(r,o,i),a&&console.log(`[printform]   inserted 1 dummy_row with height: ${i}px`),m(t+i)):m(t)}function fe(r,o,e,t,a,i){if(!r.insertFooterSpacerWithDummyRowItemWhileFormatTable||a)return i&&console.log(`[printform] applyFooterSpacerWithDummyStep: SKIPPED (flag=${r.insertFooterSpacerWithDummyRowItemWhileFormatTable}, skipDummy=${a})`),{currentHeight:m(t),skipFooterSpacer:!1};const n=m(e-t);let s=m(t);if(i&&(console.log("[printform] applyFooterSpacerWithDummyStep:"),console.log(`[printform]   heightPerPage: ${e}px, currentHeight: ${t}px`),console.log(`[printform]   remaining: ${n}px`)),n>0){B(r,o,n);const l=m(r.heightOfDummyRowItem);if(l>0){const p=Math.floor(n/l),c=m(n%l);s=m(e-c),i&&console.log(`[printform]   inserted ${p} spacer dummy_row_items, remainder: ${c}px`)}}return{currentHeight:s,skipFooterSpacer:!0}}function ge(r,o,e,t,a,i,n){if(!r.insertFooterSpacerWhileFormatTable){n&&console.log("[printform] applyFooterSpacerStep: SKIPPED (insertFooterSpacerWhileFormatTable=false)");return}const s=i.cloneNode(!0);let l=m(e-t);const p=a&&a.nonRepeating?m(a.nonRepeating):0;p>0&&(l-=p);const c=Math.max(0,l);s.style.height=`${c}px`,o.appendChild(s),n&&(console.log("[printform] applyFooterSpacerStep:"),console.log(`[printform]   heightPerPage: ${e}px, currentHeight: ${t}px`),console.log(`[printform]   nonRepeatingFooter: ${p}px`),console.log(`[printform]   pfooter_spacer height: ${c}px`))}function me(r,o){!r||!o||r.classList.contains(`${o}_processed`)||(r.classList.remove(o),r.classList.add(`${o}_processed`))}function he(r){if(!r)return 0;const o=r.offsetHeight||r.getBoundingClientRect().height,e=r.ownerDocument&&r.ownerDocument.defaultView||(typeof window<"u"?window:null);if(!e||!e.getComputedStyle)return m(o);const t=e.getComputedStyle(r),a=Number.parseFloat(t.marginTop)||0,i=Number.parseFloat(t.marginBottom)||0;return m(o+a+i)}function ye(r){if(!r)return 0;const o=r.getBoundingClientRect?r.getBoundingClientRect():null,e=o&&Number.isFinite(o.height)?o.height:r.offsetHeight||0,t=r.ownerDocument&&r.ownerDocument.defaultView||(typeof window<"u"?window:null);if(!t||!t.getComputedStyle)return Number.isFinite(e)?Math.max(0,e):0;const a=t.getComputedStyle(r),i=Number.parseFloat(a.marginTop)||0,n=Number.parseFloat(a.marginBottom)||0,s=e+i+n;return Number.isFinite(s)?Math.max(0,s):0}function Pe(r){const o=document.createElement("div");o.classList.add("div_page_break_before"),o.setAttribute("style","page-break-before: always; font-size: 0pt; height: 0px;");const e=typeof window<"u"?window:globalThis,t=typeof r=="string"&&r.trim()?r:e&&typeof e.__printFormDividerClassAppend=="string"?e.__printFormDividerClassAppend:"";return t&&t.split(/\s+/).filter(Boolean).forEach(a=>o.classList.add(a)),o}function we(r,o,e,t){if(!o)return null;const a=o.cloneNode(!0);return r.appendChild(a),e&&e(`append ${t}`),a}function _e(r,o,e,t,a){if(!o)return null;const i=o.cloneNode(!0);return r.appendChild(i),e&&e(`append ${a||"prowitem"} ${t}`),i}const g={markAsProcessed:me,measureHeight:he,measureHeightRaw:ye,createPageBreakDivider:Pe,appendClone:we,appendRowItem:_e,createDummyRowTable:O};function be(r){r.prototype.initializeOutputContainer=function(){const e=document.createElement("div");return e.classList.add("printform_formatter"),this.formEl.parentNode.insertBefore(e,this.formEl),e},r.prototype.initializePhysicalWrapper=function(e){this.currentPhysicalWrapper?(e.appendChild(g.createPageBreakDivider()),this.currentPhysicalPage+=1):this.currentPhysicalPage=1;const t=document.createElement("div");return t.classList.add("physical_page_wrapper"),t.style.display="flex",t.style.flexDirection="column",t.style.alignItems="flex-start",t.style.width=`${this.config.papersizeWidth}px`,e.appendChild(t),this.currentPhysicalWrapper=t,this.pagesInCurrentPhysical=0,t},r.prototype.ensureCurrentPageContainer=function(e){return this.currentPhysicalWrapper||this.initializePhysicalWrapper(e),this.currentPageContainer||this.createNewLogicalPage(e),this.currentPageContainer},r.prototype.createNewLogicalPage=function(e){(!this.currentPhysicalWrapper||this.pagesInCurrentPhysical>=this.nUp)&&this.initializePhysicalWrapper(e);const t=document.createElement("div");return t.classList.add("printform_page"),t.style.width=`${this.config.papersizeWidth}px`,this.currentPhysicalWrapper.appendChild(t),this.currentPageContainer=t,this.pagesInCurrentPhysical+=1,this.logicalPageToPhysicalPage[this.currentPage]=this.currentPhysicalPage,t},r.prototype.getCurrentPageContainer=function(e){return this.ensureCurrentPageContainer(e)},r.prototype.finalizePageHeight=function(e){if(!e)return;const t=this.config.papersizeHeight,a=this.config.fillPageHeightAfterFooter!==!1;let i=0;const n=s=>Number.isFinite(s)?String(Math.round(s*100)/100):"0";if(a){const s=g.measureHeightRaw(e),l=Math.max(0,t-s);if(l>.01){const p=document.createElement("div");p.classList.add("dummy_spacer"),p.setAttribute("aria-hidden","true"),p.style.display="block",p.style.width="100%",p.style.height=`${l}px`,p.style.margin="0",p.style.padding="0";const c=v.map(f=>`.${f.className}_processed`).concat([`.${D.className}_processed`,`.${L.className}_processed`]),d=e.querySelector(c.join(", "));d&&d.parentNode===e?e.insertBefore(p,d):e.appendChild(p),i=l}}if(this.debug){console.log(`
-[printform] ========== PAGE HEIGHT CALCULATION ==========`),console.log(`[printform] Configured page height: ${t}px`),console.log("[printform] -------------------------------------------");const s=Array.from(e.children);let l=0;if(console.log(`[printform] Elements breakdown (${s.length} elements):`),s.forEach((p,c)=>{const d=g.measureHeightRaw(p);l+=d;const f=p.className||"(no class)",h=p.tagName.toLowerCase();console.log(`[printform]   ${c+1}. <${h}.${f}>`),console.log(`[printform]      Height: ${n(d)}px`),console.log(`[printform]      Cumulative: ${n(l)}px`),console.log(`[printform]      Remaining: ${n(Math.max(0,t-l))}px`),d>t*.5&&console.log("[printform]      ⚠️  WARNING: Element height is > 50% of page height")}),console.log("[printform] -------------------------------------------"),console.log(`[printform] Total content height: ${n(l)}px`),l<t){const p=t-l;console.log(`[printform] ✓ Content fits (${n(p)}px under limit)`)}else if(l>t){const p=l-t;console.log(`[printform] ⚠️  Content overflow (${n(p)}px over limit)`)}else console.log("[printform] ✓ Perfect fit (exactly matches configured height)");i>0&&console.log(`[printform] ✓ Final spacer appended: ${n(i)}px`)}if(this.debug){const s=g.measureHeightRaw(e);console.log("[printform] -------------------------------------------"),console.log(`[printform] Actual measured height: ${n(s)}px`),console.log("[printform] ℹ️  Height NOT set - using natural content height"),console.log(`[printform] ===============================================
-`)}}}const Se=".prowitem, .ptac-rowitem, .paddt-rowitem",He=200,Re=200;function Ne(r){var o=[];if(!r||!r.ownerDocument||!r.ownerDocument.createTreeWalker)return o;for(var e=r.ownerDocument.createTreeWalker(r,4,null,!1),t=e.nextNode();t;){for(var a=t.nodeValue||"",i=/\S+/g,n=i.exec(a);n;)o.push({node:t,start:n.index,end:n.index+n[0].length}),n=i.exec(a);t=e.nextNode()}return o}function Fe(r,o){var e=r.cloneNode(!1);return e.appendChild(o.cloneContents()),e.outerHTML||""}function q(r,o){if(!r)return[];if(!o||o<=0)return[r.outerHTML||""];var e=(r.textContent||"").trim();if(!e)return[r.outerHTML||""];if(!r.ownerDocument||!r.ownerDocument.createRange||!r.ownerDocument.createTreeWalker)return[r.outerHTML||""];var t=Ne(r);if(t.length===0)return[r.outerHTML||""];if(t.length<=o)return[r.outerHTML||""];for(var a=[],i=0;i<t.length;i+=o){var n=i+o-1;n>=t.length&&(n=t.length-1);var s=r.ownerDocument.createRange();if(i===0)s.setStart(r,0);else{var l=t[i];s.setStart(l.node,l.start)}if(n+1<t.length){var p=t[n+1];s.setEnd(p.node,p.start)}else s.setEnd(r,r.childNodes.length);a.push(Fe(r,s))}return a}function Ce(r,o){return q(r,o)}function De(r){r.prototype.collectSections=function(){this.expandPaddtSegments(),this.expandPtacSegments();const e=re.map(s=>{const l=this.formEl.querySelector(`.${s.className}`);return l?{key:s.key,className:s.className,repeatFlag:s.repeatFlag,element:l}:null}).filter(Boolean),t=v.map(s=>{const l=this.formEl.querySelector(`.${s.className}`);return l?{key:s.key,className:s.className,repeatFlag:s.repeatFlag,element:l}:null}).filter(Boolean),a=Array.from(this.formEl.querySelectorAll(Se)),i=a.filter(s=>this.isPaddtRow(s)),n=a.filter(s=>!this.isPaddtRow(s));return this.paddtRows=i,{header:this.formEl.querySelector(".pheader"),docInfos:e,rowHeader:this.formEl.querySelector(".prowheader"),footerVariants:t,footerLogo:this.formEl.querySelector(`.${D.className}`),footerPagenum:this.formEl.querySelector(`.${L.className}`),rows:n}},r.prototype.measureSections=function(e){const t={header:g.measureHeight(e.header),docInfos:{},rowHeader:g.measureHeight(e.rowHeader),footerVariants:{},footerLogo:g.measureHeight(e.footerLogo),footerPagenum:g.measureHeight(e.footerPagenum)};return e.docInfos.forEach(a=>{t.docInfos[a.key]=g.measureHeight(a.element)}),e.footerVariants.forEach(a=>{t.footerVariants[a.key]=g.measureHeight(a.element)}),t},r.prototype.markSectionsProcessed=function(e){g.markAsProcessed(e.header,"pheader"),e.docInfos.forEach(t=>{g.markAsProcessed(t.element,t.className)}),g.markAsProcessed(e.rowHeader,"prowheader"),e.footerVariants.forEach(t=>{g.markAsProcessed(t.element,t.className)}),g.markAsProcessed(e.footerLogo,D.className),g.markAsProcessed(e.footerPagenum,L.className)},r.prototype.createFooterSpacerTemplate=function(){const e=document.createElement("div");return e.classList.add("pfooter_spacer","paper_width"),e.style.height="0px",e}}function ke(r){r.prototype.isPaddtRow=function(e){return e?e.classList.contains("paddt_segment")||e.classList.contains("paddt")||e.classList.contains("paddt-rowitem")||e.classList.contains("paddt-rowitem_processed"):!1},r.prototype.isPtacRow=function(e){return e?e.classList.contains("ptac_segment")||e.classList.contains("ptac")||e.classList.contains("ptac-rowitem")||e.classList.contains("ptac-rowitem_processed"):!1},r.prototype.getRowBaseClass=function(e){return e?this.isPaddtRow(e)?"paddt-rowitem":this.isPtacRow(e)?"ptac-rowitem":"prowitem":"prowitem"},r.prototype.shouldSkipRowHeaderForRow=function(e){return!e||!this.config.repeatRowheader?!1:e.classList.contains("without_prowheader")||e.classList.contains("tb_without_rowheader")?!0:this.isPtacRow(e)?!this.config.repeatPtacRowheader:this.isPaddtRow(e)?!(this.paddtConfig&&this.paddtConfig.repeatPaddtRowheader):!1},r.prototype.shouldSkipDummyRowItemsForContext=function(e){return!!(e&&(e.isPtacPage&&!this.config.insertPtacDummyRowItems||e.isPaddtPage&&!(this.paddtConfig&&this.paddtConfig.insertPaddtDummyRowItems)))}}function Le(r){r.prototype.expandPaddtSegments=function(){if(this.formEl.dataset.paddtExpanded==="true")return;const e=Array.from(this.formEl.querySelectorAll(".paddt"));if(e.length===0){this.formEl.dataset.paddtExpanded="true";return}var t=this.paddtConfig&&this.paddtConfig.paddtMaxWordsPerSegment||Re;e.forEach(a=>{if(!a||a.dataset.paddtSegment==="true")return;const i=a.querySelector("td > div")||a.querySelector("td");if(!i){a.classList.add("paddt-rowitem","paddt_segment"),a.dataset.paddtSegment="true";return}const n=Array.from(i.children);if(n.length===0){a.classList.add("paddt-rowitem","paddt_segment"),a.dataset.paddtSegment="true";return}const s=[];if(n.forEach(c=>{c.tagName.toLowerCase()==="p"?Ce(c,t).forEach(f=>s.push(f)):s.push(c.outerHTML)}),s.length===0){a.classList.add("paddt-rowitem","paddt_segment"),a.dataset.paddtSegment="true";return}i.innerHTML=s[0],a.classList.add("paddt-rowitem","paddt_segment"),a.dataset.paddtSegment="true";for(var l=a,p=1;p<s.length;p+=1){const c=a.cloneNode(!0);c.dataset.paddtSegment="true";const d=c.querySelector("td > div")||c.querySelector("td");d&&(d.innerHTML=s[p]),l.parentNode.insertBefore(c,l.nextSibling),l=c}}),this.formEl.dataset.paddtExpanded="true"}}function Ee(r){r.prototype.expandPtacSegments=function(){if(this.formEl.dataset.ptacExpanded==="true")return;const e=Array.from(this.formEl.querySelectorAll(".ptac"));if(e.length===0){this.formEl.dataset.ptacExpanded="true";return}e.forEach(t=>{if(!t||t.dataset.ptacSegment==="true")return;const a=t.querySelector("td > div")||t.querySelector("td");if(!a){t.classList.add("ptac-rowitem","ptac_segment"),t.dataset.ptacSegment="true";return}const i=Array.from(a.children);if(i.length===0){t.classList.add("ptac-rowitem","ptac_segment"),t.dataset.ptacSegment="true";return}const n=[];if(i.forEach(p=>{p.tagName.toLowerCase()==="p"?q(p,He).forEach(d=>n.push(d)):n.push(p.outerHTML)}),n.length===0){t.classList.add("ptac-rowitem","ptac_segment"),t.dataset.ptacSegment="true";return}a.innerHTML=n[0],t.classList.add("ptac-rowitem","ptac_segment"),t.dataset.ptacSegment="true";for(var s=t,l=1;l<n.length;l+=1){const p=t.cloneNode(!0);p.classList.remove("tb_page_break_before"),p.dataset.ptacSegment="true";const c=p.querySelector("td > div")||p.querySelector("td");c&&(c.innerHTML=n[l]),s.parentNode.insertBefore(p,s.nextSibling),s=p}}),this.formEl.dataset.ptacExpanded="true"}}function xe(r){r.prototype.ensureFirstPageSections=function(e,t,a,i,n){let s=0;return t.header&&(g.appendClone(e,t.header,i,"pheader"),this.config.repeatHeader||(s+=a.header)),t.docInfos.forEach(l=>{const p=g.appendClone(e,l.element,i,l.className);this.registerPageNumberClone(p),this.config[l.repeatFlag]||(s+=a.docInfos[l.key]||0)}),t.rowHeader&&!n&&(g.appendClone(e,t.rowHeader,i,"prowheader"),this.config.repeatRowheader||(s+=a.rowHeader)),s},r.prototype.appendRepeatingSections=function(e,t,a,i){this.config.repeatHeader&&g.appendClone(e,t.header,a,"pheader"),t.docInfos.forEach(n=>{if(this.config[n.repeatFlag]){const s=g.appendClone(e,n.element,a,n.className);this.registerPageNumberClone(s)}}),this.config.repeatRowheader&&!i&&g.appendClone(e,t.rowHeader,a,"prowheader")},r.prototype.registerPageNumberClone=function(e){if(!e)return!1;let t=!1;if(this.showLogicalPageNumber&&e.querySelector("[data-page-number], [data-page-total], [data-page-number-container]")&&(I(e,this.currentPage,null),this.logicalPageNumberClones.push({node:e,pageNumber:this.currentPage}),t=!0),this.showPhysicalPageNumber&&e.querySelector("[data-physical-page-number], [data-physical-page-total], [data-physical-page-number-container]")){const a=this.logicalPageToPhysicalPage[this.currentPage]||this.currentPhysicalPage||1;V(e,a,null),this.physicalPageNumberClones.push({node:e,pageNumber:a}),t=!0}return t},r.prototype.appendRepeatingFooters=function(e,t,a){t.footerVariants.forEach(i=>{this.config[i.repeatFlag]&&g.appendClone(e,i.element,a,i.className)}),this.config.repeatFooterLogo&&g.appendClone(e,t.footerLogo,a,D.className),this.config.repeatFooterPagenum&&this.appendFooterPageNumber(e,t,a)},r.prototype.appendFinalFooters=function(e,t,a){t.footerVariants.forEach(i=>{g.appendClone(e,i.element,a,i.className)}),g.appendClone(e,t.footerLogo,a,D.className),this.appendFooterPageNumber(e,t,a)},r.prototype.appendFooterPageNumber=function(e,t,a){if(!t.footerPagenum)return;const i=t.footerPagenum.cloneNode(!0);e.appendChild(i),this.registerPageNumberClone(i),a&&a(`append ${L.className} page ${this.currentPage}`)},r.prototype.updatePageNumberTotals=function(){if(!this.logicalPageNumberClones.length&&!this.physicalPageNumberClones.length)return;const e=this.currentPage,t=this.currentPhysicalPage||1;this.logicalPageNumberClones.forEach(a=>{I(a.node,a.pageNumber,e)}),this.physicalPageNumberClones.forEach(a=>{V(a.node,a.pageNumber,t)})}}function $e(r){r.prototype.initializePageContext=function(e){return{baseLimit:e,limit:e,skipRowHeader:!1,isPtacPage:!1,isPaddtPage:!1,repeatingHeight:0}},r.prototype.refreshPageContextForRow=function(e,t,a){if(!e)return e;const i=this.shouldSkipRowHeaderForRow(t),n=a.rowHeader||0;return e.skipRowHeader=i,e.isPtacPage=this.isPtacRow(t),e.isPaddtPage=this.isPaddtRow(t),e.limit=e.baseLimit+(i?n:0),e},r.prototype.computeRepeatingHeightForPage=function(e,t,a){let i=0;return this.config.repeatHeader&&e.header&&(i+=t.header||0),e.docInfos.forEach(n=>{this.config[n.repeatFlag]&&(i+=t.docInfos[n.key]||0)}),this.config.repeatRowheader&&e.rowHeader&&!a&&(i+=t.rowHeader||0),m(i)},r.prototype.measureContentHeight=function(e,t){const a=g.measureHeight(e);return m(a-(t||0))},r.prototype.renderRows=function(e,t,a,i,n,s,l){let p=0;const c=this.initializePageContext(n);return this.debug&&(console.log("[printform] ===== renderRows START ====="),console.log(`[printform] Total rows: ${t.rows.length}, heightPerPage: ${n}px`)),t.rows.forEach((d,f)=>{const h=g.measureHeight(d),y=this.getRowBaseClass(d),R=this.isPtacRow(d),F=this.isPaddtRow(d);if(!h){g.markAsProcessed(d,y);return}if(p===0){this.refreshPageContextForRow(c,d,a);const P=this.getCurrentPageContainer(e);this.ensureFirstPageSections(P,t,a,l,c.skipRowHeader),c.repeatingHeight=this.computeRepeatingHeightForPage(t,a,c.skipRowHeader),p=this.measureContentHeight(P,c.repeatingHeight),this.debug&&console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${p}px, pageLimit=${c.limit}px`)}if(g.markAsProcessed(d,y),d.classList.contains("tb_page_break_before")){this.debug&&console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${f}]`);const P=this.shouldSkipDummyRowItemsForContext(c),k=this.shouldSkipRowHeaderForRow(d);p=this.prepareNextPage(e,t,l,c.limit,p,i,s,k,P,c.repeatingHeight),this.refreshPageContextForRow(c,d,a);const S=this.getCurrentPageContainer(e);c.repeatingHeight=this.computeRepeatingHeightForPage(t,a,c.skipRowHeader),p=this.measureContentHeight(S,c.repeatingHeight),g.appendRowItem(S,d,null,f,y),l&&l(`append ${y||"prowitem"} ${f}`),p=this.measureContentHeight(S,c.repeatingHeight),this.debug&&console.log(`[printform] Page ${this.currentPage} start: currentHeight=${p}px, limit=${c.limit}px`),R||(c.isPtacPage=!1),F||(c.isPaddtPage=!1)}else{const P=this.getCurrentPageContainer(e),k=p,S=g.appendRowItem(P,d,null,f,y),E=this.measureContentHeight(P,c.repeatingHeight);if(this.debug&&console.log(`[printform]   row[${f}] height=${h}px, currentHeight=${E}px, limit=${c.limit}px`),E<=c.limit){l&&l(`append ${y||"prowitem"} ${f}`),p=E,R||(c.isPtacPage=!1),F||(c.isPaddtPage=!1);return}S&&S.parentNode===P&&P.removeChild(S),this.debug&&console.log(`[printform]   >> PAGE BREAK (overflow) at row[${f}]`);const Ie=this.shouldSkipDummyRowItemsForContext(c),Ve=this.shouldSkipRowHeaderForRow(d);p=this.prepareNextPage(e,t,l,c.limit,k,i,s,Ve,Ie,c.repeatingHeight),this.refreshPageContextForRow(c,d,a);const K=this.getCurrentPageContainer(e);c.repeatingHeight=this.computeRepeatingHeightForPage(t,a,c.skipRowHeader),p=this.measureContentHeight(K,c.repeatingHeight),g.appendRowItem(K,d,null,f,y),l&&l(`append ${y||"prowitem"} ${f}`),p=this.measureContentHeight(K,c.repeatingHeight),this.debug&&console.log(`[printform] Page ${this.currentPage} start: currentHeight=${p}px, limit=${c.limit}px`),R||(c.isPtacPage=!1),F||(c.isPaddtPage=!1)}}),this.debug&&console.log(`[printform] ===== renderRows END (page ${this.currentPage}, finalHeight=${p}px) =====`),{currentHeight:p,pageLimit:c.limit,isPtacPage:c.isPtacPage,isPaddtPage:c.isPaddtPage,repeatingHeight:c.repeatingHeight}},r.prototype.prepareNextPage=function(e,t,a,i,n,s,l,p,c,d){const f=this.getCurrentPageContainer(e),h=this.applyRemainderSpacing(f,i,n,s,l,{skipDummyRowItems:c,repeatingHeight:d});this.appendRepeatingFooters(f,t,a),this.currentPage+=1,this.currentPageContainer=null,this.createNewLogicalPage(e);const y=this.getCurrentPageContainer(e);return this.appendRepeatingSections(y,t,a,p),h},r.prototype.applyRemainderSpacing=function(e,t,a,i,n,s){const l=s&&s.skipDummyRowItems,p=s&&Number.isFinite(s.repeatingHeight)?s.repeatingHeight:null,c=s&&s.useCurrentHeight===!0;let d=m(a);if(p!==null&&!c){const h=g.measureHeight(e);d=m(h-p)}this.debug&&(console.log(`[printform] ----- applyRemainderSpacing (page ${this.currentPage}) -----`),console.log(`[printform]   heightPerPage: ${t}px, currentHeight: ${a}px`),console.log(`[printform]   skipDummyRowItems: ${l}`)),l||(d=de(this.config,e,t,d,this.debug)),d=ue(this.config,e,t,d,this.debug);const f=fe(this.config,e,t,d,l,this.debug);return d=f.currentHeight,f.skipFooterSpacer||ge(this.config,e,t,d,i,n,this.debug),this.debug&&(console.log(`[printform]   finalHeight after spacing: ${d}px`),console.log("[printform] -----------------------------------------")),m(d)}}function Te(r){r.prototype.computeHeightPerPage=function(e,t){let a=this.config.papersizeHeight;if(this.debug&&(console.log("[printform] ===== computeHeightPerPage ====="),console.log(`[printform] papersizeHeight (config): ${this.config.papersizeHeight}px`),console.log(`[printform] papersizeWidth (config): ${this.config.papersizeWidth}px`)),this.config.repeatHeader&&e.header&&(this.debug&&console.log(`[printform]   - repeatHeader: ${t.header}px`),a-=t.header),e.docInfos.forEach(i=>{if(this.config[i.repeatFlag]){const n=t.docInfos[i.key]||0;this.debug&&console.log(`[printform]   - repeat ${i.className}: ${n}px`),a-=n}}),this.config.repeatRowheader&&e.rowHeader&&(this.debug&&console.log(`[printform]   - repeatRowheader: ${t.rowHeader}px`),a-=t.rowHeader),e.footerVariants.forEach(i=>{if(this.config[i.repeatFlag]){const n=t.footerVariants[i.key]||0;this.debug&&console.log(`[printform]   - repeat ${i.className}: ${n}px`),a-=n}}),this.config.repeatFooterLogo&&e.footerLogo&&(this.debug&&console.log(`[printform]   - repeatFooterLogo: ${t.footerLogo}px`),a-=t.footerLogo),this.config.repeatFooterPagenum&&e.footerPagenum){const i=t.footerPagenum||0;this.debug&&console.log(`[printform]   - repeatFooterPagenum: ${i}px`),a-=i}return this.debug&&(console.log(`[printform] heightPerPage (available for content): ${Math.max(0,a)}px`),console.log("[printform] ================================")),Math.max(0,a)},r.prototype.computeFooterState=function(e,t){const a=t.footerLogo||0,i=t.footerPagenum||0,s=e.footerVariants.reduce((d,f)=>{const h=t.footerVariants[f.key]||0;return d+h},0)+a+i;let p=e.footerVariants.reduce((d,f)=>{const h=t.footerVariants[f.key]||0;return this.config[f.repeatFlag]?d+h:d},0);this.config.repeatFooterLogo&&(p+=a),this.config.repeatFooterPagenum&&(p+=i);const c=Math.max(0,s-p);return{totalFinal:s,repeating:p,nonRepeating:c}},r.prototype.finalizeDocument=function(e,t,a,i,n,s,l,p){const c=s?s.currentHeight:0,d=s&&s.pageLimit?s.pageLimit:n,f=s&&Number.isFinite(s.repeatingHeight)?s.repeatingHeight:0,h=!!(s&&(s.isPtacPage&&!this.config.insertPtacDummyRowItems||s.isPaddtPage&&!(this.paddtConfig&&this.paddtConfig.insertPaddtDummyRowItems))),y=i.totalFinal-i.repeating,R=c+y;if(R<=d){const S=this.getCurrentPageContainer(e);this.applyRemainderSpacing(S,d,R,i,l,{skipDummyRowItems:h,repeatingHeight:f,useCurrentHeight:!0}),this.appendFinalFooters(S,t,p);return}this.prepareNextPage(e,t,p,d,c,i,l,!1,h,f);const F=y,P=this.getCurrentPageContainer(e),k=this.computeRepeatingHeightForPage(t,a,!1);this.applyRemainderSpacing(P,n,F,i,l,{repeatingHeight:k,useCurrentHeight:!0}),this.appendFinalFooters(P,t,p)}}class b{constructor(o,e){this.formEl=o,this.config=e,this.debug=!!e.debug,this.nUp=Math.max(1,Math.floor(Number(e.nUp||1))),this.showLogicalPageNumber=e.showLogicalPageNumber!==!1,this.showPhysicalPageNumber=!!e.showPhysicalPageNumber,this.paddtConfig=pe(o,{}),this.paddtDebug=!!this.paddtConfig.paddtDebug,this.currentPage=1,this.currentPhysicalPage=0,this.pagesInCurrentPhysical=0,this.currentPhysicalWrapper=null,this.currentPageContainer=null,this.logicalPageNumberClones=[],this.physicalPageNumberClones=[],this.logicalPageToPhysicalPage=[],this.debug&&(console.log("[printform] ===== PrintFormFormatter initialized ====="),console.log("[printform] debug mode: ON"),console.log(`[printform] config.debug raw value: ${e.debug}`))}log(o){this.debug&&console.log(`[printform] ${o}`)}format(){const o=this.debug?this.log.bind(this):null,e=this.initializeOutputContainer();this.ensureCurrentPageContainer(e);const t=this.collectSections(),a=this.measureSections(t),i=this.createFooterSpacerTemplate();this.markSectionsProcessed(t);const n=this.computeFooterState(t,a),s=this.computeHeightPerPage(t,a),l=this.renderRows(e,t,a,n,s,i,o);if(this.finalizeDocument(e,t,a,n,s,l,i,o),this.paddtRows&&this.paddtRows.length){this.currentPage+=1,this.currentPageContainer=null,this.initializePhysicalWrapper(e),this.createNewLogicalPage(e);var p={docInfo:this.paddtConfig.repeatPaddtDocinfo,docInfo002:this.paddtConfig.repeatPaddtDocinfo002,docInfo003:this.paddtConfig.repeatPaddtDocinfo003,docInfo004:this.paddtConfig.repeatPaddtDocinfo004,docInfo005:this.paddtConfig.repeatPaddtDocinfo005},c=t.docInfos.filter(function(F){var P=p[F.key];return P===void 0?!0:!!P});const f={header:t.header,docInfos:c,rowHeader:t.rowHeader,footerVariants:[],footerLogo:t.footerLogo,footerPagenum:t.footerPagenum,rows:this.paddtRows},h=this.computeFooterState(f,a),y=this.computeHeightPerPage(f,a),R=this.renderRows(e,f,a,h,y,i,o);this.finalizeDocument(e,f,a,h,y,R,i,o)}this.updatePageNumberTotals();const d=e.querySelectorAll(".printform_page");return this.debug&&console.log(`[printform] Finalizing heights for ${d.length} pages...`),d.forEach((f,h)=>{if(this.finalizePageHeight(f),this.debug){const y=f.style.height||"(auto)";console.log(`[printform]   Page ${h+1}: height style = ${y}`)}}),e.classList.remove("printform_formatter"),e.classList.add("printform_formatter_processed"),this.formEl.remove(),e}}be(b),De(b),ke(b),Le(b),Ee(b),xe(b),$e(b),Te(b);function U(r,o,e){const t=r.__printFormDividerClassAppend;r.__printFormDividerClassAppend=typeof o=="string"?o:"";try{return e()}finally{t===void 0?delete r.__printFormDividerClassAppend:r.__printFormDividerClassAppend=t}}function Ke(r){return new Promise((o,e)=>{setTimeout(o,r)})}async function G(r={}){const o=typeof window<"u"?window:globalThis;if(!o.__printFormProcessing&&!(!r.force&&o.__printFormProcessed)){o.__printFormProcessing=!0;try{const e=o.document;if(!e)return;const t=Array.from(e.querySelectorAll(".printform"));for(let a=0;a<t.length;a+=1){const i=t[a],n={...r};if(n.divPageBreakBeforeClassAppend===void 0&&i&&i.dataset){const p=i.dataset.divPageBreakBeforeClassAppend;typeof p=="string"&&p.trim()&&(n.divPageBreakBeforeClassAppend=p.trim())}const s=n.divPageBreakBeforeClassAppend,l=z(i,n);try{await Ke(1)}catch(p){console.error("pauseInMilliseconds error",p)}try{const p=U(o,s,()=>new b(i,l).format());a>0&&p&&p.parentNode&&p.parentNode.insertBefore(g.createPageBreakDivider(s),p)}catch(p){console.error("printform format error",p)}}o.__printFormProcessed=!0}finally{o.__printFormProcessing=!1}}}function Ae(r,o={}){const e=typeof window<"u"?window:globalThis,t={...o};if(t.divPageBreakBeforeClassAppend===void 0&&r&&r.dataset){const n=r.dataset.divPageBreakBeforeClassAppend;typeof n=="string"&&n.trim()&&(t.divPageBreakBeforeClassAppend=n.trim())}const a=t.divPageBreakBeforeClassAppend,i=z(r,t);return U(e,a,()=>new b(r,i).format())}const T={formatAll:G,format:Ae,DEFAULT_CONFIG:w,DEFAULT_PADDT_CONFIG:N},H=typeof window<"u"?window:null;if(H)if(H.__printFormScriptLoaded__)H.PrintForm=H.PrintForm||T;else{H.__printFormScriptLoaded__=!0,H.PrintForm=H.PrintForm||{},Object.assign(H.PrintForm,T);const r=H.document;r&&r.addEventListener&&r.addEventListener("DOMContentLoaded",()=>{G()})}return T}();
+var PrintForm = function() {
+  "use strict";
+  const TRUE_TOKENS = /* @__PURE__ */ new Set(["y", "yes", "true", "1"]);
+  const FALSE_TOKENS = /* @__PURE__ */ new Set(["n", "no", "false", "0"]);
+  function parseBooleanFlag(value, fallback) {
+    if (value === void 0 || value === null || value === "") return fallback;
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0;
+    const lowered = String(value).trim().toLowerCase();
+    if (TRUE_TOKENS.has(lowered)) return true;
+    if (FALSE_TOKENS.has(lowered)) return false;
+    return fallback;
+  }
+  function parseNumber(value, fallback) {
+    if (value === void 0 || value === null || value === "") return fallback;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+  function parseString(value, fallback) {
+    if (value === void 0 || value === null || value === "") return fallback;
+    return String(value);
+  }
+  function normalizeOrientation(value) {
+    const token = String(value || "").trim().toLowerCase();
+    if (token === "landscape") return "landscape";
+    if (token === "portrait") return "portrait";
+    return "";
+  }
+  function normalizePaperSize(value) {
+    const token = String(value || "").trim();
+    if (!token) return "";
+    const upper = token.toUpperCase();
+    if (upper === "A4" || upper === "A5" || upper === "LETTER" || upper === "LEGAL") {
+      return upper;
+    }
+    if (upper === "US_LETTER" || upper === "USLETTER") return "LETTER";
+    if (upper === "US_LEGAL" || upper === "USLEGAL") return "LEGAL";
+    return "";
+  }
+  function mmToPx(mm, dpi) {
+    const mmValue = Number(mm);
+    const dpiValue = Number(dpi);
+    if (!Number.isFinite(mmValue) || !Number.isFinite(dpiValue) || dpiValue <= 0) return 0;
+    return Math.round(mmValue / 25.4 * dpiValue);
+  }
+  const PAPER_SIZES_MM = {
+    A4: { widthMm: 210, heightMm: 297 },
+    A5: { widthMm: 148, heightMm: 210 },
+    LETTER: { widthMm: 215.9, heightMm: 279.4 },
+    LEGAL: { widthMm: 215.9, heightMm: 355.6 }
+  };
+  function resolvePaperDimensions(options) {
+    const paperSize = normalizePaperSize(options && options.paperSize);
+    if (!paperSize) return null;
+    const preset = PAPER_SIZES_MM[paperSize];
+    if (!preset) return null;
+    const dpi = Number(options && options.dpi);
+    const width = mmToPx(preset.widthMm, dpi);
+    const height = mmToPx(preset.heightMm, dpi);
+    if (!width || !height) return null;
+    const orientation = normalizeOrientation(options && options.orientation) || "portrait";
+    if (orientation === "landscape") {
+      return { width: height, height: width };
+    }
+    return { width, height };
+  }
+  function normalizeHeight(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    return Math.max(0, Math.round(num));
+  }
+  function ensurePageNumberPlaceholder(element) {
+    if (!element) return null;
+    if (element.__pageNumberPlaceholder) {
+      return element.__pageNumberPlaceholder;
+    }
+    const doc = element.ownerDocument || (typeof document !== "undefined" ? document : null);
+    if (!doc) return null;
+    let container = element.querySelector("[data-page-number-container]");
+    if (!container) {
+      container = element.querySelector("td:last-child") || element.querySelector("td") || element;
+    }
+    const placeholder = doc.createElement("span");
+    placeholder.className = "printform_page_number_placeholder";
+    container.appendChild(placeholder);
+    element.__pageNumberPlaceholder = placeholder;
+    return placeholder;
+  }
+  function ensurePhysicalPageNumberPlaceholder(element) {
+    if (!element) return null;
+    if (element.__physicalPageNumberPlaceholder) {
+      return element.__physicalPageNumberPlaceholder;
+    }
+    const doc = element.ownerDocument || (typeof document !== "undefined" ? document : null);
+    if (!doc) return null;
+    let container = element.querySelector("[data-physical-page-number-container]");
+    if (!container) {
+      container = element.querySelector("td:last-child") || element.querySelector("td") || element;
+    }
+    const placeholder = doc.createElement("span");
+    placeholder.className = "printform_physical_page_number_placeholder";
+    container.appendChild(placeholder);
+    element.__physicalPageNumberPlaceholder = placeholder;
+    return placeholder;
+  }
+  function updatePageNumberContent(element, pageNumber, totalPages) {
+    if (!element) return;
+    const numberTargets = element.querySelectorAll("[data-page-number]");
+    if (numberTargets.length > 0) {
+      numberTargets.forEach(function(target) {
+        target.textContent = pageNumber;
+      });
+    }
+    const totalTargets = element.querySelectorAll("[data-page-total]");
+    const totalValue = totalPages !== void 0 && totalPages !== null ? totalPages : "";
+    if (totalTargets.length > 0) {
+      totalTargets.forEach(function(target) {
+        target.textContent = totalValue;
+      });
+    }
+    if (numberTargets.length === 0 && totalTargets.length === 0) {
+      const fallback = ensurePageNumberPlaceholder(element);
+      if (fallback) {
+        fallback.textContent = totalPages !== void 0 && totalPages !== null ? "Page " + pageNumber + " of " + totalPages : "Page " + pageNumber;
+      }
+    }
+  }
+  function updatePhysicalPageNumberContent(element, pageNumber, totalPages) {
+    if (!element) return;
+    const numberTargets = element.querySelectorAll("[data-physical-page-number]");
+    if (numberTargets.length > 0) {
+      numberTargets.forEach(function(target) {
+        target.textContent = pageNumber;
+      });
+    }
+    const totalTargets = element.querySelectorAll("[data-physical-page-total]");
+    const totalValue = totalPages !== void 0 && totalPages !== null ? totalPages : "";
+    if (totalTargets.length > 0) {
+      totalTargets.forEach(function(target) {
+        target.textContent = totalValue;
+      });
+    }
+    if (numberTargets.length === 0 && totalTargets.length === 0) {
+      const fallback = ensurePhysicalPageNumberPlaceholder(element);
+      if (fallback) {
+        fallback.textContent = totalPages !== void 0 && totalPages !== null ? "Sheet " + pageNumber + " of " + totalPages : "Sheet " + pageNumber;
+      }
+    }
+  }
+  const CONFIG_DESCRIPTORS = [
+    { key: "papersizeWidth", datasetKey: "papersizeWidth", legacyKey: "papersize_width", defaultValue: 750, parser: parseNumber },
+    { key: "papersizeHeight", datasetKey: "papersizeHeight", legacyKey: "papersize_height", defaultValue: 1050, parser: parseNumber },
+    { key: "paperSize", datasetKey: "paperSize", legacyKey: "paper_size", defaultValue: "", parser: parseString },
+    { key: "orientation", datasetKey: "orientation", legacyKey: "orientation", defaultValue: "portrait", parser: parseString },
+    { key: "dpi", datasetKey: "dpi", legacyKey: "dpi", defaultValue: 96, parser: parseNumber },
+    { key: "nUp", datasetKey: "nUp", legacyKey: "n_up", defaultValue: 1, parser: parseNumber },
+    {
+      key: "showLogicalPageNumber",
+      datasetKey: "showLogicalPageNumber",
+      legacyKey: "show_logical_page_number",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "showPhysicalPageNumber",
+      datasetKey: "showPhysicalPageNumber",
+      legacyKey: "show_physical_page_number",
+      defaultValue: false,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "heightOfDummyRowItem",
+      datasetKey: "heightOfDummyRowItem",
+      legacyKey: "height_of_dummy_row_item",
+      defaultValue: 18,
+      parser: parseNumber
+    },
+    { key: "repeatHeader", datasetKey: "repeatHeader", legacyKey: "repeat_header", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatDocinfo", datasetKey: "repeatDocinfo", legacyKey: "repeat_docinfo", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatDocinfo002", datasetKey: "repeatDocinfo002", legacyKey: "repeat_docinfo002", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatDocinfo003", datasetKey: "repeatDocinfo003", legacyKey: "repeat_docinfo003", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatDocinfo004", datasetKey: "repeatDocinfo004", legacyKey: "repeat_docinfo004", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatDocinfo005", datasetKey: "repeatDocinfo005", legacyKey: "repeat_docinfo005", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatRowheader", datasetKey: "repeatRowheader", legacyKey: "repeat_rowheader", defaultValue: true, parser: parseBooleanFlag },
+    {
+      key: "repeatPtacRowheader",
+      datasetKey: "repeatPtacRowheader",
+      legacyKey: "repeat_ptac_rowheader",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    { key: "repeatFooter", datasetKey: "repeatFooter", legacyKey: "repeat_footer", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooter002", datasetKey: "repeatFooter002", legacyKey: "repeat_footer002", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooter003", datasetKey: "repeatFooter003", legacyKey: "repeat_footer003", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooter004", datasetKey: "repeatFooter004", legacyKey: "repeat_footer004", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooter005", datasetKey: "repeatFooter005", legacyKey: "repeat_footer005", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooterLogo", datasetKey: "repeatFooterLogo", legacyKey: "repeat_footer_logo", defaultValue: false, parser: parseBooleanFlag },
+    { key: "repeatFooterPagenum", datasetKey: "repeatFooterPagenum", legacyKey: "repeat_footer_pagenum", defaultValue: false, parser: parseBooleanFlag },
+    {
+      key: "fillPageHeightAfterFooter",
+      datasetKey: "fillPageHeightAfterFooter",
+      legacyKey: "fill_page_height_after_footer",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "insertDummyRowItemWhileFormatTable",
+      datasetKey: "insertDummyRowItemWhileFormatTable",
+      legacyKey: "insert_dummy_row_item_while_format_table",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "insertPtacDummyRowItems",
+      datasetKey: "insertPtacDummyRowItems",
+      legacyKey: "insert_ptac_dummy_row_items",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "insertDummyRowWhileFormatTable",
+      datasetKey: "insertDummyRowWhileFormatTable",
+      legacyKey: "insert_dummy_row_while_format_table",
+      defaultValue: false,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "insertFooterSpacerWhileFormatTable",
+      datasetKey: "insertFooterSpacerWhileFormatTable",
+      legacyKey: "insert_footer_spacer_while_format_table",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "insertFooterSpacerWithDummyRowItemWhileFormatTable",
+      datasetKey: "insertFooterSpacerWithDummyRowItemWhileFormatTable",
+      legacyKey: "insert_footer_spacer_with_dummy_row_item_while_format_table",
+      defaultValue: true,
+      parser: parseBooleanFlag
+    },
+    {
+      key: "customDummyRowItemContent",
+      datasetKey: "customDummyRowItemContent",
+      legacyKey: "custom_dummy_row_item_content",
+      defaultValue: "",
+      parser: parseString
+    },
+    { key: "debug", datasetKey: "debug", legacyKey: "debug_printform", defaultValue: false, parser: parseBooleanFlag }
+  ];
+  const DOCINFO_VARIANTS = [
+    { key: "docInfo", className: "pdocinfo", repeatFlag: "repeatDocinfo" },
+    { key: "docInfo002", className: "pdocinfo002", repeatFlag: "repeatDocinfo002" },
+    { key: "docInfo003", className: "pdocinfo003", repeatFlag: "repeatDocinfo003" },
+    { key: "docInfo004", className: "pdocinfo004", repeatFlag: "repeatDocinfo004" },
+    { key: "docInfo005", className: "pdocinfo005", repeatFlag: "repeatDocinfo005" }
+  ];
+  const FOOTER_VARIANTS = [
+    { key: "footer", className: "pfooter", repeatFlag: "repeatFooter" },
+    { key: "footer002", className: "pfooter002", repeatFlag: "repeatFooter002" },
+    { key: "footer003", className: "pfooter003", repeatFlag: "repeatFooter003" },
+    { key: "footer004", className: "pfooter004", repeatFlag: "repeatFooter004" },
+    { key: "footer005", className: "pfooter005", repeatFlag: "repeatFooter005" }
+  ];
+  const FOOTER_LOGO_VARIANT = { className: "pfooter_logo" };
+  const FOOTER_PAGENUM_VARIANT = { className: "pfooter_pagenum" };
+  const DEFAULT_CONFIG = CONFIG_DESCRIPTORS.reduce((accumulator, descriptor) => {
+    accumulator[descriptor.key] = descriptor.defaultValue;
+    return accumulator;
+  }, {});
+  function readConfigFromLegacy(descriptors) {
+    const source = typeof window !== "undefined" ? window : typeof globalThis !== "undefined" ? globalThis : {};
+    return descriptors.reduce((config, descriptor) => {
+      if (!descriptor.legacyKey) return config;
+      const value = source[descriptor.legacyKey];
+      if (value === void 0 || value === null || value === "") return config;
+      config[descriptor.key] = descriptor.parser(value, descriptor.defaultValue);
+      return config;
+    }, {});
+  }
+  function readConfigFromDataset(descriptors, dataset) {
+    const source = dataset || {};
+    return descriptors.reduce((config, descriptor) => {
+      if (!descriptor.datasetKey) return config;
+      if (!Object.prototype.hasOwnProperty.call(source, descriptor.datasetKey)) return config;
+      const value = source[descriptor.datasetKey];
+      if (value === void 0 || value === null || value === "") return config;
+      config[descriptor.key] = descriptor.parser(value, descriptor.defaultValue);
+      return config;
+    }, {});
+  }
+  function getLegacyConfig() {
+    return readConfigFromLegacy(CONFIG_DESCRIPTORS);
+  }
+  function getDatasetConfig(dataset) {
+    return readConfigFromDataset(CONFIG_DESCRIPTORS, dataset);
+  }
+  function resolveTemplateOverride(formEl, fallback) {
+    const template = formEl.querySelector("template.custom-dummy-row-item-content");
+    if (template) {
+      return template.innerHTML.trim();
+    }
+    return fallback;
+  }
+  function getPrintformConfig(formEl, overrides = {}) {
+    const legacy = getLegacyConfig();
+    const datasetConfig = getDatasetConfig(formEl.dataset || {});
+    const merged = {
+      ...DEFAULT_CONFIG,
+      ...legacy,
+      ...datasetConfig,
+      ...overrides
+    };
+    merged.customDummyRowItemContent = resolveTemplateOverride(
+      formEl,
+      overrides.customDummyRowItemContent !== void 0 ? overrides.customDummyRowItemContent : merged.customDummyRowItemContent
+    );
+    merged.debug = parseBooleanFlag(merged.debug, DEFAULT_CONFIG.debug);
+    merged.nUp = parseNumber(merged.nUp, DEFAULT_CONFIG.nUp);
+    if (!Number.isFinite(merged.nUp) || merged.nUp < 1) {
+      merged.nUp = DEFAULT_CONFIG.nUp;
+    }
+    merged.nUp = Math.floor(merged.nUp);
+    merged.showLogicalPageNumber = parseBooleanFlag(merged.showLogicalPageNumber, DEFAULT_CONFIG.showLogicalPageNumber);
+    merged.showPhysicalPageNumber = parseBooleanFlag(merged.showPhysicalPageNumber, DEFAULT_CONFIG.showPhysicalPageNumber);
+    merged.papersizeWidth = parseNumber(merged.papersizeWidth, DEFAULT_CONFIG.papersizeWidth);
+    merged.papersizeHeight = parseNumber(merged.papersizeHeight, DEFAULT_CONFIG.papersizeHeight);
+    merged.paperSize = parseString(merged.paperSize, DEFAULT_CONFIG.paperSize);
+    merged.orientation = parseString(merged.orientation, DEFAULT_CONFIG.orientation);
+    merged.dpi = parseNumber(merged.dpi, DEFAULT_CONFIG.dpi);
+    if (!Number.isFinite(merged.dpi) || merged.dpi <= 0) merged.dpi = DEFAULT_CONFIG.dpi;
+    const overrideHas = (key) => Object.prototype.hasOwnProperty.call(overrides, key) && overrides[key] !== "";
+    const manualWidthProvided = Object.prototype.hasOwnProperty.call(legacy, "papersizeWidth") || Object.prototype.hasOwnProperty.call(datasetConfig, "papersizeWidth") || overrideHas("papersizeWidth");
+    const manualHeightProvided = Object.prototype.hasOwnProperty.call(legacy, "papersizeHeight") || Object.prototype.hasOwnProperty.call(datasetConfig, "papersizeHeight") || overrideHas("papersizeHeight");
+    if (!manualWidthProvided && !manualHeightProvided) {
+      const resolved = resolvePaperDimensions({ paperSize: merged.paperSize, orientation: merged.orientation, dpi: merged.dpi });
+      if (resolved) {
+        merged.papersizeWidth = resolved.width;
+        merged.papersizeHeight = resolved.height;
+      }
+    }
+    return merged;
+  }
+  const PADDT_CONFIG_DESCRIPTORS = [
+    { key: "repeatPaddt", datasetKey: "repeatPaddt", legacyKey: "repeat_paddt", defaultValue: true, parser: parseBooleanFlag },
+    { key: "insertPaddtDummyRowItems", datasetKey: "insertPaddtDummyRowItems", legacyKey: "insert_paddt_dummy_row_items", defaultValue: true, parser: parseBooleanFlag },
+    { key: "paddtMaxWordsPerSegment", datasetKey: "paddtMaxWordsPerSegment", legacyKey: "paddt_max_words_per_segment", defaultValue: 200, parser: parseNumber },
+    { key: "repeatPaddtRowheader", datasetKey: "repeatPaddtRowheader", legacyKey: "repeat_paddt_rowheader", defaultValue: true, parser: parseBooleanFlag },
+    { key: "paddtDebug", datasetKey: "paddtDebug", legacyKey: "paddt_debug", defaultValue: false, parser: parseBooleanFlag },
+    // PADDT-specific docinfo toggles (show/hide on PADDT pages only)
+    { key: "repeatPaddtDocinfo", datasetKey: "repeatPaddtDocinfo", legacyKey: "repeat_paddt_docinfo", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatPaddtDocinfo002", datasetKey: "repeatPaddtDocinfo002", legacyKey: "repeat_paddt_docinfo002", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatPaddtDocinfo003", datasetKey: "repeatPaddtDocinfo003", legacyKey: "repeat_paddt_docinfo003", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatPaddtDocinfo004", datasetKey: "repeatPaddtDocinfo004", legacyKey: "repeat_paddt_docinfo004", defaultValue: true, parser: parseBooleanFlag },
+    { key: "repeatPaddtDocinfo005", datasetKey: "repeatPaddtDocinfo005", legacyKey: "repeat_paddt_docinfo005", defaultValue: true, parser: parseBooleanFlag }
+  ];
+  const DEFAULT_PADDT_CONFIG = PADDT_CONFIG_DESCRIPTORS.reduce(function(acc, d) {
+    acc[d.key] = d.defaultValue;
+    return acc;
+  }, {});
+  function getPaddtLegacyConfig() {
+    return readConfigFromLegacy(PADDT_CONFIG_DESCRIPTORS);
+  }
+  function getPaddtDatasetConfig(dataset) {
+    return readConfigFromDataset(PADDT_CONFIG_DESCRIPTORS, dataset);
+  }
+  function getPaddtConfig(formEl, overrides) {
+    overrides = overrides || {};
+    var legacy = getPaddtLegacyConfig();
+    var datasetConfig = getPaddtDatasetConfig(formEl && formEl.dataset || {});
+    var merged = {};
+    for (var k in DEFAULT_PADDT_CONFIG) {
+      if (Object.prototype.hasOwnProperty.call(DEFAULT_PADDT_CONFIG, k)) merged[k] = DEFAULT_PADDT_CONFIG[k];
+    }
+    for (var k1 in legacy) {
+      if (Object.prototype.hasOwnProperty.call(legacy, k1)) merged[k1] = legacy[k1];
+    }
+    for (var k2 in datasetConfig) {
+      if (Object.prototype.hasOwnProperty.call(datasetConfig, k2)) merged[k2] = datasetConfig[k2];
+    }
+    for (var k3 in overrides) {
+      if (Object.prototype.hasOwnProperty.call(overrides, k3)) merged[k3] = overrides[k3];
+    }
+    merged.paddtDebug = parseBooleanFlag(merged.paddtDebug, DEFAULT_PADDT_CONFIG.paddtDebug);
+    merged.paddtMaxWordsPerSegment = parseNumber(merged.paddtMaxWordsPerSegment, DEFAULT_PADDT_CONFIG.paddtMaxWordsPerSegment);
+    if (!Number.isFinite(merged.paddtMaxWordsPerSegment) || merged.paddtMaxWordsPerSegment <= 0) {
+      merged.paddtMaxWordsPerSegment = DEFAULT_PADDT_CONFIG.paddtMaxWordsPerSegment;
+    }
+    return merged;
+  }
+  function createDummyRowTable(config, height) {
+    const table = document.createElement("table");
+    table.className = "dummy_row";
+    table.setAttribute("width", `${config.papersizeWidth}px`);
+    table.setAttribute("cellspacing", "0");
+    table.setAttribute("cellpadding", "0");
+    table.innerHTML = `<tr style="height:${normalizeHeight(height)}px;"><td style="border:0px solid black;"></td></tr>`;
+    return table;
+  }
+  function createDummyRowItemTable(config) {
+    const table = document.createElement("table");
+    table.className = "dummy_row_item";
+    table.setAttribute("width", `${config.papersizeWidth}px`);
+    table.setAttribute("cellspacing", "0");
+    table.setAttribute("cellpadding", "0");
+    if (config.customDummyRowItemContent) {
+      table.innerHTML = config.customDummyRowItemContent;
+    } else {
+      table.innerHTML = `<tr style="height:${normalizeHeight(config.heightOfDummyRowItem)}px;"><td style="border:0px solid black;"></td></tr>`;
+    }
+    return table;
+  }
+  function appendDummyRowItems(config, target, diffHeight) {
+    const itemHeight = normalizeHeight(config.heightOfDummyRowItem);
+    const remaining = normalizeHeight(diffHeight);
+    if (itemHeight <= 0 || remaining <= 0) return;
+    const count = Math.floor(remaining / itemHeight);
+    for (let index = 0; index < count; index += 1) {
+      target.appendChild(createDummyRowItemTable(config));
+    }
+  }
+  function appendDummyRow(config, target, diffHeight) {
+    const remaining = normalizeHeight(diffHeight);
+    if (remaining <= 0) return;
+    target.appendChild(createDummyRowTable(config, remaining));
+  }
+  function applyDummyRowItemsStep(config, container, heightPerPage, currentHeight, debug) {
+    if (!config.insertDummyRowItemWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyDummyRowItemsStep: SKIPPED (insertDummyRowItemWhileFormatTable=false)`);
+      }
+      return normalizeHeight(currentHeight);
+    }
+    const remaining = normalizeHeight(heightPerPage - currentHeight);
+    if (debug) {
+      console.log(`[printform] applyDummyRowItemsStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px, itemHeight: ${config.heightOfDummyRowItem}px`);
+    }
+    if (remaining > 0) {
+      appendDummyRowItems(config, container, remaining);
+      const itemHeight = normalizeHeight(config.heightOfDummyRowItem);
+      if (itemHeight > 0) {
+        const count = Math.floor(remaining / itemHeight);
+        const remainder = normalizeHeight(remaining % itemHeight);
+        const newHeight = normalizeHeight(heightPerPage - remainder);
+        if (debug) {
+          console.log(`[printform]   inserted ${count} dummy_row_items (${count} x ${itemHeight}px = ${count * itemHeight}px)`);
+          console.log(`[printform]   remainder: ${remainder}px, newHeight: ${newHeight}px`);
+        }
+        return newHeight;
+      }
+    }
+    return normalizeHeight(currentHeight);
+  }
+  function applyDummyRowStep(config, container, heightPerPage, currentHeight, debug) {
+    if (!config.insertDummyRowWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyDummyRowStep: SKIPPED (insertDummyRowWhileFormatTable=false)`);
+      }
+      return normalizeHeight(currentHeight);
+    }
+    const remaining = normalizeHeight(heightPerPage - currentHeight);
+    if (debug) {
+      console.log(`[printform] applyDummyRowStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px`);
+    }
+    if (remaining > 0) {
+      appendDummyRow(config, container, remaining);
+      if (debug) {
+        console.log(`[printform]   inserted 1 dummy_row with height: ${remaining}px`);
+      }
+      return normalizeHeight(currentHeight + remaining);
+    }
+    return normalizeHeight(currentHeight);
+  }
+  function applyFooterSpacerWithDummyStep(config, container, heightPerPage, currentHeight, skipDummyRowItems, debug) {
+    if (!config.insertFooterSpacerWithDummyRowItemWhileFormatTable || skipDummyRowItems) {
+      if (debug) {
+        console.log(`[printform] applyFooterSpacerWithDummyStep: SKIPPED (flag=${config.insertFooterSpacerWithDummyRowItemWhileFormatTable}, skipDummy=${skipDummyRowItems})`);
+      }
+      return {
+        currentHeight: normalizeHeight(currentHeight),
+        skipFooterSpacer: false
+      };
+    }
+    const remaining = normalizeHeight(heightPerPage - currentHeight);
+    let workingHeight = normalizeHeight(currentHeight);
+    if (debug) {
+      console.log(`[printform] applyFooterSpacerWithDummyStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   remaining: ${remaining}px`);
+    }
+    if (remaining > 0) {
+      appendDummyRowItems(config, container, remaining);
+      const itemHeight = normalizeHeight(config.heightOfDummyRowItem);
+      if (itemHeight > 0) {
+        const count = Math.floor(remaining / itemHeight);
+        const remainder = normalizeHeight(remaining % itemHeight);
+        workingHeight = normalizeHeight(heightPerPage - remainder);
+        if (debug) {
+          console.log(`[printform]   inserted ${count} spacer dummy_row_items, remainder: ${remainder}px`);
+        }
+      }
+    }
+    return {
+      currentHeight: workingHeight,
+      skipFooterSpacer: true
+    };
+  }
+  function applyFooterSpacerStep(config, container, heightPerPage, currentHeight, footerState, spacerTemplate, debug) {
+    if (!config.insertFooterSpacerWhileFormatTable) {
+      if (debug) {
+        console.log(`[printform] applyFooterSpacerStep: SKIPPED (insertFooterSpacerWhileFormatTable=false)`);
+      }
+      return;
+    }
+    const clone = spacerTemplate.cloneNode(true);
+    let remaining = normalizeHeight(heightPerPage - currentHeight);
+    const nonRepeating = footerState && footerState.nonRepeating ? normalizeHeight(footerState.nonRepeating) : 0;
+    if (nonRepeating > 0) {
+      remaining -= nonRepeating;
+    }
+    const spacerHeight = Math.max(0, remaining);
+    clone.style.height = `${spacerHeight}px`;
+    container.appendChild(clone);
+    if (debug) {
+      console.log(`[printform] applyFooterSpacerStep:`);
+      console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+      console.log(`[printform]   nonRepeatingFooter: ${nonRepeating}px`);
+      console.log(`[printform]   pfooter_spacer height: ${spacerHeight}px`);
+    }
+  }
+  function markAsProcessed(element, baseClass) {
+    if (!element || !baseClass) return;
+    if (element.classList.contains(`${baseClass}_processed`)) return;
+    element.classList.remove(baseClass);
+    element.classList.add(`${baseClass}_processed`);
+  }
+  function measureHeight(element) {
+    if (!element) return 0;
+    const baseHeight = element.offsetHeight || element.getBoundingClientRect().height;
+    const view = element.ownerDocument && element.ownerDocument.defaultView || (typeof window !== "undefined" ? window : null);
+    if (!view || !view.getComputedStyle) {
+      return normalizeHeight(baseHeight);
+    }
+    const style = view.getComputedStyle(element);
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+    return normalizeHeight(baseHeight + marginTop + marginBottom);
+  }
+  function measureHeightRaw(element) {
+    if (!element) return 0;
+    const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+    const baseHeight = rect && Number.isFinite(rect.height) ? rect.height : element.offsetHeight || 0;
+    const view = element.ownerDocument && element.ownerDocument.defaultView || (typeof window !== "undefined" ? window : null);
+    if (!view || !view.getComputedStyle) {
+      return Number.isFinite(baseHeight) ? Math.max(0, baseHeight) : 0;
+    }
+    const style = view.getComputedStyle(element);
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+    const total = baseHeight + marginTop + marginBottom;
+    return Number.isFinite(total) ? Math.max(0, total) : 0;
+  }
+  function createPageBreakDivider(extraClassNames) {
+    const div = document.createElement("div");
+    div.classList.add("div_page_break_before");
+    div.setAttribute("style", "page-break-before: always; font-size: 0pt; height: 0px;");
+    const globalScope2 = typeof window !== "undefined" ? window : globalThis;
+    const resolvedClassNames = typeof extraClassNames === "string" && extraClassNames.trim() ? extraClassNames : globalScope2 && typeof globalScope2.__printFormDividerClassAppend === "string" ? globalScope2.__printFormDividerClassAppend : "";
+    if (resolvedClassNames) {
+      resolvedClassNames.split(/\s+/).filter(Boolean).forEach((className) => div.classList.add(className));
+    }
+    return div;
+  }
+  function appendClone(target, element, logFn, label) {
+    if (!element) return null;
+    const clone = element.cloneNode(true);
+    target.appendChild(clone);
+    if (logFn) logFn(`append ${label}`);
+    return clone;
+  }
+  function appendRowItem(target, element, logFn, index, label) {
+    if (!element) return null;
+    const clone = element.cloneNode(true);
+    target.appendChild(clone);
+    if (logFn) {
+      const resolvedLabel = label || "prowitem";
+      logFn(`append ${resolvedLabel} ${index}`);
+    }
+    return clone;
+  }
+  const DomHelpers = {
+    markAsProcessed,
+    measureHeight,
+    measureHeightRaw,
+    createPageBreakDivider,
+    appendClone,
+    appendRowItem,
+    createDummyRowTable
+  };
+  function attachPageMethods(FormatterClass) {
+    FormatterClass.prototype.initializeOutputContainer = function initializeOutputContainer() {
+      const container = document.createElement("div");
+      container.classList.add("printform_formatter");
+      this.formEl.parentNode.insertBefore(container, this.formEl);
+      return container;
+    };
+    FormatterClass.prototype.initializePhysicalWrapper = function initializePhysicalWrapper(outputContainer) {
+      if (this.currentPhysicalWrapper) {
+        outputContainer.appendChild(DomHelpers.createPageBreakDivider());
+        this.currentPhysicalPage += 1;
+      } else {
+        this.currentPhysicalPage = 1;
+      }
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("physical_page_wrapper");
+      wrapper.style.display = "flex";
+      wrapper.style.flexDirection = "column";
+      wrapper.style.alignItems = "flex-start";
+      wrapper.style.width = `${this.config.papersizeWidth}px`;
+      outputContainer.appendChild(wrapper);
+      this.currentPhysicalWrapper = wrapper;
+      this.pagesInCurrentPhysical = 0;
+      return wrapper;
+    };
+    FormatterClass.prototype.ensureCurrentPageContainer = function ensureCurrentPageContainer(outputContainer) {
+      if (!this.currentPhysicalWrapper) {
+        this.initializePhysicalWrapper(outputContainer);
+      }
+      if (!this.currentPageContainer) {
+        this.createNewLogicalPage(outputContainer);
+      }
+      return this.currentPageContainer;
+    };
+    FormatterClass.prototype.createNewLogicalPage = function createNewLogicalPage(outputContainer) {
+      if (!this.currentPhysicalWrapper || this.pagesInCurrentPhysical >= this.nUp) {
+        this.initializePhysicalWrapper(outputContainer);
+      }
+      const page = document.createElement("div");
+      page.classList.add("printform_page");
+      page.style.width = `${this.config.papersizeWidth}px`;
+      this.currentPhysicalWrapper.appendChild(page);
+      this.currentPageContainer = page;
+      this.pagesInCurrentPhysical += 1;
+      this.logicalPageToPhysicalPage[this.currentPage] = this.currentPhysicalPage;
+      return page;
+    };
+    FormatterClass.prototype.getCurrentPageContainer = function getCurrentPageContainer(outputContainer) {
+      return this.ensureCurrentPageContainer(outputContainer);
+    };
+    FormatterClass.prototype.finalizePageHeight = function finalizePageHeight(pageContainer) {
+      if (!pageContainer) return;
+      const configuredHeight = this.config.papersizeHeight;
+      const fillPageHeightAfterFooter = this.config.fillPageHeightAfterFooter !== false;
+      let appendedSpacerHeight = 0;
+      const formatPx = (value) => {
+        if (!Number.isFinite(value)) return "0";
+        return String(Math.round(value * 100) / 100);
+      };
+      if (fillPageHeightAfterFooter) {
+        const currentHeight = DomHelpers.measureHeightRaw(pageContainer);
+        const remaining = Math.max(0, configuredHeight - currentHeight);
+        if (remaining > 0.01) {
+          const spacer = document.createElement("div");
+          spacer.classList.add("dummy_spacer");
+          spacer.setAttribute("aria-hidden", "true");
+          spacer.style.display = "block";
+          spacer.style.width = "100%";
+          spacer.style.height = `${remaining}px`;
+          spacer.style.margin = "0";
+          spacer.style.padding = "0";
+          const footerSelectors = FOOTER_VARIANTS.map((variant) => `.${variant.className}_processed`).concat([
+            `.${FOOTER_LOGO_VARIANT.className}_processed`,
+            `.${FOOTER_PAGENUM_VARIANT.className}_processed`
+          ]);
+          const firstFooter = pageContainer.querySelector(footerSelectors.join(", "));
+          if (firstFooter && firstFooter.parentNode === pageContainer) {
+            pageContainer.insertBefore(spacer, firstFooter);
+          } else {
+            pageContainer.appendChild(spacer);
+          }
+          appendedSpacerHeight = remaining;
+        }
+      }
+      if (this.debug) {
+        console.log(`
+[printform] ========== PAGE HEIGHT CALCULATION ==========`);
+        console.log(`[printform] Configured page height: ${configuredHeight}px`);
+        console.log(`[printform] -------------------------------------------`);
+        const children = Array.from(pageContainer.children);
+        let cumulativeHeight = 0;
+        console.log(`[printform] Elements breakdown (${children.length} elements):`);
+        children.forEach((child, index) => {
+          const childHeight = DomHelpers.measureHeightRaw(child);
+          cumulativeHeight += childHeight;
+          const className = child.className || "(no class)";
+          const tagName = child.tagName.toLowerCase();
+          console.log(`[printform]   ${index + 1}. <${tagName}.${className}>`);
+          console.log(`[printform]      Height: ${formatPx(childHeight)}px`);
+          console.log(`[printform]      Cumulative: ${formatPx(cumulativeHeight)}px`);
+          console.log(`[printform]      Remaining: ${formatPx(Math.max(0, configuredHeight - cumulativeHeight))}px`);
+          if (childHeight > configuredHeight * 0.5) {
+            console.log(`[printform]      ⚠️  WARNING: Element height is > 50% of page height`);
+          }
+        });
+        console.log(`[printform] -------------------------------------------`);
+        console.log(`[printform] Total content height: ${formatPx(cumulativeHeight)}px`);
+        if (cumulativeHeight < configuredHeight) {
+          const shortfall = configuredHeight - cumulativeHeight;
+          console.log(`[printform] ✓ Content fits (${formatPx(shortfall)}px under limit)`);
+        } else if (cumulativeHeight > configuredHeight) {
+          const overflow = cumulativeHeight - configuredHeight;
+          console.log(`[printform] ⚠️  Content overflow (${formatPx(overflow)}px over limit)`);
+        } else {
+          console.log(`[printform] ✓ Perfect fit (exactly matches configured height)`);
+        }
+        if (appendedSpacerHeight > 0) {
+          console.log(`[printform] ✓ Final spacer appended: ${formatPx(appendedSpacerHeight)}px`);
+        }
+      }
+      if (this.debug) {
+        const actualHeight = DomHelpers.measureHeightRaw(pageContainer);
+        console.log(`[printform] -------------------------------------------`);
+        console.log(`[printform] Actual measured height: ${formatPx(actualHeight)}px`);
+        console.log(`[printform] ℹ️  Height NOT set - using natural content height`);
+        console.log(`[printform] ===============================================
+`);
+      }
+    };
+  }
+  const ROW_SELECTOR = ".prowitem, .ptac-rowitem, .paddt-rowitem";
+  const PTAC_MAX_WORDS_PER_SEGMENT = 200;
+  const PADDT_MAX_WORDS_PER_SEGMENT = 200;
+  function collectWordTokens(node) {
+    var tokens = [];
+    if (!node || !node.ownerDocument || !node.ownerDocument.createTreeWalker) {
+      return tokens;
+    }
+    var walker = node.ownerDocument.createTreeWalker(node, 4, null, false);
+    var current = walker.nextNode();
+    while (current) {
+      var text = current.nodeValue || "";
+      var regex = /\S+/g;
+      var match = regex.exec(text);
+      while (match) {
+        tokens.push({
+          node: current,
+          start: match.index,
+          end: match.index + match[0].length
+        });
+        match = regex.exec(text);
+      }
+      current = walker.nextNode();
+    }
+    return tokens;
+  }
+  function buildChunkHtml(node, range) {
+    var clone = node.cloneNode(false);
+    clone.appendChild(range.cloneContents());
+    return clone.outerHTML || "";
+  }
+  function splitParagraphIntoHtmlChunks(node, maxWords) {
+    if (!node) {
+      return [];
+    }
+    if (!maxWords || maxWords <= 0) {
+      return [node.outerHTML || ""];
+    }
+    var text = (node.textContent || "").trim();
+    if (!text) {
+      return [node.outerHTML || ""];
+    }
+    if (!node.ownerDocument || !node.ownerDocument.createRange || !node.ownerDocument.createTreeWalker) {
+      return [node.outerHTML || ""];
+    }
+    var tokens = collectWordTokens(node);
+    if (tokens.length === 0) {
+      return [node.outerHTML || ""];
+    }
+    if (tokens.length <= maxWords) {
+      return [node.outerHTML || ""];
+    }
+    var chunks = [];
+    for (var startIndex = 0; startIndex < tokens.length; startIndex += maxWords) {
+      var endIndex = startIndex + maxWords - 1;
+      if (endIndex >= tokens.length) {
+        endIndex = tokens.length - 1;
+      }
+      var range = node.ownerDocument.createRange();
+      if (startIndex === 0) {
+        range.setStart(node, 0);
+      } else {
+        var startToken = tokens[startIndex];
+        range.setStart(startToken.node, startToken.start);
+      }
+      if (endIndex + 1 < tokens.length) {
+        var nextToken = tokens[endIndex + 1];
+        range.setEnd(nextToken.node, nextToken.start);
+      } else {
+        range.setEnd(node, node.childNodes.length);
+      }
+      chunks.push(buildChunkHtml(node, range));
+    }
+    return chunks;
+  }
+  function splitPaddtParagraphIntoHtmlChunks(node, maxWords) {
+    return splitParagraphIntoHtmlChunks(node, maxWords);
+  }
+  function attachSectionMethods(FormatterClass) {
+    FormatterClass.prototype.collectSections = function collectSections() {
+      this.expandPaddtSegments();
+      this.expandPtacSegments();
+      const docInfos = DOCINFO_VARIANTS.map((variant) => {
+        const element = this.formEl.querySelector(`.${variant.className}`);
+        if (!element) return null;
+        return {
+          key: variant.key,
+          className: variant.className,
+          repeatFlag: variant.repeatFlag,
+          element
+        };
+      }).filter(Boolean);
+      const footerVariants = FOOTER_VARIANTS.map((variant) => {
+        const element = this.formEl.querySelector(`.${variant.className}`);
+        if (!element) return null;
+        return {
+          key: variant.key,
+          className: variant.className,
+          repeatFlag: variant.repeatFlag,
+          element
+        };
+      }).filter(Boolean);
+      const allRows = Array.from(this.formEl.querySelectorAll(ROW_SELECTOR));
+      const paddtRows = allRows.filter((row) => this.isPaddtRow(row));
+      const mainRows = allRows.filter((row) => !this.isPaddtRow(row));
+      this.paddtRows = paddtRows;
+      return {
+        header: this.formEl.querySelector(".pheader"),
+        docInfos,
+        rowHeader: this.formEl.querySelector(".prowheader"),
+        footerVariants,
+        footerLogo: this.formEl.querySelector(`.${FOOTER_LOGO_VARIANT.className}`),
+        footerPagenum: this.formEl.querySelector(`.${FOOTER_PAGENUM_VARIANT.className}`),
+        rows: mainRows
+      };
+    };
+    FormatterClass.prototype.measureSections = function measureSections(sections) {
+      const heights = {
+        header: DomHelpers.measureHeight(sections.header),
+        docInfos: {},
+        rowHeader: DomHelpers.measureHeight(sections.rowHeader),
+        footerVariants: {},
+        footerLogo: DomHelpers.measureHeight(sections.footerLogo),
+        footerPagenum: DomHelpers.measureHeight(sections.footerPagenum)
+      };
+      sections.docInfos.forEach((docInfo) => {
+        heights.docInfos[docInfo.key] = DomHelpers.measureHeight(docInfo.element);
+      });
+      sections.footerVariants.forEach((footer) => {
+        heights.footerVariants[footer.key] = DomHelpers.measureHeight(footer.element);
+      });
+      return heights;
+    };
+    FormatterClass.prototype.markSectionsProcessed = function markSectionsProcessed(sections) {
+      DomHelpers.markAsProcessed(sections.header, "pheader");
+      sections.docInfos.forEach((docInfo) => {
+        DomHelpers.markAsProcessed(docInfo.element, docInfo.className);
+      });
+      DomHelpers.markAsProcessed(sections.rowHeader, "prowheader");
+      sections.footerVariants.forEach((footer) => {
+        DomHelpers.markAsProcessed(footer.element, footer.className);
+      });
+      DomHelpers.markAsProcessed(sections.footerLogo, FOOTER_LOGO_VARIANT.className);
+      DomHelpers.markAsProcessed(sections.footerPagenum, FOOTER_PAGENUM_VARIANT.className);
+    };
+    FormatterClass.prototype.createFooterSpacerTemplate = function createFooterSpacerTemplate() {
+      const spacer = document.createElement("div");
+      spacer.classList.add("pfooter_spacer", "paper_width");
+      spacer.style.height = "0px";
+      return spacer;
+    };
+  }
+  function attachRowTypeMethods(FormatterClass) {
+    FormatterClass.prototype.isPaddtRow = function isPaddtRow(row) {
+      if (!row) {
+        return false;
+      }
+      return row.classList.contains("paddt_segment") || row.classList.contains("paddt") || row.classList.contains("paddt-rowitem") || row.classList.contains("paddt-rowitem_processed");
+    };
+    FormatterClass.prototype.isPtacRow = function isPtacRow(row) {
+      if (!row) {
+        return false;
+      }
+      return row.classList.contains("ptac_segment") || row.classList.contains("ptac") || row.classList.contains("ptac-rowitem") || row.classList.contains("ptac-rowitem_processed");
+    };
+    FormatterClass.prototype.getRowBaseClass = function getRowBaseClass(row) {
+      if (!row) {
+        return "prowitem";
+      }
+      if (this.isPaddtRow(row)) return "paddt-rowitem";
+      return this.isPtacRow(row) ? "ptac-rowitem" : "prowitem";
+    };
+    FormatterClass.prototype.shouldSkipRowHeaderForRow = function shouldSkipRowHeaderForRow(row) {
+      if (!row) {
+        return false;
+      }
+      if (!this.config.repeatRowheader) {
+        return false;
+      }
+      if (row.classList.contains("without_prowheader") || row.classList.contains("tb_without_rowheader")) {
+        return true;
+      }
+      if (this.isPtacRow(row)) {
+        if (this.config.repeatPtacRowheader) return false;
+        return true;
+      }
+      if (this.isPaddtRow(row)) {
+        if (this.paddtConfig && this.paddtConfig.repeatPaddtRowheader) return false;
+        return true;
+      }
+      return false;
+    };
+    FormatterClass.prototype.shouldSkipDummyRowItemsForContext = function shouldSkipDummyRowItemsForContext(pageContext) {
+      return Boolean(
+        pageContext && (pageContext.isPtacPage && !this.config.insertPtacDummyRowItems || pageContext.isPaddtPage && !(this.paddtConfig && this.paddtConfig.insertPaddtDummyRowItems))
+      );
+    };
+  }
+  function attachPaddtSegmentMethods(FormatterClass) {
+    FormatterClass.prototype.expandPaddtSegments = function expandPaddtSegments() {
+      if (this.formEl.dataset.paddtExpanded === "true") {
+        return;
+      }
+      const paddtTables = Array.from(this.formEl.querySelectorAll(".paddt"));
+      if (paddtTables.length === 0) {
+        this.formEl.dataset.paddtExpanded = "true";
+        return;
+      }
+      var maxWords = this.paddtConfig && this.paddtConfig.paddtMaxWordsPerSegment || PADDT_MAX_WORDS_PER_SEGMENT;
+      paddtTables.forEach((paddtRoot) => {
+        if (!paddtRoot || paddtRoot.dataset.paddtSegment === "true") {
+          return;
+        }
+        const contentWrapper = paddtRoot.querySelector("td > div") || paddtRoot.querySelector("td");
+        if (!contentWrapper) {
+          paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
+          paddtRoot.dataset.paddtSegment = "true";
+          return;
+        }
+        const allChildren = Array.from(contentWrapper.children);
+        if (allChildren.length === 0) {
+          paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
+          paddtRoot.dataset.paddtSegment = "true";
+          return;
+        }
+        const segments = [];
+        allChildren.forEach((child) => {
+          if (child.tagName.toLowerCase() === "p") {
+            const chunks = splitPaddtParagraphIntoHtmlChunks(child, maxWords);
+            chunks.forEach((chunk) => segments.push(chunk));
+          } else {
+            segments.push(child.outerHTML);
+          }
+        });
+        if (segments.length === 0) {
+          paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
+          paddtRoot.dataset.paddtSegment = "true";
+          return;
+        }
+        contentWrapper.innerHTML = segments[0];
+        paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
+        paddtRoot.dataset.paddtSegment = "true";
+        var lastNode = paddtRoot;
+        for (var index = 1; index < segments.length; index += 1) {
+          const clone = paddtRoot.cloneNode(true);
+          clone.dataset.paddtSegment = "true";
+          const cloneWrapper = clone.querySelector("td > div") || clone.querySelector("td");
+          if (cloneWrapper) {
+            cloneWrapper.innerHTML = segments[index];
+          }
+          lastNode.parentNode.insertBefore(clone, lastNode.nextSibling);
+          lastNode = clone;
+        }
+      });
+      this.formEl.dataset.paddtExpanded = "true";
+    };
+  }
+  function attachPtacSegmentMethods(FormatterClass) {
+    FormatterClass.prototype.expandPtacSegments = function expandPtacSegments() {
+      if (this.formEl.dataset.ptacExpanded === "true") {
+        return;
+      }
+      const ptacTables = Array.from(this.formEl.querySelectorAll(".ptac"));
+      if (ptacTables.length === 0) {
+        this.formEl.dataset.ptacExpanded = "true";
+        return;
+      }
+      ptacTables.forEach((ptacRoot) => {
+        if (!ptacRoot || ptacRoot.dataset.ptacSegment === "true") {
+          return;
+        }
+        const contentWrapper = ptacRoot.querySelector("td > div") || ptacRoot.querySelector("td");
+        if (!contentWrapper) {
+          ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
+          ptacRoot.dataset.ptacSegment = "true";
+          return;
+        }
+        const allChildren = Array.from(contentWrapper.children);
+        if (allChildren.length === 0) {
+          ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
+          ptacRoot.dataset.ptacSegment = "true";
+          return;
+        }
+        const segments = [];
+        allChildren.forEach((child) => {
+          if (child.tagName.toLowerCase() === "p") {
+            const chunks = splitParagraphIntoHtmlChunks(child, PTAC_MAX_WORDS_PER_SEGMENT);
+            chunks.forEach((chunk) => segments.push(chunk));
+          } else {
+            segments.push(child.outerHTML);
+          }
+        });
+        if (segments.length === 0) {
+          ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
+          ptacRoot.dataset.ptacSegment = "true";
+          return;
+        }
+        contentWrapper.innerHTML = segments[0];
+        ptacRoot.classList.add("ptac-rowitem", "ptac_segment");
+        ptacRoot.dataset.ptacSegment = "true";
+        var lastNode = ptacRoot;
+        for (var index = 1; index < segments.length; index += 1) {
+          const clone = ptacRoot.cloneNode(true);
+          clone.classList.remove("tb_page_break_before");
+          clone.dataset.ptacSegment = "true";
+          const cloneWrapper = clone.querySelector("td > div") || clone.querySelector("td");
+          if (cloneWrapper) {
+            cloneWrapper.innerHTML = segments[index];
+          }
+          lastNode.parentNode.insertBefore(clone, lastNode.nextSibling);
+          lastNode = clone;
+        }
+      });
+      this.formEl.dataset.ptacExpanded = "true";
+    };
+  }
+  function attachRenderingMethods(FormatterClass) {
+    FormatterClass.prototype.ensureFirstPageSections = function ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader) {
+      let consumedHeight = 0;
+      if (sections.header) {
+        DomHelpers.appendClone(container, sections.header, logFn, "pheader");
+        if (!this.config.repeatHeader) {
+          consumedHeight += heights.header;
+        }
+      }
+      sections.docInfos.forEach((docInfo) => {
+        const clone = DomHelpers.appendClone(container, docInfo.element, logFn, docInfo.className);
+        this.registerPageNumberClone(clone);
+        if (!this.config[docInfo.repeatFlag]) {
+          consumedHeight += heights.docInfos[docInfo.key] || 0;
+        }
+      });
+      if (sections.rowHeader && !skipRowHeader) {
+        DomHelpers.appendClone(container, sections.rowHeader, logFn, "prowheader");
+        if (!this.config.repeatRowheader) {
+          consumedHeight += heights.rowHeader;
+        }
+      }
+      return consumedHeight;
+    };
+    FormatterClass.prototype.appendRepeatingSections = function appendRepeatingSections(container, sections, logFn, skipRowHeader) {
+      if (this.config.repeatHeader) {
+        DomHelpers.appendClone(container, sections.header, logFn, "pheader");
+      }
+      sections.docInfos.forEach((docInfo) => {
+        if (this.config[docInfo.repeatFlag]) {
+          const clone = DomHelpers.appendClone(container, docInfo.element, logFn, docInfo.className);
+          this.registerPageNumberClone(clone);
+        }
+      });
+      if (this.config.repeatRowheader && !skipRowHeader) {
+        DomHelpers.appendClone(container, sections.rowHeader, logFn, "prowheader");
+      }
+    };
+    FormatterClass.prototype.registerPageNumberClone = function registerPageNumberClone(node) {
+      if (!node) {
+        return false;
+      }
+      let registered = false;
+      if (this.showLogicalPageNumber) {
+        if (node.querySelector("[data-page-number], [data-page-total], [data-page-number-container]")) {
+          updatePageNumberContent(node, this.currentPage, null);
+          this.logicalPageNumberClones.push({ node, pageNumber: this.currentPage });
+          registered = true;
+        }
+      }
+      if (this.showPhysicalPageNumber) {
+        if (node.querySelector("[data-physical-page-number], [data-physical-page-total], [data-physical-page-number-container]")) {
+          const physicalPage = this.logicalPageToPhysicalPage[this.currentPage] || this.currentPhysicalPage || 1;
+          updatePhysicalPageNumberContent(node, physicalPage, null);
+          this.physicalPageNumberClones.push({ node, pageNumber: physicalPage });
+          registered = true;
+        }
+      }
+      return registered;
+    };
+    FormatterClass.prototype.appendRepeatingFooters = function appendRepeatingFooters(container, sections, logFn) {
+      sections.footerVariants.forEach((footer) => {
+        if (this.config[footer.repeatFlag]) {
+          DomHelpers.appendClone(container, footer.element, logFn, footer.className);
+        }
+      });
+      if (this.config.repeatFooterLogo) {
+        DomHelpers.appendClone(container, sections.footerLogo, logFn, FOOTER_LOGO_VARIANT.className);
+      }
+      if (this.config.repeatFooterPagenum) {
+        this.appendFooterPageNumber(container, sections, logFn);
+      }
+    };
+    FormatterClass.prototype.appendFinalFooters = function appendFinalFooters(container, sections, logFn) {
+      sections.footerVariants.forEach((footer) => {
+        DomHelpers.appendClone(container, footer.element, logFn, footer.className);
+      });
+      DomHelpers.appendClone(container, sections.footerLogo, logFn, FOOTER_LOGO_VARIANT.className);
+      this.appendFooterPageNumber(container, sections, logFn);
+    };
+    FormatterClass.prototype.appendFooterPageNumber = function appendFooterPageNumber(container, sections, logFn) {
+      if (!sections.footerPagenum) {
+        return;
+      }
+      const clone = sections.footerPagenum.cloneNode(true);
+      container.appendChild(clone);
+      this.registerPageNumberClone(clone);
+      if (logFn) {
+        logFn(`append ${FOOTER_PAGENUM_VARIANT.className} page ${this.currentPage}`);
+      }
+    };
+    FormatterClass.prototype.updatePageNumberTotals = function updatePageNumberTotals() {
+      if (!this.logicalPageNumberClones.length && !this.physicalPageNumberClones.length) {
+        return;
+      }
+      const totalLogicalPages = this.currentPage;
+      const totalPhysicalPages = this.currentPhysicalPage || 1;
+      this.logicalPageNumberClones.forEach((entry) => {
+        updatePageNumberContent(entry.node, entry.pageNumber, totalLogicalPages);
+      });
+      this.physicalPageNumberClones.forEach((entry) => {
+        updatePhysicalPageNumberContent(entry.node, entry.pageNumber, totalPhysicalPages);
+      });
+    };
+  }
+  function attachPaginationRenderMethods(FormatterClass) {
+    FormatterClass.prototype.initializePageContext = function initializePageContext(heightPerPage) {
+      return {
+        baseLimit: heightPerPage,
+        limit: heightPerPage,
+        skipRowHeader: false,
+        isPtacPage: false,
+        isPaddtPage: false,
+        repeatingHeight: 0
+      };
+    };
+    FormatterClass.prototype.refreshPageContextForRow = function refreshPageContextForRow(pageContext, row, heights) {
+      if (!pageContext) {
+        return pageContext;
+      }
+      const skipRowHeader = this.shouldSkipRowHeaderForRow(row);
+      const rowHeaderHeight = heights.rowHeader || 0;
+      pageContext.skipRowHeader = skipRowHeader;
+      pageContext.isPtacPage = this.isPtacRow(row);
+      pageContext.isPaddtPage = this.isPaddtRow(row);
+      pageContext.limit = pageContext.baseLimit + (skipRowHeader ? rowHeaderHeight : 0);
+      return pageContext;
+    };
+    FormatterClass.prototype.computeRepeatingHeightForPage = function computeRepeatingHeightForPage(sections, heights, skipRowHeader) {
+      let total = 0;
+      if (this.config.repeatHeader && sections.header) {
+        total += heights.header || 0;
+      }
+      sections.docInfos.forEach((docInfo) => {
+        if (this.config[docInfo.repeatFlag]) {
+          total += heights.docInfos[docInfo.key] || 0;
+        }
+      });
+      if (this.config.repeatRowheader && sections.rowHeader && !skipRowHeader) {
+        total += heights.rowHeader || 0;
+      }
+      return normalizeHeight(total);
+    };
+    FormatterClass.prototype.measureContentHeight = function measureContentHeight(container, repeatingHeight) {
+      const total = DomHelpers.measureHeight(container);
+      return normalizeHeight(total - (repeatingHeight || 0));
+    };
+    FormatterClass.prototype.renderRows = function renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
+      let currentHeight = 0;
+      const pageContext = this.initializePageContext(heightPerPage);
+      if (this.debug) {
+        console.log(`[printform] ===== renderRows START =====`);
+        console.log(`[printform] Total rows: ${sections.rows.length}, heightPerPage: ${heightPerPage}px`);
+      }
+      sections.rows.forEach((row, index) => {
+        const rowHeight = DomHelpers.measureHeight(row);
+        const baseClass = this.getRowBaseClass(row);
+        const isPtacRow = this.isPtacRow(row);
+        const isPaddtRow = this.isPaddtRow(row);
+        if (!rowHeight) {
+          DomHelpers.markAsProcessed(row, baseClass);
+          return;
+        }
+        if (currentHeight === 0) {
+          this.refreshPageContextForRow(pageContext, row, heights);
+          const container = this.getCurrentPageContainer(outputContainer);
+          this.ensureFirstPageSections(
+            container,
+            sections,
+            heights,
+            logFn,
+            pageContext.skipRowHeader
+          );
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${currentHeight}px, pageLimit=${pageContext.limit}px`);
+          }
+        }
+        DomHelpers.markAsProcessed(row, baseClass);
+        if (row.classList.contains("tb_page_break_before")) {
+          if (this.debug) {
+            console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${index}]`);
+          }
+          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+          const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
+          currentHeight = this.prepareNextPage(
+            outputContainer,
+            sections,
+            logFn,
+            pageContext.limit,
+            currentHeight,
+            footerState,
+            footerSpacerTemplate,
+            nextSkipRowHeader,
+            skipDummyRowItems,
+            pageContext.repeatingHeight
+          );
+          this.refreshPageContextForRow(pageContext, row, heights);
+          const container = this.getCurrentPageContainer(outputContainer);
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          DomHelpers.appendRowItem(container, row, null, index, baseClass);
+          if (logFn) {
+            const resolvedLabel = baseClass || "prowitem";
+            logFn(`append ${resolvedLabel} ${index}`);
+          }
+          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+          }
+          if (!isPtacRow) {
+            pageContext.isPtacPage = false;
+          }
+          if (!isPaddtRow) {
+            pageContext.isPaddtPage = false;
+          }
+        } else {
+          const container = this.getCurrentPageContainer(outputContainer);
+          const priorHeight = currentHeight;
+          const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
+          const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${measuredHeight}px, limit=${pageContext.limit}px`);
+          }
+          if (measuredHeight <= pageContext.limit) {
+            if (logFn) {
+              const resolvedLabel = baseClass || "prowitem";
+              logFn(`append ${resolvedLabel} ${index}`);
+            }
+            currentHeight = measuredHeight;
+            if (!isPtacRow) {
+              pageContext.isPtacPage = false;
+            }
+            if (!isPaddtRow) {
+              pageContext.isPaddtPage = false;
+            }
+            return;
+          }
+          if (clone && clone.parentNode === container) {
+            container.removeChild(clone);
+          }
+          if (this.debug) {
+            console.log(`[printform]   >> PAGE BREAK (overflow) at row[${index}]`);
+          }
+          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+          const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
+          currentHeight = this.prepareNextPage(
+            outputContainer,
+            sections,
+            logFn,
+            pageContext.limit,
+            priorHeight,
+            footerState,
+            footerSpacerTemplate,
+            nextSkipRowHeader,
+            skipDummyRowItems,
+            pageContext.repeatingHeight
+          );
+          this.refreshPageContextForRow(pageContext, row, heights);
+          const nextContainer = this.getCurrentPageContainer(outputContainer);
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+          currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+          DomHelpers.appendRowItem(nextContainer, row, null, index, baseClass);
+          if (logFn) {
+            const resolvedLabel = baseClass || "prowitem";
+            logFn(`append ${resolvedLabel} ${index}`);
+          }
+          currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+          }
+          if (!isPtacRow) {
+            pageContext.isPtacPage = false;
+          }
+          if (!isPaddtRow) {
+            pageContext.isPaddtPage = false;
+          }
+        }
+      });
+      if (this.debug) {
+        console.log(`[printform] ===== renderRows END (page ${this.currentPage}, finalHeight=${currentHeight}px) =====`);
+      }
+      return {
+        currentHeight,
+        pageLimit: pageContext.limit,
+        isPtacPage: pageContext.isPtacPage,
+        isPaddtPage: pageContext.isPaddtPage,
+        repeatingHeight: pageContext.repeatingHeight
+      };
+    };
+    FormatterClass.prototype.prepareNextPage = function prepareNextPage(outputContainer, sections, logFn, pageLimit, currentHeight, footerState, spacerTemplate, skipRowHeader, skipDummyRowItems, repeatingHeight) {
+      const container = this.getCurrentPageContainer(outputContainer);
+      const filledHeight = this.applyRemainderSpacing(
+        container,
+        pageLimit,
+        currentHeight,
+        footerState,
+        spacerTemplate,
+        {
+          skipDummyRowItems,
+          repeatingHeight
+        }
+      );
+      this.appendRepeatingFooters(container, sections, logFn);
+      this.currentPage += 1;
+      this.currentPageContainer = null;
+      this.createNewLogicalPage(outputContainer);
+      const nextContainer = this.getCurrentPageContainer(outputContainer);
+      this.appendRepeatingSections(nextContainer, sections, logFn, skipRowHeader);
+      return filledHeight;
+    };
+    FormatterClass.prototype.applyRemainderSpacing = function applyRemainderSpacing(container, heightPerPage, currentHeight, footerState, spacerTemplate, options) {
+      const skipDummyRowItems = options && options.skipDummyRowItems;
+      const repeatingHeight = options && Number.isFinite(options.repeatingHeight) ? options.repeatingHeight : null;
+      const useCurrentHeight = options && options.useCurrentHeight === true;
+      let workingHeight = normalizeHeight(currentHeight);
+      if (repeatingHeight !== null && !useCurrentHeight) {
+        const measuredTotal = DomHelpers.measureHeight(container);
+        workingHeight = normalizeHeight(measuredTotal - repeatingHeight);
+      }
+      if (this.debug) {
+        console.log(`[printform] ----- applyRemainderSpacing (page ${this.currentPage}) -----`);
+        console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
+        console.log(`[printform]   skipDummyRowItems: ${skipDummyRowItems}`);
+      }
+      if (!skipDummyRowItems) {
+        workingHeight = applyDummyRowItemsStep(this.config, container, heightPerPage, workingHeight, this.debug);
+      }
+      workingHeight = applyDummyRowStep(this.config, container, heightPerPage, workingHeight, this.debug);
+      const spacerState = applyFooterSpacerWithDummyStep(
+        this.config,
+        container,
+        heightPerPage,
+        workingHeight,
+        skipDummyRowItems,
+        this.debug
+      );
+      workingHeight = spacerState.currentHeight;
+      if (!spacerState.skipFooterSpacer) {
+        applyFooterSpacerStep(
+          this.config,
+          container,
+          heightPerPage,
+          workingHeight,
+          footerState,
+          spacerTemplate,
+          this.debug
+        );
+      }
+      if (this.debug) {
+        console.log(`[printform]   finalHeight after spacing: ${workingHeight}px`);
+        console.log(`[printform] -----------------------------------------`);
+      }
+      return normalizeHeight(workingHeight);
+    };
+  }
+  function attachPaginationFinalizeMethods(FormatterClass) {
+    FormatterClass.prototype.computeHeightPerPage = function computeHeightPerPage(sections, heights) {
+      let available = this.config.papersizeHeight;
+      if (this.debug) {
+        console.log(`[printform] ===== computeHeightPerPage =====`);
+        console.log(`[printform] papersizeHeight (config): ${this.config.papersizeHeight}px`);
+        console.log(`[printform] papersizeWidth (config): ${this.config.papersizeWidth}px`);
+      }
+      if (this.config.repeatHeader && sections.header) {
+        if (this.debug) {
+          console.log(`[printform]   - repeatHeader: ${heights.header}px`);
+        }
+        available -= heights.header;
+      }
+      sections.docInfos.forEach((docInfo) => {
+        if (this.config[docInfo.repeatFlag]) {
+          const h = heights.docInfos[docInfo.key] || 0;
+          if (this.debug) {
+            console.log(`[printform]   - repeat ${docInfo.className}: ${h}px`);
+          }
+          available -= h;
+        }
+      });
+      if (this.config.repeatRowheader && sections.rowHeader) {
+        if (this.debug) {
+          console.log(`[printform]   - repeatRowheader: ${heights.rowHeader}px`);
+        }
+        available -= heights.rowHeader;
+      }
+      sections.footerVariants.forEach((footer) => {
+        if (this.config[footer.repeatFlag]) {
+          const h = heights.footerVariants[footer.key] || 0;
+          if (this.debug) {
+            console.log(`[printform]   - repeat ${footer.className}: ${h}px`);
+          }
+          available -= h;
+        }
+      });
+      if (this.config.repeatFooterLogo && sections.footerLogo) {
+        if (this.debug) {
+          console.log(`[printform]   - repeatFooterLogo: ${heights.footerLogo}px`);
+        }
+        available -= heights.footerLogo;
+      }
+      if (this.config.repeatFooterPagenum && sections.footerPagenum) {
+        const h = heights.footerPagenum || 0;
+        if (this.debug) {
+          console.log(`[printform]   - repeatFooterPagenum: ${h}px`);
+        }
+        available -= h;
+      }
+      if (this.debug) {
+        console.log(`[printform] heightPerPage (available for content): ${Math.max(0, available)}px`);
+        console.log(`[printform] ================================`);
+      }
+      return Math.max(0, available);
+    };
+    FormatterClass.prototype.computeFooterState = function computeFooterState(sections, heights) {
+      const footerLogoHeight = heights.footerLogo || 0;
+      const footerPagenumHeight = heights.footerPagenum || 0;
+      const totalFooterHeight = sections.footerVariants.reduce((sum, footer) => {
+        const height = heights.footerVariants[footer.key] || 0;
+        return sum + height;
+      }, 0);
+      const totalFinal = totalFooterHeight + footerLogoHeight + footerPagenumHeight;
+      const repeatingFooterHeight = sections.footerVariants.reduce((sum, footer) => {
+        const height = heights.footerVariants[footer.key] || 0;
+        return this.config[footer.repeatFlag] ? sum + height : sum;
+      }, 0);
+      let repeating = repeatingFooterHeight;
+      if (this.config.repeatFooterLogo) {
+        repeating += footerLogoHeight;
+      }
+      if (this.config.repeatFooterPagenum) {
+        repeating += footerPagenumHeight;
+      }
+      const nonRepeating = Math.max(0, totalFinal - repeating);
+      return {
+        totalFinal,
+        repeating,
+        nonRepeating
+      };
+    };
+    FormatterClass.prototype.finalizeDocument = function finalizeDocument(outputContainer, sections, heights, footerState, defaultHeightPerPage, renderState, spacerTemplate, logFn) {
+      const baseHeight = renderState ? renderState.currentHeight : 0;
+      const lastPageLimit = renderState && renderState.pageLimit ? renderState.pageLimit : defaultHeightPerPage;
+      const repeatingHeight = renderState && Number.isFinite(renderState.repeatingHeight) ? renderState.repeatingHeight : 0;
+      const skipDummyRowItems = Boolean(
+        renderState && (renderState.isPtacPage && !this.config.insertPtacDummyRowItems || renderState.isPaddtPage && !(this.paddtConfig && this.paddtConfig.insertPaddtDummyRowItems))
+      );
+      const allowance = footerState.totalFinal - footerState.repeating;
+      const heightWithFinalFooters = baseHeight + allowance;
+      if (heightWithFinalFooters <= lastPageLimit) {
+        const container2 = this.getCurrentPageContainer(outputContainer);
+        this.applyRemainderSpacing(
+          container2,
+          lastPageLimit,
+          heightWithFinalFooters,
+          footerState,
+          spacerTemplate,
+          {
+            skipDummyRowItems,
+            repeatingHeight,
+            useCurrentHeight: true
+          }
+        );
+        this.appendFinalFooters(container2, sections, logFn);
+        return;
+      }
+      this.prepareNextPage(
+        outputContainer,
+        sections,
+        logFn,
+        lastPageLimit,
+        baseHeight,
+        footerState,
+        spacerTemplate,
+        false,
+        skipDummyRowItems,
+        repeatingHeight
+      );
+      const finalPageStartHeight = allowance;
+      const container = this.getCurrentPageContainer(outputContainer);
+      const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, false);
+      this.applyRemainderSpacing(
+        container,
+        defaultHeightPerPage,
+        finalPageStartHeight,
+        footerState,
+        spacerTemplate,
+        {
+          repeatingHeight: nextRepeatingHeight,
+          useCurrentHeight: true
+        }
+      );
+      this.appendFinalFooters(container, sections, logFn);
+    };
+  }
+  class PrintFormFormatter {
+    constructor(formEl, config) {
+      this.formEl = formEl;
+      this.config = config;
+      this.debug = Boolean(config.debug);
+      this.nUp = Math.max(1, Math.floor(Number(config.nUp || 1)));
+      this.showLogicalPageNumber = config.showLogicalPageNumber !== false;
+      this.showPhysicalPageNumber = Boolean(config.showPhysicalPageNumber);
+      this.paddtConfig = getPaddtConfig(formEl, {});
+      this.paddtDebug = Boolean(this.paddtConfig.paddtDebug);
+      this.currentPage = 1;
+      this.currentPhysicalPage = 0;
+      this.pagesInCurrentPhysical = 0;
+      this.currentPhysicalWrapper = null;
+      this.currentPageContainer = null;
+      this.logicalPageNumberClones = [];
+      this.physicalPageNumberClones = [];
+      this.logicalPageToPhysicalPage = [];
+      if (this.debug) {
+        console.log(`[printform] ===== PrintFormFormatter initialized =====`);
+        console.log(`[printform] debug mode: ON`);
+        console.log(`[printform] config.debug raw value: ${config.debug}`);
+      }
+    }
+    log(message) {
+      if (this.debug) {
+        console.log(`[printform] ${message}`);
+      }
+    }
+    format() {
+      const logFn = this.debug ? this.log.bind(this) : null;
+      const container = this.initializeOutputContainer();
+      this.ensureCurrentPageContainer(container);
+      const sections = this.collectSections();
+      const heights = this.measureSections(sections);
+      const footerSpacerTemplate = this.createFooterSpacerTemplate();
+      this.markSectionsProcessed(sections);
+      const footerState = this.computeFooterState(sections, heights);
+      const heightPerPage = this.computeHeightPerPage(sections, heights);
+      const renderState = this.renderRows(
+        container,
+        sections,
+        heights,
+        footerState,
+        heightPerPage,
+        footerSpacerTemplate,
+        logFn
+      );
+      this.finalizeDocument(
+        container,
+        sections,
+        heights,
+        footerState,
+        heightPerPage,
+        renderState,
+        footerSpacerTemplate,
+        logFn
+      );
+      if (this.paddtRows && this.paddtRows.length) {
+        this.currentPage += 1;
+        this.currentPageContainer = null;
+        this.initializePhysicalWrapper(container);
+        this.createNewLogicalPage(container);
+        var paddtDocinfoFlags = {
+          docInfo: this.paddtConfig.repeatPaddtDocinfo,
+          docInfo002: this.paddtConfig.repeatPaddtDocinfo002,
+          docInfo003: this.paddtConfig.repeatPaddtDocinfo003,
+          docInfo004: this.paddtConfig.repeatPaddtDocinfo004,
+          docInfo005: this.paddtConfig.repeatPaddtDocinfo005
+        };
+        var paddtDocInfos = sections.docInfos.filter(function(di) {
+          var flag = paddtDocinfoFlags[di.key];
+          return flag === void 0 ? true : !!flag;
+        });
+        const paddtSections = {
+          header: sections.header,
+          docInfos: paddtDocInfos,
+          rowHeader: sections.rowHeader,
+          // 不包含业务 footer（如 pfooter/pfooter002...），仅保留 logo 与页码
+          footerVariants: [],
+          footerLogo: sections.footerLogo,
+          footerPagenum: sections.footerPagenum,
+          rows: this.paddtRows
+        };
+        const paddtFooterState = this.computeFooterState(paddtSections, heights);
+        const paddtHeightPerPage = this.computeHeightPerPage(paddtSections, heights);
+        const paddtRenderState = this.renderRows(
+          container,
+          paddtSections,
+          heights,
+          paddtFooterState,
+          paddtHeightPerPage,
+          footerSpacerTemplate,
+          logFn
+        );
+        this.finalizeDocument(
+          container,
+          paddtSections,
+          heights,
+          paddtFooterState,
+          paddtHeightPerPage,
+          paddtRenderState,
+          footerSpacerTemplate,
+          logFn
+        );
+      }
+      this.updatePageNumberTotals();
+      const allPages = container.querySelectorAll(".printform_page");
+      if (this.debug) {
+        console.log(`[printform] Finalizing heights for ${allPages.length} pages...`);
+      }
+      allPages.forEach((page, index) => {
+        this.finalizePageHeight(page);
+        if (this.debug) {
+          const heightStyle = page.style.height || "(auto)";
+          console.log(`[printform]   Page ${index + 1}: height style = ${heightStyle}`);
+        }
+      });
+      container.classList.remove("printform_formatter");
+      container.classList.add("printform_formatter_processed");
+      this.formEl.remove();
+      return container;
+    }
+  }
+  attachPageMethods(PrintFormFormatter);
+  attachSectionMethods(PrintFormFormatter);
+  attachRowTypeMethods(PrintFormFormatter);
+  attachPaddtSegmentMethods(PrintFormFormatter);
+  attachPtacSegmentMethods(PrintFormFormatter);
+  attachRenderingMethods(PrintFormFormatter);
+  attachPaginationRenderMethods(PrintFormFormatter);
+  attachPaginationFinalizeMethods(PrintFormFormatter);
+  function withDividerClassAppend(globalScope2, classAppend, fn) {
+    const prior = globalScope2.__printFormDividerClassAppend;
+    globalScope2.__printFormDividerClassAppend = typeof classAppend === "string" ? classAppend : "";
+    try {
+      return fn();
+    } finally {
+      if (prior === void 0) {
+        delete globalScope2.__printFormDividerClassAppend;
+      } else {
+        globalScope2.__printFormDividerClassAppend = prior;
+      }
+    }
+  }
+  function pauseInMilliseconds(time) {
+    return new Promise((resolve, reject) => {
+      {
+        setTimeout(resolve, time);
+      }
+    });
+  }
+  async function formatAllPrintForms(overrides = {}) {
+    const globalScope2 = typeof window !== "undefined" ? window : globalThis;
+    if (globalScope2.__printFormProcessing) {
+      return;
+    }
+    if (!overrides.force && globalScope2.__printFormProcessed) {
+      return;
+    }
+    globalScope2.__printFormProcessing = true;
+    try {
+      const doc = globalScope2.document;
+      if (!doc) return;
+      const forms = Array.from(doc.querySelectorAll(".printform"));
+      for (let index = 0; index < forms.length; index += 1) {
+        const formEl = forms[index];
+        const perFormOverrides = { ...overrides };
+        if (perFormOverrides.divPageBreakBeforeClassAppend === void 0 && formEl && formEl.dataset) {
+          const datasetValue = formEl.dataset.divPageBreakBeforeClassAppend;
+          if (typeof datasetValue === "string" && datasetValue.trim()) {
+            perFormOverrides.divPageBreakBeforeClassAppend = datasetValue.trim();
+          }
+        }
+        const dividerClassAppend = perFormOverrides.divPageBreakBeforeClassAppend;
+        const config = getPrintformConfig(formEl, perFormOverrides);
+        try {
+          await pauseInMilliseconds(1);
+        } catch (error) {
+          console.error("pauseInMilliseconds error", error);
+        }
+        try {
+          const formatted = withDividerClassAppend(globalScope2, dividerClassAppend, () => {
+            const formatter = new PrintFormFormatter(formEl, config);
+            return formatter.format();
+          });
+          if (index > 0 && formatted && formatted.parentNode) {
+            formatted.parentNode.insertBefore(DomHelpers.createPageBreakDivider(dividerClassAppend), formatted);
+          }
+        } catch (error) {
+          console.error("printform format error", error);
+        }
+      }
+      globalScope2.__printFormProcessed = true;
+    } finally {
+      globalScope2.__printFormProcessing = false;
+    }
+  }
+  function formatSinglePrintForm(formEl, overrides = {}) {
+    const globalScope2 = typeof window !== "undefined" ? window : globalThis;
+    const perFormOverrides = { ...overrides };
+    if (perFormOverrides.divPageBreakBeforeClassAppend === void 0 && formEl && formEl.dataset) {
+      const datasetValue = formEl.dataset.divPageBreakBeforeClassAppend;
+      if (typeof datasetValue === "string" && datasetValue.trim()) {
+        perFormOverrides.divPageBreakBeforeClassAppend = datasetValue.trim();
+      }
+    }
+    const dividerClassAppend = perFormOverrides.divPageBreakBeforeClassAppend;
+    const config = getPrintformConfig(formEl, perFormOverrides);
+    return withDividerClassAppend(globalScope2, dividerClassAppend, () => {
+      const formatter = new PrintFormFormatter(formEl, config);
+      return formatter.format();
+    });
+  }
+  const api = {
+    formatAll: formatAllPrintForms,
+    format: formatSinglePrintForm,
+    DEFAULT_CONFIG,
+    DEFAULT_PADDT_CONFIG
+  };
+  const globalScope = typeof window !== "undefined" ? window : null;
+  if (globalScope) {
+    if (globalScope.__printFormScriptLoaded__) {
+      globalScope.PrintForm = globalScope.PrintForm || api;
+    } else {
+      globalScope.__printFormScriptLoaded__ = true;
+      globalScope.PrintForm = globalScope.PrintForm || {};
+      Object.assign(globalScope.PrintForm, api);
+      const doc = globalScope.document;
+      if (doc && doc.addEventListener) {
+        doc.addEventListener("DOMContentLoaded", () => {
+          formatAllPrintForms();
+        });
+      }
+    }
+  }
+  return api;
+}();

@@ -5,6 +5,9 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: false,
+    // Keep `dist/printform.js` readable for debugging and easier review.
+    // If you need a smaller artifact for distribution, enable minify and/or add a separate `.min.js` output.
+    minify: false,
     lib: {
       entry: path.resolve(__dirname, "js/vite-entry.js"),
       name: "PrintForm",
@@ -22,4 +25,3 @@ export default defineConfig({
     include: ["tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"]
   }
 });
-
