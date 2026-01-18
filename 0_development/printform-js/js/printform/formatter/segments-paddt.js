@@ -27,46 +27,26 @@ export function attachPaddtSegmentMethods(FormatterClass) {
         return;
       }
 
-      const allParagraphs = Array.from(contentWrapper.querySelectorAll("p"));
-      var headingNode = null;
-      if (allParagraphs.length > 1) {
-        headingNode = allParagraphs.shift();
-      }
-      const paragraphs = allParagraphs;
+      const allChildren = Array.from(contentWrapper.children);
 
-      if (paragraphs.length === 0) {
-        paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
-        paddtRoot.dataset.paddtSegment = "true";
-        return;
-      }
-
-      const headingHTML = headingNode ? headingNode.outerHTML : "";
-      const paragraphHTML = paragraphs.reduce(function(accumulator, node) {
-        const chunks = splitPaddtParagraphIntoHtmlChunks(node, maxWords);
-        return accumulator.concat(chunks);
-      }, []);
-
-      if (paragraphHTML.length === 0) {
-        contentWrapper.innerHTML = headingHTML;
+      if (allChildren.length === 0) {
         paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
         paddtRoot.dataset.paddtSegment = "true";
         return;
       }
 
       const segments = [];
-      if (headingHTML) {
-        segments.push(headingHTML + paragraphHTML[0]);
-        for (var segIndex = 1; segIndex < paragraphHTML.length; segIndex += 1) {
-          segments.push(paragraphHTML[segIndex]);
+
+      allChildren.forEach(child => {
+        if (child.tagName.toLowerCase() === "p") {
+          const chunks = splitPaddtParagraphIntoHtmlChunks(child, maxWords);
+          chunks.forEach(chunk => segments.push(chunk));
+        } else {
+          segments.push(child.outerHTML);
         }
-      } else {
-        for (var segIndexAlt = 0; segIndexAlt < paragraphHTML.length; segIndexAlt += 1) {
-          segments.push(paragraphHTML[segIndexAlt]);
-        }
-      }
+      });
 
       if (segments.length === 0) {
-        contentWrapper.innerHTML = headingHTML;
         paddtRoot.classList.add("paddt-rowitem", "paddt_segment");
         paddtRoot.dataset.paddtSegment = "true";
         return;
@@ -92,4 +72,3 @@ export function attachPaddtSegmentMethods(FormatterClass) {
     this.formEl.dataset.paddtExpanded = "true";
   };
 }
-
