@@ -88,6 +88,7 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
   FormatterClass.prototype.finalizeDocument = function finalizeDocument(
     outputContainer,
     sections,
+    heights,
     footerState,
     defaultHeightPerPage,
     renderState,
@@ -98,6 +99,9 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
     const lastPageLimit = renderState && renderState.pageLimit
       ? renderState.pageLimit
       : defaultHeightPerPage;
+    const repeatingHeight = renderState && Number.isFinite(renderState.repeatingHeight)
+      ? renderState.repeatingHeight
+      : 0;
     const skipDummyRowItems = Boolean(
       renderState &&
       (
@@ -116,7 +120,9 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
         footerState,
         spacerTemplate,
         {
-          skipDummyRowItems
+          skipDummyRowItems,
+          repeatingHeight,
+          useCurrentHeight: true
         }
       );
       this.appendFinalFooters(container, sections, logFn);
@@ -132,20 +138,24 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
       footerState,
       spacerTemplate,
       false,
-      skipDummyRowItems
+      skipDummyRowItems,
+      repeatingHeight
     );
 
     const finalPageStartHeight = allowance;
     const container = this.getCurrentPageContainer(outputContainer);
+    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, false);
     this.applyRemainderSpacing(
       container,
       defaultHeightPerPage,
       finalPageStartHeight,
       footerState,
       spacerTemplate,
-      null
+      {
+        repeatingHeight: nextRepeatingHeight,
+        useCurrentHeight: true
+      }
     );
     this.appendFinalFooters(container, sections, logFn);
   };
 }
-

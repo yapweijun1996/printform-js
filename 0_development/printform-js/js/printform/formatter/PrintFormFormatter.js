@@ -66,6 +66,7 @@ export class PrintFormFormatter {
     this.finalizeDocument(
       container,
       sections,
+      heights,
       footerState,
       heightPerPage,
       renderState,
@@ -122,6 +123,7 @@ export class PrintFormFormatter {
       this.finalizeDocument(
         container,
         paddtSections,
+        heights,
         paddtFooterState,
         paddtHeightPerPage,
         paddtRenderState,

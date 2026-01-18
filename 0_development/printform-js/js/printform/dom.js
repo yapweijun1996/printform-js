@@ -206,13 +206,14 @@ import { normalizeHeight } from "./helpers.js";
   }
 
   function appendRowItem(target, element, logFn, index, label) {
-    if (!element) return;
+    if (!element) return null;
     const clone = element.cloneNode(true);
     target.appendChild(clone);
     if (logFn) {
       const resolvedLabel = label || "prowitem";
       logFn(`append ${resolvedLabel} ${index}`);
     }
+    return clone;
   }
 
   export const DomHelpers = {

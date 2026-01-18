@@ -10,7 +10,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
       limit: heightPerPage,
       skipRowHeader: false,
       isPtacPage: false,
-      isPaddtPage: false
+      isPaddtPage: false,
+      repeatingHeight: 0
     };
   };
 
@@ -25,6 +26,27 @@ export function attachPaginationRenderMethods(FormatterClass) {
     pageContext.isPaddtPage = this.isPaddtRow(row);
     pageContext.limit = pageContext.baseLimit + (skipRowHeader ? rowHeaderHeight : 0);
     return pageContext;
+  };
+
+  FormatterClass.prototype.computeRepeatingHeightForPage = function computeRepeatingHeightForPage(sections, heights, skipRowHeader) {
+    let total = 0;
+    if (this.config.repeatHeader && sections.header) {
+      total += heights.header || 0;
+    }
+    sections.docInfos.forEach((docInfo) => {
+      if (this.config[docInfo.repeatFlag]) {
+        total += heights.docInfos[docInfo.key] || 0;
+      }
+    });
+    if (this.config.repeatRowheader && sections.rowHeader && !skipRowHeader) {
+      total += heights.rowHeader || 0;
+    }
+    return normalizeHeight(total);
+  };
+
+  FormatterClass.prototype.measureContentHeight = function measureContentHeight(container, repeatingHeight) {
+    const total = DomHelpers.measureHeight(container);
+    return normalizeHeight(total - (repeatingHeight || 0));
   };
 
   FormatterClass.prototype.renderRows = function renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
@@ -47,29 +69,26 @@ export function attachPaginationRenderMethods(FormatterClass) {
       if (currentHeight === 0) {
         this.refreshPageContextForRow(pageContext, row, heights);
         const container = this.getCurrentPageContainer(outputContainer);
-        currentHeight += this.ensureFirstPageSections(
+        this.ensureFirstPageSections(
           container,
           sections,
           heights,
           logFn,
           pageContext.skipRowHeader
         );
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         if (this.debug) {
           console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${currentHeight}px, pageLimit=${pageContext.limit}px`);
         }
       }
 
-      currentHeight += rowHeight;
-      if (this.debug) {
-        console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
-      }
       DomHelpers.markAsProcessed(row, baseClass);
 
       if (row.classList.contains("tb_page_break_before")) {
         if (this.debug) {
           console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${index}]`);
         }
-        currentHeight -= rowHeight;
         const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
         const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
         currentHeight = this.prepareNextPage(
@@ -81,12 +100,19 @@ export function attachPaginationRenderMethods(FormatterClass) {
           footerState,
           footerSpacerTemplate,
           nextSkipRowHeader,
-          skipDummyRowItems
+          skipDummyRowItems,
+          pageContext.repeatingHeight
         );
         this.refreshPageContextForRow(pageContext, row, heights);
         const container = this.getCurrentPageContainer(outputContainer);
-        DomHelpers.appendRowItem(container, row, logFn, index, baseClass);
-        currentHeight = rowHeight;
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+        DomHelpers.appendRowItem(container, row, null, index, baseClass);
+        if (logFn) {
+          const resolvedLabel = baseClass || "prowitem";
+          logFn(`append ${resolvedLabel} ${index}`);
+        }
+        currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         if (this.debug) {
           console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
         }
@@ -96,17 +122,32 @@ export function attachPaginationRenderMethods(FormatterClass) {
         if (!isPaddtRow) {
           pageContext.isPaddtPage = false;
         }
-      } else if (currentHeight <= pageContext.limit) {
-        const container = this.getCurrentPageContainer(outputContainer);
-        DomHelpers.appendRowItem(container, row, logFn, index, baseClass);
-        if (!isPtacRow) {
-          pageContext.isPtacPage = false;
-        }
-        if (!isPaddtRow) {
-          pageContext.isPaddtPage = false;
-        }
       } else {
-        currentHeight -= rowHeight;
+        const container = this.getCurrentPageContainer(outputContainer);
+        const priorHeight = currentHeight;
+        const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
+        const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+        if (this.debug) {
+          console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${measuredHeight}px, limit=${pageContext.limit}px`);
+        }
+        if (measuredHeight <= pageContext.limit) {
+          if (logFn) {
+            const resolvedLabel = baseClass || "prowitem";
+            logFn(`append ${resolvedLabel} ${index}`);
+          }
+          currentHeight = measuredHeight;
+          if (!isPtacRow) {
+            pageContext.isPtacPage = false;
+          }
+          if (!isPaddtRow) {
+            pageContext.isPaddtPage = false;
+          }
+          return;
+        }
+
+        if (clone && clone.parentNode === container) {
+          container.removeChild(clone);
+        }
         if (this.debug) {
           console.log(`[printform]   >> PAGE BREAK (overflow) at row[${index}]`);
         }
@@ -117,16 +158,23 @@ export function attachPaginationRenderMethods(FormatterClass) {
           sections,
           logFn,
           pageContext.limit,
-          currentHeight,
+          priorHeight,
           footerState,
           footerSpacerTemplate,
           nextSkipRowHeader,
-          skipDummyRowItems
+          skipDummyRowItems,
+          pageContext.repeatingHeight
         );
         this.refreshPageContextForRow(pageContext, row, heights);
-        const container = this.getCurrentPageContainer(outputContainer);
-        DomHelpers.appendRowItem(container, row, logFn, index, baseClass);
-        currentHeight = rowHeight;
+        const nextContainer = this.getCurrentPageContainer(outputContainer);
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+        DomHelpers.appendRowItem(nextContainer, row, null, index, baseClass);
+        if (logFn) {
+          const resolvedLabel = baseClass || "prowitem";
+          logFn(`append ${resolvedLabel} ${index}`);
+        }
+        currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
         if (this.debug) {
           console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
         }
@@ -145,7 +193,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
       currentHeight,
       pageLimit: pageContext.limit,
       isPtacPage: pageContext.isPtacPage,
-      isPaddtPage: pageContext.isPaddtPage
+      isPaddtPage: pageContext.isPaddtPage,
+      repeatingHeight: pageContext.repeatingHeight
     };
   };
 
@@ -158,7 +207,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
     footerState,
     spacerTemplate,
     skipRowHeader,
-    skipDummyRowItems
+    skipDummyRowItems,
+    repeatingHeight
   ) {
     const container = this.getCurrentPageContainer(outputContainer);
     const filledHeight = this.applyRemainderSpacing(
@@ -168,7 +218,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
       footerState,
       spacerTemplate,
       {
-        skipDummyRowItems
+        skipDummyRowItems,
+        repeatingHeight
       }
     );
     this.appendRepeatingFooters(container, sections, logFn);
@@ -182,7 +233,13 @@ export function attachPaginationRenderMethods(FormatterClass) {
 
   FormatterClass.prototype.applyRemainderSpacing = function applyRemainderSpacing(container, heightPerPage, currentHeight, footerState, spacerTemplate, options) {
     const skipDummyRowItems = options && options.skipDummyRowItems;
+    const repeatingHeight = options && Number.isFinite(options.repeatingHeight) ? options.repeatingHeight : null;
+    const useCurrentHeight = options && options.useCurrentHeight === true;
     let workingHeight = normalizeHeight(currentHeight);
+    if (repeatingHeight !== null && !useCurrentHeight) {
+      const measuredTotal = DomHelpers.measureHeight(container);
+      workingHeight = normalizeHeight(measuredTotal - repeatingHeight);
+    }
     if (this.debug) {
       console.log(`[printform] ----- applyRemainderSpacing (page ${this.currentPage}) -----`);
       console.log(`[printform]   heightPerPage: ${heightPerPage}px, currentHeight: ${currentHeight}px`);
@@ -219,4 +276,3 @@ export function attachPaginationRenderMethods(FormatterClass) {
     return normalizeHeight(workingHeight);
   };
 }
-

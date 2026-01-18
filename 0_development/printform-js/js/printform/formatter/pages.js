@@ -77,8 +77,14 @@ export function attachPageMethods(FormatterClass) {
       const currentHeight = DomHelpers.measureHeight(pageContainer);
       const remaining = Math.max(0, configuredHeight - currentHeight);
       if (remaining > 0) {
-        const spacer = DomHelpers.createDummyRowTable(this.config, remaining);
+        const spacer = document.createElement("div");
         spacer.classList.add("dummy_spacer");
+        spacer.setAttribute("aria-hidden", "true");
+        spacer.style.display = "block";
+        spacer.style.width = "100%";
+        spacer.style.height = `${remaining}px`;
+        spacer.style.margin = "0";
+        spacer.style.padding = "0";
         const footerSelectors = FOOTER_VARIANTS
           .map((variant) => `.${variant.className}_processed`)
           .concat([
