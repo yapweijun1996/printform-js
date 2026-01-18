@@ -507,34 +507,47 @@
 </head>
 
 <body>
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh" onclick="switchLanguage('zh')">
+            <span>🇨🇳</span>
+            <span>中文</span>
+        </button>
+        <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">
+            <span>🇬🇧</span>
+            <span>English</span>
+        </button>
+    </div>
+
     <div class="container">
         <header>
             <div class="logo">
                 <div class="logo-icon">P</div>
             </div>
             <h1>PrintForm.js</h1>
-            <p class="subtitle">专业的打印表单分页引擎 - 演示导航中心</p>
+            <p class="subtitle" data-i18n="header.subtitle">Professional Print Form Pagination Engine - Demo Navigation
+                Center</p>
         </header>
 
         <!-- Stats -->
         <div class="stats-bar">
             <div class="stat-card">
                 <div class="stat-value">2</div>
-                <div class="stat-label">主要演示</div>
+                <div class="stat-label" data-i18n="stats.featured">Featured Demos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">16</div>
-                <div class="stat-label">测试文件</div>
+                <div class="stat-value">17</div>
+                <div class="stat-label" data-i18n="stats.tests">Test Files</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">100%</div>
-                <div class="stat-label">响应式设计</div>
+                <div class="stat-label" data-i18n="stats.responsive">Responsive Design</div>
             </div>
         </div>
 
         <!-- Featured Demos -->
         <section class="section">
-            <h2 class="section-title">🌟 精选演示</h2>
+            <h2 class="section-title" data-i18n="section.featured">🌟 Featured Demos</h2>
             <div class="cards-grid">
                 <!-- Demo 001 -->
                 <div class="demo-card" onclick="window.location.href='demo001.html'">
@@ -542,25 +555,26 @@
                         <div>
                             <div class="card-icon primary">💻</div>
                         </div>
-                        <span class="card-badge badge-featured">精选</span>
+                        <span class="card-badge badge-featured" data-i18n="badge.featured">Featured</span>
                     </div>
-                    <h3 class="card-title">电脑商店销售发票</h3>
-                    <p class="card-description">
-                        完整的销售发票演示,包含45个产品项目、多页分页、条款与条件(PTAC)以及审计数据(PADDT)。展示了复杂表格的完美分页处理。
+                    <h3 class="card-title" data-i18n="demo001.title">Computer Store Sales Invoice</h3>
+                    <p class="card-description" data-i18n="demo001.description">
+                        Complete sales invoice demo with 45 product items, multi-page pagination, Terms and Conditions
+                        (PTAC), and audit data (PADDT). Demonstrates perfect pagination handling of complex tables.
                     </p>
                     <div class="card-meta">
                         <div class="meta-item">
                             <span>📄</span>
-                            <span>多页文档</span>
+                            <span data-i18n="meta.multipage">Multi-page</span>
                         </div>
                         <div class="meta-item">
                             <span>🎨</span>
-                            <span>现代设计</span>
+                            <span data-i18n="meta.modern">Modern Design</span>
                         </div>
                     </div>
                     <div class="card-actions">
                         <a href="demo001.html" class="btn btn-primary" onclick="event.stopPropagation()">
-                            <span>查看演示</span>
+                            <span data-i18n="button.view">View Demo</span>
                             <span>→</span>
                         </a>
                     </div>
@@ -572,25 +586,27 @@
                         <div>
                             <div class="card-icon success">🏗️</div>
                         </div>
-                        <span class="card-badge badge-new">最新</span>
+                        <span class="card-badge badge-new" data-i18n="badge.new">New</span>
                     </div>
-                    <h3 class="card-title">建筑采购订单</h3>
-                    <p class="card-description">
-                        建筑行业采购订单模板,包含34个物料项目、供应商信息、交付条款。演示了工业级文档的专业排版能力。
+                    <h3 class="card-title" data-i18n="demo002.title">Construction Purchase Order</h3>
+                    <p class="card-description" data-i18n="demo002.description">
+                        Construction industry purchase order template with 34 material items, supplier information, and
+                        delivery terms. Demonstrates professional typesetting capabilities for industrial-grade
+                        documents.
                     </p>
                     <div class="card-meta">
                         <div class="meta-item">
                             <span>📋</span>
-                            <span>采购订单</span>
+                            <span data-i18n="meta.po">Purchase Order</span>
                         </div>
                         <div class="meta-item">
                             <span>⚙️</span>
-                            <span>工业级</span>
+                            <span data-i18n="meta.industrial">Industrial Grade</span>
                         </div>
                     </div>
                     <div class="card-actions">
                         <a href="demo002.html" class="btn btn-primary" onclick="event.stopPropagation()">
-                            <span>查看演示</span>
+                            <span data-i18n="button.view">View Demo</span>
                             <span>→</span>
                         </a>
                     </div>
@@ -600,27 +616,29 @@
 
         <!-- Legacy Tests -->
         <section class="section">
-            <h2 class="section-title collapsible-header" onclick="toggleSection(this)">
-                🧪 测试文件集合
+            <h2 class="section-title collapsible-header" onclick="toggleSection(this)" data-i18n="section.tests">
+                🧪 Test Files Collection
             </h2>
             <div class="collapsible-content">
                 <div class="cards-grid">
                     <!-- Index Files -->
                     <div class="demo-card" onclick="window.location.href='index.html'">
                         <div class="card-icon warning">📝</div>
-                        <h3 class="card-title">index.html</h3>
-                        <p class="card-description">基础示例文档</p>
+                        <h3 class="card-title">index017.html</h3>
+                        <p class="card-description" data-i18n="test.basic">Basic example document</p>
                         <div class="card-actions">
-                            <a href="index.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                            <a href="index017.html" class="btn btn-secondary" onclick="event.stopPropagation()"
+                                data-i18n="button.view">View</a>
                         </div>
                     </div>
 
                     <div class="demo-card" onclick="window.location.href='index001.html'">
                         <div class="card-icon secondary">📄</div>
                         <h3 class="card-title">index001.html</h3>
-                        <p class="card-description">测试文档 001</p>
+                        <p class="card-description" data-i18n="test.doc">Test document 001</p>
                         <div class="card-actions">
-                            <a href="index001.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                            <a href="index001.html" class="btn btn-secondary" onclick="event.stopPropagation()"
+                                data-i18n="button.view">View</a>
                         </div>
                     </div>
 
@@ -775,25 +793,122 @@
 
         <footer>
             <p>
-                PrintForm.js © 2026 |
-                <a href="https://github.com/yapweijun1996/printform-js" target="_blank">GitHub</a> |
-                <a href="README.md">文档</a>
+                <span data-i18n="footer.copyright"></span>PrintForm.js © 2026</span> |
+                <a href="https://github.com/yapweijun1996/printform-js" target="_blank"
+                    data-i18n="footer.github">GitHub</a> |
+                <a href="README.md" data-i18n="footer.docs">Documentation</a>
             </p>
-            <p style="margin-top: 10px; font-size: 12px;">
-                使用 ❤️ 和现代 Web 技术构建
+            <p style="margin-top: 10px; font-size: 12px;" data-i18n="footer.tagline">
+                Built with ❤️ and Modern Web Technologies
             </p>
         </footer>
     </div>
 
     <script>
+        // i18n Translation Dictionary
+        const translations = {
+            zh: {
+                'page.title': 'PrintForm.js - 演示导航',
+                'header.subtitle': '专业的打印表单分页引擎 - 演示导航中心',
+                'stats.featured': '主要演示',
+                'stats.tests': '测试文件',
+                'stats.responsive': '响应式设计',
+                'section.featured': '🌟 精选演示',
+                'section.tests': '🧪 测试文件集合',
+                'badge.featured': '精选',
+                'badge.new': '最新',
+                'demo001.title': '电脑商店销售发票',
+                'demo001.description': '完整的销售发票演示,包含45个产品项目、多页分页、条款与条件(PTAC)以及审计数据(PADDT)。展示了复杂表格的完美分页处理。',
+                'demo002.title': '建筑采购订单',
+                'demo002.description': '建筑行业采购订单模板,包含34个物料项目、供应商信息、交付条款。演示了工业级文档的专业排版能力。',
+                'meta.multipage': '多页文档',
+                'meta.modern': '现代设计',
+                'meta.po': '采购订单',
+                'meta.industrial': '工业级',
+                'button.view': '查看',
+                'test.basic': '基础示例文档',
+                'test.doc': '测试文档',
+                'test.preview': '多页预览功能演示',
+                'footer.copyright': 'PrintForm.js © 2026',
+                'footer.github': 'GitHub',
+                'footer.docs': '文档',
+                'footer.tagline': '使用 ❤️ 和现代 Web 技术构建'
+            },
+            en: {
+                'page.title': 'PrintForm.js - Demo Navigation',
+                'header.subtitle': 'Professional Print Form Pagination Engine - Demo Navigation Center',
+                'stats.featured': 'Featured Demos',
+                'stats.tests': 'Test Files',
+                'stats.responsive': 'Responsive Design',
+                'section.featured': '🌟 Featured Demos',
+                'section.tests': '🧪 Test Files Collection',
+                'badge.featured': 'Featured',
+                'badge.new': 'New',
+                'demo001.title': 'Computer Store Sales Invoice',
+                'demo001.description': 'Complete sales invoice demo with 45 product items, multi-page pagination, Terms and Conditions (PTAC), and audit data (PADDT). Demonstrates perfect pagination handling of complex tables.',
+                'demo002.title': 'Construction Purchase Order',
+                'demo002.description': 'Construction industry purchase order template with 34 material items, supplier information, and delivery terms. Demonstrates professional typesetting capabilities for industrial-grade documents.',
+                'meta.multipage': 'Multi-page',
+                'meta.modern': 'Modern Design',
+                'meta.po': 'Purchase Order',
+                'meta.industrial': 'Industrial Grade',
+                'button.view': 'View',
+                'test.basic': 'Basic example document',
+                'test.doc': 'Test document',
+                'test.preview': 'Multi-page preview demo',
+                'footer.copyright': 'PrintForm.js © 2026',
+                'footer.github': 'GitHub',
+                'footer.docs': 'Documentation',
+                'footer.tagline': 'Built with ❤️ and Modern Web Technologies'
+            }
+        };
+
+        // Get current language from localStorage or default to 'en'
+        let currentLang = localStorage.getItem('printform-lang') || 'en';
+
+        // Apply translations
+        function applyTranslations(lang) {
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            // Update page title
+            document.title = translations[lang]['page.title'];
+
+            // Update language button states
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+            });
+
+            // Save to localStorage
+            localStorage.setItem('printform-lang', lang);
+            currentLang = lang;
+        }
+
+        // Switch language
+        function switchLanguage(lang) {
+            applyTranslations(lang);
+        }
+
+        // Collapsible section toggle
         function toggleSection(header) {
             header.classList.toggle('collapsed');
             const content = header.nextElementSibling;
             content.classList.toggle('collapsed');
         }
 
-        // Add stagger animation to cards
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Apply saved language or default
+            applyTranslations(currentLang);
+
+            // Add stagger animation to cards
             const cards = document.querySelectorAll('.demo-card');
             cards.forEach((card, index) => {
                 card.style.animation = `fadeInUp 0.6s ease-out ${index * 0.05}s both`;
