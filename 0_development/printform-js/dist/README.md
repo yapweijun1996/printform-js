@@ -39,61 +39,8 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 ## Logic Diagram
 
 To help understand how `printform.js` works, please refer to the flowchart below:
-
-```mermaid
-flowchart TD
-    subgraph Raw_Input [Raw HTML Input]
-        RawContainer[".printform Container"]
-        Header[".pheader (Header)"]
-        DocInfo[".pdocinfo / .pdocinfo002... (Document Info)"]
-        RowHeader[".prowheader (Table Header)"]
-        RowItems[".prowitem (Data Rows 1..N)"]
-        Ptac[".ptac (Terms Paragraphs)"]
-        Paddt[".paddt (Additional Paragraphs)"]
-        Footer[".pfooter / .pfooter002... (Business Footers)"]
-        FooterLogo[".pfooter_logo (Footer Logo)"]
-        FooterPagenum[".pfooter_pagenum (Footer Page Number)"]
-    end
-
-    subgraph Processing [PrintForm.js Logic]
-        Start(Start Formatting) --> ExpandSeg[Expand .ptac/.paddt into row segments]
-        ExpandSeg --> Collect[Collect Sections & Rows]
-        Collect --> Measure[Measure Section Heights]
-        Measure --> ComputeLayout[Compute Height/Page & Footer State]
-        ComputeLayout --> InitPage[Create Logical Page 1]
-        InitPage --> LoopRows{More main rows?}
-
-        LoopRows -- Yes --> CheckSpace{Row fits or forced break?}
-        CheckSpace -- Fits --> AppendRow[Append row item]
-        AppendRow --> LoopRows
-
-        CheckSpace -- Break/Overflow --> FillRemainder[Dummy rows + spacer]
-        FillRemainder --> AddRepeatFooter[Append repeating footers]
-        AddRepeatFooter --> NewPage["Create new logical page (N-Up creates new physical wrapper as needed)"]
-        NewPage --> AddRepeatHeader[Append repeated header/docinfo/rowheader]
-        AddRepeatHeader --> LoopRows
-
-        LoopRows -- "No (Done)" --> FinalizeMain[Fill remainder + append final footers]
-        FinalizeMain --> PaddtCheck{Has PADDT rows?}
-        PaddtCheck -- No --> UpdatePageNum[Update page number totals]
-        PaddtCheck -- Yes --> NewPhysical[Start new physical page for PADDT]
-        NewPhysical --> RenderPaddt["Render PADDT rows (only logo + page number footers)"]
-        RenderPaddt --> FinalizePaddt[Finalize PADDT pages]
-        FinalizePaddt --> UpdatePageNum
-        UpdatePageNum --> FinalizeHeight[Finalize Page Heights]
-        FinalizeHeight --> Finish(Done)
-    end
-
-    subgraph Output_Result [Print Output]
-        Physical1["Physical Page 1 (A4)"]
-        Logical1["Logical Page 1"]
-        Logical2["Logical Page 2 (N-Up)"]
-        PhysicalN["Physical Page N"]
-    end
-
-    RawContainer --> Start
-    Finish --> Output_Result
-```
+See: `docs/LOGIC_DIAGRAM.md`.
+Link: https://yapweijun1996.github.io/Mermaid-Share-Lite/#pako:eNp1Vl1v2zoM_SuEH4YMXZO12NMe7kXXrGiBNgvS7uHCGQrVUhJvtmRY8rIu6H-_JCV7Uub6IdHH4SF1SNE-ZIWRKvuYbSqzL3aidfAwX2vAx3ZP21Y0O1iJ_eONbjoHOQ7h-uHuFnj-zQPpwY1Lo50otWrzdTZt2lK7jWlrGJbXWYS_VkIG5I6HMPFLbxPY3BQ3emMYJ01R4hhmMIzfvz-fTqcwQVhXK-2AwCnDyuwjX63Z9-4exFOlYMwpmtw4VdveosQJ-hBO0JaFs-l0kVosnSgYjf_IrNrawlK0gvWzR1ghpWMwDWByIWXpSqNF9arJlTEuHGDDQ9bAD3sJPnUWRbY2gEcZbs3WRCyPFc5h4veANseMlmKrdFfHdo1fGkwJAouufoqVVFqu9VElLVtTYIyl3kK-pAq5wgqZfrfkvCwi1_cOK3HCv0AY4RwavYXT03_g869GaHmvtrkfAcs-C3oiqQFMGli1pZKwEetgyTyXpqpU4fLwD_f4g3mw8IbTHNn1CLK6U8J2rcrDf2-FhVRud4m3HuF91Xhf1K14Nh155FmwmbF8b4LcdHSnEueRKZPd6NKRTX7ZKsR68bh8kOcsMu2BbHVrTEPnOtwZDKrGK0ky2X9f-izR04PQAv5T1se-U8WP-0YU6oBbsCmdBdMCXu5CSXjCGH4QyRDvACeSK0ITy0XTYEUgQe5HnCO6WVG8AyYJOI4vJf9EvmdffqqWuhcbXZVVtVJ0Orry866un_mYcAKWzNq4vmOsD1LKlWpQ1HDj-lB5jarWX4A4y0cmTLNQe87POgsZ0moPVcgSXR6YLE6_NlDwruXtZvdseX-PN6VBIkHrSiqZXsrAnYYbOlwSLubGt7pZaJazofmNhe8pXhU-Lox1tjDUc7XC0ILq2L7K3-oOtcxJVoyh1_UEhA9rQ6ARBWNjZuMOyZk-XKMKy4v5_GGo1aSNMohCwoDI8msj8eCkD3aj3M-84Jq7EzjjRGW_vUbTlzyJHPKR-yaUpIgZsf59aEfJ6UHEs1IkQd_x_Sw6D0yMrp6B2_BJEudmrIlHbInqnr-fBX5iG1P5j3ki1h9gspz48e0qckQB_933UnjPUNpdKJlX3w5fOoed7nGlbFe58IIIi3HGgsBnqOggtm99-DL9kEoWWiNh0y45hjo_Rp37e3r0_g4-F3_5X4y9--IPI9aC68nveVl4NTn7Wmfvshq_IkQps4-HzO1UTd9oUm0EbmcvL_8DWI8ieQ
 
 ---
 
@@ -121,6 +68,19 @@ Open in browser:
 ## How to Use
 
 PrintForm does not require complex build tools, just follow a specific **HTML structure convention**.
+
+### Mobile (iOS/Android) Rendering Notes
+
+Some mobile browsers can auto-adjust font sizes and/or allow user scaling which may change layout measurements and break the expected print-like pagination. For consistent rendering, set these on your HTML page:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<style>
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+</style>
+```
+
+If you need to keep pinch-zoom for accessibility, remove `maximum-scale=1, user-scalable=no` and keep `text-size-adjust`.
 
 ### 1. Basic Structure
 Create a `div` with `class="printform"` and configure the paper size.
