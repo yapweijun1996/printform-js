@@ -154,6 +154,7 @@ Create a `div` with `class="printform"` and configure the paper size.
 ```
 
 ### 2. Key Classes
+Note: Do not rely on `data-*` attributes for styling. During formatting, the engine replaces section class names (e.g. `.pheader` → `.pheader_processed`). If you style by class, mirror rules for both original and `_processed` class names.
 
 | Class | Description | Default Behavior |
 | :--- | :--- | :--- |

@@ -13,20 +13,20 @@
     .block { border: 1px solid var(--line); padding: 10px 12px; margin-bottom: 8px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 13px; }
     .grid b { color: var(--ink); }
-    .rowheader table, .prowitem table, .ptac table, .paddt table { width: 100%; border-collapse: collapse; }
-    .rowheader th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; background:#f3f4f6; }
+    .rowheader table, .prowitem table, .prowitem_processed table, table.ptac, table.paddt, table.ptac-rowitem_processed, table.paddt-rowitem_processed { width: 100%; border-collapse: collapse; }
+    .rowheader th, .prowheader_processed th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; background:#f3f4f6; }
     th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
     .col-no { width: 48px; text-align: center; }
     .col-qty { width: 80px; text-align: right; }
     .col-unit { width: 70px; text-align: center; }
     .col-loc { width: 120px; }
     .col-remark { width: 180px; }
-    .pheader h1 { margin: 0 0 4px 0; color: var(--accent); font-size: 22px; }
-    .pheader small { color: var(--muted); }
+    .pheader h1, .pheader_processed h1 { margin: 0 0 4px 0; color: var(--accent); font-size: 22px; }
+    .pheader small, .pheader_processed small { color: var(--muted); }
     .ptac h3, .paddt h3 { margin: 0 0 6px 0; color: var(--accent); }
-    .pfooter { font-size: 12px; color: var(--muted); }
-    .pfooter_logo { font-size: 12px; font-weight: bold; color: var(--accent); margin-top: 6px; }
-    .pfooter_pagenum { font-size: 12px; text-align: right; }
+    .pfooter, .pfooter_processed { font-size: 12px; color: var(--muted); }
+    .pfooter_logo, .pfooter_logo_processed { font-size: 12px; font-weight: bold; color: var(--accent); margin-top: 6px; }
+    .pfooter_pagenum, .pfooter_pagenum_processed { font-size: 12px; text-align: right; }
   </style>
 </head>
 <body>
