@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PrintForm.js - Mobile Debug Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            padding: 10px;
+            font-size: 14px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .debug-section {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .debug-section h2 {
+            font-size: 16px;
+            margin: 0 0 10px 0;
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 5px;
+        }
+
+        .debug-info {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .debug-info strong {
+            color: #333;
+        }
+
+        .success {
+            color: #00aa00;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .warning {
+            color: #ff8800;
+            font-weight: bold;
+        }
+
+        /* PrintForm 测试样式 */
+        .printform {
+            background: white;
+            margin: 20px 0;
+        }
+
+        .pheader {
+            background: #0066cc;
+            color: white;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .prowitem {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pfooter {
+            background: #f0f0f0;
+            padding: 15px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📱 PrintForm.js Mobile Debug</h1>
+
+    <div class="debug-section">
+        <h2>设备信息 / Device Info</h2>
+        <div id="device-info" class="debug-info"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>加载状态 / Loading Status</h2>
+        <div id="loading-status" class="debug-info"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>PrintForm 测试</h2>
+        <div class="printform" data-debug="y" data-papersize-width="750" data-papersize-height="1050"
+            data-repeat-header="y" data-repeat-footer="y">
+            <div class="pheader">测试页眉 / Test Header</div>
+            <div class="prowitem">测试行 1 / Test Row 1</div>
+            <div class="prowitem">测试行 2 / Test Row 2</div>
+            <div class="prowitem">测试行 3 / Test Row 3</div>
+            <div class="pfooter">测试页脚 / Test Footer</div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>测量结果 / Measurement Results</h2>
+        <div id="measurement-results" class="debug-info"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>格式化结果 / Formatting Results</h2>
+        <div id="formatting-results" class="debug-info"></div>
+    </div>
+
+    <script src="./dist/printform.js"></script>
+    <script>
+        // 调试输出函数
+        function addDebugInfo(containerId, info, className = '') {
+            const container = document.getElementById(containerId);
+            const line = document.createElement('div');
+            line.innerHTML = info;
+            if (className) line.className = className;
+            container.appendChild(line);
+        }
+
+        // 1. 设备信息
+        function collectDeviceInfo() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            const isMobile = isIOS || isAndroid || /Mobile/.test(ua);
+
+            addDebugInfo('device-info', `<strong>User Agent:</strong> ${ua}`);
+            addDebugInfo('device-info', `<strong>Platform:</strong> ${navigator.platform}`);
+            addDebugInfo('device-info', `<strong>Is Mobile:</strong> ${isMobile ? '✓ Yes' : '✗ No'}`, isMobile ? 'success' : '');
+            addDebugInfo('device-info', `<strong>Is iOS:</strong> ${isIOS ? '✓ Yes' : '✗ No'}`, isIOS ? 'success' : '');
+            addDebugInfo('device-info', `<strong>Is Android:</strong> ${isAndroid ? '✓ Yes' : '✗ No'}`, isAndroid ? 'success' : '');
+            addDebugInfo('device-info', `<strong>Screen Size:</strong> ${window.screen.width} x ${window.screen.height}`);
+            addDebugInfo('device-info', `<strong>Viewport Size:</strong> ${window.innerWidth} x ${window.innerHeight}`);
+            addDebugInfo('device-info', `<strong>Device Pixel Ratio:</strong> ${window.devicePixelRatio}`);
+        }
+
+        // 2. 加载状态监控
+        let startTime = Date.now();
+
+        function logLoadingStatus(event, detail = '') {
+            const elapsed = Date.now() - startTime;
+            addDebugInfo('loading-status', `<strong>[${elapsed}ms]</strong> ${event} ${detail}`);
+        }
+
+        logLoadingStatus('Script Started', `(readyState: ${document.readyState})`);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            logLoadingStatus('DOMContentLoaded', '✓');
+        });
+
+        window.addEventListener('load', () => {
+            logLoadingStatus('Window Load', '✓');
+        });
+
+        // 3. 测量 PrintForm 元素
+        function measurePrintForm() {
+            setTimeout(() => {
+                const printform = document.querySelector('.printform');
+                if (printform) {
+                    const offsetHeight = printform.offsetHeight;
+                    const boundingHeight = printform.getBoundingClientRect().height;
+                    const computedStyle = window.getComputedStyle(printform);
+
+                    addDebugInfo('measurement-results', `<strong>Original .printform:</strong>`);
+                    addDebugInfo('measurement-results', `  offsetHeight: ${offsetHeight}px`);
+                    addDebugInfo('measurement-results', `  getBoundingClientRect().height: ${boundingHeight}px`);
+                    addDebugInfo('measurement-results', `  computedStyle.height: ${computedStyle.height}`);
+                    addDebugInfo('measurement-results', `  computedStyle.display: ${computedStyle.display}`);
+                    addDebugInfo('measurement-results', `  computedStyle.visibility: ${computedStyle.visibility}`);
+
+                    if (offsetHeight === 0 || boundingHeight === 0) {
+                        addDebugInfo('measurement-results', `<span class="error">⚠️ WARNING: Height is 0! This will cause formatting to fail.</span>`);
+                    } else {
+                        addDebugInfo('measurement-results', `<span class="success">✓ Height measurement looks good</span>`);
+                    }
+                } else {
+                    addDebugInfo('measurement-results', `<span class="error">✗ .printform element not found</span>`);
+                }
+            }, 100);
+        }
+
+        // 4. 检查格式化结果
+        function checkFormattingResults() {
+            setTimeout(() => {
+                const formatted = document.querySelector('.printform_formatter_processed');
+                const pages = document.querySelectorAll('.printform_page');
+
+                if (formatted) {
+                    addDebugInfo('formatting-results', `<span class="success">✓ PrintForm Successfully Formatted!</span>`);
+                    addDebugInfo('formatting-results', `<strong>Formatted Container:</strong>`);
+                    addDebugInfo('formatting-results', `  offsetHeight: ${formatted.offsetHeight}px`);
+                    addDebugInfo('formatting-results', `  Number of pages: ${pages.length}`);
+
+                    pages.forEach((page, index) => {
+                        const pageHeight = page.offsetHeight;
+                        const pageBoundingHeight = page.getBoundingClientRect().height;
+                        addDebugInfo('formatting-results', `  Page ${index + 1}: ${pageHeight}px (bounding: ${pageBoundingHeight}px)`);
+                    });
+                } else {
+                    addDebugInfo('formatting-results', `<span class="error">✗ PrintForm NOT Formatted</span>`);
+                    addDebugInfo('formatting-results', `<span class="warning">Check browser console for errors</span>`);
+
+                    // 检查是否还有原始的 .printform
+                    const originalPrintform = document.querySelector('.printform');
+                    if (originalPrintform) {
+                        addDebugInfo('formatting-results', `<span class="warning">⚠️ Original .printform still exists - formatting may not have run</span>`);
+                    }
+                }
+            }, 1000); // 等待 1 秒确保格式化完成
+        }
+
+        // 执行调试
+        collectDeviceInfo();
+
+        // 在不同阶段测量
+        measurePrintForm();
+
+        window.addEventListener('load', () => {
+            measurePrintForm();
+            checkFormattingResults();
+        });
+
+        // 额外的延迟检查(针对慢速移动设备)
+        setTimeout(() => {
+            logLoadingStatus('Delayed Check (2s)', '');
+            checkFormattingResults();
+        }, 2000);
+    </script>
+</body>
+
+</html>
