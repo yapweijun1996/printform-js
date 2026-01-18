@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Sample Printform</title>
+		<style>
+			body {
+				margin: 0px;
+				font-family: Arial, sans-serif;
+				padding: 0px;
+			}
+			.paper_width{
+				width:750px;
+			}
+			td{
+				line-height:20px;
+			}
+		</style>
+	</head>
+	<body>
+		<!--
+		  Printform container configuration — keep these data-* attributes in sync with
+		  DEFAULT_CONFIG in js/printform/config.js (also exposed as window.PrintForm.DEFAULT_CONFIG). Unless noted, the toggles accept
+		  y/yes/true/1 or n/no/false/0.
+		    data-papersize-width="750"   : Page width in pixels (print target <= 750px).
+		    data-papersize-height="1050" : Page height in pixels.
+		    data-height-of-dummy-row-item="26" : Height (px) used when auto-filling rows.
+		    data-repeat-header="y"       : Repeat .pheader on every page.
+		    data-repeat-docinfo="y"      : Repeat .pdocinfo table on every page.
+		    data-repeat-docinfo002="n"   : Repeat .pdocinfo002 per page (set to "y" when needed).
+		    data-repeat-docinfo003="y"   : Repeat .pdocinfo003 per page.
+		    data-repeat-docinfo004="y"   : Repeat .pdocinfo004 per page.
+		    data-repeat-docinfo005="y"   : Repeat .pdocinfo005 per page.
+		    data-repeat-rowheader="y"    : Repeat .prowheader on every page.
+		    data-repeat-footer="n"       : Repeat .pfooter on every page.
+		    data-repeat-footer002="n"   : Repeat .pfooter002 per page.
+		    data-repeat-footer003="n"   : Repeat .pfooter003 per page.
+		    data-repeat-footer004="n"   : Repeat .pfooter004 per page.
+		    data-repeat-footer005="n"   : Repeat .pfooter005 per page.
+		    data-repeat-footer-logo="y"  : Repeat .pfooter_logo on every page.
+		    data-repeat-footer-pagenum="y"  : Repeat .pfooter_pagenum per page (auto page numbers).
+		    data-insert-dummy-row-item-while-format-table="y" : Fill remaining space with dummy rows.
+		    data-insert-dummy-row-while-format-table="y" : Add a single full-height dummy table.
+		    data-insert-footer-spacer-while-format-table="y" : Insert spacer div before the footer.
+		    data-insert-footer-spacer-with-dummy-row-item-while-format-table="y" : Spacer + dummy rows.
+		    data-custom-dummy-row-item-content (via <template>) : Override dummy row markup.
+		    data-debug="y" (optional)   : Enable verbose console logging.
+		-->
+		<div class="paper_width printform"
+			 data-papersize-width="750"
+			 data-papersize-height="1050"
+			 data-height-of-dummy-row-item="26"
+			 data-repeat-header="y"
+			 data-repeat-docinfo="y"
+			 data-repeat-docinfo002="y"
+			 data-repeat-docinfo003="y"
+			 data-repeat-docinfo004="y"
+			 data-repeat-docinfo005="y"
+			 data-repeat-rowheader="y"
+			 data-repeat-footer="n"
+			 data-repeat-footer002="n"
+			 data-repeat-footer003="n"
+			 data-repeat-footer004="n"
+			 data-repeat-footer005="y"
+			 data-repeat-footer-logo="y"
+			 data-repeat-footer-pagenum="y"
+			 data-insert-dummy-row-item-while-format-table="y"
+			 data-insert-dummy-row-while-format-table="y"
+			 data-insert-footer-spacer-while-format-table="y"
+			 data-insert-footer-spacer-with-dummy-row-item-while-format-table="y"
+			 >
+			 <template class="custom-dummy-row-item-content">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">&nbsp; Customize Template Dummy Rows</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;"></div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;"></div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;"></div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</template>
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<img src="./img/letterhead_logo.jpg" style="height: auto; width: 100%;">
+						<font style="font-weight:600;font-size: 20px;">Sample Company Name</font><br>
+						<font style="font-size: 15px;">Address 1</font><br>
+						<font style="font-size: 15px;">Address 2</font><br>
+						<font style="font-size: 15px;">12345 Singapore</font><br>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<font style="font-weight:600;font-size: 20px;">Invoice</font><br>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo002">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Sender</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Payment To</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Invoice Number</font>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo003">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+								<td style="box-sizing:border-box;width:130px;"></td>
+							</tr>
+							<tr style="height:10px;"></tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Receiver</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Payment Method</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-weight:600;font-size: 15px;">Invoice Date</font>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+								<td style="box-sizing:border-box;" align="right">
+									<div>
+										<font style="font-size: 13px;">sample</font>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo004">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<font style="font-weight:600;font-size: 20px;">Page</font><br>
+						<span style="display: block">
+							<span data-page-number></span> of <span data-page-total></span>
+						</span>
+						<span style="display: block">
+							<span data-page-number></span> of <span data-page-total></span>
+						</span>
+						<span style="display: block">
+							<span data-page-number></span> of <span data-page-total></span>
+						</span>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo005">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<font style="font-weight:600;font-size: 20px;">DO Remarks</font><br>
+						Please check condition.
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				<tr style="height:10px;"></tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Description</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">Qty</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">UOM</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">Price</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Sumatra Mandheling Green Coffee Beans, Lot 21B - triple-picked microlot roasted to order, April 2024 harvest.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Guatemala Huehuetenango Green Coffee Beans, Lot 14 - washed process from Finca La Esperanza, shipped with GrainPro liners.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem tb_page_break_before">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Colombia Supremo Green Coffee Beans, Lot 512 - Excelso 17/18 screen, dried on raised beds with 12 hour fermentation.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<!-- repeat prowitem [start] -->
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Brazil Cerrado NY2 Green Coffee Beans, Lot 98 - natural process from Carmo estate, direct trade shipment with QC notes.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Ethiopia Yirgacheffe Grade 1 Green Coffee Beans - heirloom varietals sun-dried on nets, floral profile reserved for filter.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Costa Rica Tarrazu Honey Process Green Coffee Beans - yellow honey process from Los Santos, limited 150 bag allocation.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Kenya AA Kirinyaga Green Coffee Beans - double washed at Kii factory, SL28 and SL34 cultivars with vibrant acidity.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Nicaragua Jinotega SHG Green Coffee Beans - shade-grown cooperative lot, SCA score 86 with export-ready moisture.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Peru Cajamarca Fairtrade Green Coffee Beans - organic certified smallholder blend, vacuum sealed for Pacific transit.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">India Monsooned Malabar AA Green Coffee Beans - monsooned in Mangalore warehouses, mellow body suited for espresso.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Papua New Guinea Sigri Estate Green Coffee Beans - washed Typica lot traceable to Block 12 with Rainforest Alliance seal.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Tanzania Peaberry Green Coffee Beans - Northern Arusha harvest, peaberry screen 10 plus with balanced citrus and cocoa.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Decaf Swiss Water Process Green Coffee Beans - Colombian base decaffeinated in Vancouver, clean cup ready for medium roast.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Limited Reserve Gesha Green Coffee Beans - Panama Boquete terroir, anaerobic slow dry experiment limited to 20 boxes.</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+			
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" rowspan="3" valign="top">
+								<div style="padding:3px 3px 3px 0px;font-weight:600;">Remarks : </div>
+								<div style="font-size:13px;line-height: 13px;">
+									this is a test and sample text to let us do testing.
+								</div>
+								</td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Subtotal</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" align="right"><div style="padding:3px 0px 3px 3px;">1233.44</div></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">GST</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;">12.33</div></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Total</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;font-weight:600;">1245.77</div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+				</table>
+				
+				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter002">
+					<tr>
+						<td style="box-sizing:border-box;width:15px;"></td>
+						<td style="box-sizing:border-box;width:inherit;"></td>
+						<td style="box-sizing:border-box;width:15px;"></td>
+					</tr>
+					<tr>
+						<td style="box-sizing:border-box;"></td>
+						<td style="box-sizing:border-box;">
+							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+								<tr>
+									<td style="box-sizing:border-box;width:50%;font-size:13px;line-height:18px;border-top:1px solid #000;padding:10px 15px 0px 0px;">
+										<div style="font-weight:600;">Authorised Signature</div>
+										<div>Sample Representative</div>
+									</td>
+									<td style="box-sizing:border-box;width:50%;font-size:13px;line-height:18px;border-top:1px solid #000;padding:10px 0px 0px 15px;" align="right">
+										<div style="font-weight:600;">Prepared By</div>
+										<div>sample.user@example.com</div>
+									</td>
+								</tr>
+							</table>
+						</td>
+						<td style="box-sizing:border-box;"></td>
+					</tr>
+				</table>
+				
+				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter003">
+					<tr>
+						<td style="box-sizing:border-box;width:15px;"></td>
+						<td style="box-sizing:border-box;width:inherit;"></td>
+						<td style="box-sizing:border-box;width:15px;"></td>
+					</tr>
+					<tr>
+						<td style="box-sizing:border-box;"></td>
+						<td style="box-sizing:border-box;">
+							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;background:#f5f5f5;" border="0">
+								<tr>
+									<td style="box-sizing:border-box;width:33%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Bank</td>
+									<td style="box-sizing:border-box;width:33%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Account No.</td>
+									<td style="box-sizing:border-box;width:34%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Swift Code</td>
+								</tr>
+								<tr>
+									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">Sample Bank Ltd</td>
+									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">123-456789-001</td>
+									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">SAMPSES1XXX</td>
+								</tr>
+							</table>
+						</td>
+						<td style="box-sizing:border-box;"></td>
+					</tr>
+				</table>
+				
+				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter004">
+					<tr>
+						<td style="box-sizing:border-box;width:15px;"></td>
+						<td style="box-sizing:border-box;width:inherit;"></td>
+						<td style="box-sizing:border-box;width:15px;"></td>
+					</tr>
+					<tr>
+						<td style="box-sizing:border-box;"></td>
+						<td style="box-sizing:border-box;">
+							<div style="border:1px solid #000;padding:8px 12px;font-size:12px;line-height:16px;">
+								<div style="font-weight:600;margin-bottom:4px;">Terms &amp; Conditions</div>
+								<div>Payment is due within 30 days from invoice date. Goods remain the property of Sample Company until payment clears.</div>
+							</div>
+						</td>
+						<td style="box-sizing:border-box;"></td>
+					</tr>
+				</table>
+				
+				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter005">
+					<tr>
+						<td style="box-sizing:border-box;width:15px;"></td>
+						<td style="box-sizing:border-box;width:inherit;"></td>
+						<td style="box-sizing:border-box;width:15px;"></td>
+					</tr>
+					<tr>
+						<td style="box-sizing:border-box;"></td>
+						<td style="box-sizing:border-box;">
+							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+								<tr>
+									<td style="box-sizing:border-box;font-size:12px;line-height:16px;padding:6px 0px;" valign="top">
+										<div style="font-weight:600;">Support</div>
+										<div>support@sample-company.test</div>
+									</td>
+									<td style="box-sizing:border-box;font-size:12px;line-height:16px;padding:6px 0px;" valign="top" align="right">
+										<div style="font-weight:600;">Hotline</div>
+										<div>+65 6000 1234</div>
+									</td>
+								</tr>
+							</table>
+						</td>
+						<td style="box-sizing:border-box;"></td>
+					</tr>
+				</table>
+				
+				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<!-- footer logo -->
+						<img src="./img/footer_logo.jpg" style="height: auto; width: 100%;">
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+
+			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_pagenum">
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<div style="font-size:12px;line-height:16px;text-align:right;" data-page-number-container>
+							Page <span data-page-number></span> of <span data-page-total></span>
+						</div>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			</table>
+		</div>
+
+		<script src="./printform.js"></script>
+		
+		<!-- extra tools [start] -->
+		<style>
+		@media print {
+			.etools {
+				display: none;
+			}
+		}
+		</style>
+		<script>
+			function go_to_page(url) {
+				window.location.replace(url);
+			}
+		</script>
+		<div class="extra_tools" style="">
+			<input type="button" class="etools" value="Print" onclick="window.print();" style="position: fixed; top: 10px; right: 14px;">
+			<input type="button" class="etools" value="Sample 013" onclick="go_to_page('./index013.html');" style="position: fixed; top: 40px; right: 14px;">
+		</div>
+		<!-- extra tools [end  ] -->
+	</body>
+</html>

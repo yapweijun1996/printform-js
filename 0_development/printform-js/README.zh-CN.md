@@ -50,7 +50,8 @@ flowchart TD
         NewPhysical --> RenderPaddt["渲染 PADDT 行（仅 Logo + 页码页脚）"]
         RenderPaddt --> FinalizePaddt[完成 PADDT 页]
         FinalizePaddt --> UpdatePageNum
-        UpdatePageNum --> Finish(完成)
+        UpdatePageNum --> FinalizeHeight[最终确定页面高度]
+        FinalizeHeight --> Finish(完成)
     end
 
     subgraph Output_Result [最终打印效果]

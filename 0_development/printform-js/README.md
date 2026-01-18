@@ -80,7 +80,8 @@ flowchart TD
         NewPhysical --> RenderPaddt["Render PADDT rows (only logo + page number footers)"]
         RenderPaddt --> FinalizePaddt[Finalize PADDT pages]
         FinalizePaddt --> UpdatePageNum
-        UpdatePageNum --> Finish(Done)
+        UpdatePageNum --> FinalizeHeight[Finalize Page Heights]
+        FinalizeHeight --> Finish(Done)
     end
 
     subgraph Output_Result [Print Output]
@@ -177,7 +178,7 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | Attribute | Example | Description |
 | :--- | :--- | :--- |
 | `data-papersize-width` | `750` | Paper width (px). |
-| `data-papersize-height` | `1050` | Paper height budget (px); page container height is intentionally not forced so debug can show actual content height. |
+| `data-papersize-height` | `1050` | Paper height budget (px); page container height is intentionally not forced so debug can show actual content height (final fill spacer may be sub-pixel). |
 | `data-orientation` | `portrait` / `landscape` | Paper orientation. |
 | `data-repeat-header` | `y` / `n` | Repeat header on every page (Default `y`). |
 | `data-repeat-footer` | `y` / `n` | Repeat footer on every page (Default `n`). |
@@ -274,7 +275,7 @@ If you modify the source (`js/` directory), rebuild:
 ```bash
 npm run build
 ```
-Output is in `dist/printform.js`.
+Output is in `dist/printform.js` (and root `*.html` are copied to `dist/` for `npm run preview`).
 
 ---
 
@@ -287,7 +288,7 @@ A: Check if a single `.prowitem` height exceeds `data-papersize-height` minus he
 A: The logic prefers consistency. For special cases, use CSS with the `.printform_page_1` class, or split the DOM during data preparation.
 
 **Q: Margins are wrong when printing?**
-A: Physical margins are controlled by the browser and printer driver. In the print dialog, enable "Background graphics" and set margins to "None" or "Minimum".
+A: Physical margins are controlled by the browser and printer driver. In the print dialog, enable "Background graphics" and set margins to "None" or "Minimum" (PDF viewers at non-100% zoom may show 1px jitter; pin footers via `@media print` absolute positioning if you need visual lock).
 
 ---
 

@@ -10,6 +10,14 @@ function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
+function rewriteHtmlForDist(html) {
+  if (typeof html !== "string") return "";
+  return html
+    .replace(/\.\/dist\/printform\.js/g, "./printform.js")
+    .replace(/\.\/dist\/printform\.iife\.js/g, "./printform.iife.js")
+    .replace(/\.\/dist\//g, "./");
+}
+
 function copyDirectoryContents(srcDir, destDir) {
   if (!fs.existsSync(srcDir)) return;
   ensureDir(destDir);
@@ -74,7 +82,7 @@ function getSourceIndexHtml() {
     return FALLBACK_HTML;
   }
   const content = fs.readFileSync(SOURCE_INDEX, "utf8");
-  return content.replace(/\.\/dist\/printform\.js/g, "./printform.js");
+  return rewriteHtmlForDist(content);
 }
 
 function writeDistIndexHtml() {
@@ -83,8 +91,22 @@ function writeDistIndexHtml() {
   fs.writeFileSync(outPath, html, "utf8");
 }
 
+function copyRootHtmlFiles() {
+  const entries = fs.readdirSync(PROJECT_ROOT, { withFileTypes: true });
+  entries.forEach((entry) => {
+    if (!entry.isFile()) return;
+    if (!entry.name.endsWith(".html")) return;
+    if (entry.name === "index.html") return; // handled by writeDistIndexHtml()
+    const srcPath = path.resolve(PROJECT_ROOT, entry.name);
+    const destPath = path.resolve(DIST_DIR, entry.name);
+    const content = fs.readFileSync(srcPath, "utf8");
+    fs.writeFileSync(destPath, rewriteHtmlForDist(content), "utf8");
+  });
+}
+
 ensureDir(DIST_DIR);
 
 writeDistIndexHtml();
+copyRootHtmlFiles();
 
 copyDirectoryContents(IMG_DIR, path.resolve(DIST_DIR, "img"));

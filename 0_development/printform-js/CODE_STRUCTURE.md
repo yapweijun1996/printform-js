@@ -39,8 +39,7 @@ printform-js/
 │   ├── 📄 configuration.html           # 配置参考 HTML
 │   ├── 📄 config-reference.json        # 配置参考 JSON
 │   ├── 📄 AUTO_DOC_GENERATION_GUIDE.md # 文档生成说明
-│   ├── 📄 AUTO_DOC_DEMO_SUMMARY.md     # 演示总结
-│   └── 📄 WHAT_FILES_AUTO_UPDATE.md    # 自动更新说明
+│   └── 📄 MAINTAINING_DOCS.md          # 文档维护指南
 │
 ├── 📂 dist/                    # 构建输出目录
 │   ├── 📄 printform.js         # 打包后的库文件
