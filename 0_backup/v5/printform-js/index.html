@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page.title">PrintForm.js - Demo Navigation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent-color: #0066cc;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            --card-hover-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --border-radius: 18px;
+            --transition: all 0.3s cubic-bezier(0, 0, 0.5, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Language Switcher */
+        .lang-switcher {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .lang-btn:hover,
+        .lang-btn.active {
+            color: var(--text-primary);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Hero Section */
+        header {
+            text-align: center;
+            padding: 120px 0 80px;
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 30px;
+        }
+
+        .grid-featured {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d46b08;
+            margin-bottom: 16px;
+        }
+
+        .card-badge.new {
+            color: #0066cc;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .card-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+
+        .card-link {
+            font-size: 15px;
+            color: var(--accent-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-link::after {
+            content: "›";
+            font-size: 18px;
+        }
+
+        /* Test Files List - Simplified */
+        .test-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .test-item {
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .test-item:hover {
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            color: var(--accent-color);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        footer a {
+            color: var(--text-primary);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 40px;
+            }
+
+            .subtitle {
+                font-size: 20px;
+            }
+
+            .grid-featured {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <button class="lang-btn active" data-lang="en">English</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>PrintForm.js</h1>
+            <p class="subtitle" data-i18n="header.subtitle">Professional Print Form Pagination Engine</p>
+        </header>
+
+        <section class="section">
+            <h2 class="section-title" data-i18n="section.featured">Featured Demos</h2>
+            <div class="grid grid-featured">
+                <a href="demo001.html" class="card">
+                    <span class="card-badge" data-i18n="badge.featured">Featured</span>
+                    <h3 class="card-title" data-i18n="demo001.title">Sales Invoice</h3>
+                    <p class="card-desc" data-i18n="demo001.description">Complete sales invoice demo with multi-page
+                        pagination and complex tables.</p>
+                    <span class="card-link" data-i18n="button.view">View Demo</span>
+                </a>
+                <a href="demo002.html" class="card">
+                    <span class="card-badge new" data-i18n="badge.new">New</span>
+                    <h3 class="card-title" data-i18n="demo002.title">Construction Purchase Order</h3>
+                    <p class="card-desc" data-i18n="demo002.description">Industrial-grade document with material items
+                        and delivery terms.</p>
+                    <span class="card-link" data-i18n="button.view">View Demo</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title" data-i18n="section.tests">Test Files</h2>
+            <div class="test-list">
+                <a href="index017.html" class="test-item">index017.html <span>›</span></a>
+                <a href="delivery_order_test.html" class="test-item">delivery_order_test.html <span>›</span></a>
+                <a href="multiple_page_preview.html" class="test-item">Preview Demo <span>›</span></a>
+                <a href="index001.html" class="test-item">index001.html <span>›</span></a>
+                <a href="index002.html" class="test-item">index002.html <span>›</span></a>
+                <!-- Generating more items simply is better than a long list manually if not critical, but will list key ones -->
+                <a href="index003.html" class="test-item">index003.html <span>›</span></a>
+                <a href="index004.html" class="test-item">index004.html <span>›</span></a>
+                <a href="index005.html" class="test-item">index005.html <span>›</span></a>
+                <a href="index006.html" class="test-item">index006.html <span>›</span></a>
+                <a href="index007.html" class="test-item">index007.html <span>›</span></a>
+                <a href="index008.html" class="test-item">index008.html <span>›</span></a>
+                <a href="index009.html" class="test-item">index009.html <span>›</span></a>
+                <a href="index010.html" class="test-item">index010.html <span>›</span></a>
+                <a href="index011.html" class="test-item">index011.html <span>›</span></a>
+                <a href="index012.html" class="test-item">index012.html <span>›</span></a>
+                <a href="index013.html" class="test-item">index013.html <span>›</span></a>
+                <a href="index014.html" class="test-item">index014.html <span>›</span></a>
+                <a href="index015.html" class="test-item">index015.html <span>›</span></a>
+                <a href="index016.html" class="test-item">index016.html <span>›</span></a>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                <span data-i18n="footer.copyright">© 2026 PrintForm.js</span> •
+                <a href="https://github.com/yapweijun1996" target="_blank" data-i18n="footer.github">GitHub</a> •
+                <a href="README.md" data-i18n="footer.docs">Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Simple I18n Logic
+        const translations = {
+            zh: {
+                "page.title": "PrintForm.js - 演示导航",
+                "header.subtitle": "专业的打印表单分页引擎",
+                "section.featured": "精选演示",
+                "badge.featured": "精选",
+                "badge.new": "新",
+                "demo001.title": "销售发票",
+                "demo001.description": "完整的销售发票演示，包含45个产品项、多页分页、条款条件(PTAC)和审计数据。",
+                "demo002.title": "建筑采购单",
+                "demo002.description": "建筑行业采购单模板，包含34个材料项、供应商信息和交付条款。",
+                "button.view": "查看演示",
+                "section.tests": "测试文件",
+                "footer.copyright": "PrintForm.js © 2026",
+                "footer.github": "GitHub",
+                "footer.docs": "文档"
+            },
+            en: {
+                "page.title": "PrintForm.js - Demo Navigation",
+                "header.subtitle": "Professional Print Form Pagination Engine",
+                "section.featured": "Featured Demos",
+                "badge.featured": "Featured",
+                "badge.new": "New",
+                "demo001.title": "Sales Invoice",
+                "demo001.description": "Complete sales invoice demo with multi-page pagination, Terms and Conditions, and audit data.",
+                "demo002.title": "Construction Purchase Order",
+                "demo002.description": "Construction industry purchase order template with material items and delivery terms.",
+                "button.view": "View Demo",
+                "section.tests": "Test Files",
+                "footer.copyright": "PrintForm.js © 2026",
+                "footer.github": "GitHub",
+                "footer.docs": "Documentation"
+            }
+        };
+
+        function switchLanguage(lang) {
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // Update text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Save preference
+            localStorage.setItem('printform_lang', lang);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click listeners to buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchLanguage(btn.dataset.lang));
+            });
+
+            // Load saved language or default to en
+            const savedLang = localStorage.getItem('printform_lang') || 'en';
+            switchLanguage(savedLang);
+        });
+    </script>
+</body>
+
+</html>
