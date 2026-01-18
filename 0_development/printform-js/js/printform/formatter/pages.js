@@ -7,6 +7,10 @@ export function attachPageMethods(FormatterClass) {
   FormatterClass.prototype.initializeOutputContainer = function initializeOutputContainer() {
     const container = document.createElement("div");
     container.classList.add("printform_formatter");
+    // iOS/Android (WebKit) may auto-adjust text sizes, which breaks fixed-height pagination.
+    // Keep it scoped to the formatter output to avoid unexpected global side effects.
+    container.style.webkitTextSizeAdjust = "100%";
+    container.style.textSizeAdjust = "100%";
     this.formEl.parentNode.insertBefore(container, this.formEl);
     return container;
   };

@@ -388,13 +388,23 @@ var PrintForm = function() {
     }
     return merged;
   }
+  function applyTableSizingReset(table) {
+    if (!table) return;
+    table.style.borderCollapse = "collapse";
+    table.style.borderSpacing = "0";
+    table.style.margin = "0";
+    table.style.padding = "0";
+    table.style.lineHeight = "0";
+    table.style.fontSize = "0";
+  }
   function createDummyRowTable(config, height) {
     const table = document.createElement("table");
     table.className = "dummy_row";
     table.setAttribute("width", `${config.papersizeWidth}px`);
     table.setAttribute("cellspacing", "0");
     table.setAttribute("cellpadding", "0");
-    table.innerHTML = `<tr style="height:${normalizeHeight(height)}px;"><td style="border:0px solid black;"></td></tr>`;
+    applyTableSizingReset(table);
+    table.innerHTML = `<tr style="height:${normalizeHeight(height)}px;"><td style="border:0px solid black;padding:0;margin:0;line-height:0;font-size:0;"></td></tr>`;
     return table;
   }
   function createDummyRowItemTable(config) {
@@ -403,10 +413,11 @@ var PrintForm = function() {
     table.setAttribute("width", `${config.papersizeWidth}px`);
     table.setAttribute("cellspacing", "0");
     table.setAttribute("cellpadding", "0");
+    applyTableSizingReset(table);
     if (config.customDummyRowItemContent) {
       table.innerHTML = config.customDummyRowItemContent;
     } else {
-      table.innerHTML = `<tr style="height:${normalizeHeight(config.heightOfDummyRowItem)}px;"><td style="border:0px solid black;"></td></tr>`;
+      table.innerHTML = `<tr style="height:${normalizeHeight(config.heightOfDummyRowItem)}px;"><td style="border:0px solid black;padding:0;margin:0;line-height:0;font-size:0;"></td></tr>`;
     }
     return table;
   }
@@ -622,6 +633,8 @@ var PrintForm = function() {
     FormatterClass.prototype.initializeOutputContainer = function initializeOutputContainer() {
       const container = document.createElement("div");
       container.classList.add("printform_formatter");
+      container.style.webkitTextSizeAdjust = "100%";
+      container.style.textSizeAdjust = "100%";
       this.formEl.parentNode.insertBefore(container, this.formEl);
       return container;
     };
