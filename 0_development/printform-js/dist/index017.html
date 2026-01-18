@@ -2,13 +2,19 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
 		<title>Sample Printform</title>
 		<style>
 			body {
 				margin: 0px;
 				font-family: Arial, sans-serif;
 				padding: 0px;
+			}
+			/* iOS WebKit 會自動調整文字大小，導致分頁高度計算漂移 */
+			body, .printform, .printform_formatter, .paper_width{
+				-webkit-text-size-adjust: 100%;
+				text-size-adjust: 100%;
 			}
 			.paper_width{
 				width:750px;
