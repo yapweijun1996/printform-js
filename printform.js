@@ -1221,7 +1221,7 @@ var PrintForm = function() {
       return normalizeHeight(total);
     };
     FormatterClass.prototype.measureContentHeight = function measureContentHeight(container, repeatingHeight) {
-      const total = DomHelpers.measureHeight(container);
+      const total = DomHelpers.measureHeightRaw(container);
       return normalizeHeight(total - (repeatingHeight || 0));
     };
     FormatterClass.prototype.renderRows = function renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
@@ -1395,7 +1395,7 @@ var PrintForm = function() {
       const useCurrentHeight = options && options.useCurrentHeight === true;
       let workingHeight = normalizeHeight(currentHeight);
       if (repeatingHeight !== null && !useCurrentHeight) {
-        const measuredTotal = DomHelpers.measureHeight(container);
+        const measuredTotal = DomHelpers.measureHeightRaw(container);
         workingHeight = normalizeHeight(measuredTotal - repeatingHeight);
       }
       if (this.debug) {

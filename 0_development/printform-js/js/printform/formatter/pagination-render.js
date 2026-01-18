@@ -45,7 +45,11 @@ export function attachPaginationRenderMethods(FormatterClass) {
   };
 
   FormatterClass.prototype.measureContentHeight = function measureContentHeight(container, repeatingHeight) {
-    const total = DomHelpers.measureHeight(container);
+    // Use the "raw" measurement here. `measureHeight()` may temporarily mutate styles
+    // when it sees a 0 height (for hidden nodes). That behavior can destabilize layout
+    // on mobile Safari/Chrome during tight pagination loops, causing 0-height reads and
+    // repeated section appends.
+    const total = DomHelpers.measureHeightRaw(container);
     return normalizeHeight(total - (repeatingHeight || 0));
   };
 
@@ -237,7 +241,7 @@ export function attachPaginationRenderMethods(FormatterClass) {
     const useCurrentHeight = options && options.useCurrentHeight === true;
     let workingHeight = normalizeHeight(currentHeight);
     if (repeatingHeight !== null && !useCurrentHeight) {
-      const measuredTotal = DomHelpers.measureHeight(container);
+      const measuredTotal = DomHelpers.measureHeightRaw(container);
       workingHeight = normalizeHeight(measuredTotal - repeatingHeight);
     }
     if (this.debug) {
