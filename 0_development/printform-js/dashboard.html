@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrintForm.js - 演示导航</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-bg: #0f0f23;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(245, 87, 108, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-gradient);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            box-shadow: var(--shadow-md);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 50px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        /* Card */
+        .demo-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .demo-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon.primary {
+            background: var(--primary-gradient);
+        }
+
+        .card-icon.secondary {
+            background: var(--secondary-gradient);
+        }
+
+        .card-icon.success {
+            background: var(--success-gradient);
+        }
+
+        .card-icon.warning {
+            background: var(--warning-gradient);
+        }
+
+        .card-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-featured {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .badge-new {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .badge-legacy {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-top: 1px solid var(--card-border);
+            margin-top: 60px;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #f5576c;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 36px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Collapsible Section */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .collapsible-header::after {
+            content: '▼';
+            font-size: 14px;
+            transition: transform 0.3s ease;
+            margin-left: auto;
+        }
+
+        .collapsible-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">P</div>
+            </div>
+            <h1>PrintForm.js</h1>
+            <p class="subtitle">专业的打印表单分页引擎 - 演示导航中心</p>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value">2</div>
+                <div class="stat-label">主要演示</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">16</div>
+                <div class="stat-label">测试文件</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">响应式设计</div>
+            </div>
+        </div>
+
+        <!-- Featured Demos -->
+        <section class="section">
+            <h2 class="section-title">🌟 精选演示</h2>
+            <div class="cards-grid">
+                <!-- Demo 001 -->
+                <div class="demo-card" onclick="window.location.href='demo001.html'">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-icon primary">💻</div>
+                        </div>
+                        <span class="card-badge badge-featured">精选</span>
+                    </div>
+                    <h3 class="card-title">电脑商店销售发票</h3>
+                    <p class="card-description">
+                        完整的销售发票演示,包含45个产品项目、多页分页、条款与条件(PTAC)以及审计数据(PADDT)。展示了复杂表格的完美分页处理。
+                    </p>
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span>📄</span>
+                            <span>多页文档</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🎨</span>
+                            <span>现代设计</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a href="demo001.html" class="btn btn-primary" onclick="event.stopPropagation()">
+                            <span>查看演示</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Demo 002 -->
+                <div class="demo-card" onclick="window.location.href='demo002.html'">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-icon success">🏗️</div>
+                        </div>
+                        <span class="card-badge badge-new">最新</span>
+                    </div>
+                    <h3 class="card-title">建筑采购订单</h3>
+                    <p class="card-description">
+                        建筑行业采购订单模板,包含34个物料项目、供应商信息、交付条款。演示了工业级文档的专业排版能力。
+                    </p>
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span>📋</span>
+                            <span>采购订单</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>⚙️</span>
+                            <span>工业级</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a href="demo002.html" class="btn btn-primary" onclick="event.stopPropagation()">
+                            <span>查看演示</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Legacy Tests -->
+        <section class="section">
+            <h2 class="section-title collapsible-header" onclick="toggleSection(this)">
+                🧪 测试文件集合
+            </h2>
+            <div class="collapsible-content">
+                <div class="cards-grid">
+                    <!-- Index Files -->
+                    <div class="demo-card" onclick="window.location.href='index.html'">
+                        <div class="card-icon warning">📝</div>
+                        <h3 class="card-title">index.html</h3>
+                        <p class="card-description">基础示例文档</p>
+                        <div class="card-actions">
+                            <a href="index.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index001.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index001.html</h3>
+                        <p class="card-description">测试文档 001</p>
+                        <div class="card-actions">
+                            <a href="index001.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index002.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index002.html</h3>
+                        <p class="card-description">测试文档 002</p>
+                        <div class="card-actions">
+                            <a href="index002.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index003.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index003.html</h3>
+                        <p class="card-description">测试文档 003</p>
+                        <div class="card-actions">
+                            <a href="index003.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index004.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index004.html</h3>
+                        <p class="card-description">测试文档 004</p>
+                        <div class="card-actions">
+                            <a href="index004.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index005.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index005.html</h3>
+                        <p class="card-description">测试文档 005</p>
+                        <div class="card-actions">
+                            <a href="index005.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index006.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index006.html</h3>
+                        <p class="card-description">测试文档 006</p>
+                        <div class="card-actions">
+                            <a href="index006.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index007.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index007.html</h3>
+                        <p class="card-description">测试文档 007</p>
+                        <div class="card-actions">
+                            <a href="index007.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index008.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index008.html</h3>
+                        <p class="card-description">测试文档 008</p>
+                        <div class="card-actions">
+                            <a href="index008.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index009.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index009.html</h3>
+                        <p class="card-description">测试文档 009</p>
+                        <div class="card-actions">
+                            <a href="index009.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index010.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index010.html</h3>
+                        <p class="card-description">测试文档 010</p>
+                        <div class="card-actions">
+                            <a href="index010.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index011.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index011.html</h3>
+                        <p class="card-description">测试文档 011</p>
+                        <div class="card-actions">
+                            <a href="index011.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index012.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index012.html</h3>
+                        <p class="card-description">测试文档 012</p>
+                        <div class="card-actions">
+                            <a href="index012.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index013.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index013.html</h3>
+                        <p class="card-description">测试文档 013</p>
+                        <div class="card-actions">
+                            <a href="index013.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index014.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index014.html</h3>
+                        <p class="card-description">测试文档 014</p>
+                        <div class="card-actions">
+                            <a href="index014.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index015.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index015.html</h3>
+                        <p class="card-description">测试文档 015</p>
+                        <div class="card-actions">
+                            <a href="index015.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <div class="demo-card" onclick="window.location.href='index016.html'">
+                        <div class="card-icon secondary">📄</div>
+                        <h3 class="card-title">index016.html</h3>
+                        <p class="card-description">测试文档 016</p>
+                        <div class="card-actions">
+                            <a href="index016.html" class="btn btn-secondary" onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+
+                    <!-- Multiple Page Preview -->
+                    <div class="demo-card" onclick="window.location.href='multiple_page_preview.html'">
+                        <div class="card-icon warning">🖼️</div>
+                        <h3 class="card-title">multiple_page_preview.html</h3>
+                        <p class="card-description">多页预览功能演示</p>
+                        <div class="card-actions">
+                            <a href="multiple_page_preview.html" class="btn btn-secondary"
+                                onclick="event.stopPropagation()">查看</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                PrintForm.js © 2026 |
+                <a href="https://github.com/yapweijun1996/printform-js" target="_blank">GitHub</a> |
+                <a href="README.md">文档</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                使用 ❤️ 和现代 Web 技术构建
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            content.classList.toggle('collapsed');
+        }
+
+        // Add stagger animation to cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.demo-card');
+            cards.forEach((card, index) => {
+                card.style.animation = `fadeInUp 0.6s ease-out ${index * 0.05}s both`;
+            });
+        });
+    </script>
+</body>
+
+</html>
