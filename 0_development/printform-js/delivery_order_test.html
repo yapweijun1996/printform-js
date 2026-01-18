@@ -25,8 +25,15 @@
     .pheader small, .pheader_processed small { color: var(--muted); }
     .ptac h3, .paddt h3 { margin: 0 0 6px 0; color: var(--accent); }
     .pfooter, .pfooter_processed { font-size: 12px; color: var(--muted); }
-    .pfooter_logo, .pfooter_logo_processed { font-size: 12px; font-weight: bold; color: var(--accent); margin-top: 6px; }
-    .pfooter_pagenum, .pfooter_pagenum_processed { font-size: 12px; text-align: right; }
+    .pfooter_logo, .pfooter_logo_processed,
+    .pfooter_pagenum, .pfooter_pagenum_processed {
+      font-size: 12px;
+      line-height: 15px;
+      margin: 0;
+      padding: 0;
+    }
+    .pfooter_logo, .pfooter_logo_processed { font-weight: bold; color: var(--accent); }
+    .pfooter_pagenum, .pfooter_pagenum_processed { text-align: right; color: var(--muted); }
   </style>
 </head>
 <body>

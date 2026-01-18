@@ -72,11 +72,15 @@ export function attachPageMethods(FormatterClass) {
     const configuredHeight = this.config.papersizeHeight;
     const fillPageHeightAfterFooter = this.config.fillPageHeightAfterFooter !== false;
     let appendedSpacerHeight = 0;
+    const formatPx = (value) => {
+      if (!Number.isFinite(value)) return "0";
+      return String(Math.round(value * 100) / 100);
+    };
 
     if (fillPageHeightAfterFooter) {
-      const currentHeight = DomHelpers.measureHeight(pageContainer);
+      const currentHeight = DomHelpers.measureHeightRaw(pageContainer);
       const remaining = Math.max(0, configuredHeight - currentHeight);
-      if (remaining > 0) {
+      if (remaining > 0.01) {
         const spacer = document.createElement("div");
         spacer.classList.add("dummy_spacer");
         spacer.setAttribute("aria-hidden", "true");
@@ -112,15 +116,15 @@ export function attachPageMethods(FormatterClass) {
 
       console.log(`[printform] Elements breakdown (${children.length} elements):`);
       children.forEach((child, index) => {
-        const childHeight = DomHelpers.measureHeight(child);
+        const childHeight = DomHelpers.measureHeightRaw(child);
         cumulativeHeight += childHeight;
         const className = child.className || '(no class)';
         const tagName = child.tagName.toLowerCase();
 
         console.log(`[printform]   ${index + 1}. <${tagName}.${className}>`);
-        console.log(`[printform]      Height: ${childHeight}px`);
-        console.log(`[printform]      Cumulative: ${cumulativeHeight}px`);
-        console.log(`[printform]      Remaining: ${Math.max(0, configuredHeight - cumulativeHeight)}px`);
+        console.log(`[printform]      Height: ${formatPx(childHeight)}px`);
+        console.log(`[printform]      Cumulative: ${formatPx(cumulativeHeight)}px`);
+        console.log(`[printform]      Remaining: ${formatPx(Math.max(0, configuredHeight - cumulativeHeight))}px`);
 
         // Show warning if element is unexpectedly tall
         if (childHeight > configuredHeight * 0.5) {
@@ -129,19 +133,19 @@ export function attachPageMethods(FormatterClass) {
       });
 
       console.log(`[printform] -------------------------------------------`);
-      console.log(`[printform] Total content height: ${cumulativeHeight}px`);
+      console.log(`[printform] Total content height: ${formatPx(cumulativeHeight)}px`);
 
       if (cumulativeHeight < configuredHeight) {
         const shortfall = configuredHeight - cumulativeHeight;
-        console.log(`[printform] ✓ Content fits (${shortfall}px under limit)`);
+        console.log(`[printform] ✓ Content fits (${formatPx(shortfall)}px under limit)`);
       } else if (cumulativeHeight > configuredHeight) {
         const overflow = cumulativeHeight - configuredHeight;
-        console.log(`[printform] ⚠️  Content overflow (${overflow}px over limit)`);
+        console.log(`[printform] ⚠️  Content overflow (${formatPx(overflow)}px over limit)`);
       } else {
         console.log(`[printform] ✓ Perfect fit (exactly matches configured height)`);
       }
       if (appendedSpacerHeight > 0) {
-        console.log(`[printform] ✓ Final spacer appended: ${appendedSpacerHeight}px`);
+        console.log(`[printform] ✓ Final spacer appended: ${formatPx(appendedSpacerHeight)}px`);
       }
     }
 
@@ -149,9 +153,9 @@ export function attachPageMethods(FormatterClass) {
     // pageContainer.style.height is intentionally not set
 
     if (this.debug) {
-      const actualHeight = DomHelpers.measureHeight(pageContainer);
+      const actualHeight = DomHelpers.measureHeightRaw(pageContainer);
       console.log(`[printform] -------------------------------------------`);
-      console.log(`[printform] Actual measured height: ${actualHeight}px`);
+      console.log(`[printform] Actual measured height: ${formatPx(actualHeight)}px`);
       console.log(`[printform] ℹ️  Height NOT set - using natural content height`);
       console.log(`[printform] ===============================================\n`);
     }

@@ -174,6 +174,21 @@ import { normalizeHeight } from "./helpers.js";
     return normalizeHeight(baseHeight + marginTop + marginBottom);
   }
 
+  function measureHeightRaw(element) {
+    if (!element) return 0;
+    const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+    const baseHeight = rect && Number.isFinite(rect.height) ? rect.height : (element.offsetHeight || 0);
+    const view = (element.ownerDocument && element.ownerDocument.defaultView) || (typeof window !== "undefined" ? window : null);
+    if (!view || !view.getComputedStyle) {
+      return Number.isFinite(baseHeight) ? Math.max(0, baseHeight) : 0;
+    }
+    const style = view.getComputedStyle(element);
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+    const total = baseHeight + marginTop + marginBottom;
+    return Number.isFinite(total) ? Math.max(0, total) : 0;
+  }
+
   function createPageBreakDivider(extraClassNames) {
     const div = document.createElement("div");
     div.classList.add("div_page_break_before");
@@ -219,6 +234,7 @@ import { normalizeHeight } from "./helpers.js";
   export const DomHelpers = {
     markAsProcessed,
     measureHeight,
+    measureHeightRaw,
     createPageBreakDivider,
     appendClone,
     appendRowItem,
