@@ -1,997 +1,378 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Sample Printform</title>
-		<style>
-			body {
-				margin: 0px;
-				font-family: Arial, sans-serif;
-				padding: 0px;
-			}
-			.paper_width{
-				width:750px;
-			}
-			td{
-				line-height:20px;
-			}
-		</style>
-	</head>
-	<body>
-		<!--
-			  Printform container configuration — keep these data-* attributes in sync with
-			  DEFAULT_CONFIG in js/printform/config.js (also exposed as window.PrintForm.DEFAULT_CONFIG). Unless noted, the toggles accept
-			  y/yes/true/1 or n/no/false/0.
-			    data-papersize-width="750"   : Page width in pixels (print target <= 750px).
-			    data-papersize-height="1050" : Page height in pixels.
-			    data-height-of-dummy-row-item="26" : Height (px) used when auto-filling rows.
-			    data-repeat-header="y"       : Repeat .pheader on every page.
-			    data-repeat-docinfo="y"      : Repeat .pdocinfo table on every page.
-		    data-repeat-docinfo002="n"   : Repeat .pdocinfo002 per page (set to "y" when needed).
-		    data-repeat-docinfo003="y"   : Repeat .pdocinfo003 per page.
-		    data-repeat-docinfo004="y"   : Repeat .pdocinfo004 per page.
-		    data-repeat-docinfo005="y"   : Repeat .pdocinfo005 per page.
-			    data-repeat-rowheader="y"    : Repeat .prowheader on every page.
-			    data-repeat-ptac-rowheader="y" : Repeat .prowheader on PTAC-only continuation pages (PTAC rows use .ptac-rowitem).
-		    data-repeat-footer="n"       : Repeat .pfooter on every page.
-		    data-repeat-footer002="n"   : Repeat .pfooter002 per page.
-		    data-repeat-footer003="n"   : Repeat .pfooter003 per page.
-		    data-repeat-footer004="n"   : Repeat .pfooter004 per page.
-		    data-repeat-footer005="n"   : Repeat .pfooter005 per page.
-		    data-repeat-footer-logo="y"  : Repeat .pfooter_logo on every page.
-		    data-repeat-footer-pagenum="y"  : Repeat .pfooter_pagenum per page (auto page numbers).
-		    data-insert-dummy-row-item-while-format-table="y" : Fill remaining space with dummy rows.
-			    data-insert-ptac-dummy-row-items="y" : Allow PTAC-only pages to use dummy row items.
-			      PTAC terms are expanded into multiple .ptac-rowitem blocks during formatting.
-		    data-insert-dummy-row-while-format-table="y" : Add a single full-height dummy table.
-		    data-insert-footer-spacer-while-format-table="y" : Insert spacer div before the footer.
-		    data-insert-footer-spacer-with-dummy-row-item-while-format-table="y" : Spacer + dummy rows.
-		    data-custom-dummy-row-item-content (via <template>) : Override dummy row markup.
-		    data-debug="y" (optional)   : Enable verbose console logging.
-			
-			-- paddt pipeline (independent) --
-			    data-repeat-paddt="n"                     : Repeat .paddt on every page (usually "n").
-			    data-repeat-paddt-rowheader="n"           : Repeat .prowheader on paddt-only continuation pages.
-			    data-insert-paddt-dummy-row-items="y"     : Allow paddt-only pages to use dummy row items.
-			    data-paddt-max-words-per-segment="200"    : Max words per paddt paragraph segment.
-			    data-paddt-debug="n"                      : Enable paddt-only debug logs.
-			    data-repeat-paddt-docinfo="y"             : Show pdocinfo on PADDT pages (y/n).
-			    data-repeat-paddt-docinfo002="y"          : Show pdocinfo002 on PADDT pages (y/n).
-			    data-repeat-paddt-docinfo003="y"          : Show pdocinfo003 on PADDT pages (y/n).
-			    data-repeat-paddt-docinfo004="y"          : Show pdocinfo004 on PADDT pages (y/n).
-			    data-repeat-paddt-docinfo005="y"          : Show pdocinfo005 on PADDT pages (y/n).
-			  Note: PADDT docinfo toggles control presence only; per-page repeating still follows global repeatDocinfo* flags.
-		-->
-		<div class="paper_width printform"
-			 data-debug="y"
-			 data-papersize-width="750"
-			 data-papersize-height="1050"
-			 data-height-of-dummy-row-item="26"
-			 data-repeat-header="y"
-			 data-repeat-docinfo="y"
-			 data-repeat-docinfo002="y"
-			 data-repeat-docinfo003="y"
-			 data-repeat-docinfo004="y"
-			 data-repeat-docinfo005="y"
-			 data-repeat-rowheader="y"
-			 data-repeat-ptac-rowheader="n"
-			 data-repeat-footer="n"
-			 data-repeat-footer002="n"
-			 data-repeat-footer003="n"
-			 data-repeat-footer004="n"
-			 data-repeat-footer005="y"
-			 data-repeat-footer-logo="y"
-			 data-repeat-footer-pagenum="y"
-			 data-insert-dummy-row-item-while-format-table="y"
-			 data-insert-ptac-dummy-row-items="n"
-			 data-insert-dummy-row-while-format-table="y"
-			 data-insert-footer-spacer-while-format-table="y"
-			 data-insert-footer-spacer-with-dummy-row-item-while-format-table="y"
-			 data-repeat-paddt="n"
-			 data-repeat-paddt-rowheader="n"
-			 data-insert-paddt-dummy-row-items="n"
-			 data-paddt-max-words-per-segment="180"
-			 data-paddt-debug="n"
-			 data-repeat-paddt-docinfo="n"
-			 data-repeat-paddt-docinfo002="n"
-			 data-repeat-paddt-docinfo003="n"
-			 data-repeat-paddt-docinfo004="n"
-			 data-repeat-paddt-docinfo005="n"
-			 >
-			 <template class="custom-dummy-row-item-content">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">&nbsp; Customize Template Dummy Rows</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;"></div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;"></div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;"></div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</template>
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<img src="./img/letterhead_logo.jpg" style="height: 102px; width: 100%;">
-						<font style="font-weight:600;font-size: 20px;">Sample Company Name</font><br>
-						<font style="font-size: 15px;">Address 1</font><br>
-						<font style="font-size: 15px;">Address 2</font><br>
-						<font style="font-size: 15px;">12345 Singapore</font><br>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<font style="font-weight:600;font-size: 20px;">Invoice</font><br>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo002">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:130px;"></td>
-								<td style="box-sizing:border-box;width:130px;"></td>
-							</tr>
-							<tr>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Sender</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Payment To</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;" align="right">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Invoice Number</font>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;" align="right">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo003">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:130px;"></td>
-								<td style="box-sizing:border-box;width:130px;"></td>
-							</tr>
-							<tr style="height:10px;"></tr>
-							<tr>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Receiver</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Payment Method</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;" align="right">
-									<div>
-										<font style="font-weight:600;font-size: 15px;">Invoice Date</font>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-								<td style="box-sizing:border-box;" align="right">
-									<div>
-										<font style="font-size: 13px;">sample</font>
-									</div>
-								</td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo004">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<font style="font-weight:600;font-size: 20px;">Page</font><br>
-						<span style="display: block">
-							<span data-page-number></span> of <span data-page-total></span>
-						</span>
-						<span style="display: block">
-							<span data-page-number></span> of <span data-page-total></span>
-						</span>
-						<span style="display: block">
-							<span data-page-number></span> of <span data-page-total></span>
-						</span>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo005">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<font style="font-weight:600;font-size: 20px;">DO Remarks</font><br>
-						Please check condition.
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				<tr style="height:10px;"></tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Description</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">Qty</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">UOM</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;box-shadow: 0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">Price</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Sumatra Mandheling Green Coffee Beans, Lot 21B - triple-picked microlot roasted to order, April 2024 harvest.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Guatemala Huehuetenango Green Coffee Beans, Lot 14 - washed process from Finca La Esperanza, shipped with GrainPro liners.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem tb_page_break_before">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Colombia Supremo Green Coffee Beans, Lot 512 - Excelso 17/18 screen, dried on raised beds with 12 hour fermentation.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<!-- repeat prowitem [start] -->
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Brazil Cerrado NY2 Green Coffee Beans, Lot 98 - natural process from Carmo estate, direct trade shipment with QC notes.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Ethiopia Yirgacheffe Grade 1 Green Coffee Beans - heirloom varietals sun-dried on nets, floral profile reserved for filter.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Costa Rica Tarrazu Honey Process Green Coffee Beans - yellow honey process from Los Santos, limited 150 bag allocation.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Kenya AA Kirinyaga Green Coffee Beans - double washed at Kii factory, SL28 and SL34 cultivars with vibrant acidity.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Nicaragua Jinotega SHG Green Coffee Beans - shade-grown cooperative lot, SCA score 86 with export-ready moisture.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Peru Cajamarca Fairtrade Green Coffee Beans - organic certified smallholder blend, vacuum sealed for Pacific transit.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">India Monsooned Malabar AA Green Coffee Beans - monsooned in Mangalore warehouses, mellow body suited for espresso.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Papua New Guinea Sigri Estate Green Coffee Beans - washed Typica lot traceable to Block 12 with Rainforest Alliance seal.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Tanzania Peaberry Green Coffee Beans - Northern Arusha harvest, peaberry screen 10 plus with balanced citrus and cocoa.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Decaf Swiss Water Process Green Coffee Beans - Colombian base decaffeinated in Vancouver, clean cup ready for medium roast.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">Limited Reserve Gesha Green Coffee Beans - Panama Boquete terroir, anaerobic slow dry experiment limited to 20 boxes.</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;">887.92</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;">KG</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;box-shadow: 0px -1px 0 #000 inset;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;">100.00</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<!-- PTAC terms appear once after itemized rows and before footers.
-			     js/printform.js splits this table into sequential .ptac-rowitem blocks
-			     so pagination can treat each PTAC chunk like a standard row. -->
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width ptac">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-								<div style="padding:10px 0px 15px 0px;">
-								<p style="font-weight:600;font-size:16px;padding-bottom:6px;margin:0px 0px 8px 0px;">Purchase Terms and Conditions (PTAC)</p>
-								<p style="margin:0px 0px 10px 0px;">These Purchase Terms and Conditions (PTAC) govern each sale of green coffee documented in this invoice. The buyer confirms that it has reviewed the latest cupping scores, moisture reports, and defect allowances shared on the secure drive, and understands that these artifacts form part of the binding specification for every lot. Prior to contracting, the buyer may request additional lab data, including water activity, bean density, screen size distribution, mycotoxin screens, pesticide residue reports, sensory variance simulations, and shipping moisture forecasts, but once the purchase order is accepted the values supplied will be considered conclusive unless a written variance is approved by the exporter. The buyer acknowledges that pre-shipment samples are representative rather than exhaustive; cup profiles can shift slightly due to logistical timing, warehouse climate, fermentation styles, post-harvest conditioning, and natural biological variation, and any preference adjustments must be negotiated before milling commences. Unless expressly waived in writing, quality claims must be submitted within seven calendar days of receipt, accompanied by photographic evidence, an annotated intake report, and at least two hundred gram physical samples for every disputed bag to enable investigation with the producing partner. The buyer further agrees to document seal numbers, container IDs, humidity readings, unloading timestamps, forklift routes, pallet maps, and temperature gun measurements so that traceability is preserved even when third-party warehouses perform the discharge. When coffee is transloaded or palletized on arrival, the buyer will capture weight slips, reconciliation sheets, fumigation certificates, and relevant customs stamps to maintain chain of custody; discrepancies discovered later without supporting paperwork will be deemed non-actionable. Any calibration errors found in the buyer's lab equipment, including moisture meters, roast color trackers, water activity meters, refractometers, or scales, must be reported immediately, and all disputes will default to the master results logged by the exporter, mill, and producing cooperatives. The buyer agrees to store disputed samples in airtight containers labeled with bag number, date, incident description, humidity upon intake, and responsible team member, retaining them for at least sixty days or until the matter is resolved. By continuing with the drawdown, the buyer signals acceptance of every clause contained herein, including those related to sample handling, analytical tolerances, sensory drift, corrective timelines, data retention, and documentation duties. Should the buyer fail to comply with these requirements, the exporter reserves the right to suspend replacements, withhold future allocations, adjust payment terms, or invoice administrative fees necessary to resolve the deviation. Both parties agree that proactive communication is essential; therefore weekly status reports, assigned escalation contacts, and mutually agreed cutoffs for change requests will be implemented for the duration of the contract. The buyer will nominate a quality lead empowered to approve corrective actions within twenty-four hours, ensuring that no investigative cycle stalls due to lack of authority or absent personnel. If key staff are on leave, the buyer will provide alternate contacts and confirm they are authorized to accept remedial options such as partial credits, discounted downgrades, or coordinated reconditioning. These coordination principles protect the integrity of the supply chain and demonstrate mutual respect for the labor invested by producing communities.</p>
-								<p style="margin:0px 0px 10px 0px;">Shipment is deemed fulfilled when the carrier scans the lot as in-transit from the consolidation warehouse, and from that timestamp risk of loss transfers entirely to the buyer. The exporter will still coordinate the booking, provide verified container condition reports, and share route alerts, yet insurance coverage for inland haulage, transshipment, and destination storage becomes the responsibility of the buyer unless a separate addendum states otherwise. Temperature-controlled containers remain mandatory for all specialty microlots, competition coffees, and lots with moisture below ten percent, and any deviation must be communicated before the booking cut-off so that alternate insulation or desiccant plans can be formalized. The buyer must inspect container integrity upon arrival, logging photographs of doors, vents, floorboards, locking mechanisms, and data-logger readings; if irregularities are not recorded at the point of opening, the exporter will assume the cargo was received in fit condition. Should condensation, infestation, or customs delays arise because of routing changes requested by the buyer, remediation costs and administrative fees will be invoiced at cost plus ten percent to cover lab work, rebagging, storage, disposal, and staff hours assigned to the investigation. The buyer commits to appointing clearing agents experienced with agricultural imports, ensuring that phytosanitary certifications, fumigation declarations, organic attestations, and coffee-specific HS codes are processed without avoidable delay, and that any pre-shipment notifications demanded by the destination authorities are filed on time. In the event that the buyer requires partial deliveries or split shipments, the exporter may levy additional handling charges to cover sealing, palletization, repacking, export declarations, or extra trucking legs, and the buyer agrees these charges are due alongside the final invoice. If international events such as strikes, port congestion, extreme weather, security advisories, or political embargoes disrupt the planned schedule, the exporter will propose mitigation steps including alternative ports, feeder vessels, airfreight upgrades, or the substitution of equivalent lots; the buyer must approve or reject each option within forty-eight hours to keep bookings active and maintain insurance validity. When coffee is placed into bonded storage awaiting duty payment, the buyer remains liable for demurrage, storage fees, sample pulls requested by customs, and any fumigation mandated by port health officials; failure to settle these charges within the warehouse's terms may result in lien sales or product seizure, and the exporter will not be accountable for the outcome. The buyer also undertakes to instruct downstream logistics partners—fulfilment centers, roasters, or distribution hubs—to preserve lot codes, document stock movement, and maintain first-in-first-out rotation so that cupping notes hold true for the entire campaign. Should the buyer resell, gift, or allocate any portion of the coffee to a third party before completing payment, it must notify the exporter so that tracking documents can be updated and responsibilities clearly assigned, preventing disputes about freshness or condition once the beans are out of direct control. The buyer further agrees to provide quarterly logistics reviews summarizing transit performance, claims lodged, and incident learnings so both parties can refine routing strategies and packaging specifications. These shipping obligations are designed to protect cup quality, safeguard producing communities from clawbacks, and ensure the relationship remains transparent even when supply chains stretch across multiple continents, regulatory regimes, and climate zones that present evolving risk profiles.</p>
-								<p style="margin:0px 0px 10px 0px;">Payment terms follow the schedule listed on the invoice header, and unless a separate credit agreement exists all balances must be settled within fifteen days of the invoice date via bank transfer to the beneficiary stated above. The buyer acknowledges that bank processing windows, public holidays, and intermediary controls fall under its responsibility, and therefore payments must be initiated early enough to post to the exporter’s account on or before the due date. Late balances incur interest at one percent per month compounded, payable immediately upon calculation, and the exporter may pause pending shipments, sampling, or reservation of future harvest lots until accounts return to good standing. All remittances must reference the invoice number, sales contract, and container ID to ensure accurate allocation, and remitter charges, intermediary bank fees, and foreign exchange losses are borne entirely by the buyer. If the buyer wishes to pay in a currency other than Singapore dollars, it must obtain written approval and accept any costs associated with conversion, hedging, or forward contracts; absent such approval the exporter will convert funds at the prevailing bank rate and debit any shortfall to the buyer’s account. Should the buyer’s credit profile change materially—through mergers, divestments, adverse auditor findings, credit downgrades, or regulatory sanctions—the exporter reserves the right to request updated financial statements, trade references, or secured guarantees, and may reset payment terms to advance or letter-of-credit only. Where letters of credit are offered, they must be irrevocable, confirmed by a bank acceptable to the exporter, and allow partial shipments, transshipment, and presentation of digital documents, otherwise the exporter may decline the booking. The buyer agrees to cover costs arising from returned or rejected payments, including administrative time, bank penalties, courier expenses for reissued documents, and legal fees incurred to recover outstanding amounts. Any deductions, offsets, or counterclaims must be discussed and agreed before remittance; unilateral short payments constitute breach of contract and allow the exporter to suspend fulfillment or escalate collection to third-party agencies. If the buyer requests installment plans, it must present a restructuring proposal detailing timelines, collateral, interest, and board-level approval, and the exporter retains sole discretion to approve, reject, or modify the plan. In jurisdictions where withholding tax applies, the buyer will gross up payments to ensure the exporter receives the net amount stated on the invoice, and will promptly furnish supporting certificates within thirty days of payment. The buyer further agrees to maintain internal controls over accounts payable, including dual approvals, segregation of duties, audit trails, and secure banking tokens, to prevent fraud or misapplication of funds. Should insolvency proceedings, administrative receivership, or bankruptcy petitions be filed against the buyer or its affiliates, all outstanding sums become immediately due and payable, and the exporter may seize allocations, reassign stock to other customers, or invoke retention-of-title clauses permitted by local law. The exporter may also request personal or corporate guarantees from parent entities if risk indicators rise, and failure to provide such assurances within five business days will be treated as a material breach. These payment obligations exist to keep cash flows predictable for producing cooperatives, sustain community investments linked to the contracts, uphold supplier payroll commitments, and maintain mutual trust throughout the supply chain.</p>
-								<p style="margin:0px 0px 10px 0px;">All coffees are supplied in GrainPro-lined bags unless otherwise specified, and the buyer agrees to maintain storage between twelve and twenty-three degrees Celsius with relative humidity below sixty percent to preserve cup integrity, green color, and moisture equilibrium. Warehouses must be clean, pest-controlled, and fitted with calibrated hygrometers; temperature and humidity readings should be logged at least twice daily and archived for twelve months in case retrospective analysis is required by certification bodies or insurance auditors. The buyer is responsible for arranging pallets, slip sheets, or shelving that keeps coffee off the floor and away from direct sunlight, steam pipes, forklifts exhaust, or exterior doors, and any deviation must be documented along with corrective action plans approved by the quality lead. When coffees are rebagged, blended, or relabeled, the buyer will notify the exporter in writing, providing lot IDs, new bag counts, tare weights, destination customers, and any additives used, so traceability remains intact even after value-added processing. The buyer agrees not to rebag or remark the coffee without approval when origin certifications—organic, fair trade, Rainforest Alliance, Carbon Neutral, or similar—are attached, since misuse can lead to de-certification, fines, or reputational harm for producing communities and exporter partners. If the buyer intends to blend, decaffeinate, flavor, or otherwise modify the lot, it must retain batch samples for six months in case post-processing sensory or compliance checks are required by authorities or certification partners. All modifications must be carried out in facilities that comply with food safety standards (HACCP, ISO 22000, BRC, or equivalent), and the buyer will furnish audit reports, pest logs, and licenses upon request. The buyer also undertakes to label finished goods with production dates, roast profiles, allergen statements, and storage instructions that reflect the exporter’s recommendations, ensuring downstream customers handle the coffee responsibly. Inventory reconciliations must be run monthly; discrepancies exceeding one percent of total weight should be disclosed immediately with an action plan to locate missing stock, investigate potential theft, recalibrate scales, or adjust enterprise resource planning systems. The buyer will implement pest management programs that rely on food-safe products and record every treatment, including supplier name, batch number, technician signature, and follow-up verification, while avoiding chemicals that could compromise sensory quality. In the event of contamination—chemical spills, smoke exposure, cross-contact with allergens, or infestation—the buyer must quarantine affected pallets, notify the exporter within twenty-four hours, and cooperate on mitigation such as reconditioning, disposal, insurance claims, or recall notices. Environmental monitoring data, including particulate readings, ventilation rates, water activity logs, and mold tests, should be shared if flavor taints are suspected, enabling the exporter to determine whether issues stem from origin or storage conditions. Staff who handle green coffee must receive training on bag handling, lot code interpretation, sampling protocols, workplace ergonomics, and safety measures to minimize damage and maintain audit readiness, and attendance records should be retained for inspection. These storage and handling commitments exist to honor the work of producers, protect consumer safety, satisfy regulatory oversight, and give both parties confidence that every bag retains the profile promised at contracting, even as the beans travel through multiple facilities, product formats, and potential risk points sometimes outside direct exporter supervision.</p>
-								<p style="margin:0px 0px 10px 0px;">Force majeure events including but not limited to natural disasters, pandemic-related lockdowns, port congestion, labor actions, government embargoes, cyber incidents, data center outages, or transportation network failures excuse performance for the duration of the disruption. The exporter will promptly notify the buyer of any anticipated delay and provide available evidence such as carrier advisories, government notices, meteorological bulletins, cyber forensic summaries, or mill-level incident reports, while outlining potential mitigation strategies tailored to the affected lots. These strategies may include reallocating volumes across other warehouses, rerouting through alternative ports, advancing or delaying milling schedules, substituting comparable lots, upgrading to airfreight for limited quantities, or arranging temporary storage near the destination until clearance is possible. The buyer must respond within forty-eight hours indicating whether the proposed mitigation is acceptable; silence will be interpreted as acceptance so that operational teams can continue planning, retain vessel slots, and coordinate insurance notifications. If the buyer cannot accept the adjusted timeline, prepaid amounts will be credited toward future purchases, excluding costs already incurred for milling, inland freight, third-party inspections, bespoke packaging, regulatory filings, or hedging activities that cannot be rescinded. Both parties agree to cooperate on any required filings with insurers, export authorities, chambers of commerce, or trade associations to document the force majeure event and preserve relevant rights, including claims on cargo insurance, political risk policies, or business interruption coverage. Should the event extend beyond sixty days, the exporter may, at its discretion, terminate the contract with no liability beyond refunding unearned amounts, and the buyer may source substitutes elsewhere without penalty, provided outstanding invoices unrelated to the affected lots are kept current. If the buyer elects to cancel rather than accept mitigation when substitute lots or routes are available, the exporter may retain deposits to cover committed inputs such as cherry purchases, milling slots, advance labor, financing costs, and third-party certification fees. The buyer acknowledges that producers depend on predictable cash flow, so unwarranted cancellation could cause severe hardship, jeopardize community programs, and undermine future harvest planning; both parties therefore commit to evaluating reasonable alternatives in good faith before altering agreements. When force majeure impacts only a portion of the contracted volume, unaffected pallets will ship on the original schedule and be invoiced separately, while delayed volumes follow the adjusted plan with clear tracking of new ETAs, storage costs, and insurance status. The parties will review the incident after resolution, document lessons learned, and update risk registers, including contingency sourcing plans, insurance endorsements, communication protocols, and incident response checklists that define who escalates, who approves spending, and how updates flow to stakeholders. Nothing herein limits either party from seeking interim injunctive relief to protect intellectual property, confidential information, or prevent imminent spoilage of coffee held in bonded facilities, and each side agrees to maintain open communication channels throughout the disruption, providing weekly updates even when new information is limited, along with post-event reporting that highlights metrics such as delay days, financial impact, and future prevention steps. These provisions balance resilience with fairness, recognizing that agricultural supply chains are vulnerable to climate volatility, infrastructure breakdowns, epidemiological shifts, and regulatory changes that require flexibility, transparent dialogue, and shared responsibility to protect every stakeholder from farm to roastery.</p>
-								<p style="margin:0px;">These PTAC shall be governed by the laws of Singapore, and any interpretation questions will be resolved according to statutes, case law, and trade customs recognized within that jurisdiction. The parties agree to keep comprehensive records of correspondence, shipping documents, quality reports, payment confirmations, and compliance certificates so that evidence is available should a disagreement arise or regulators conduct audits. Any dispute that cannot be resolved through good faith negotiations within thirty days shall first be submitted to mediation under the Singapore Mediation Centre rules, and both parties will designate representatives with authority to settle, supported by technical experts as required. Mediation costs are to be shared equally unless the mediator directs otherwise, and the participants will prepare detailed briefs summarizing facts, issues, contractual references, and desired remedies to expedite the session and minimize ambiguity. If mediation fails, the parties consent to exclusive jurisdiction of the Singapore International Commercial Court, with proceedings conducted in English, and waive objections based on inconvenient forum, sovereign immunity, or lack of personal jurisdiction. Each party agrees to honour discovery requests promptly, preserve electronic records, maintain litigation holds on relevant email archives, and avoid dilatory tactics that could inflate legal fees or jeopardize evidence. The exporter and buyer will continue performing undisputed portions of the contract while litigation is pending, including payment of uncontested invoices, provision of traceability data, and release of unaffected shipments, so that business continuity is maintained for producers and customers. Nothing herein limits either party from seeking interim injunctive relief to protect intellectual property, confidential information, or prevent imminent spoilage of coffee held in bonded facilities, and courts may grant such relief without requiring security beyond what the law mandates when irreparable harm is demonstrated. The parties acknowledge that compliance obligations extend to anti-bribery laws, sanctions regimes, money laundering controls, data protection statutes, labor standards, and sustainability commitments referenced in the contract; breaches in these areas constitute material default justifying termination or indemnification claims, and remedial plans must be documented in writing. Should either party receive regulatory inquiries, subpoenas, or audits related to the contract, it will notify the other within forty-eight hours and cooperate in crafting responses that are truthful, complete, and aligned with regulatory expectations, while respecting confidentiality undertakings made to producers and financial institutions. Confidential information exchanged under this agreement—including pricing, origin relationships, logistics strategies, quality methodologies, and proprietary software outputs—shall be safeguarded using reasonable administrative, technical, and physical controls, and may be shared only with employees or advisors who require access to perform obligations and are bound by confidentiality commitments. Upon termination or completion of the contract, the receiving party will return or destroy the other party’s confidential information, certifying the action in writing upon request, and will erase digital backups unless retention is mandated by law, in which case the data remains protected under these confidentiality terms. Each party bears its own legal costs unless the court awards otherwise, yet both agree that in cases of willful breach, fraud, gross negligence, or misrepresentation, the prevailing party may seek full reimbursement of reasonable attorney fees, expert witness expenses, and court costs. These governance, dispute resolution, and confidentiality clauses reinforce the professional collaboration expected between exporter and buyer, ensuring disagreements are addressed systematically while preserving the trust, transparency, risk management discipline, and ethical standards that support long-term sourcing partnerships and safeguard the livelihoods of farming communities.</p>
-							</div>
-						</div>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<!-- paddt terms appear once; js/printform.js expands into .paddt-rowitem blocks (independent of PTAC). -->
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width paddt">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<div style="padding:10px 0px 15px 0px;">
-							<p style="font-weight:600;font-size:16px;padding-bottom:6px;margin:0px 0px 8px 0px;">Post-Audit Data Terms (PADDT)</p>
-							<p style="margin:0px 0px 10px 0px;">The PADDT section defines a post-format, audit-ready narrative that accompanies printable artifacts produced by this document. Its purpose is to make pagination behavior observable, reproducible, and comparable across versions without coupling to other business clauses. PADDT is configuration-driven and uses dataset flags to control behavior at runtime, including paddtMaxWordsPerSegment for textual segmentation, data-insert-paddt-dummy-row-items to govern fine-grained fillers, data-repeat-paddt-rowheader for header repetition on continuation pages, and data-paddt-debug to emit focused diagnostics that do not pollute primary logs. These controls allow operators to validate layout evolution with minimal friction while preserving strict separation from PTAC or any pricing narrative. PADDT content is long-form by design so that the formatter exercises realistic splitting paths and page context transitions, enabling robust verification.</p>
-							<p style="margin:0px 0px 10px 0px;">Scope and definitions for PADDT are as follows. A print session is a single invocation of the formatter from initial DOM scan to final page total assignment. Render input includes the static HTML, dataset configuration, and measured sizes of repeating sections. Layout trace refers to any collected evidence that explains how content was segmented and placed, such as token counts per chunk and computed height budgets. A row item is a standard paginatable block within the body region. A dummy row is a full-table filler used to occupy remaining space on a page for visual stability, while a dummy row item is a single-row filler used to pad the last page when granular control is required. Footer logo area and page number area refer to the dedicated repeating sections that provide branding and page counters on each page.</p>
-							<p style="margin:0px 0px 10px 0px;">Segmentation policy. PADDT paragraphs may be longer than a single page. To keep pagination stable, the processor splits text into segments constrained by paddtMaxWordsPerSegment. The formatter creates .paddt-rowitem clones that each carry a contiguous slice of the paragraph while preserving original order and inline semantics. The split respects word boundaries and avoids mid-word breaks to reduce hyphenation artifacts and inconsistent line wrapping across engines. Operators should select a segment size that yields steady page boundaries for their typical font and printer settings; 160–200 words per segment is usually a safe range that balances page utilization with reflow risk. This segmentation runs independently from PTAC expansion, so tests for one pipeline will not mask issues in the other.</p>
-							<p style="margin:0px 0px 10px 0px;">Layout invariants. The printable width remains under the configured papersize width, typically 750 pixels, to align with the repository’s QA guideline. Header and document info areas follow the standard repeating rules of the container. For the PADDT continuation pages, only the footer logo and page number areas are repeated by default; business footers like pfooter through pfooter005 are considered completed before PADDT begins. This ensures a clear separation of commercial content and audit commentary. The formatter treats PADDT like a distinct chapter rendered after footer005, preventing interleaving of business totals with audit prose and avoiding accidental carryover of pricing tables onto validation pages.</p>
-							<p style="margin:0px 0px 10px 0px;">Page context and numbering. The formatter increments page numbers continuously; PADDT pages contribute to the same global total so that the page number component remains truthful regardless of where content resides. If the operator wants an independent numbering scheme for PADDT, they should export a separate artifact or instruct the formatter to render PADDT in its own pass; by default, a single unified page counter improves traceability because screenshots, incident notes, and print dialogs will show a consistent progression. All computed heights are derived from measured DOM nodes; PADDT honors those measurements the same way primary rows do.</p>
-							<p style="margin:0px 0px 10px 0px;">Dummy fillers and visual stability. Two orthogonal controls influence remainder filling. First, data-insert-dummy-row-while-format-table governs whether a full-height dummy table is placed to visually anchor the bottom of a page. Second, data-insert-paddt-dummy-row-items determines whether granular dummy row items are permitted on PADDT-only pages. Setting the latter to "n" keeps pages clean by avoiding line-by-line placeholders while still allowing a single full dummy table if globally enabled, a useful compromise when audit pages should read like prose instead of ledgers. These options are reversible at runtime and are documented to prevent accidental double fillers.</p>
-							<p style="margin:0px 0px 10px 0px;">Row header repetition. The flag data-repeat-paddt-rowheader controls whether the general row header appears on PADDT continuation pages. The default "n" results in uncluttered audit pages that emphasize narrative analysis rather than tabular headings. If set to "y", the formatter ensures the row header is present whenever a PADDT segment begins on a new page, matching the behavior used for transactional rows. Teams should pick a consistent policy per template to reduce confusion during audits and to keep the first line of each PADDT page predictable in screenshots and scan-to-text tools.</p>
-							<p style="margin:0px 0px 10px 0px;">Footer presence and ordering. PADDT renders after pfooter005 but still repeats the footer logo and page number areas if those global flags are enabled. This strikes a balance between separation of concerns and branding consistency. The logo affirms document origin and helps stakeholders verify that screenshots belong to the same run, while page numbers preserve navigability across multi-page narratives. If compliance requires hiding either element on PADDT pages, the container can switch data-repeat-footer-logo or data-repeat-footer-pagenum to "n" without touching PADDT text or changing the business footers that came before it.</p>
-							<p style="margin:0px 0px 10px 0px;">Diagnostics and traceability. When data-paddt-debug is "y", the formatter emits supplemental logs that focus on PADDT behavior: segment counts, word totals per segment, measured height budgets per page, and reasons why a segment moved to the next page. These logs are intentionally scoped to avoid drowning out primary debug output. Operators are encouraged to capture a compact evidence pack for each investigation: a config snapshot, a copy of the PADDT paragraphs used, a set of page screenshots, and the debug console export. This bundle makes regressions reproducible and shortens review cycles because a second engineer can rebuild the exact conditions.</p>
-							<p style="margin:0px 0px 10px 0px;">Retention, privacy, and redaction. Unless a longer period is mandated, PADDT evidence may be retained for at least thirty days so that intermittent issues, printer driver updates, and reflow differences can be studied. Evidence should exclude personal data and confidential pricing tables. If a paragraph must reference ticket numbers, employee names, or client codes, teams should use pseudonyms or hashed identifiers in the PADDT text. The anonymization principle applies to both screenshots and raw HTML artifacts; when sharing with third parties, mask addresses, tax identifiers, and any custom attributes that could reveal sensitive relationships.</p>
-							<p style="margin:0px 0px 10px 0px;">Versioning and compatibility. PADDT configuration is described by a stable descriptor list that declares expected dataset keys and data types. When the descriptor set evolves, add new entries without breaking old names. If a key is deprecated, keep the reader tolerant and translate to the new semantics in code, documenting the migration in release notes. This forward-compatible approach ensures older templates continue to render while allowing teams to adopt more precise flags for new behaviors, such as independent footer control or alternative splitting strategies for languages where word boundaries differ.</p>
-							<p style="margin:0px 0px 10px 0px;">Performance considerations. The formatter operates in linear time with respect to the number of segments and rows, relying on measured node heights to avoid layout thrashing. Splitting is done once per paragraph per session, and clones reuse static markup where possible to minimize memory. Because audit prose can be lengthy, teams should keep font choices consistent and avoid excessive inline styling that could complicate measurement. If an environment exhibits slow measurement calls, capture a performance trace with timestamps around header, footer, and segment insertion points to identify outliers, then adjust segment size or simplify styles as required.</p>
-							<p style="margin:0px 0px 10px 0px;">Cross-browser expectations. Minor differences in text metrics are inevitable between layout engines, and PADDT is resilient to these shifts because it splits at coarse word counts and relies on page-height budgets. Operators should validate critical runs in Chromium print preview and at least one secondary engine. Stick to standard fonts that ship with the operating system or embed web-safe alternatives if allowed by policy. Avoid characters that some printers replace with fallback glyphs. If necessary, prefer straight quotes over curly quotes and hyphen-minus over extended dashes to reduce unexpected wrapping and keep audit prose legible when photocopied.</p>
-							<p style="margin:0px 0px 10px 0px;">Edge cases and safeguards. Extremely long tokens that exceed the width of the column without spaces are treated as atomic units and may overflow the expected line box in a few engines; consider inserting soft spaces or breaking hints in such rare cases. If a PADDT segment cannot fit even after moving to a fresh page due to non-breakable content, the formatter records a warning in debug mode to aid triage. Multilingual paragraphs are supported; however, teams should verify word-boundary logic when using scripts that do not separate words with spaces, and adjust segment counts conservatively to keep page break positions stable.</p>
-							<p style="margin:0px 0px 10px 0px;">Operational guidance. Recommended defaults for most templates are paddtMaxWordsPerSegment between 160 and 200, data-insert-paddt-dummy-row-items set to "n" for narrative clarity, and data-repeat-paddt-rowheader set to "n" unless the audit prose explicitly references columns in a table. Retain the footer logo and page numbers for navigability, particularly when screenshots are pasted into tickets. During incidents, capture the full dataset block from the container so reviewers can reconstruct conditions without guesswork. When closing an incident, document which configuration values meaningfully changed the page count; that list becomes a quick regression checklist for future updates.</p>
-							<p style="margin:0px 0px 10px 0px;">Change management and approvals. Because PADDT appears after business footers, it is a safe place to document behavioral shifts, known deviations, and temporary workarounds without risking confusion in customer-facing totals. Treat PADDT edits like code: record a short changelog at the top of the paragraph set, note the intended effect, and include a reference ticket. Before merging, run the Chromium print preview and confirm that total width remains within the expected limit, that page numbers advance without gaps, and that the first and last PADDT pages show the intended footers per configuration.</p>
-							<p style="margin:0px 0px 10px 0px;">Evidence packs and acceptance criteria. A run is considered audit-ready when the following are true: the formatter reports the same total page count across two consecutive runs with the same inputs; screenshots of the first, a middle, and the last PADDT page align with measured budgets; the page number component shows a continuous sequence that includes PADDT pages; and dummy fillers, if enabled, do not obscure prose or push lines across pages unpredictably. Store the config used for acceptance alongside the screenshots so stakeholders can re-run the scenario if later changes are proposed.</p>
-							<p style="margin:0px;">By adhering to these PADDT terms, teams gain a reliable, independent channel for documenting layout behavior, isolating regressions, and communicating decisions about pagination, retention, and privacy. The combination of clear configuration, deterministic segmentation, careful footer policy, and disciplined evidence handling makes the formatter predictable under change. As a result, audits become faster, incident turnover improves, and templates can evolve without fear that a small styling tweak will silently shift where pages break or how totals are counted. PADDT is therefore both a quality tool and a governance aid for any printable workflow.</p>
-						</div>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-			
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-							<tr>
-								<td style="box-sizing:border-box;width:inherit;"></td>
-								<td style="box-sizing:border-box;width:50px;"></td>
-								<td style="box-sizing:border-box;width:42px;"></td>
-								<td style="box-sizing:border-box;width:78px;"></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" rowspan="3" valign="top">
-								<div style="padding:3px 3px 3px 0px;font-weight:600;">Remarks : </div>
-								<div style="font-size:13px;line-height: 13px;">
-									this is a test and sample text to let us do testing.
-								</div>
-								</td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Subtotal</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;box-shadow: 0px 1px 0 #000 inset;" align="right"><div style="padding:3px 0px 3px 3px;">1233.44</div></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">GST</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;">12.33</div></td>
-							</tr>
-							<tr>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" colspan="2"><div style="padding:3px 3px 3px 3px;font-weight:600;">Total</div></td>
-								<td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:300;" align="right"><div style="padding:3px 0px 3px 3px;font-weight:600;">1245.77</div></td>
-							</tr>
-						</table>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-				</table>
-				
-				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter002">
-					<tr>
-						<td style="box-sizing:border-box;width:15px;"></td>
-						<td style="box-sizing:border-box;width:inherit;"></td>
-						<td style="box-sizing:border-box;width:15px;"></td>
-					</tr>
-					<tr>
-						<td style="box-sizing:border-box;"></td>
-						<td style="box-sizing:border-box;">
-							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-								<tr>
-									<td style="box-sizing:border-box;width:50%;font-size:13px;line-height:18px;border-top:1px solid #000;padding:10px 15px 0px 0px;">
-										<div style="font-weight:600;">Authorised Signature</div>
-										<div>Sample Representative</div>
-									</td>
-									<td style="box-sizing:border-box;width:50%;font-size:13px;line-height:18px;border-top:1px solid #000;padding:10px 0px 0px 15px;" align="right">
-										<div style="font-weight:600;">Prepared By</div>
-										<div>sample.user@example.com</div>
-									</td>
-								</tr>
-							</table>
-						</td>
-						<td style="box-sizing:border-box;"></td>
-					</tr>
-				</table>
-				
-				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter003">
-					<tr>
-						<td style="box-sizing:border-box;width:15px;"></td>
-						<td style="box-sizing:border-box;width:inherit;"></td>
-						<td style="box-sizing:border-box;width:15px;"></td>
-					</tr>
-					<tr>
-						<td style="box-sizing:border-box;"></td>
-						<td style="box-sizing:border-box;">
-							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;background:#f5f5f5;" border="0">
-								<tr>
-									<td style="box-sizing:border-box;width:33%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Bank</td>
-									<td style="box-sizing:border-box;width:33%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Account No.</td>
-									<td style="box-sizing:border-box;width:34%;font-size:13px;line-height:18px;padding:8px 10px;font-weight:600;">Swift Code</td>
-								</tr>
-								<tr>
-									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">Sample Bank Ltd</td>
-									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">123-456789-001</td>
-									<td style="box-sizing:border-box;font-size:13px;line-height:18px;padding:8px 10px;">SAMPSES1XXX</td>
-								</tr>
-							</table>
-						</td>
-						<td style="box-sizing:border-box;"></td>
-					</tr>
-				</table>
-				
-				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter004">
-					<tr>
-						<td style="box-sizing:border-box;width:15px;"></td>
-						<td style="box-sizing:border-box;width:inherit;"></td>
-						<td style="box-sizing:border-box;width:15px;"></td>
-					</tr>
-					<tr>
-						<td style="box-sizing:border-box;"></td>
-						<td style="box-sizing:border-box;">
-							<div style="border:1px solid #000;padding:8px 12px;font-size:12px;line-height:16px;">
-								<div style="font-weight:600;margin-bottom:4px;">Terms &amp; Conditions</div>
-								<div>Payment is due within 30 days from invoice date. Goods remain the property of Sample Company until payment clears.</div>
-							</div>
-						</td>
-						<td style="box-sizing:border-box;"></td>
-					</tr>
-				</table>
-				
-				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter005">
-					<tr>
-						<td style="box-sizing:border-box;width:15px;"></td>
-						<td style="box-sizing:border-box;width:inherit;"></td>
-						<td style="box-sizing:border-box;width:15px;"></td>
-					</tr>
-					<tr>
-						<td style="box-sizing:border-box;"></td>
-						<td style="box-sizing:border-box;">
-							<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
-								<tr>
-									<td style="box-sizing:border-box;font-size:12px;line-height:16px;padding:6px 0px;" valign="top">
-										<div style="font-weight:600;">Support</div>
-										<div>support@sample-company.test</div>
-									</td>
-									<td style="box-sizing:border-box;font-size:12px;line-height:16px;padding:6px 0px;" valign="top" align="right">
-										<div style="font-weight:600;">Hotline</div>
-										<div>+65 6000 1234</div>
-									</td>
-								</tr>
-							</table>
-						</td>
-						<td style="box-sizing:border-box;"></td>
-					</tr>
-				</table>
-				
-				<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<!-- footer logo -->
-						<img src="./img/footer_logo.jpg" style="height: 102px; width: 100%;">
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
+<html lang="zh-CN">
 
-			<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_pagenum">
-				<tr>
-					<td style="box-sizing:border-box;width:15px;"></td>
-					<td style="box-sizing:border-box;width:inherit;"></td>
-					<td style="box-sizing:border-box;width:15px;"></td>
-				</tr>
-				<tr>
-					<td style="box-sizing:border-box;"></td>
-					<td style="box-sizing:border-box;">
-						<div style="font-size:12px;line-height:16px;text-align:right;" data-page-number-container>
-							Page <span data-page-number></span> of <span data-page-total></span>
-						</div>
-					</td>
-					<td style="box-sizing:border-box;"></td>
-				</tr>
-			</table>
-		</div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page.title">PrintForm.js - Demo Navigation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent-color: #0066cc;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            --card-hover-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --border-radius: 18px;
+            --transition: all 0.3s cubic-bezier(0, 0, 0.5, 1);
+        }
 
-		<script src="./printform.js"></script>
-		
-		<!-- extra tools [start] -->
-		<style>
-		@media print {
-			.etools {
-				display: none;
-			}
-		}
-		</style>
-		<script>
-			function go_to_page(url) {
-				window.location.replace(url);
-			}
-		</script>
-		<div class="extra_tools" style="">
-			<input type="button" class="etools" value="Print" onclick="window.print();" style="position: fixed; top: 10px; right: 14px;">
-			<input type="button" class="etools" value="Sample 001" onclick="go_to_page('./index001.html');" style="position: fixed; top: 40px; right: 14px;">
-		</div>
-		<!-- extra tools [end  ] -->
-	</body>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Language Switcher */
+        .lang-switcher {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .lang-btn:hover,
+        .lang-btn.active {
+            color: var(--text-primary);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Hero Section */
+        header {
+            text-align: center;
+            padding: 120px 0 80px;
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 30px;
+        }
+
+        .grid-featured {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d46b08;
+            margin-bottom: 16px;
+        }
+
+        .card-badge.new {
+            color: #0066cc;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .card-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+
+        .card-link {
+            font-size: 15px;
+            color: var(--accent-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-link::after {
+            content: "›";
+            font-size: 18px;
+        }
+
+        /* Test Files List - Simplified */
+        .test-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .test-item {
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .test-item:hover {
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            color: var(--accent-color);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        footer a {
+            color: var(--text-primary);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 40px;
+            }
+
+            .subtitle {
+                font-size: 20px;
+            }
+
+            .grid-featured {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <button class="lang-btn active" data-lang="en">English</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>PrintForm.js</h1>
+            <p class="subtitle" data-i18n="header.subtitle">Professional Print Form Pagination Engine</p>
+        </header>
+
+        <section class="section">
+            <h2 class="section-title" data-i18n="section.featured">Featured Demos</h2>
+            <div class="grid grid-featured">
+                <a href="demo001.html" class="card">
+                    <span class="card-badge" data-i18n="badge.featured">Featured</span>
+                    <h3 class="card-title" data-i18n="demo001.title">Sales Invoice</h3>
+                    <p class="card-desc" data-i18n="demo001.description">Complete sales invoice demo with multi-page
+                        pagination and complex tables.</p>
+                    <span class="card-link" data-i18n="button.view">View Demo</span>
+                </a>
+                <a href="demo002.html" class="card">
+                    <span class="card-badge new" data-i18n="badge.new">New</span>
+                    <h3 class="card-title" data-i18n="demo002.title">Construction Purchase Order</h3>
+                    <p class="card-desc" data-i18n="demo002.description">Industrial-grade document with material items
+                        and delivery terms.</p>
+                    <span class="card-link" data-i18n="button.view">View Demo</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title" data-i18n="section.tests">Test Files</h2>
+            <div class="test-list">
+                <a href="index017.html" class="test-item">index017.html <span>›</span></a>
+                <a href="delivery_order_test.html" class="test-item">delivery_order_test.html <span>›</span></a>
+                <a href="multiple_page_preview.html" class="test-item">Preview Demo <span>›</span></a>
+                <a href="index001.html" class="test-item">index001.html <span>›</span></a>
+                <a href="index002.html" class="test-item">index002.html <span>›</span></a>
+                <!-- Generating more items simply is better than a long list manually if not critical, but will list key ones -->
+                <a href="index003.html" class="test-item">index003.html <span>›</span></a>
+                <a href="index004.html" class="test-item">index004.html <span>›</span></a>
+                <a href="index005.html" class="test-item">index005.html <span>›</span></a>
+                <a href="index006.html" class="test-item">index006.html <span>›</span></a>
+                <a href="index007.html" class="test-item">index007.html <span>›</span></a>
+                <a href="index008.html" class="test-item">index008.html <span>›</span></a>
+                <a href="index009.html" class="test-item">index009.html <span>›</span></a>
+                <a href="index010.html" class="test-item">index010.html <span>›</span></a>
+                <a href="index011.html" class="test-item">index011.html <span>›</span></a>
+                <a href="index012.html" class="test-item">index012.html <span>›</span></a>
+                <a href="index013.html" class="test-item">index013.html <span>›</span></a>
+                <a href="index014.html" class="test-item">index014.html <span>›</span></a>
+                <a href="index015.html" class="test-item">index015.html <span>›</span></a>
+                <a href="index016.html" class="test-item">index016.html <span>›</span></a>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                <span data-i18n="footer.copyright">© 2026 PrintForm.js</span> •
+                <a href="https://github.com/yapweijun1996" target="_blank" data-i18n="footer.github">GitHub</a> •
+                <a href="README.md" data-i18n="footer.docs">Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Simple I18n Logic
+        const translations = {
+            zh: {
+                "page.title": "PrintForm.js - 演示导航",
+                "header.subtitle": "专业的打印表单分页引擎",
+                "section.featured": "精选演示",
+                "badge.featured": "精选",
+                "badge.new": "新",
+                "demo001.title": "销售发票",
+                "demo001.description": "完整的销售发票演示，包含45个产品项、多页分页、条款条件(PTAC)和审计数据。",
+                "demo002.title": "建筑采购单",
+                "demo002.description": "建筑行业采购单模板，包含34个材料项、供应商信息和交付条款。",
+                "button.view": "查看演示",
+                "section.tests": "测试文件",
+                "footer.copyright": "PrintForm.js © 2026",
+                "footer.github": "GitHub",
+                "footer.docs": "文档"
+            },
+            en: {
+                "page.title": "PrintForm.js - Demo Navigation",
+                "header.subtitle": "Professional Print Form Pagination Engine",
+                "section.featured": "Featured Demos",
+                "badge.featured": "Featured",
+                "badge.new": "New",
+                "demo001.title": "Sales Invoice",
+                "demo001.description": "Complete sales invoice demo with multi-page pagination, Terms and Conditions, and audit data.",
+                "demo002.title": "Construction Purchase Order",
+                "demo002.description": "Construction industry purchase order template with material items and delivery terms.",
+                "button.view": "View Demo",
+                "section.tests": "Test Files",
+                "footer.copyright": "PrintForm.js © 2026",
+                "footer.github": "GitHub",
+                "footer.docs": "Documentation"
+            }
+        };
+
+        function switchLanguage(lang) {
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // Update text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Save preference
+            localStorage.setItem('printform_lang', lang);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click listeners to buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchLanguage(btn.dataset.lang));
+            });
+
+            // Load saved language or default to en
+            const savedLang = localStorage.getItem('printform_lang') || 'en';
+            switchLanguage(savedLang);
+        });
+    </script>
+</body>
+
 </html>
