@@ -34,6 +34,13 @@
     }
     .pfooter_logo, .pfooter_logo_processed { font-weight: bold; color: var(--accent); }
     .pfooter_pagenum, .pfooter_pagenum_processed { text-align: right; color: var(--muted); }
+
+    @media print {
+      /* Stabilize footer rendering in PDF output by pinning to the page box. */
+      .printform_page { position: relative; height: 1050px; }
+      .pfooter_logo_processed { position: absolute; left: 0; right: 0; bottom: 15px; }
+      .pfooter_pagenum_processed { position: absolute; left: 0; right: 0; bottom: 0; }
+    }
   </style>
 </head>
 <body>
