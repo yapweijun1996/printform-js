@@ -176,7 +176,7 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | Attribute | Example | Description |
 | :--- | :--- | :--- |
 | `data-papersize-width` | `750` | Paper width (px). |
-| `data-papersize-height` | `1050` | Paper height (px). |
+| `data-papersize-height` | `1050` | Paper height budget (px); page container height is intentionally not forced so debug can show actual content height. |
 | `data-orientation` | `portrait` / `landscape` | Paper orientation. |
 | `data-repeat-header` | `y` / `n` | Repeat header on every page (Default `y`). |
 | `data-repeat-footer` | `y` / `n` | Repeat footer on every page (Default `n`). |
