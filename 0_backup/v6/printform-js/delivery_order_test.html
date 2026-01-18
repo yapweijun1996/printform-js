@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Order - PTAC/PADDT Test</title>
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#0f4c81; }
+    body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); margin: 0px; }
+    .notes { max-width: 760px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .printform { width: 750px; }
+    .paper_width { width: 750px; }
+    .block { border: 1px solid var(--line); padding: 10px 12px; margin-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 13px; }
+    .grid b { color: var(--ink); }
+    .rowheader table, .prowitem table, .prowitem_processed table, table.ptac, table.paddt, table.ptac-rowitem_processed, table.paddt-rowitem_processed { width: 100%; border-collapse: collapse; }
+    .rowheader th, .prowheader_processed th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; background:#f3f4f6; }
+    th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+    .col-no { width: 48px; text-align: center; }
+    .col-qty { width: 80px; text-align: right; }
+    .col-unit { width: 70px; text-align: center; }
+    .col-loc { width: 120px; }
+    .col-remark { width: 180px; }
+    .pheader h1, .pheader_processed h1 { margin: 0 0 4px 0; color: var(--accent); font-size: 22px; }
+    .pheader small, .pheader_processed small { color: var(--muted); }
+    .ptac h3, .paddt h3 { margin: 0 0 6px 0; color: var(--accent); }
+    .pfooter, .pfooter_processed { font-size: 12px; color: var(--muted); }
+    .pfooter_logo, .pfooter_logo_processed,
+    .pfooter_pagenum, .pfooter_pagenum_processed {
+      font-size: 12px;
+      line-height: 15px;
+      margin: 0;
+      padding: 0;
+    }
+    .pfooter_logo, .pfooter_logo_processed { font-weight: bold; color: var(--accent); text-align: center; }
+    .pfooter_pagenum, .pfooter_pagenum_processed { text-align: center; color: var(--muted); }
+
+    @media print {
+      /* Stabilize footer rendering in PDF output by pinning to the page box. */
+      .printform_page { position: relative; height: 1050px; }
+      .pfooter_logo_processed { position: absolute; left: 0; right: 0; bottom: 15px; }
+      .pfooter_pagenum_processed { position: absolute; left: 0; right: 0; bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="printform paper_width"
+       data-papersize-width="750"
+       data-papersize-height="1050"
+       data-repeat-header="y"
+       data-repeat-docinfo="y"
+       data-repeat-rowheader="y"
+       data-repeat-ptac-rowheader="n"
+       data-repeat-footer-logo="y"
+       data-repeat-footer-pagenum="y"
+       data-insert-dummy-row-item-while-format-table="y"
+       data-insert-ptac-dummy-row-items="n"
+       data-repeat-paddt-rowheader="n"
+       data-insert-paddt-dummy-row-items="n"
+       data-paddt-max-words-per-segment="140"
+       data-debug="y">
+
+    <div class="pheader block">
+      <h1>Delivery Order</h1>
+      <small>Warehouse Dispatch - DO-2026-0137</small>
+    </div>
+
+    <div class="pdocinfo block grid">
+      <div><b>Ship To:</b> Sunrise Retail Pte Ltd</div>
+      <div><b>Delivery Date:</b> 2026-02-03</div>
+      <div><b>Address:</b> 28 Harbor Link, Singapore</div>
+      <div><b>Truck:</b> SGX-9082</div>
+      <div><b>Driver:</b> Kevin Tan</div>
+      <div><b>Contact:</b> +65 8123 4455</div>
+    </div>
+
+    <div class="prowheader rowheader">
+      <table>
+        <tr>
+          <th class="col-no">No.</th>
+          <th>Description</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-loc">Location</th>
+          <th class="col-remark">Remarks</th>
+        </tr>
+      </table>
+    </div>
+
+    <div id="row-list-pre"></div>
+
+    <!-- PTAC (kept short so it can sit on the same page as normal rows). -->
+    <table class="paper_width ptac">
+      <tr>
+        <td>
+          <div style="padding:8px 6px;">
+            <h3>PTAC - Delivery Terms</h3>
+            <p style="margin:0 0 6px 0;">
+              Goods must be inspected at unloading. Note any shortages or damages on the DO and return a signed copy
+              within 24 hours. Title and risk transfer upon delivery confirmation.
+            </p>
+            <p style="margin:0;">
+              For temperature-sensitive items, keep pallets sealed until receiving QA completes checks.
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div id="row-list-post"></div>
+    <div id="row-list-tail"></div>
+
+    <!-- PADDT (should always render on new page after footers). -->
+    <table class="paper_width paddt">
+      <tr>
+        <td>
+          <div style="padding:8px 6px;">
+            <h3>PADDT - Audit Notes</h3>
+            <p style="margin:0 0 8px 0;">
+              PADDT runs after PTAC and footers. It is used to audit pagination stability, row segmentation, and
+              dummy filler behavior for delivery orders under different dataset configurations.
+            </p>
+            <p style="margin:0 0 8px 0;">
+              This section is intentionally verbose so it splits into multiple paddt-rowitem segments. Use it to
+              verify the formatter starts PADDT on a fresh page and that page totals include PADDT pages.
+            </p>
+            <p style="margin:0;">
+              If you need to change padding or rowheader visibility for PADDT pages, update the dataset flags and
+              compare before/after screenshots for consistent breaks.
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="pfooter block">
+      <div><b>Receiver Signature:</b> ____________________________</div>
+      <div><b>Driver Signature:</b> _______________________________</div>
+      <div>All deliveries are subject to standard handling policies and customer return agreements.</div>
+    </div>
+
+    <div class="pfooter_logo">AURORA LOGISTICS - DELIVERY SERVICES</div>
+    <div class="pfooter_pagenum">Page <span data-page-number></span> of <span data-page-total></span></div>
+  </div>
+
+  <script src="./dist/printform.js"></script>
+  <script>
+    (function() {
+      const catalog = [
+        ["Steel Pipe 2m", "pcs", "A-02", "Keep dry"],
+        ["Safety Cones (Orange)", "pcs", "B-11", "Return after use"],
+        ["Concrete Mix 40kg", "bag", "C-05", "Handle with care"],
+        ["Cable Tray 1.2m", "pcs", "A-17", "Bundle tightly"],
+        ["Pallet Wrap Film", "roll", "D-03", "Store upright"],
+        ["Aluminum Sheet 3mm", "pcs", "A-09", "No scratches"]
+      ];
+
+      function makeRow(index, desc, qty, unit, loc, remark) {
+        return [
+          "<div class=\"prowitem\">",
+          "  <table class=\"paper_width\">",
+          "    <tr>",
+          "      <td class=\"col-no\">" + index + "</td>",
+          "      <td>" + desc + "</td>",
+          "      <td class=\"col-qty\">" + qty + "</td>",
+          "      <td class=\"col-unit\">" + unit + "</td>",
+          "      <td class=\"col-loc\">" + loc + "</td>",
+          "      <td class=\"col-remark\">" + remark + "</td>",
+          "    </tr>",
+          "  </table>",
+          "</div>"
+        ].join("");
+      }
+
+      function appendRows(containerId, startIndex, count, qtyBase) {
+        const container = document.getElementById(containerId);
+        let html = "";
+        for (let i = 0; i < count; i += 1) {
+          const [desc, unit, loc, remark] = catalog[(startIndex + i) % catalog.length];
+          const qty = (qtyBase + i) % 18 + 1;
+          html += makeRow(startIndex + i + 1, desc, qty, unit, loc, remark);
+        }
+        container.innerHTML = html;
+      }
+
+      appendRows("row-list-pre", 0, 6, 3);
+      appendRows("row-list-post", 6, 6, 5);
+      appendRows("row-list-tail", 12, 36, 7);
+    })();
+  </script>
+</body>
+</html>

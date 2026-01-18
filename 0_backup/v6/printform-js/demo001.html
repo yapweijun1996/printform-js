@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Computer Shop Sales Invoice</title>
+	<style>
+		body {
+			margin: 0px;
+			font-family: Arial, sans-serif;
+			padding: 0px;
+		}
+
+		.paper_width {
+			width: 750px;
+		}
+
+		td {
+			line-height: 20px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="paper_width printform" data-debug="y" data-papersize-width="750" data-papersize-height="1050"
+		data-height-of-dummy-row-item="26" data-repeat-header="y" data-repeat-docinfo="y" data-repeat-docinfo002="y"
+		data-repeat-rowheader="y" data-repeat-ptac-rowheader="n" data-repeat-footer="n" data-repeat-footer-logo="y"
+		data-repeat-footer-pagenum="y" data-insert-dummy-row-item-while-format-table="n"
+		data-insert-ptac-dummy-row-items="n" data-insert-dummy-row-while-format-table="y"
+		data-insert-footer-spacer-while-format-table="y"
+		data-insert-footer-spacer-with-dummy-row-item-while-format-table="y">
+
+		<!-- Custom dummy row template -->
+		<template class="custom-dummy-row-item-content">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr style="height:26px;">
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</template>
+
+		<!-- Header with SVG Logo -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<!-- SVG Logo -->
+					<svg width="100%" height="80" viewBox="0 0 720 80" xmlns="http://www.w3.org/2000/svg">
+						<defs>
+							<linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+								<stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+								<stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+							</linearGradient>
+						</defs>
+						<rect x="0" y="0" width="720" height="80" fill="url(#logoGradient)" rx="4" />
+						<circle cx="40" cy="40" r="25" fill="#ffffff" opacity="0.9" />
+						<path d="M 30 40 L 40 30 L 50 40 L 40 50 Z" fill="#1e3a8a" />
+						<text x="80" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold"
+							fill="#ffffff">TECH COMPUTER STORE</text>
+						<text x="80" y="55" font-family="Arial, sans-serif" font-size="14" fill="#e0e7ff">Professional
+							PC Components</text>
+						<text x="80" y="70" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1">Quality
+							Products · Expert Service</text>
+					</svg>
+					<div style="margin-top:8px;font-size:13px;color:#666;">
+						Address: 123 Orchard Road #05-00, Tech Building, Singapore<br>
+						Phone: +65 6888 9999 | Email: sales@techcomputer.sg
+					</div>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+		</table>
+
+		<!-- Document Info -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<font style="font-weight:600;font-size:20px;">SALES INVOICE</font>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+		</table>
+
+		<!-- Document Info 002 -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo002">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50%;"></td>
+							<td style="box-sizing:border-box;width:50%;"></td>
+						</tr>
+						<tr>
+							<td style="box-sizing:border-box;padding-right:10px;">
+								<div style="font-weight:600;font-size:15px;margin-bottom:4px;">Customer Information
+								</div>
+								<div style="font-size:13px;line-height:18px;">
+									Company: Singapore Tech Pte Ltd<br>
+									Contact: Mr. Zhang<br>
+									Address: Marina Bay Financial Centre Tower 2<br>
+									Phone: +65 6777 8888
+								</div>
+							</td>
+							<td style="box-sizing:border-box;padding-left:10px;" align="right">
+								<div style="font-weight:600;font-size:15px;margin-bottom:4px;">Invoice Information</div>
+								<div style="font-size:13px;line-height:18px;text-align:right;">
+									Invoice No: INV-2026-001234<br>
+									Invoice Date: 2026-01-17<br>
+									Payment Method: Bank Transfer<br>
+									Delivery Date: 2026-01-20
+								</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+		</table>
+
+		<!-- Table Header Row -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;background:#f0f9ff;">
+								<div style="padding:6px 4px;">No.</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;">
+								<div style="padding:6px 4px;">Product Name / Specifications</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;"
+								align="right">
+								<div style="padding:6px 4px;">Qty</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;"
+								align="right">
+								<div style="padding:6px 4px;">Unit Price</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;"
+								align="right">
+								<div style="padding:6px 4px;">Subtotal</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<!-- Product Items (45 items) -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">1</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Intel Core i9-13900K Processor 24-Core 32-Thread 3.0GHz
+								</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$689.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1378.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">AMD Ryzen 9 7950X Processor 16-Core 32-Thread 4.5GHz</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$599.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1797.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">ASUS ROG STRIX Z790-E Motherboard ATX LGA1700 DDR5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$459.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$918.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">MSI MAG X670E TOMAHAWK Motherboard ATX AM5 DDR5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$389.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1167.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Corsair Vengeance DDR5 32GB (2x16GB) 6000MHz RGB</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$189.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$945.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">6</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">G.SKILL Trident Z5 RGB DDR5 64GB (2x32GB) 6400MHz</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$299.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1196.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">7</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">NVIDIA GeForce RTX 4090 24GB GDDR6X Graphics Card</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1899.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$3798.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">8</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">AMD Radeon RX 7900 XTX 24GB GDDR6 Graphics Card</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1099.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$3297.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">9</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Samsung 990 PRO 2TB NVMe M.2 SSD PCIe 4.0</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">6</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$189.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1134.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">10</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">WD Black SN850X 4TB NVMe M.2 SSD PCIe 4.0</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$349.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1396.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">11</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Seagate FireCuda 530 1TB NVMe M.2 SSD PCIe 4.0</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">8</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$129.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1032.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">12</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Crucial P5 Plus 2TB NVMe M.2 SSD PCIe 4.0</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$159.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$795.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">13</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Corsair RM1000x 1000W 80+ Gold Modular PSU</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$189.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$567.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">14</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">EVGA SuperNOVA 850 G6 850W 80+ Gold PSU</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$149.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$745.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">15</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Seasonic PRIME TX-1000 1000W 80+ Titanium PSU</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$329.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$658.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">16</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">NZXT Kraken Z73 360mm AIO Liquid Cooler LCD Display</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$279.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1116.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">17</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Corsair iCUE H150i ELITE 360mm AIO Liquid Cooler</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$189.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$945.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">18</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">be quiet! Dark Rock Pro 4 Air Cooler</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">8</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$89.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$712.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">19</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Lian Li O11 Dynamic EVO Case ATX Tempered Glass</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$159.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$477.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">20</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Fractal Design Meshify 2 Case ATX High Airflow</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$139.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$556.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">21</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Corsair 5000D AIRFLOW Case ATX Mid Tower</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$149.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$745.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">22</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">LG 27GP950-B 27" 4K 144Hz Nano IPS Monitor</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$799.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$3196.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">23</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">ASUS ROG Swift PG279QM 27" QHD 240Hz IPS Monitor</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$699.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$2097.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">24</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Samsung Odyssey G9 49" DQHD 240Hz Curved Monitor</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1499.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$2998.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">25</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Logitech G Pro X Superlight Wireless Gaming Mouse</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">10</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$149.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1490.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">26</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Razer DeathAdder V3 Pro Wireless Gaming Mouse</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">8</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$139.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1112.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">27</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">SteelSeries Apex Pro TKL Mechanical Keyboard OmniPoint
+								</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">6</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$189.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1134.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">28</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Corsair K100 RGB Mechanical Keyboard Cherry MX Speed</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$229.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1145.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">29</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">HyperX Cloud Alpha Wireless Gaming Headset</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">7</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$199.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1393.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">30</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">SteelSeries Arctis Nova Pro Gaming Headset Hi-Res</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$349.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1745.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">31</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Elgato Stream Deck XL 32-Key Streaming Controller</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$249.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$747.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">32</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Blue Yeti X Professional USB Microphone Quad-Capsule</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$169.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$676.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">33</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Logitech C920 Pro HD Webcam 1080p</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">12</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$79.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$948.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">34</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Elgato Cam Link 4K Video Capture Card HDMI to USB</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">6</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$129.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$774.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">35</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">TP-Link Archer AX6000 WiFi 6 Router 8-Antenna</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$299.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1196.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">36</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">ASUS RT-AX88U WiFi 6 Dual-Band Router AiMesh</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">3</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$329.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$987.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">37</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Synology DS920+ 4-Bay NAS Network Storage Server</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$549.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1098.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">38</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">QNAP TS-453D 4-Bay NAS Intel Celeron J4125</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">2</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$479.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$958.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">39</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">APC Back-UPS Pro 1500VA UPS Uninterruptible Power Supply
+								</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">5</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$249.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1245.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">40</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">CyberPower CP1500PFCLCD UPS 1500VA Pure Sine Wave</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">4</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$219.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$876.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">41</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Cable Matters USB-C Docking Station Triple Display 100W PD
+								</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">8</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$149.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1192.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">42</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Anker 747 Charger 150W GaN 4-Port USB-C</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">10</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$109.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1090.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">43</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Belkin Thunderbolt 3 Cable 2m 100W 40Gbps</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">15</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$49.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$735.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">44</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">StarTech USB-C to Dual HDMI Adapter 4K 60Hz</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">12</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$89.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$1068.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:70px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">45</div>
+							</td>
+							<td
+								style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">Microsoft Office 2021 Professional Perpetual License 1PC
+								</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">20</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$299.00</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;"
+								align="right">
+								<div style="padding:3px 4px;">$5980.00</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+
+		<!-- Sales Terms PTAC -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width ptac">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<div style="padding:15px 0px 20px 0px;">
+						<p
+							style="font-weight:600;font-size:18px;padding-bottom:8px;margin:0px 0px 12px 0px;border-bottom:2px solid #1e40af;color:#1e40af;">
+							Terms and Conditions</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Product
+								Warranty:</strong> All computer components sold by our company are genuine original
+							products with standard manufacturer warranty. Core components such as processors,
+							motherboards, and memory come with 3-year warranty. Graphics cards have 2-year warranty,
+							storage devices have 5-year warranty, and peripheral products have 1-2 year warranty. During
+							the warranty period, customers can bring their invoice and warranty card to our store or
+							authorized service centers for free repair or replacement if hardware failures occur due to
+							non-human damage. Warranty does not cover damage caused by improper use, overclocking, water
+							damage, drops, or other human factors.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Payment
+								Terms:</strong> Customers must complete full payment within 15 business days after
+							invoice issuance. We accept various payment methods including bank transfer, check, and
+							credit card. Corporate customers may apply for 30-day payment terms after credit review.
+							Overdue orders will incur a late fee of 0.05% per day. After payment completion, we will
+							arrange shipping within 1-2 business days. Large orders may negotiate installment payment
+							plans.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Delivery and
+								Logistics:</strong> Standard delivery time is 3-5 business days after payment
+							confirmation. Free delivery within Singapore mainland, additional shipping fees apply for
+							offshore areas. We use professional computer component logistics services to ensure safe
+							product delivery. Customers should inspect the outer packaging upon receipt. If damaged,
+							please refuse delivery and contact us immediately. Transportation damage discovered after
+							signing must be reported within 24 hours with photographic evidence. Urgent orders can be
+							arranged for same-day or next-day delivery with express fees.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Return and
+								Exchange Policy:</strong> Unopened new products can be returned without reason within 7
+							days of receipt, provided original packaging is intact and all accessories are complete.
+							Opened products with quality issues can be exchanged within 30 days, requiring fault
+							description and test report. Customized products, software licenses, and activated digital
+							products do not support returns or exchanges. Return shipping costs are borne by customers,
+							except for quality issues. Refunds will be processed within 5-7 business days after
+							receiving and inspecting returned goods.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Technical
+								Support Services:</strong> After purchase, customers enjoy free technical consultation
+							services, including installation guidance, driver downloads, and system optimization. We
+							provide multiple support channels including phone, email, and online chat, with immediate
+							response during business hours 9:00-18:00. For complex technical issues, on-site engineer
+							services can be scheduled at reasonable service fees. We also regularly hold technical
+							seminars and PC building training to help customers improve their computer skills.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Price
+								Adjustment Clause:</strong> Prices listed on this invoice are market prices as of the
+							invoice date and may be adjusted at any time due to exchange rate fluctuations, supply chain
+							changes, and other factors. Confirmed order prices are locked before payment and are not
+							affected by subsequent price changes. For long-term corporate customers, we provide
+							quarterly price agreements to ensure predictable procurement costs. Bulk purchases may enjoy
+							additional discounts, with specific discount rates to be negotiated separately.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Inventory and
+								Out-of-Stock Handling:</strong> Products listed on this invoice are either current
+							inventory or confirmed supplier orders. In case of stock shortage, we will notify customers
+							within 24 hours and provide the following options: wait for arrival (usually 1-2 weeks),
+							replace with equivalent alternative products, or cancel the order for full refund. For
+							urgent needs, we can assist in sourcing from other channels, which may incur additional
+							costs. Large purchases are recommended to be pre-ordered to ensure sufficient supply.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Installation
+								and Configuration Services:</strong> We provide professional computer assembly and
+							system installation services. Standard PC building services include hardware assembly,
+							system installation, driver configuration, and basic testing, ranging from $80-150 depending
+							on configuration complexity. Corporate customers with bulk purchases may enjoy free
+							installation services. We also provide value-added services such as network cabling, server
+							configuration, and data migration, quoted per project. All installation services come with
+							30-day warranty to ensure system stability.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Data Security
+								and Privacy:</strong> During technical service provision, we may need to access customer
+							computer systems. We promise to strictly protect customer data privacy and will not copy,
+							distribute, or misuse any personal or business information. Customers are advised to backup
+							important data before service, as we are not responsible for data loss. For corporate
+							customers involving sensitive information, confidentiality agreements can be signed. Our
+							technicians are professionally trained and background-checked to ensure service reliability
+							and security.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Product
+								Compatibility Notice:</strong> Computer component compatibility is crucial. We recommend
+							customers consult our technical team before purchase to ensure selected products can work
+							together properly. We provide free configuration design services to help customers choose
+							optimal hardware combinations. For components purchased by customers themselves, if they
+							cannot be used due to compatibility issues, we can assist with exchanges, but handling fees
+							may apply. We are not responsible for compatibility issues caused by customer self-assembly.
+						</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Software
+								Licensing and Compliance:</strong> Software products sold by our company are all genuine
+							licenses. Customers must comply with software license agreement terms. Software licenses are
+							typically bound to specific devices or users and cannot be transferred or shared. Corporate
+							customers must purchase licenses according to actual number of users. We provide software
+							asset management consulting services to help enterprises ensure software usage compliance.
+							Pirated software may lead to legal risks and security hazards. We strongly recommend using
+							genuine software.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Environmental
+								Protection and Recycling:</strong> We are committed to promoting sustainable development
+							of electronic products and encourage customers to participate in old equipment recycling
+							programs. When purchasing new products, customers can bring old computers and components to
+							our store. We will provide recycling subsidies or trade-in discounts based on market value.
+							Recycled equipment will be environmentally processed or refurbished through proper channels.
+							We also provide electronic waste disposal consulting services to help enterprises comply
+							with environmental regulations.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Dispute
+								Resolution Mechanism:</strong> If customers have any dissatisfaction with products or
+							services, please first contact our customer service department. We will respond within 48
+							hours and propose solutions. Most issues can be resolved through friendly negotiation. If
+							negotiation fails, both parties agree to submit disputes to the Singapore Consumers
+							Association for mediation. For commercial disputes involving larger amounts, both parties
+							agree to arbitration through the Singapore International Arbitration Centre, with
+							arbitration results being final.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Force Majeure
+								Clause:</strong> When contract obligations cannot be fulfilled due to force majeure
+							factors such as natural disasters, war, government actions, epidemics, or supply chain
+							disruptions, neither party shall bear liability for breach of contract. After a force
+							majeure event occurs, the affected party shall immediately notify the other party and
+							provide relevant supporting documents. Both parties shall negotiate to adjust delivery time
+							or order content. If force majeure continues for more than 30 days, either party has the
+							right to terminate the contract, and paid amounts will be fully refunded.</p>
+						<p style="margin:0px 0px 12px 0px;"><strong style="font-size:14px;color:#1e40af;">Terms
+								Amendment and Notification:</strong> These sales terms may be revised according to
+							market conditions and legal requirements. Revised terms will be published on our official
+							website and in-store bulletin boards and will apply to new orders after the publication
+							date. For confirmed orders, the terms version at the time of order confirmation still
+							applies. We will notify customers of important term changes via email, SMS, or phone.
+							Customers are responsible for regularly reviewing the latest terms. Continued purchases are
+							deemed acceptance of revised terms.</p>
+						<p style="margin:12px 0px 0px 0px;font-size:12px;color:#666;font-style:italic;">These sales
+							terms take effect from the invoice date. Customer acceptance of goods constitutes full
+							acceptance of all above terms. If you have any questions about the terms, please contact us
+							before payment.</p>
+					</div>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<!-- Footer - Amount Summary -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0"
+						style="width:100%;table-layout:fixed;border-top:2px solid #000;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:60%;padding:8px 0px;"></td>
+							<td
+								style="box-sizing:border-box;width:20%;padding:8px 10px;font-size:14px;font-weight:600;">
+								Subtotal:</td>
+							<td
+								style="box-sizing:border-box;width:20%;padding:8px 10px;font-size:14px;text-align:right;">
+								$61,254.00</td>
+						</tr>
+						<tr>
+							<td style="box-sizing:border-box;"></td>
+							<td style="box-sizing:border-box;padding:8px 10px;font-size:14px;font-weight:600;">GST (9%):
+							</td>
+							<td style="box-sizing:border-box;padding:8px 10px;font-size:14px;text-align:right;">
+								$5,512.86</td>
+						</tr>
+						<tr style="border-top:1px solid #666;">
+							<td style="box-sizing:border-box;"></td>
+							<td
+								style="box-sizing:border-box;padding:12px 10px;font-size:16px;font-weight:700;color:#1e40af;">
+								Total:</td>
+							<td
+								style="box-sizing:border-box;padding:12px 10px;font-size:16px;font-weight:700;text-align:right;color:#1e40af;">
+								$66,766.86</td>
+						</tr>
+					</table>
+					<div
+						style="margin-top:15px;padding:12px;background:#f0f9ff;border-left:4px solid #3b82f6;font-size:13px;">
+						<strong>Payment Information:</strong> OCBC Bank Singapore | Account: 123-456-789-001 | Swift
+						Code: OCBCSGSGXXX<br>
+						<strong>Beneficiary:</strong> Tech Computer Store Pte Ltd
+					</div>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:15px;"></tr>
+		</table>
+
+		<!-- Footer Logo -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;text-align:center;padding:10px 0px;">
+					<svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+						<circle cx="20" cy="20" r="15" fill="#3b82f6" opacity="0.2" />
+						<path d="M 12 20 L 20 12 L 28 20 L 20 28 Z" fill="#1e40af" />
+						<text x="40" y="18" font-family="Arial, sans-serif" font-size="14" font-weight="bold"
+							fill="#1e40af">TECH COMPUTER STORE</text>
+						<text x="40" y="30" font-family="Arial, sans-serif" font-size="9" fill="#666">Thank you for your
+							business</text>
+					</svg>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<!-- Page Number -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0"
+			class="paper_width pfooter_pagenum">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<div style="font-size:11px;line-height:16px;text-align:center;color:#666;padding:8px 0px;"
+						data-page-number-container>
+						Page <span data-page-number></span> of <span data-page-total></span>
+					</div>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+	</div>
+
+	<script src="./dist/printform.js"></script>
+
+	<!-- Print Button -->
+	<style>
+		@media print {
+			.print-btn {
+				display: none;
+			}
+		}
+	</style>
+	<div class="print-btn" style="position:fixed;top:20px;right:20px;">
+		<button onclick="window.print();"
+			style="padding:12px 24px;background:#3b82f6;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">🖨️
+			Print Invoice</button>
+	</div>
+</body>
+
+</html>
