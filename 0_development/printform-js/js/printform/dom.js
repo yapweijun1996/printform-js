@@ -30,6 +30,8 @@ import { normalizeHeight } from "./helpers.js";
     table.setAttribute("cellspacing", "0");
     table.setAttribute("cellpadding", "0");
     applyTableSizingReset(table);
+    // Default dummy row item table to separate borders (override reset).
+    table.style.borderCollapse = "separate";
     if (config.customDummyRowItemContent) {
       table.innerHTML = config.customDummyRowItemContent;
     } else {

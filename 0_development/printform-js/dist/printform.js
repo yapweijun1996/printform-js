@@ -427,6 +427,7 @@ var PrintForm = function() {
     table.setAttribute("cellspacing", "0");
     table.setAttribute("cellpadding", "0");
     applyTableSizingReset(table);
+    table.style.borderCollapse = "separate";
     if (config.customDummyRowItemContent) {
       table.innerHTML = config.customDummyRowItemContent;
     } else {
