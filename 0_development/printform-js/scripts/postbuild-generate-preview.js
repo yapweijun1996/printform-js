@@ -6,6 +6,7 @@ const DIST_DIR = path.resolve(PROJECT_ROOT, "dist");
 const IMG_DIR = path.resolve(PROJECT_ROOT, "img");
 const SOURCE_INDEX = path.resolve(PROJECT_ROOT, "index.html");
 const README_FILES = ["README.md", "README.zh-CN.md"];
+const DOCS_DIR = path.resolve(PROJECT_ROOT, "docs");
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -114,10 +115,16 @@ function copyReadmeFiles() {
   });
 }
 
+function copyDocsDirectory() {
+  if (!fs.existsSync(DOCS_DIR)) return;
+  copyDirectoryContents(DOCS_DIR, path.resolve(DIST_DIR, "docs"));
+}
+
 ensureDir(DIST_DIR);
 
 writeDistIndexHtml();
 copyRootHtmlFiles();
 copyReadmeFiles();
+copyDocsDirectory();
 
 copyDirectoryContents(IMG_DIR, path.resolve(DIST_DIR, "img"));
