@@ -62,15 +62,23 @@ export class PrintFormFormatter {
       this.markSectionsProcessed(sections);
       const footerState = this.computeFooterState(sections, heights);
       const heightPerPage = this.computeHeightPerPage(sections, heights);
-      const renderState = this.renderRows(
-        container,
-        sections,
-        heights,
-        footerState,
-        heightPerPage,
-        footerSpacerTemplate,
-        logFn
-      );
+      const renderState = sections.rows.length
+        ? this.renderRows(
+          container,
+          sections,
+          heights,
+          footerState,
+          heightPerPage,
+          footerSpacerTemplate,
+          logFn
+        )
+        : this.renderEmptyDocument(
+          container,
+          sections,
+          heights,
+          heightPerPage,
+          logFn
+        );
 
       this.finalizeDocument(
         container,

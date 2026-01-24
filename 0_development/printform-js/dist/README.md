@@ -95,7 +95,7 @@ Create a `div` with `class="printform"` and configure the paper size.
     <!-- 1. Header (Repeated at top of every page) -->
     <div class="pheader">...</div>
 
-    <!-- 2. Doc Info (Usually on first page, can be repeated) -->
+    <!-- 2. Doc Info (Repeats by default; configurable) -->
     <div class="pdocinfo">...</div>
 
     <!-- 3. Table Header (Column titles, repeated on new pages) -->
@@ -106,7 +106,7 @@ Create a `div` with `class="printform"` and configure the paper size.
     <div class="prowitem">Row 2</div>
     <div class="prowitem">Row 3...</div>
 
-    <!-- 5. Footer (Repeated at bottom of every page) -->
+    <!-- 5. Footer (Defaults to last page; configurable) -->
     <div class="pfooter">...</div>
     
 </div>
@@ -127,6 +127,7 @@ Note: Do not rely on `data-*` attributes for styling. During formatting, the eng
 | `.prowitem` | **Data Row** | The **smallest unit** for splitting. The script will not split content inside a single `.prowitem`, but decides pagination row by row. |
 | `.pfooter` | **Footer** | Defaults to **last page only** (can be configured to repeat). |
 | `.ptac` | **Terms/Text** | For legal terms or long text, automatically splits by paragraph. |
+| `.paddt` | **Audit/Addendum** | PADDT rows rendered after main pages. |
 
 ---
 
@@ -216,14 +217,21 @@ If a page is not full, PrintForm automatically inserts empty rows to push the fo
 </template>
 ```
 
-### 2. Hide Row Header On A Specific Page
+### 2. Force Page Break
+Add `tb_page_break_before` to the row to start a new page before it.
+
+```html
+<div class="prowitem tb_page_break_before">...</div>
+```
+
+### 3. Hide Row Header On A Specific Page
 If you need a page to start without the repeating `.prowheader`, add `without_prowheader` (or `tb_without_rowheader`) on the row that starts that page.
 
 ```html
 <table class="prowitem tb_page_break_before without_prowheader">...</table>
 ```
 
-### 3. JS API
+### 4. JS API
 The script runs automatically on load. If you generate content dynamically (e.g. AJAX), trigger formatting manually:
 
 ```javascript
@@ -239,7 +247,7 @@ Notes:
 - `formatAll` is async and only runs once unless `force: true` is supplied.
 - The formatter removes the original `.printform` node and inserts a processed container in its place.
 
-### 4. Build for Production
+### 5. Build for Production
 If you modify the source (`js/` directory), rebuild:
 
 ```bash

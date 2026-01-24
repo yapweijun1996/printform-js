@@ -71,7 +71,7 @@ npm run dev
     <!-- 1. 页眉 (每页顶部重复) -->
     <div class="pheader">...</div>
 
-    <!-- 2. 文档信息 (通常只在第一页显示，可通过配置重复) -->
+    <!-- 2. 文档信息 (默认每页重复，可按配置关闭) -->
     <div class="pdocinfo">...</div>
 
     <!-- 3. 表头 (表格列名，跨页时重复显示) -->
@@ -82,7 +82,7 @@ npm run dev
     <div class="prowitem">行 2</div>
     <div class="prowitem">行 3...</div>
 
-    <!-- 5. 页脚 (每页底部重复) -->
+    <!-- 5. 页脚 (默认只在最后一页，可配置重复) -->
     <div class="pfooter">...</div>
     
 </div>

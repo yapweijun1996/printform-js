@@ -54,6 +54,10 @@ printform-js/
 │
 ├── docs/                        # 文档目录
 │   ├── CONFIGURATION.md         # 配置参考(自动生成)
+│   ├── USAGE_GUIDE.md           # 使用指南(英文)
+│   ├── USAGE_GUIDE.zh-CN.md      # 使用指南(中文)
+│   ├── quick-start/             # 快速上手拆分文档
+│   ├── code-structure/          # 代码结构拆分文档
 │   ├── configuration.html       # 配置参考 HTML 版
 │   └── config-reference.json    # 配置参考 JSON 版
 │

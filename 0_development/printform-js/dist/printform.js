@@ -1368,6 +1368,27 @@ var PrintForm = function() {
         repeatingHeight: pageContext.repeatingHeight
       };
     };
+    FormatterClass.prototype.renderEmptyDocument = function renderEmptyDocument(outputContainer, sections, heights, heightPerPage, logFn) {
+      const container = this.getCurrentPageContainer(outputContainer);
+      const skipRowHeader = false;
+      if (this.debug) {
+        console.log(`[printform] ===== renderEmptyDocument START =====`);
+      }
+      this.ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader);
+      const repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, skipRowHeader);
+      const currentHeight = this.measureContentHeight(container, repeatingHeight);
+      if (this.debug) {
+        console.log(`[printform] Empty document currentHeight=${currentHeight}px, pageLimit=${heightPerPage}px`);
+        console.log(`[printform] ===== renderEmptyDocument END =====`);
+      }
+      return {
+        currentHeight,
+        pageLimit: heightPerPage,
+        isPtacPage: false,
+        isPaddtPage: false,
+        repeatingHeight
+      };
+    };
     FormatterClass.prototype.prepareNextPage = function prepareNextPage(outputContainer, sections, logFn, pageLimit, currentHeight, footerState, spacerTemplate, skipRowHeader, skipDummyRowItems, repeatingHeight) {
       const container = this.getCurrentPageContainer(outputContainer);
       const filledHeight = this.applyRemainderSpacing(
@@ -1867,13 +1888,19 @@ var PrintForm = function() {
         this.markSectionsProcessed(sections);
         const footerState = this.computeFooterState(sections, heights);
         const heightPerPage = this.computeHeightPerPage(sections, heights);
-        const renderState = this.renderRows(
+        const renderState = sections.rows.length ? this.renderRows(
           container,
           sections,
           heights,
           footerState,
           heightPerPage,
           footerSpacerTemplate,
+          logFn
+        ) : this.renderEmptyDocument(
+          container,
+          sections,
+          heights,
+          heightPerPage,
           logFn
         );
         this.finalizeDocument(

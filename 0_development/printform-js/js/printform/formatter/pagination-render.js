@@ -202,6 +202,28 @@ export function attachPaginationRenderMethods(FormatterClass) {
     };
   };
 
+  FormatterClass.prototype.renderEmptyDocument = function renderEmptyDocument(outputContainer, sections, heights, heightPerPage, logFn) {
+    const container = this.getCurrentPageContainer(outputContainer);
+    const skipRowHeader = false;
+    if (this.debug) {
+      console.log(`[printform] ===== renderEmptyDocument START =====`);
+    }
+    this.ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader);
+    const repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, skipRowHeader);
+    const currentHeight = this.measureContentHeight(container, repeatingHeight);
+    if (this.debug) {
+      console.log(`[printform] Empty document currentHeight=${currentHeight}px, pageLimit=${heightPerPage}px`);
+      console.log(`[printform] ===== renderEmptyDocument END =====`);
+    }
+    return {
+      currentHeight,
+      pageLimit: heightPerPage,
+      isPtacPage: false,
+      isPaddtPage: false,
+      repeatingHeight
+    };
+  };
+
   FormatterClass.prototype.prepareNextPage = function prepareNextPage(
     outputContainer,
     sections,
