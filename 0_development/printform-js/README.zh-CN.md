@@ -150,6 +150,7 @@ npm run dev
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | 是否插入页脚 spacer 将页脚顶到底部。 |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | 是否用空白行 item 作为 footer spacer。 |
 | `data-custom-dummy-row-item-content` | HTML | 自定义空白行的 HTML（或使用 `<template class="custom-dummy-row-item-content">`）。 |
+| `data-custom-dummy-spacer-content` | HTML | 自定义 dummy spacer 的 HTML（或使用 `<template class="custom-dummy-spacer-content">`）。 |
 | `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | 给生成的 `div_page_break_before` 追加 class。 |
 
 ### PADDT 控制
@@ -188,6 +189,14 @@ npm run dev
 ```html
 <template class="custom-dummy-row-item-content">
   <tr style="height:20px;"><td style="border:0;">...</td></tr>
+</template>
+```
+- 你也可以自定义页面填充 spacer（必须单一根元素，高度自动填充）：
+```html
+<template class="custom-dummy-spacer-content">
+  <table style="width:100%; table-layout:fixed;" cellpadding="0" cellspacing="0">
+    <tr><td style="border-top:1px solid #000;"></td></tr>
+  </table>
 </template>
 ```
 

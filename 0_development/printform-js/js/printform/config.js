@@ -110,6 +110,13 @@ import { parseBooleanFlag, parseNumber, parseString, resolvePaperDimensions } fr
       defaultValue: "",
       parser: parseString
     },
+    {
+      key: "customDummySpacerContent",
+      datasetKey: "customDummySpacerContent",
+      legacyKey: "custom_dummy_spacer_content",
+      defaultValue: "",
+      parser: parseString
+    },
     { key: "debug", datasetKey: "debug", legacyKey: "debug_printform", defaultValue: false, parser: parseBooleanFlag }
   ];
 
@@ -168,8 +175,8 @@ import { parseBooleanFlag, parseNumber, parseString, resolvePaperDimensions } fr
     return readConfigFromDataset(CONFIG_DESCRIPTORS, dataset);
   }
 
-  function resolveTemplateOverride(formEl, fallback) {
-    const template = formEl.querySelector("template.custom-dummy-row-item-content");
+  function resolveTemplateOverride(formEl, className, fallback) {
+    const template = formEl.querySelector(`template.${className}`);
     if (template) {
       return template.innerHTML.trim();
     }
@@ -187,9 +194,17 @@ import { parseBooleanFlag, parseNumber, parseString, resolvePaperDimensions } fr
     };
     merged.customDummyRowItemContent = resolveTemplateOverride(
       formEl,
+      "custom-dummy-row-item-content",
       overrides.customDummyRowItemContent !== undefined
         ? overrides.customDummyRowItemContent
         : merged.customDummyRowItemContent
+    );
+    merged.customDummySpacerContent = resolveTemplateOverride(
+      formEl,
+      "custom-dummy-spacer-content",
+      overrides.customDummySpacerContent !== undefined
+        ? overrides.customDummySpacerContent
+        : merged.customDummySpacerContent
     );
     merged.debug = parseBooleanFlag(merged.debug, DEFAULT_CONFIG.debug);
     merged.nUp = parseNumber(merged.nUp, DEFAULT_CONFIG.nUp);

@@ -246,6 +246,13 @@ var PrintForm = function() {
       defaultValue: "",
       parser: parseString
     },
+    {
+      key: "customDummySpacerContent",
+      datasetKey: "customDummySpacerContent",
+      legacyKey: "custom_dummy_spacer_content",
+      defaultValue: "",
+      parser: parseString
+    },
     { key: "debug", datasetKey: "debug", legacyKey: "debug_printform", defaultValue: false, parser: parseBooleanFlag }
   ];
   const DOCINFO_VARIANTS = [
@@ -295,8 +302,8 @@ var PrintForm = function() {
   function getDatasetConfig(dataset) {
     return readConfigFromDataset(CONFIG_DESCRIPTORS, dataset);
   }
-  function resolveTemplateOverride(formEl, fallback) {
-    const template = formEl.querySelector("template.custom-dummy-row-item-content");
+  function resolveTemplateOverride(formEl, className, fallback) {
+    const template = formEl.querySelector(`template.${className}`);
     if (template) {
       return template.innerHTML.trim();
     }
@@ -313,7 +320,13 @@ var PrintForm = function() {
     };
     merged.customDummyRowItemContent = resolveTemplateOverride(
       formEl,
+      "custom-dummy-row-item-content",
       overrides.customDummyRowItemContent !== void 0 ? overrides.customDummyRowItemContent : merged.customDummyRowItemContent
+    );
+    merged.customDummySpacerContent = resolveTemplateOverride(
+      formEl,
+      "custom-dummy-spacer-content",
+      overrides.customDummySpacerContent !== void 0 ? overrides.customDummySpacerContent : merged.customDummySpacerContent
     );
     merged.debug = parseBooleanFlag(merged.debug, DEFAULT_CONFIG.debug);
     merged.nUp = parseNumber(merged.nUp, DEFAULT_CONFIG.nUp);
@@ -629,6 +642,40 @@ var PrintForm = function() {
     appendRowItem,
     createDummyRowTable
   };
+  function buildDummySpacer(config, remaining, debug) {
+    if (config.customDummySpacerContent) {
+      const template = document.createElement("template");
+      template.innerHTML = config.customDummySpacerContent.trim();
+      const elements = Array.from(template.content.childNodes).filter((node) => node.nodeType === Node.ELEMENT_NODE);
+      if (elements.length === 1) {
+        const spacer2 = elements[0];
+        spacer2.classList.add("dummy_spacer");
+        spacer2.setAttribute("aria-hidden", "true");
+        if (spacer2.tagName !== "TABLE") {
+          spacer2.style.display = "block";
+        }
+        spacer2.style.width = "100%";
+        spacer2.style.height = `${remaining}px`;
+        spacer2.style.margin = "0";
+        spacer2.style.padding = "0";
+        return spacer2;
+      }
+      if (debug) {
+        console.log("[printform] customDummySpacerContent ignored: template must have exactly 1 root element.");
+      }
+    }
+    const spacer = document.createElement("div");
+    spacer.classList.add("dummy_spacer");
+    spacer.setAttribute("aria-hidden", "true");
+    if (spacer.tagName !== "TABLE") {
+      spacer.style.display = "block";
+    }
+    spacer.style.width = "100%";
+    spacer.style.height = `${remaining}px`;
+    spacer.style.margin = "0";
+    spacer.style.padding = "0";
+    return spacer;
+  }
   function attachPageMethods(FormatterClass) {
     FormatterClass.prototype.initializeOutputContainer = function initializeOutputContainer() {
       const container = document.createElement("div");
@@ -694,14 +741,7 @@ var PrintForm = function() {
         const currentHeight = DomHelpers.measureHeightRaw(pageContainer);
         const remaining = Math.max(0, configuredHeight - currentHeight);
         if (remaining > 0.01) {
-          const spacer = document.createElement("div");
-          spacer.classList.add("dummy_spacer");
-          spacer.setAttribute("aria-hidden", "true");
-          spacer.style.display = "block";
-          spacer.style.width = "100%";
-          spacer.style.height = `${remaining}px`;
-          spacer.style.margin = "0";
-          spacer.style.padding = "0";
+          const spacer = buildDummySpacer(this.config, remaining, this.debug);
           const footerSelectors = FOOTER_VARIANTS.map((variant) => `.${variant.className}_processed`).concat([
             `.${FOOTER_LOGO_VARIANT.className}_processed`,
             `.${FOOTER_PAGENUM_VARIANT.className}_processed`

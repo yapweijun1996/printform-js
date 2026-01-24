@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <title>Sample Printform - PADDT Only</title>
+    <style>
+      body { margin: 0px; font-family: Arial, sans-serif; padding: 0px; }
+      body, .printform, .printform_formatter, .paper_width { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+      .paper_width { width: 750px; }
+      td { line-height: 20px; }
+    </style>
+  </head>
+  <body>
+    <!-- clone from index018.html, trimmed for PADDT-only demo -->
+    <div class="paper_width printform"
+      data-debug="y"
+      data-papersize-width="750"
+      data-papersize-height="1050"
+      data-height-of-dummy-row-item="26"
+      data-repeat-header="y"
+      data-repeat-docinfo="y"
+      data-repeat-docinfo002="y"
+      data-repeat-docinfo003="y"
+      data-repeat-docinfo004="y"
+      data-repeat-docinfo005="y"
+      data-repeat-rowheader="y"
+      data-repeat-ptac-rowheader="n"
+      data-repeat-footer="n"
+      data-repeat-footer002="n"
+      data-repeat-footer003="n"
+      data-repeat-footer004="n"
+      data-repeat-footer005="y"
+      data-repeat-footer-logo="y"
+      data-repeat-footer-pagenum="y"
+      data-insert-dummy-row-item-while-format-table="y"
+      data-insert-ptac-dummy-row-items="n"
+      data-insert-dummy-row-while-format-table="y"
+      data-insert-footer-spacer-while-format-table="y"
+      data-insert-footer-spacer-with-dummy-row-item-while-format-table="y"
+      data-repeat-paddt="n"
+      data-repeat-paddt-rowheader="n"
+      data-insert-paddt-dummy-row-items="n"
+      data-paddt-max-words-per-segment="180"
+      data-paddt-debug="n"
+      data-repeat-paddt-docinfo="n"
+      data-repeat-paddt-docinfo002="n"
+      data-repeat-paddt-docinfo003="n"
+      data-repeat-paddt-docinfo004="n"
+      data-repeat-paddt-docinfo005="n">
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><img src="./img/letterhead_logo.jpg" style="height: 102px; width: 100%;"><div style="font-weight:600;font-size:20px;">Sample Company Name</div><div style="font-size:15px;">Address 1</div><div style="font-size:15px;">12345 Singapore</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:20px;">Invoice</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo002">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:15px;">Sender</div><div style="font-size:13px;">sample</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo003">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:15px;">Receiver</div><div style="font-size:13px;">sample</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo004">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:15px;">Summary</div><div style="font-size:13px;">Page <span data-page-number></span> of <span data-page-total></span></div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo005">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:15px;">DO Remarks</div><div style="font-size:13px;">Please check condition.</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-weight:600;font-size:15px;">Description | Qty | UOM | Price</div></td><td></td></tr>
+      </table>
+
+      <!-- PADDT only (no prowitem rows) -->
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width paddt">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr>
+          <td></td>
+          <td>
+            <div style="padding:10px 0px 15px 0px;">
+              <p style="font-weight:600;font-size:16px;padding-bottom:6px;margin:0px 0px 8px 0px;">Post-Audit Data Terms (PADDT)</p>
+              <p style="margin:0px 0px 10px 0px;">This PADDT-only demo is used to validate behavior when there are no .prowitem rows. The formatter splits PADDT text into .paddt-rowitem segments based on data-paddt-max-words-per-segment. It renders after business footers and uses repeat-footer-logo and repeat-footer-pagenum to place branding and page counters. The text below is intentionally long to trigger segmentation and multi-page output in a single run.</p>
+              <p style="margin:0px 0px 10px 0px;">Segmentation policy. PADDT paragraphs are split at word boundaries to reduce reflow risk. Operators can tune paddtMaxWordsPerSegment to stabilize pagination across printers and fonts. Use a consistent font size and line height to reduce drift. This demo keeps the main document empty to expose how header/docinfo/rowheader and footer areas are handled when only PADDT exists.</p>
+              <p style="margin:0px 0px 10px 0px;">Page context and numbering. The formatter continues logical page numbers across PADDT pages. If the main document has no row items, the first page still renders the standard header and docinfo, then PADDT starts on the next page. This ensures consistent total page counts and keeps footers visible on PADDT pages when repeat flags are enabled.</p>
+              <p style="margin:0px 0px 10px 0px;">Dummy fillers. data-insert-paddt-dummy-row-items controls whether paddt-only pages can use dummy row items; setting it to n keeps audit pages clean. data-insert-dummy-row-while-format-table still allows a single full-height filler if enabled. This demo keeps paddt dummy rows disabled so that only content and footers are visible.</p>
+              <p style="margin:0px 0px 10px 0px;">Operational note. Capture screenshots of the first page, first PADDT page, and the final PADDT page to confirm that header/docinfo/rowheader behavior and page numbers align with expectations. The text is long enough to span multiple pages so you can observe the page counter continuity.</p>
+              <p style="margin:0px;">Additional long paragraph to exceed word segmentation limits and force multiple PADDT segments. This paragraph is deliberately verbose and repetitive so that the segmenter has enough words to split into multiple paddt-rowitem blocks. Keep this paragraph as a single line to reduce file length while still generating sufficient content for pagination tests in Chromium and print preview.</p>
+            </div>
+          </td>
+          <td></td>
+        </tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter004">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="border:1px solid #000;padding:8px 12px;font-size:12px;line-height:16px;">Terms &amp; Conditions placeholder</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter005">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-size:12px;line-height:16px;">Support: support@sample-company.test</div></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><img src="./img/footer_logo.jpg" style="height: 102px; width: 100%;"></td><td></td></tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_pagenum">
+        <tr><td style="box-sizing:border-box;width:15px;"></td><td style="box-sizing:border-box;width:inherit;"></td><td style="box-sizing:border-box;width:15px;"></td></tr>
+        <tr><td></td><td><div style="font-size:12px;line-height:16px;text-align:right;" data-page-number-container>Page <span data-page-number></span> of <span data-page-total></span></div></td><td></td></tr>
+      </table>
+    </div>
+
+    <script src="./printform.js"></script>
+    <style>
+      @media print { .etools { display: none; } }
+    </style>
+    <script>
+      function go_to_page(url) { window.location.replace(url); }
+    </script>
+    <div class="extra_tools" style="">
+      <input type="button" class="etools" value="Print" onclick="window.print();" style="position: fixed; top: 10px; right: 14px;">
+      <input type="button" class="etools" value="Sample 001" onclick="go_to_page('./index001.html');" style="position: fixed; top: 40px; right: 14px;">
+    </div>
+  </body>
+</html>

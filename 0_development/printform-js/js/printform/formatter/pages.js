@@ -3,6 +3,42 @@
 import { FOOTER_LOGO_VARIANT, FOOTER_PAGENUM_VARIANT, FOOTER_VARIANTS } from "../config.js";
 import { DomHelpers } from "../dom.js";
 
+function buildDummySpacer(config, remaining, debug) {
+  if (config.customDummySpacerContent) {
+    const template = document.createElement("template");
+    template.innerHTML = config.customDummySpacerContent.trim();
+    const elements = Array.from(template.content.childNodes)
+      .filter((node) => node.nodeType === Node.ELEMENT_NODE);
+    if (elements.length === 1) {
+      const spacer = elements[0];
+      spacer.classList.add("dummy_spacer");
+      spacer.setAttribute("aria-hidden", "true");
+      if (spacer.tagName !== "TABLE") {
+        spacer.style.display = "block";
+      }
+      spacer.style.width = "100%";
+      spacer.style.height = `${remaining}px`;
+      spacer.style.margin = "0";
+      spacer.style.padding = "0";
+      return spacer;
+    }
+    if (debug) {
+      console.log("[printform] customDummySpacerContent ignored: template must have exactly 1 root element.");
+    }
+  }
+  const spacer = document.createElement("div");
+  spacer.classList.add("dummy_spacer");
+  spacer.setAttribute("aria-hidden", "true");
+  if (spacer.tagName !== "TABLE") {
+    spacer.style.display = "block";
+  }
+  spacer.style.width = "100%";
+  spacer.style.height = `${remaining}px`;
+  spacer.style.margin = "0";
+  spacer.style.padding = "0";
+  return spacer;
+}
+
 export function attachPageMethods(FormatterClass) {
   FormatterClass.prototype.initializeOutputContainer = function initializeOutputContainer() {
     const container = document.createElement("div");
@@ -85,14 +121,7 @@ export function attachPageMethods(FormatterClass) {
       const currentHeight = DomHelpers.measureHeightRaw(pageContainer);
       const remaining = Math.max(0, configuredHeight - currentHeight);
       if (remaining > 0.01) {
-        const spacer = document.createElement("div");
-        spacer.classList.add("dummy_spacer");
-        spacer.setAttribute("aria-hidden", "true");
-        spacer.style.display = "block";
-        spacer.style.width = "100%";
-        spacer.style.height = `${remaining}px`;
-        spacer.style.margin = "0";
-        spacer.style.padding = "0";
+        const spacer = buildDummySpacer(this.config, remaining, this.debug);
         const footerSelectors = FOOTER_VARIANTS
           .map((variant) => `.${variant.className}_processed`)
           .concat([
