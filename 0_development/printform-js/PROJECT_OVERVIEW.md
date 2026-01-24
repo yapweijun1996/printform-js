@@ -61,7 +61,7 @@ printform-js/
 │   └── printform.js             # 📍 打包后的单文件库
 │
 ├── index*.html                  # 测试和演示文件
-├── example.html                 # 基础示例
+├── index001.html                # 基础示例
 │
 ├── README.md                    # 项目说明
 ├── DEVELOPER_BOOK.md            # 开发者手册
@@ -143,80 +143,13 @@ PrintForm.js 识别以下区块类型:
 |------|------|------|
 | **JavaScript** | ES6+ | 核心逻辑 |
 | **Vite** | 5.4.0 | 构建工具 |
-| **ESLint** | - | 代码检查 |
 | **无外部依赖** | - | 纯 Vanilla JS |
 
 ---
 
-## 🚀 5分钟快速开始
+## 🚀 快速开始
 
-### 步骤 1: 创建 HTML 文件
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>PrintForm 示例</title>
-</head>
-<body>
-  <!-- 分页容器 -->
-  <div class="printform" 
-       data-papersize-width="750" 
-       data-papersize-height="1050">
-    
-    <!-- 头部 -->
-    <div class="pheader">
-      <h1>我的文档</h1>
-    </div>
-    
-    <!-- 行头 -->
-    <div class="prowheader">
-      <table>
-        <tr>
-          <th>项目</th>
-          <th>数量</th>
-        </tr>
-      </table>
-    </div>
-    
-    <!-- 数据行 -->
-    <div class="prowitem">
-      <table>
-        <tr>
-          <td>商品 A</td>
-          <td>10</td>
-        </tr>
-      </table>
-    </div>
-    
-    <!-- 更多数据行... -->
-    
-    <!-- 页脚 -->
-    <div class="pfooter">
-      <p>感谢您的购买</p>
-    </div>
-  </div>
-  
-  <!-- 引入 PrintForm.js -->
-  <script src="./dist/printform.js"></script>
-</body>
-</html>
-```
-
-### 步骤 2: 打开浏览器查看
-
-```bash
-# 启动本地服务器
-python3 -m http.server 8000
-
-# 或使用 npm
-npm run dev
-```
-
-### 步骤 3: 打印预览
-
-按 `Ctrl+P` (或 `Cmd+P`) 查看分页效果!
+快速上手请参阅 [QUICK_START.md](QUICK_START.md)。
 
 ---
 
@@ -225,10 +158,10 @@ npm run dev
 | 我想... | 查看文档 |
 |---------|---------|
 | **快速开始使用** | [QUICK_START.md](QUICK_START.md) |
+| **完整使用指南** | [docs/USAGE_GUIDE.zh-CN.md](docs/USAGE_GUIDE.zh-CN.md) |
 | **了解代码结构** | [CODE_STRUCTURE.md](CODE_STRUCTURE.md) |
 | **查看所有配置** | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | **开发和扩展** | [DEVELOPER_BOOK.md](DEVELOPER_BOOK.md) |
-| **查看所有属性** | [DATA_ATTRIBUTES_REVIEW.md](DATA_ATTRIBUTES_REVIEW.md) |
 | **了解自动化文档** | [docs/AUTO_DOC_GENERATION_GUIDE.md](docs/AUTO_DOC_GENERATION_GUIDE.md) |
 
 ---

@@ -6,6 +6,14 @@
 
 它的核心作用是：**把一个长 HTML 容器（`.printform`）自动拆分成多个符合打印纸张大小的页面**。它会自动处理页眉、页脚、表头重复、页码更新以及空白行填充（Dummy Rows）。
 
+## 📚 文档导航
+
+- 项目概览: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+- 快速上手: [QUICK_START.md](QUICK_START.md)
+- 完整使用指南: [docs/USAGE_GUIDE.zh-CN.md](docs/USAGE_GUIDE.zh-CN.md)
+- 配置参考: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
+- 代码结构: [CODE_STRUCTURE.md](CODE_STRUCTURE.md)
+
 ## 核心逻辑图解 (Logic Diagram)
 
 为了帮助理解 `printform.js` 是如何工作的，请参考下方的流程图：
@@ -30,7 +38,7 @@ npm run dev
 ### 2. 预览
 打开浏览器访问：
 - `http://localhost:8000/index.html` (完整功能演示)
-- `http://localhost:8000/example.html` (基础结构演示)
+- `http://localhost:8000/index001.html` (基础结构演示)
 
 ---
 
@@ -63,7 +71,7 @@ npm run dev
     <!-- 1. 页眉 (每页顶部重复) -->
     <div class="pheader">...</div>
 
-    <!-- 2. 文档信息 (通常只在第一页显示，可通过配置重复) -->
+    <!-- 2. 文档信息 (默认每页重复，可按配置关闭) -->
     <div class="pdocinfo">...</div>
 
     <!-- 3. 表头 (表格列名，跨页时重复显示) -->
@@ -74,7 +82,7 @@ npm run dev
     <div class="prowitem">行 2</div>
     <div class="prowitem">行 3...</div>
 
-    <!-- 5. 页脚 (每页底部重复) -->
+    <!-- 5. 页脚 (默认只在最后一页，可配置重复) -->
     <div class="pfooter">...</div>
     
 </div>
@@ -94,6 +102,7 @@ npm run dev
 | `.prowitem` | **数据行** | 这是**最小拆分单位**。脚本不会拆分一个 `.prowitem` 内部的内容，而是按行进行分页判断。 |
 | `.pfooter` | **页脚** | 默认**只在最后一页** (可通过配置改为每页重复)。 |
 | `.ptac` | **条款/长文本** | 用于不需要对齐的法律条款或长文本，会自动按段落拆分。 |
+| `.paddt` | **审计/附加段落** | PADDT 段落，分页在所有主内容之后。 |
 
 ---
 
@@ -107,10 +116,13 @@ npm run dev
 | :--- | :--- | :--- |
 | `data-papersize-width` | `750` | 纸张宽度 (px)。 |
 | `data-papersize-height` | `1050` | 纸张高度 (px)。 |
+| `data-paper-size` | `A4` | 预设纸张大小（A4/A5/LETTER/LEGAL）。 |
+| `data-dpi` | `96` | 用于纸张预设换算像素的 DPI。 |
 | `data-orientation` | `portrait` / `landscape` | 纸张方向：纵向 / 横向。 |
 | `data-repeat-header` | `y` / `n` | 是否每页重复页眉 (默认 `y`)。 |
 | `data-repeat-footer` | `y` / `n` | 是否每页重复页脚 (默认 `n`)。 |
 | `data-show-logical-page-number`| `y` / `n` | 是否显示页码 (如 "Page 1 of 3")。 |
+| `data-show-physical-page-number`| `y` / `n` | 是否显示物理页码 (N-up 时)。 |
 | `data-n-up` | `1` / `2` | **N-Up 打印**：一张纸打印几页逻辑页 (例如设为 2 可实现双联单)。 |
 
 ### 行与页脚控制
@@ -137,6 +149,8 @@ npm run dev
 | `data-insert-dummy-row-while-format-table` | `y` / `n` | 是否插入单个空白行块来填充剩余空间。 |
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | 是否插入页脚 spacer 将页脚顶到底部。 |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | 是否用空白行 item 作为 footer spacer。 |
+| `data-custom-dummy-row-item-content` | HTML | 自定义空白行的 HTML（或使用 `<template class="custom-dummy-row-item-content">`）。 |
+| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | 给生成的 `div_page_break_before` 追加 class。 |
 
 ### PADDT 控制
 
@@ -177,19 +191,28 @@ npm run dev
 </template>
 ```
 
-### 2. JS API 调用
+### 2. 强制分页与行头控制
+
+- 强制分页：在行上添加 `tb_page_break_before`。
+- 隐藏某页 `.prowheader`：在起始行添加 `without_prowheader` 或 `tb_without_rowheader`。
+
+### 3. JS API 调用
 脚本加载后会自动执行。如果你是动态生成的内容（如 AJAX 加载后），需要手动触发格式化：
 
 ```javascript
 // 格式化页面上所有 .printform
-PrintForm.formatAll();
+await PrintForm.formatAll({ force: true });
 
 // 或者只格式化特定节点
 const myForm = document.querySelector('#invoice-1');
 PrintForm.format(myForm);
 ```
 
-### 3. 构建生产版本
+注意：
+- `formatAll` 默认只执行一次，重复执行请传 `force: true`。
+- 格式化会移除原始 `.printform`，插入处理后的容器。
+
+### 4. 构建生产版本
 如果你修改了源码 (`js/` 目录)，需要重新打包：
 
 ```bash
@@ -205,7 +228,7 @@ npm run build
 A: 检查 `.prowitem` 的高度是否超过了 `data-papersize-height` 减去页眉页脚后的可用空间。如果单行内容太高，它无法被放入任何一页。
 
 **Q: 如何隐藏第一页的页眉？**
-A: 目前逻辑倾向于保持一致性。如果需要特殊处理，建议使用 CSS 配合 `.printform_page_1` 类名进行控制，或者在数据准备阶段拆分 DOM。
+A: 目前逻辑倾向于保持一致性。如果需要特殊处理，建议用外层选择器做 CSS 控制，或在数据准备阶段拆分 DOM。
 
 **Q: 打印时边距不对？**
 A: 打印机的物理边距受浏览器和打印驱动控制。建议在打印对话框中勾选 "背景图形" (Background graphics) 并将边距设为 "无" 或 "最小"。
@@ -215,7 +238,7 @@ A: 打印机的物理边距受浏览器和打印驱动控制。建议在打印�
 ## 目录结构
 
 - `js/printform.js` - 入口文件
-- `js/printform/formatter.js` - **核心逻辑** (分页计算都在这里)
+- `js/printform/formatter/` - **核心逻辑** (分页计算都在这里)
 - `js/printform/config.js` - 配置项定义
 - `js/printform/dom.js` - DOM 操作辅助函数
 - `index.html` - 完整测试用例

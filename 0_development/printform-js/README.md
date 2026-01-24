@@ -16,6 +16,7 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 |--------------|-----------|
 | **Understand the project** | [Project Overview](PROJECT_OVERVIEW.md) - Architecture, concepts, tech stack |
 | **Start using in 5 minutes** | [Quick Start Guide](QUICK_START.md) - Step-by-step tutorial |
+| **Use it correctly (full guide)** | [Usage Guide](docs/USAGE_GUIDE.md) - Structure, API, PTAC/PADDT, pitfalls |
 | **See all configuration options** | [Configuration Reference](docs/CONFIGURATION.md) - All `data-*` attributes |
 
 ### 💻 Development
@@ -44,7 +45,7 @@ Link: [Link to the flowchart image](https://yapweijun1996.github.io/Mermaid-Shar
 
 ---
 
-## Quick Start
+## Quick Start (Short)
 
 ### 1. Start Server
 You need a static server to preview the effect (to avoid browser local file restrictions).
@@ -61,11 +62,11 @@ npm run dev
 ### 2. Preview
 Open in browser:
 - `http://localhost:8000/index.html` (Full demo)
-- `http://localhost:8000/example.html` (Basic structure)
+- `http://localhost:8000/index001.html` (Basic structure)
 
 ---
 
-## How to Use
+## How to Use (Essentials)
 
 PrintForm does not require complex build tools, just follow a specific **HTML structure convention**.
 
@@ -94,7 +95,7 @@ Create a `div` with `class="printform"` and configure the paper size.
     <!-- 1. Header (Repeated at top of every page) -->
     <div class="pheader">...</div>
 
-    <!-- 2. Doc Info (Usually on first page, can be repeated) -->
+    <!-- 2. Doc Info (Repeats by default; configurable) -->
     <div class="pdocinfo">...</div>
 
     <!-- 3. Table Header (Column titles, repeated on new pages) -->
@@ -105,7 +106,7 @@ Create a `div` with `class="printform"` and configure the paper size.
     <div class="prowitem">Row 2</div>
     <div class="prowitem">Row 3...</div>
 
-    <!-- 5. Footer (Repeated at bottom of every page) -->
+    <!-- 5. Footer (Defaults to last page; configurable) -->
     <div class="pfooter">...</div>
     
 </div>
@@ -126,12 +127,14 @@ Note: Do not rely on `data-*` attributes for styling. During formatting, the eng
 | `.prowitem` | **Data Row** | The **smallest unit** for splitting. The script will not split content inside a single `.prowitem`, but decides pagination row by row. |
 | `.pfooter` | **Footer** | Defaults to **last page only** (can be configured to repeat). |
 | `.ptac` | **Terms/Text** | For legal terms or long text, automatically splits by paragraph. |
+| `.paddt` | **Audit/Addendum** | PADDT rows rendered after main pages. |
 
 ---
 
-## Configuration
+## Configuration (Short)
 
 You can use `data-*` attributes directly on the `.printform` element to control behavior.
+For the full list, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ### Common Configs
 
@@ -139,10 +142,13 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | :--- | :--- | :--- |
 | `data-papersize-width` | `750` | Paper width (px). |
 | `data-papersize-height` | `1050` | Paper height budget (px); page container height is intentionally not forced so debug can show actual content height (final fill spacer may be sub-pixel). |
+| `data-paper-size` | `A4` | Preset paper size (A4/A5/LETTER/LEGAL). Used when width/height not set. |
+| `data-dpi` | `96` | DPI used to convert `data-paper-size` to pixels. |
 | `data-orientation` | `portrait` / `landscape` | Paper orientation. |
 | `data-repeat-header` | `y` / `n` | Repeat header on every page (Default `y`). |
 | `data-repeat-footer` | `y` / `n` | Repeat footer on every page (Default `n`). |
 | `data-show-logical-page-number`| `y` / `n` | Show page numbers (e.g. "Page 1 of 3"). |
+| `data-show-physical-page-number`| `y` / `n` | Show physical page numbers (for N-up). |
 | `data-n-up` | `1` / `2` | **N-Up Printing**: Multiple logical pages per physical sheet. |
 
 ### Row / Footer Controls
@@ -169,7 +175,8 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | `data-insert-dummy-row-while-format-table` | `y` / `n` | Insert a single dummy row block to fill remaining space. |
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | Insert a footer spacer to push footers down. |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | Use dummy row items as the footer spacer. |
-| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto the generated `.div_page_break_before` nodes (forces inline `page-break-before: always` for legacy HTML-to-PDF engines). |
+| `data-custom-dummy-row-item-content` | HTML | Custom dummy row item markup (or use `<template class="custom-dummy-row-item-content">`). |
+| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto generated `div_page_break_before` nodes (legacy HTML-to-PDF support). |
 
 ### PADDT Controls
 
@@ -210,26 +217,37 @@ If a page is not full, PrintForm automatically inserts empty rows to push the fo
 </template>
 ```
 
-### 2. Hide Row Header On A Specific Page
+### 2. Force Page Break
+Add `tb_page_break_before` to the row to start a new page before it.
+
+```html
+<div class="prowitem tb_page_break_before">...</div>
+```
+
+### 3. Hide Row Header On A Specific Page
 If you need a page to start without the repeating `.prowheader`, add `without_prowheader` (or `tb_without_rowheader`) on the row that starts that page.
 
 ```html
 <table class="prowitem tb_page_break_before without_prowheader">...</table>
 ```
 
-### 3. JS API
+### 4. JS API
 The script runs automatically on load. If you generate content dynamically (e.g. AJAX), trigger formatting manually:
 
 ```javascript
 // Format all .printform elements
-PrintForm.formatAll();
+await PrintForm.formatAll({ force: true });
 
 // Or format a specific node
 const myForm = document.querySelector('#invoice-1');
 PrintForm.format(myForm);
 ```
 
-### 4. Build for Production
+Notes:
+- `formatAll` is async and only runs once unless `force: true` is supplied.
+- The formatter removes the original `.printform` node and inserts a processed container in its place.
+
+### 5. Build for Production
 If you modify the source (`js/` directory), rebuild:
 
 ```bash
@@ -244,7 +262,7 @@ Output is in `dist/printform.js` (and root `*.html` + `README.md`/`README.zh-CN.
 A: Check if a single `.prowitem` height exceeds `data-papersize-height` minus header/footer space. If one row is too tall, it won't fit on any page.
 
 **Q: How to hide the header on the first page?**
-A: The logic prefers consistency. For special cases, use CSS with the `.printform_page_1` class, or split the DOM during data preparation.
+A: The logic prefers consistency. For special cases, hide the header via CSS using a wrapper selector or split the DOM before formatting.
 
 **Q: Margins are wrong when printing?**
 A: Physical margins are controlled by the browser and printer driver. In the print dialog, enable "Background graphics" and set margins to "None" or "Minimum" (PDF viewers at non-100% zoom may show 1px jitter; pin footers via `@media print` absolute positioning if you need visual lock).
@@ -254,7 +272,7 @@ A: Physical margins are controlled by the browser and printer driver. In the pri
 ## Directory Structure
 
 - `js/printform.js` - Entry point
-- `js/printform/formatter.js` - **Core Logic** (Pagination calculation)
+- `js/printform/formatter/` - **Core Logic** (Pagination calculation)
 - `js/printform/config.js` - Configuration definitions
 - `js/printform/dom.js` - DOM helpers
 - `index.html` - Full test case

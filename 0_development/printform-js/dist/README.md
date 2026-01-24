@@ -16,6 +16,7 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 |--------------|-----------|
 | **Understand the project** | [Project Overview](PROJECT_OVERVIEW.md) - Architecture, concepts, tech stack |
 | **Start using in 5 minutes** | [Quick Start Guide](QUICK_START.md) - Step-by-step tutorial |
+| **Use it correctly (full guide)** | [Usage Guide](docs/USAGE_GUIDE.md) - Structure, API, PTAC/PADDT, pitfalls |
 | **See all configuration options** | [Configuration Reference](docs/CONFIGURATION.md) - All `data-*` attributes |
 
 ### 💻 Development
@@ -40,11 +41,11 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 
 To help understand how `printform.js` works, please refer to the flowchart below:
 See: `docs/LOGIC_DIAGRAM.md`.
-Link: https://yapweijun1996.github.io/Mermaid-Share-Lite/#pako:eNp1Vl1v2zoM_SuEH4YMXZO12NMe7kXXrGiBNgvS7uHCGQrVUhJvtmRY8rIu6H-_JCV7Uub6IdHH4SF1SNE-ZIWRKvuYbSqzL3aidfAwX2vAx3ZP21Y0O1iJ_eONbjoHOQ7h-uHuFnj-zQPpwY1Lo50otWrzdTZt2lK7jWlrGJbXWYS_VkIG5I6HMPFLbxPY3BQ3emMYJ01R4hhmMIzfvz-fTqcwQVhXK-2AwCnDyuwjX63Z9-4exFOlYMwpmtw4VdveosQJ-hBO0JaFs-l0kVosnSgYjf_IrNrawlK0gvWzR1ghpWMwDWByIWXpSqNF9arJlTEuHGDDQ9bAD3sJPnUWRbY2gEcZbs3WRCyPFc5h4veANseMlmKrdFfHdo1fGkwJAouufoqVVFqu9VElLVtTYIyl3kK-pAq5wgqZfrfkvCwi1_cOK3HCv0AY4RwavYXT03_g869GaHmvtrkfAcs-C3oiqQFMGli1pZKwEetgyTyXpqpU4fLwD_f4g3mw8IbTHNn1CLK6U8J2rcrDf2-FhVRud4m3HuF91Xhf1K14Nh155FmwmbF8b4LcdHSnEueRKZPd6NKRTX7ZKsR68bh8kOcsMu2BbHVrTEPnOtwZDKrGK0ky2X9f-izR04PQAv5T1se-U8WP-0YU6oBbsCmdBdMCXu5CSXjCGH4QyRDvACeSK0ITy0XTYEUgQe5HnCO6WVG8AyYJOI4vJf9EvmdffqqWuhcbXZVVtVJ0Orry866un_mYcAKWzNq4vmOsD1LKlWpQ1HDj-lB5jarWX4A4y0cmTLNQe87POgsZ0moPVcgSXR6YLE6_NlDwruXtZvdseX-PN6VBIkHrSiqZXsrAnYYbOlwSLubGt7pZaJazofmNhe8pXhU-Lox1tjDUc7XC0ILq2L7K3-oOtcxJVoyh1_UEhA9rQ6ARBWNjZuMOyZk-XKMKy4v5_GGo1aSNMohCwoDI8msj8eCkD3aj3M-84Jq7EzjjRGW_vUbTlzyJHPKR-yaUpIgZsf59aEfJ6UHEs1IkQd_x_Sw6D0yMrp6B2_BJEudmrIlHbInqnr-fBX5iG1P5j3ki1h9gspz48e0qckQB_933UnjPUNpdKJlX3w5fOoed7nGlbFe58IIIi3HGgsBnqOggtm99-DL9kEoWWiNh0y45hjo_Rp37e3r0_g4-F3_5X4y9--IPI9aC68nveVl4NTn7Wmfvshq_IkQps4-HzO1UTd9oUm0EbmcvL_8DWI8ieQ
+Link: [Link to the flowchart image](https://yapweijun1996.github.io/Mermaid-Share-Lite/#pako:eNp1Vl1v2zoM_SuEH4YMXZO12NMe7kXXrGiBNgvS7uHCGQrVUhJvtmRY8rIu6H-_JCV7Uub6IdHH4SF1SNE-ZIWRKvuYbSqzL3aidfAwX2vAx3ZP21Y0O1iJ_eONbjoHOQ7h-uHuFnj-zQPpwY1Lo50otWrzdTZt2lK7jWlrGJbXWYS_VkIG5I6HMPFLbxPY3BQ3emMYJ01R4hhmMIzfvz-fTqcwQVhXK-2AwCnDyuwjX63Z9-4exFOlYMwpmtw4VdveosQJ-hBO0JaFs-l0kVosnSgYjf_IrNrawlK0gvWzR1ghpWMwDWByIWXpSqNF9arJlTEuHGDDQ9bAD3sJPnUWRbY2gEcZbs3WRCyPFc5h4veANseMlmKrdFfHdo1fGkwJAouufoqVVFqu9VElLVtTYIyl3kK-pAq5wgqZfrfkvCwi1_cOK3HCv0AY4RwavYXT03_g869GaHmvtrkfAcs-C3oiqQFMGli1pZKwEetgyTyXpqpU4fLwD_f4g3mw8IbTHNn1CLK6U8J2rcrDf2-FhVRud4m3HuF91Xhf1K14Nh155FmwmbF8b4LcdHSnEueRKZPd6NKRTX7ZKsR68bh8kOcsMu2BbHVrTEPnOtwZDKrGK0ky2X9f-izR04PQAv5T1se-U8WP-0YU6oBbsCmdBdMCXu5CSXjCGH4QyRDvACeSK0ITy0XTYEUgQe5HnCO6WVG8AyYJOI4vJf9EvmdffqqWuhcbXZVVtVJ0Orry866un_mYcAKWzNq4vmOsD1LKlWpQ1HDj-lB5jarWX4A4y0cmTLNQe87POgsZ0moPVcgSXR6YLE6_NlDwruXtZvdseX-PN6VBIkHrSiqZXsrAnYYbOlwSLubGt7pZaJazofmNhe8pXhU-Lox1tjDUc7XC0ILq2L7K3-oOtcxJVoyh1_UEhA9rQ6ARBWNjZuMOyZk-XKMKy4v5_GGo1aSNMohCwoDI8msj8eCkD3aj3M-84Jq7EzjjRGW_vUbTlzyJHPKR-yaUpIgZsf59aEfJ6UHEs1IkQd_x_Sw6D0yMrp6B2_BJEudmrIlHbInqnr-fBX5iG1P5j3ki1h9gspz48e0qckQB_933UnjPUNpdKJlX3w5fOoed7nGlbFe58IIIi3HGgsBnqOggtm99-DL9kEoWWiNh0y45hjo_Rp37e3r0_g4-F3_5X4y9--IPI9aC68nveVl4NTn7Wmfvshq_IkQps4-HzO1UTd9oUm0EbmcvL_8DWI8ieQ)
 
 ---
 
-## Quick Start
+## Quick Start (Short)
 
 ### 1. Start Server
 You need a static server to preview the effect (to avoid browser local file restrictions).
@@ -61,11 +62,11 @@ npm run dev
 ### 2. Preview
 Open in browser:
 - `http://localhost:8000/index.html` (Full demo)
-- `http://localhost:8000/example.html` (Basic structure)
+- `http://localhost:8000/index001.html` (Basic structure)
 
 ---
 
-## How to Use
+## How to Use (Essentials)
 
 PrintForm does not require complex build tools, just follow a specific **HTML structure convention**.
 
@@ -129,9 +130,10 @@ Note: Do not rely on `data-*` attributes for styling. During formatting, the eng
 
 ---
 
-## Configuration
+## Configuration (Short)
 
 You can use `data-*` attributes directly on the `.printform` element to control behavior.
+For the full list, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ### Common Configs
 
@@ -139,10 +141,13 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | :--- | :--- | :--- |
 | `data-papersize-width` | `750` | Paper width (px). |
 | `data-papersize-height` | `1050` | Paper height budget (px); page container height is intentionally not forced so debug can show actual content height (final fill spacer may be sub-pixel). |
+| `data-paper-size` | `A4` | Preset paper size (A4/A5/LETTER/LEGAL). Used when width/height not set. |
+| `data-dpi` | `96` | DPI used to convert `data-paper-size` to pixels. |
 | `data-orientation` | `portrait` / `landscape` | Paper orientation. |
 | `data-repeat-header` | `y` / `n` | Repeat header on every page (Default `y`). |
 | `data-repeat-footer` | `y` / `n` | Repeat footer on every page (Default `n`). |
 | `data-show-logical-page-number`| `y` / `n` | Show page numbers (e.g. "Page 1 of 3"). |
+| `data-show-physical-page-number`| `y` / `n` | Show physical page numbers (for N-up). |
 | `data-n-up` | `1` / `2` | **N-Up Printing**: Multiple logical pages per physical sheet. |
 
 ### Row / Footer Controls
@@ -169,7 +174,8 @@ You can use `data-*` attributes directly on the `.printform` element to control 
 | `data-insert-dummy-row-while-format-table` | `y` / `n` | Insert a single dummy row block to fill remaining space. |
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | Insert a footer spacer to push footers down. |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | Use dummy row items as the footer spacer. |
-| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto the generated `.div_page_break_before` nodes (forces inline `page-break-before: always` for legacy HTML-to-PDF engines). |
+| `data-custom-dummy-row-item-content` | HTML | Custom dummy row item markup (or use `<template class="custom-dummy-row-item-content">`). |
+| `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto generated `div_page_break_before` nodes (legacy HTML-to-PDF support). |
 
 ### PADDT Controls
 
@@ -222,12 +228,16 @@ The script runs automatically on load. If you generate content dynamically (e.g.
 
 ```javascript
 // Format all .printform elements
-PrintForm.formatAll();
+await PrintForm.formatAll({ force: true });
 
 // Or format a specific node
 const myForm = document.querySelector('#invoice-1');
 PrintForm.format(myForm);
 ```
+
+Notes:
+- `formatAll` is async and only runs once unless `force: true` is supplied.
+- The formatter removes the original `.printform` node and inserts a processed container in its place.
 
 ### 4. Build for Production
 If you modify the source (`js/` directory), rebuild:
@@ -244,7 +254,7 @@ Output is in `dist/printform.js` (and root `*.html` + `README.md`/`README.zh-CN.
 A: Check if a single `.prowitem` height exceeds `data-papersize-height` minus header/footer space. If one row is too tall, it won't fit on any page.
 
 **Q: How to hide the header on the first page?**
-A: The logic prefers consistency. For special cases, use CSS with the `.printform_page_1` class, or split the DOM during data preparation.
+A: The logic prefers consistency. For special cases, hide the header via CSS using a wrapper selector or split the DOM before formatting.
 
 **Q: Margins are wrong when printing?**
 A: Physical margins are controlled by the browser and printer driver. In the print dialog, enable "Background graphics" and set margins to "None" or "Minimum" (PDF viewers at non-100% zoom may show 1px jitter; pin footers via `@media print` absolute positioning if you need visual lock).
@@ -254,7 +264,7 @@ A: Physical margins are controlled by the browser and printer driver. In the pri
 ## Directory Structure
 
 - `js/printform.js` - Entry point
-- `js/printform/formatter.js` - **Core Logic** (Pagination calculation)
+- `js/printform/formatter/` - **Core Logic** (Pagination calculation)
 - `js/printform/config.js` - Configuration definitions
 - `js/printform/dom.js` - DOM helpers
 - `index.html` - Full test case
