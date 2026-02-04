@@ -174,7 +174,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
 
           // 填充 dummy rows 将小计行推到页面底部
           const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
-          if (!skipDummyRowItems && this.config.insertDummyRowItemWhileFormatTable) {
+          // 只要不跳过 dummy items，就执行填充（移除 insertDummyRowItemWhileFormatTable 的强依赖，或者默认为 true）
+          if (!skipDummyRowItems) {
             const currentContainer = this.getCurrentPageContainer(outputContainer);
             const availableSpace = pageContext.limit - currentHeight - rowHeight;
             const dummyHeight = this.config.heightOfDummyRowItem || 27;
@@ -184,15 +185,30 @@ export function attachPaginationRenderMethods(FormatterClass) {
               console.log(`[printform]   \u003e\u003e Inserting ${numDummies} dummy rows before subtotal`);
             }
 
+            // 准备 Dummy 内容：如果配置为空，使用默认的空白行
+            const defaultDummyContent = `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;" class="prowitem_dummy"><tr><td style="height:${dummyHeight}px;">&nbsp;</td></tr></table>`;
+            const dummyContent = this.config.customDummyRowItemContent || defaultDummyContent;
+
             for (let i = 0; i < numDummies; i++) {
-              const dummyContent = this.config.customDummyRowItemContent || '';
+              // 确保 dummy content 是包裹在 table 结构中或直接可用的 HTML
               if (dummyContent) {
                 const dummyDiv = document.createElement('div');
                 dummyDiv.innerHTML = dummyContent;
-                const dummyTable = dummyDiv.firstElementChild;
-                if (dummyTable) {
-                  dummyTable.classList.add('prowitem_dummy');
-                  currentContainer.appendChild(dummyTable);
+                // 尝试获取第一个子元素，如果是 table 最好
+                let dummyNode = dummyDiv.firstElementChild;
+
+                // 如果为空（比如解析失败），使用简单的 div
+                if (!dummyNode) {
+                  dummyDiv.innerHTML = `<div style="height:${dummyHeight}px" class="prowitem_dummy">&nbsp;</div>`;
+                  dummyNode = dummyDiv.firstElementChild;
+                }
+
+                if (dummyNode) {
+                  // 确保有标记类以便调试
+                  if (!dummyNode.classList.contains('prowitem_dummy')) {
+                    dummyNode.classList.add('prowitem_dummy');
+                  }
+                  currentContainer.appendChild(dummyNode);
                 }
               }
             }

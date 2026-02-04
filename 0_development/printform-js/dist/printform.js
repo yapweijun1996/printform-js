@@ -1378,7 +1378,7 @@ var PrintForm = function() {
               currentHeight = this.measureContentHeight(nextContainer2, pageContext.repeatingHeight);
             }
             const skipDummyRowItems2 = this.shouldSkipDummyRowItemsForContext(pageContext);
-            if (!skipDummyRowItems2 && this.config.insertDummyRowItemWhileFormatTable) {
+            if (!skipDummyRowItems2) {
               const currentContainer = this.getCurrentPageContainer(outputContainer);
               const availableSpace = pageContext.limit - currentHeight - rowHeight;
               const dummyHeight = this.config.heightOfDummyRowItem || 27;
@@ -1386,15 +1386,22 @@ var PrintForm = function() {
               if (numDummies > 0 && this.debug) {
                 console.log(`[printform]   >> Inserting ${numDummies} dummy rows before subtotal`);
               }
+              const defaultDummyContent = `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;" class="prowitem_dummy"><tr><td style="height:${dummyHeight}px;">&nbsp;</td></tr></table>`;
+              const dummyContent = this.config.customDummyRowItemContent || defaultDummyContent;
               for (let i = 0; i < numDummies; i++) {
-                const dummyContent = this.config.customDummyRowItemContent || "";
                 if (dummyContent) {
                   const dummyDiv = document.createElement("div");
                   dummyDiv.innerHTML = dummyContent;
-                  const dummyTable = dummyDiv.firstElementChild;
-                  if (dummyTable) {
-                    dummyTable.classList.add("prowitem_dummy");
-                    currentContainer.appendChild(dummyTable);
+                  let dummyNode = dummyDiv.firstElementChild;
+                  if (!dummyNode) {
+                    dummyDiv.innerHTML = `<div style="height:${dummyHeight}px" class="prowitem_dummy">&nbsp;</div>`;
+                    dummyNode = dummyDiv.firstElementChild;
+                  }
+                  if (dummyNode) {
+                    if (!dummyNode.classList.contains("prowitem_dummy")) {
+                      dummyNode.classList.add("prowitem_dummy");
+                    }
+                    currentContainer.appendChild(dummyNode);
                   }
                 }
               }
