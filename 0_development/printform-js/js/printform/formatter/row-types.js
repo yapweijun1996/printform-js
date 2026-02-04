@@ -25,6 +25,13 @@ export function attachRowTypeMethods(FormatterClass) {
     );
   };
 
+  FormatterClass.prototype.isSubtotalRow = function isSubtotalRow(row) {
+    if (!row) {
+      return false;
+    }
+    return row.classList.contains("prowitem_subtotal");
+  };
+
   FormatterClass.prototype.getRowBaseClass = function getRowBaseClass(row) {
     if (!row) {
       return "prowitem";

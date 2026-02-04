@@ -967,6 +967,12 @@ var PrintForm = function() {
       }
       return row.classList.contains("ptac_segment") || row.classList.contains("ptac") || row.classList.contains("ptac-rowitem") || row.classList.contains("ptac-rowitem_processed");
     };
+    FormatterClass.prototype.isSubtotalRow = function isSubtotalRow(row) {
+      if (!row) {
+        return false;
+      }
+      return row.classList.contains("prowitem_subtotal");
+    };
     FormatterClass.prototype.getRowBaseClass = function getRowBaseClass(row) {
       if (!row) {
         return "prowitem";
@@ -1277,6 +1283,7 @@ var PrintForm = function() {
         const baseClass = this.getRowBaseClass(row);
         const isPtacRow = this.isPtacRow(row);
         const isPaddtRow = this.isPaddtRow(row);
+        const isSubtotal = this.isSubtotalRow(row);
         if (!rowHeight) {
           DomHelpers.markAsProcessed(row, baseClass);
           return;
@@ -1338,6 +1345,72 @@ var PrintForm = function() {
         } else {
           const container = this.getCurrentPageContainer(outputContainer);
           const priorHeight = currentHeight;
+          if (isSubtotal) {
+            if (this.debug) {
+              console.log(`[printform]   >> SUBTOTAL ROW detected at row[${index}]`);
+            }
+            const testClone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
+            const testHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+            if (testClone && testClone.parentNode === container) {
+              container.removeChild(testClone);
+            }
+            if (testHeight > pageContext.limit) {
+              if (this.debug) {
+                console.log(`[printform]   >> SUBTOTAL would overflow, moving to next page`);
+              }
+              const skipDummyRowItems3 = this.shouldSkipDummyRowItemsForContext(pageContext);
+              const nextSkipRowHeader2 = this.shouldSkipRowHeaderForRow(row);
+              currentHeight = this.prepareNextPage(
+                outputContainer,
+                sections,
+                logFn,
+                pageContext.limit,
+                priorHeight,
+                footerState,
+                footerSpacerTemplate,
+                nextSkipRowHeader2,
+                skipDummyRowItems3,
+                pageContext.repeatingHeight
+              );
+              this.refreshPageContextForRow(pageContext, row, heights);
+              const nextContainer2 = this.getCurrentPageContainer(outputContainer);
+              pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+              currentHeight = this.measureContentHeight(nextContainer2, pageContext.repeatingHeight);
+            }
+            const skipDummyRowItems2 = this.shouldSkipDummyRowItemsForContext(pageContext);
+            if (!skipDummyRowItems2 && this.config.insertDummyRowItemWhileFormatTable) {
+              const currentContainer = this.getCurrentPageContainer(outputContainer);
+              const availableSpace = pageContext.limit - currentHeight - rowHeight;
+              const dummyHeight = this.config.heightOfDummyRowItem || 27;
+              const numDummies = Math.floor(availableSpace / dummyHeight);
+              if (numDummies > 0 && this.debug) {
+                console.log(`[printform]   >> Inserting ${numDummies} dummy rows before subtotal`);
+              }
+              for (let i = 0; i < numDummies; i++) {
+                const dummyContent = this.config.customDummyRowItemContent || "";
+                if (dummyContent) {
+                  const dummyDiv = document.createElement("div");
+                  dummyDiv.innerHTML = dummyContent;
+                  const dummyTable = dummyDiv.firstElementChild;
+                  if (dummyTable) {
+                    dummyTable.classList.add("prowitem_dummy");
+                    currentContainer.appendChild(dummyTable);
+                  }
+                }
+              }
+              currentHeight = this.measureContentHeight(currentContainer, pageContext.repeatingHeight);
+            }
+            const finalContainer = this.getCurrentPageContainer(outputContainer);
+            DomHelpers.appendRowItem(finalContainer, row, null, index, baseClass);
+            if (logFn) {
+              logFn(`append subtotal ${index}`);
+            }
+            currentHeight = this.measureContentHeight(finalContainer, pageContext.repeatingHeight);
+            if (this.debug) {
+              console.log(`[printform]   subtotal row[${index}] added, currentHeight=${currentHeight}px`);
+            }
+            return;
+          }
           const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
           const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
           if (this.debug) {

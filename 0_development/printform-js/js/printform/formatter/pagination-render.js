@@ -65,6 +65,8 @@ export function attachPaginationRenderMethods(FormatterClass) {
       const baseClass = this.getRowBaseClass(row);
       const isPtacRow = this.isPtacRow(row);
       const isPaddtRow = this.isPaddtRow(row);
+      const isSubtotal = this.isSubtotalRow(row);
+
       if (!rowHeight) {
         DomHelpers.markAsProcessed(row, baseClass);
         return;
@@ -129,6 +131,88 @@ export function attachPaginationRenderMethods(FormatterClass) {
       } else {
         const container = this.getCurrentPageContainer(outputContainer);
         const priorHeight = currentHeight;
+
+        // 小计行特殊处理：先填充 dummy rows，再添加小计行
+        if (isSubtotal) {
+          if (this.debug) {
+            console.log(`[printform]   \u003e\u003e SUBTOTAL ROW detected at row[${index}]`);
+          }
+
+          // 先尝试添加小计行，测量是否会溢出
+          const testClone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
+          const testHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+
+          // 移除测试的小计行
+          if (testClone && testClone.parentNode === container) {
+            container.removeChild(testClone);
+          }
+
+          // 如果加上小计行会溢出，先完成当前页，小计行移到下一页
+          if (testHeight > pageContext.limit) {
+            if (this.debug) {
+              console.log(`[printform]   \u003e\u003e SUBTOTAL would overflow, moving to next page`);
+            }
+            const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+            const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
+            currentHeight = this.prepareNextPage(
+              outputContainer,
+              sections,
+              logFn,
+              pageContext.limit,
+              priorHeight,
+              footerState,
+              footerSpacerTemplate,
+              nextSkipRowHeader,
+              skipDummyRowItems,
+              pageContext.repeatingHeight
+            );
+            this.refreshPageContextForRow(pageContext, row, heights);
+            const nextContainer = this.getCurrentPageContainer(outputContainer);
+            pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+            currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+          }
+
+          // 填充 dummy rows 将小计行推到页面底部
+          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+          if (!skipDummyRowItems && this.config.insertDummyRowItemWhileFormatTable) {
+            const currentContainer = this.getCurrentPageContainer(outputContainer);
+            const availableSpace = pageContext.limit - currentHeight - rowHeight;
+            const dummyHeight = this.config.heightOfDummyRowItem || 27;
+            const numDummies = Math.floor(availableSpace / dummyHeight);
+
+            if (numDummies > 0 && this.debug) {
+              console.log(`[printform]   \u003e\u003e Inserting ${numDummies} dummy rows before subtotal`);
+            }
+
+            for (let i = 0; i < numDummies; i++) {
+              const dummyContent = this.config.customDummyRowItemContent || '';
+              if (dummyContent) {
+                const dummyDiv = document.createElement('div');
+                dummyDiv.innerHTML = dummyContent;
+                const dummyTable = dummyDiv.firstElementChild;
+                if (dummyTable) {
+                  dummyTable.classList.add('prowitem_dummy');
+                  currentContainer.appendChild(dummyTable);
+                }
+              }
+            }
+            currentHeight = this.measureContentHeight(currentContainer, pageContext.repeatingHeight);
+          }
+
+          // 现在添加小计行
+          const finalContainer = this.getCurrentPageContainer(outputContainer);
+          DomHelpers.appendRowItem(finalContainer, row, null, index, baseClass);
+          if (logFn) {
+            logFn(`append subtotal ${index}`);
+          }
+          currentHeight = this.measureContentHeight(finalContainer, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform]   subtotal row[${index}] added, currentHeight=${currentHeight}px`);
+          }
+          return;
+        }
+
+        // 普通行的处理逻辑
         const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
         const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         if (this.debug) {

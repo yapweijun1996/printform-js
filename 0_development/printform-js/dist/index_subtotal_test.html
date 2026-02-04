@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subtotal Test - Printform</title>
+    <style>
+        body {
+            margin: 0px;
+            font-family: Arial, sans-serif;
+            padding: 0px;
+        }
+
+        .paper_width {
+            width: 396px;
+        }
+
+        td {
+            line-height: 18px;
+        }
+
+        /* 小计行的特殊样式 */
+        .prowitem_subtotal {
+            background-color: #f0f0f0;
+            font-weight: 600;
+        }
+    </style>
+
+    <script>
+        var papersize_width = 396;
+        var papersize_height = 550;
+        var height_of_dummy_row_item = 27;
+
+        var repeat_header = "y";
+        var repeat_docinfo = "y";
+        var repeat_rowheader = "y";
+        var repeat_footer = "n";
+        var repeat_footer_logo = "y";
+        var insert_dummy_row_item_while_format_table = "y";
+        var insert_dummy_row_while_format_table = "y";
+        var insert_footer_spacer_while_format_table = "y";
+        var insert_footer_spacer_with_dummy_row_item_while_format_table = "y";
+        var custom_dummy_row_item_content = `
+				<tr>
+					<td style="box-sizing:border-box;width:15px;"></td>
+					<td style="box-sizing:border-box;width:inherit;"></td>
+					<td style="box-sizing:border-box;width:15px;"></td>
+				</tr>
+				<tr>
+					<td style="box-sizing:border-box;"></td>
+					<td style="box-sizing:border-box;">
+						<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+							<tr>
+								<td style="box-sizing:border-box;width:inherit;"></td>
+								<td style="box-sizing:border-box;width:50px;"></td>
+								<td style="box-sizing:border-box;width:42px;"></td>
+								<td style="box-sizing:border-box;width:78px;"></td>
+							</tr>
+							<tr>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;"><div style="padding:3px 3px 3px 0px;">&nbsp;</div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 3px 3px 3px;"></div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"><div style="padding:3px 3px 3px 3px;"></div></td>
+								<td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;" align="right"><div style="padding:3px 0px 3px 3px;"></div></td>
+							</tr>
+						</table>
+					</td>
+					<td style="box-sizing:border-box;"></td>
+				</tr>
+			`;
+    </script>
+</head>
+
+<body>
+
+    <div class="paper_width printform">
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr style="height:10px;"></tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <font style="font-weight:600;font-size: 20px;">测试公司 - 小计功能测试</font><br>
+                    <font style="font-size: 13px;">Subtotal Row Test</font>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+            <tr style="height:10px;"></tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <font style="font-weight:600;font-size: 18px;">发票 Invoice</font><br>
+                    <font style="font-size: 13px;">Invoice No: TEST-001</font>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+            <tr style="height:10px;"></tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">Description</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">Qty</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">UOM</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:15px;font-weight:600;border-top:1px solid black;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">Price</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <!-- 第一组商品 -->
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">产品 A - Product A</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">10</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">PCS</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">100.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">产品 B - Product B</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">5</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">PCS</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">200.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">产品 C - Product C</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">8</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">PCS</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">150.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <!-- 第一个小计行 -->
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0"
+            class="paper_width prowitem prowitem_subtotal">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;border-left:1px solid black;background-color:#f0f0f0;">
+                                <div style="padding:3px 3px 3px 0px;font-weight:600;">第一组小计 Subtotal Group 1</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;font-weight:600;">23</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;">
+                                <div style="padding:3px 3px 3px 3px;"></div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;font-weight:600;">2200.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <!-- 第二组商品 -->
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">产品 D - Product D</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">12</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">KG</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">80.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;border-left:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">产品 E - Product E</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;">6</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;">
+                                <div style="padding:3px 3px 3px 3px;">KG</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:1px solid black;border-right:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">120.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <!-- 第二个小计行 -->
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0"
+            class="paper_width prowitem prowitem_subtotal">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:50px;"></td>
+                            <td style="box-sizing:border-box;width:42px;"></td>
+                            <td style="box-sizing:border-box;width:78px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;border-left:1px solid black;background-color:#f0f0f0;">
+                                <div style="padding:3px 3px 3px 0px;font-weight:600;">第二组小计 Subtotal Group 2</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;"
+                                align="right">
+                                <div style="padding:3px 3px 3px 3px;font-weight:600;">18</div>
+                            </td>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;">
+                                <div style="padding:3px 3px 3px 3px;"></div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:13px;border-bottom:2px solid black;border-right:1px solid black;background-color:#f0f0f0;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;font-weight:600;">1680.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+                        <tr>
+                            <td style="box-sizing:border-box;width:inherit;"></td>
+                            <td style="box-sizing:border-box;width:170px;"></td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="line-height: 20px;box-sizing:border-box;font-size:13px;border-top:1px solid black;">
+                                <div style="padding:3px 3px 3px 0px;">备注 Remarks</div>
+                            </td>
+                            <td style="line-height: 20px;box-sizing:border-box;font-size:16px;font-weight:600;border-top:1px solid black;"
+                                align="right">
+                                <div style="padding:3px 0px 3px 3px;">总计 Total: 3880.00</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_logo">
+            <tr>
+                <td style="box-sizing:border-box;width:15px;"></td>
+                <td style="box-sizing:border-box;width:inherit;"></td>
+                <td style="box-sizing:border-box;width:15px;"></td>
+            </tr>
+            <tr>
+                <td style="box-sizing:border-box;"></td>
+                <td style="box-sizing:border-box;">
+                    <div style="text-align:center;font-size:11px;color:#666;">
+                        --- 测试页脚 Test Footer ---
+                    </div>
+                </td>
+                <td style="box-sizing:border-box;"></td>
+            </tr>
+        </table>
+    </div>
+    <script src="./printform.js"></script>
+
+    <!-- extra tools [start] -->
+    <style>
+        @media print {
+            .etools {
+                display: none;
+            }
+        }
+    </style>
+    <script>
+        function go_to_page(url) {
+            window.location.replace(url);
+        }
+    </script>
+    <div class="extra_tools" style="">
+        <input type="button" class="etools" value="Print" onclick="window.print();"
+            style="position: fixed; top: 10px; right: 14px;">
+        <input type="button" class="etools" value="Back to Index" onclick="go_to_page('./index.html');"
+            style="position: fixed; top: 40px; right: 14px;">
+    </div>
+    <!-- extra tools [end  ] -->
+</body>
+
+</html>
