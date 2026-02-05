@@ -973,6 +973,12 @@ var PrintForm = function() {
       }
       return row.classList.contains("prowitem_subtotal");
     };
+    FormatterClass.prototype.isFooterRow = function isFooterRow(row) {
+      if (!row) {
+        return false;
+      }
+      return row.classList.contains("prowitem_footer");
+    };
     FormatterClass.prototype.getRowBaseClass = function getRowBaseClass(row) {
       if (!row) {
         return "prowitem";
@@ -1229,7 +1235,7 @@ var PrintForm = function() {
       });
     };
   }
-  function attachPaginationRenderMethods(FormatterClass) {
+  function attachPaginationContextMethods(FormatterClass) {
     FormatterClass.prototype.initializePageContext = function initializePageContext(heightPerPage) {
       return {
         baseLimit: heightPerPage,
@@ -1271,6 +1277,38 @@ var PrintForm = function() {
       const total = DomHelpers.measureHeightRaw(container);
       return normalizeHeight(total - (repeatingHeight || 0));
     };
+  }
+  function attachPaginationDummyMethods(FormatterClass) {
+    FormatterClass.prototype.insertFooterDummyRows = function insertFooterDummyRows(container, pageContext, currentHeight, reservedHeight, footerLabel) {
+      const availableSpace = pageContext.limit - currentHeight - reservedHeight;
+      const dummyHeight = this.config.heightOfDummyRowItem || 27;
+      const numDummies = Math.floor(availableSpace / dummyHeight);
+      if (numDummies > 0 && this.debug) {
+        console.log(`[printform]   >> Inserting ${numDummies} dummy rows before ${footerLabel}`);
+      }
+      const defaultDummyContent = `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;" class="prowitem_dummy"><tr><td style="height:${dummyHeight}px;">&nbsp;</td></tr></table>`;
+      const dummyContent = this.config.customDummyRowItemContent || defaultDummyContent;
+      for (let i = 0; i < numDummies; i++) {
+        if (dummyContent) {
+          const dummyDiv = document.createElement("div");
+          dummyDiv.innerHTML = dummyContent;
+          let dummyNode = dummyDiv.firstElementChild;
+          if (!dummyNode) {
+            dummyDiv.innerHTML = `<div style="height:${dummyHeight}px" class="prowitem_dummy">&nbsp;</div>`;
+            dummyNode = dummyDiv.firstElementChild;
+          }
+          if (dummyNode) {
+            if (!dummyNode.classList.contains("prowitem_dummy")) {
+              dummyNode.classList.add("prowitem_dummy");
+            }
+            container.appendChild(dummyNode);
+          }
+        }
+      }
+      return this.measureContentHeight(container, pageContext.repeatingHeight);
+    };
+  }
+  function attachPaginationRenderMethods(FormatterClass) {
     FormatterClass.prototype.renderRows = function renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
       let currentHeight = 0;
       const pageContext = this.initializePageContext(heightPerPage);
@@ -1278,39 +1316,147 @@ var PrintForm = function() {
         console.log(`[printform] ===== renderRows START =====`);
         console.log(`[printform] Total rows: ${sections.rows.length}, heightPerPage: ${heightPerPage}px`);
       }
-      sections.rows.forEach((row, index) => {
+      for (let index = 0; index < sections.rows.length; index++) {
+        const row = sections.rows[index];
+        const nextRow = sections.rows[index + 1];
         const rowHeight = DomHelpers.measureHeight(row);
         const baseClass = this.getRowBaseClass(row);
         const isPtacRow = this.isPtacRow(row);
         const isPaddtRow = this.isPaddtRow(row);
         const isSubtotal = this.isSubtotalRow(row);
-        if (!rowHeight) {
+        const isFooter = this.isFooterRow(row);
+        const hasFooterCombo = isSubtotal && nextRow && this.isFooterRow(nextRow);
+        const footerRow = hasFooterCombo ? nextRow : null;
+        const footerBaseClass = footerRow ? this.getRowBaseClass(footerRow) : null;
+        const footerHeight = footerRow ? DomHelpers.measureHeight(footerRow) : 0;
+        const comboHeight = rowHeight + footerHeight;
+        if (!rowHeight && (!hasFooterCombo || !footerHeight)) {
           DomHelpers.markAsProcessed(row, baseClass);
-          return;
+          if (hasFooterCombo) {
+            DomHelpers.markAsProcessed(footerRow, footerBaseClass);
+            index += 1;
+          }
+          continue;
         }
         if (currentHeight === 0) {
           this.refreshPageContextForRow(pageContext, row, heights);
-          const container = this.getCurrentPageContainer(outputContainer);
+          const container2 = this.getCurrentPageContainer(outputContainer);
           this.ensureFirstPageSections(
-            container,
+            container2,
             sections,
             heights,
             logFn,
             pageContext.skipRowHeader
           );
           pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
-          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          currentHeight = this.measureContentHeight(container2, pageContext.repeatingHeight);
           if (this.debug) {
             console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${currentHeight}px, pageLimit=${pageContext.limit}px`);
           }
         }
         DomHelpers.markAsProcessed(row, baseClass);
+        if (footerRow) {
+          DomHelpers.markAsProcessed(footerRow, footerBaseClass);
+        }
+        if (hasFooterCombo || isSubtotal || isFooter) {
+          const priorHeight2 = currentHeight;
+          const footerLabel = hasFooterCombo ? "subtotal+footer" : isSubtotal ? "subtotal" : "footer";
+          if (this.debug) {
+            console.log(`[printform]   >> ${footerLabel.toUpperCase()} ROW detected at row[${index}]`);
+          }
+          if (row.classList.contains("tb_page_break_before")) {
+            if (this.debug) {
+              console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${index}]`);
+            }
+            const skipDummyRowItems3 = this.shouldSkipDummyRowItemsForContext(pageContext);
+            const nextSkipRowHeader2 = this.shouldSkipRowHeaderForRow(row);
+            currentHeight = this.prepareNextPage(
+              outputContainer,
+              sections,
+              logFn,
+              pageContext.limit,
+              currentHeight,
+              footerState,
+              footerSpacerTemplate,
+              nextSkipRowHeader2,
+              skipDummyRowItems3,
+              pageContext.repeatingHeight
+            );
+            this.refreshPageContextForRow(pageContext, row, heights);
+            const container3 = this.getCurrentPageContainer(outputContainer);
+            pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+            currentHeight = this.measureContentHeight(container3, pageContext.repeatingHeight);
+          }
+          const container2 = this.getCurrentPageContainer(outputContainer);
+          const testClone = DomHelpers.appendRowItem(container2, row, null, index, baseClass);
+          const testFooterClone = footerRow ? DomHelpers.appendRowItem(container2, footerRow, null, index + 1, footerBaseClass) : null;
+          const testHeight = this.measureContentHeight(container2, pageContext.repeatingHeight);
+          if (testFooterClone && testFooterClone.parentNode === container2) {
+            container2.removeChild(testFooterClone);
+          }
+          if (testClone && testClone.parentNode === container2) {
+            container2.removeChild(testClone);
+          }
+          if (testHeight > pageContext.limit) {
+            if (this.debug) {
+              console.log(`[printform]   >> ${footerLabel.toUpperCase()} would overflow, moving to next page`);
+            }
+            const skipDummyRowItems3 = this.shouldSkipDummyRowItemsForContext(pageContext);
+            const nextSkipRowHeader2 = this.shouldSkipRowHeaderForRow(row);
+            currentHeight = this.prepareNextPage(
+              outputContainer,
+              sections,
+              logFn,
+              pageContext.limit,
+              priorHeight2,
+              footerState,
+              footerSpacerTemplate,
+              nextSkipRowHeader2,
+              skipDummyRowItems3,
+              pageContext.repeatingHeight
+            );
+            this.refreshPageContextForRow(pageContext, row, heights);
+            const nextContainer2 = this.getCurrentPageContainer(outputContainer);
+            pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+            currentHeight = this.measureContentHeight(nextContainer2, pageContext.repeatingHeight);
+          }
+          const skipDummyRowItems2 = this.shouldSkipDummyRowItemsForContext(pageContext);
+          if (!skipDummyRowItems2) {
+            const currentContainer = this.getCurrentPageContainer(outputContainer);
+            const reservedHeight = footerRow ? comboHeight : rowHeight;
+            currentHeight = this.insertFooterDummyRows(currentContainer, pageContext, currentHeight, reservedHeight, footerLabel);
+          }
+          const finalContainer = this.getCurrentPageContainer(outputContainer);
+          DomHelpers.appendRowItem(finalContainer, row, null, index, baseClass);
+          if (footerRow) {
+            DomHelpers.appendRowItem(finalContainer, footerRow, null, index + 1, footerBaseClass);
+          }
+          if (logFn) {
+            logFn(`append ${footerLabel} ${index}`);
+          }
+          currentHeight = this.measureContentHeight(finalContainer, pageContext.repeatingHeight);
+          if (this.debug) {
+            console.log(`[printform]   ${footerLabel} row[${index}] added, currentHeight=${currentHeight}px`);
+          }
+          const footerIsPtac = footerRow ? this.isPtacRow(footerRow) : false;
+          const footerIsPaddt = footerRow ? this.isPaddtRow(footerRow) : false;
+          if (!isPtacRow && !footerIsPtac) {
+            pageContext.isPtacPage = false;
+          }
+          if (!isPaddtRow && !footerIsPaddt) {
+            pageContext.isPaddtPage = false;
+          }
+          if (hasFooterCombo) {
+            index += 1;
+          }
+          continue;
+        }
         if (row.classList.contains("tb_page_break_before")) {
           if (this.debug) {
             console.log(`[printform]   >> PAGE BREAK (tb_page_break_before) at row[${index}]`);
           }
-          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
-          const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
+          const skipDummyRowItems2 = this.shouldSkipDummyRowItemsForContext(pageContext);
+          const nextSkipRowHeader2 = this.shouldSkipRowHeaderForRow(row);
           currentHeight = this.prepareNextPage(
             outputContainer,
             sections,
@@ -1319,20 +1465,20 @@ var PrintForm = function() {
             currentHeight,
             footerState,
             footerSpacerTemplate,
-            nextSkipRowHeader,
-            skipDummyRowItems,
+            nextSkipRowHeader2,
+            skipDummyRowItems2,
             pageContext.repeatingHeight
           );
           this.refreshPageContextForRow(pageContext, row, heights);
-          const container = this.getCurrentPageContainer(outputContainer);
+          const container2 = this.getCurrentPageContainer(outputContainer);
           pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
-          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
-          DomHelpers.appendRowItem(container, row, null, index, baseClass);
+          currentHeight = this.measureContentHeight(container2, pageContext.repeatingHeight);
+          DomHelpers.appendRowItem(container2, row, null, index, baseClass);
           if (logFn) {
             const resolvedLabel = baseClass || "prowitem";
             logFn(`append ${resolvedLabel} ${index}`);
           }
-          currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+          currentHeight = this.measureContentHeight(container2, pageContext.repeatingHeight);
           if (this.debug) {
             console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
           }
@@ -1342,142 +1488,69 @@ var PrintForm = function() {
           if (!isPaddtRow) {
             pageContext.isPaddtPage = false;
           }
-        } else {
-          const container = this.getCurrentPageContainer(outputContainer);
-          const priorHeight = currentHeight;
-          if (isSubtotal) {
-            if (this.debug) {
-              console.log(`[printform]   >> SUBTOTAL ROW detected at row[${index}]`);
-            }
-            const testClone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
-            const testHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
-            if (testClone && testClone.parentNode === container) {
-              container.removeChild(testClone);
-            }
-            if (testHeight > pageContext.limit) {
-              if (this.debug) {
-                console.log(`[printform]   >> SUBTOTAL would overflow, moving to next page`);
-              }
-              const skipDummyRowItems3 = this.shouldSkipDummyRowItemsForContext(pageContext);
-              const nextSkipRowHeader2 = this.shouldSkipRowHeaderForRow(row);
-              currentHeight = this.prepareNextPage(
-                outputContainer,
-                sections,
-                logFn,
-                pageContext.limit,
-                priorHeight,
-                footerState,
-                footerSpacerTemplate,
-                nextSkipRowHeader2,
-                skipDummyRowItems3,
-                pageContext.repeatingHeight
-              );
-              this.refreshPageContextForRow(pageContext, row, heights);
-              const nextContainer2 = this.getCurrentPageContainer(outputContainer);
-              pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
-              currentHeight = this.measureContentHeight(nextContainer2, pageContext.repeatingHeight);
-            }
-            const skipDummyRowItems2 = this.shouldSkipDummyRowItemsForContext(pageContext);
-            if (!skipDummyRowItems2) {
-              const currentContainer = this.getCurrentPageContainer(outputContainer);
-              const availableSpace = pageContext.limit - currentHeight - rowHeight;
-              const dummyHeight = this.config.heightOfDummyRowItem || 27;
-              const numDummies = Math.floor(availableSpace / dummyHeight);
-              if (numDummies > 0 && this.debug) {
-                console.log(`[printform]   >> Inserting ${numDummies} dummy rows before subtotal`);
-              }
-              const defaultDummyContent = `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;" class="prowitem_dummy"><tr><td style="height:${dummyHeight}px;">&nbsp;</td></tr></table>`;
-              const dummyContent = this.config.customDummyRowItemContent || defaultDummyContent;
-              for (let i = 0; i < numDummies; i++) {
-                if (dummyContent) {
-                  const dummyDiv = document.createElement("div");
-                  dummyDiv.innerHTML = dummyContent;
-                  let dummyNode = dummyDiv.firstElementChild;
-                  if (!dummyNode) {
-                    dummyDiv.innerHTML = `<div style="height:${dummyHeight}px" class="prowitem_dummy">&nbsp;</div>`;
-                    dummyNode = dummyDiv.firstElementChild;
-                  }
-                  if (dummyNode) {
-                    if (!dummyNode.classList.contains("prowitem_dummy")) {
-                      dummyNode.classList.add("prowitem_dummy");
-                    }
-                    currentContainer.appendChild(dummyNode);
-                  }
-                }
-              }
-              currentHeight = this.measureContentHeight(currentContainer, pageContext.repeatingHeight);
-            }
-            const finalContainer = this.getCurrentPageContainer(outputContainer);
-            DomHelpers.appendRowItem(finalContainer, row, null, index, baseClass);
-            if (logFn) {
-              logFn(`append subtotal ${index}`);
-            }
-            currentHeight = this.measureContentHeight(finalContainer, pageContext.repeatingHeight);
-            if (this.debug) {
-              console.log(`[printform]   subtotal row[${index}] added, currentHeight=${currentHeight}px`);
-            }
-            return;
-          }
-          const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
-          const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
-          if (this.debug) {
-            console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${measuredHeight}px, limit=${pageContext.limit}px`);
-          }
-          if (measuredHeight <= pageContext.limit) {
-            if (logFn) {
-              const resolvedLabel = baseClass || "prowitem";
-              logFn(`append ${resolvedLabel} ${index}`);
-            }
-            currentHeight = measuredHeight;
-            if (!isPtacRow) {
-              pageContext.isPtacPage = false;
-            }
-            if (!isPaddtRow) {
-              pageContext.isPaddtPage = false;
-            }
-            return;
-          }
-          if (clone && clone.parentNode === container) {
-            container.removeChild(clone);
-          }
-          if (this.debug) {
-            console.log(`[printform]   >> PAGE BREAK (overflow) at row[${index}]`);
-          }
-          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
-          const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
-          currentHeight = this.prepareNextPage(
-            outputContainer,
-            sections,
-            logFn,
-            pageContext.limit,
-            priorHeight,
-            footerState,
-            footerSpacerTemplate,
-            nextSkipRowHeader,
-            skipDummyRowItems,
-            pageContext.repeatingHeight
-          );
-          this.refreshPageContextForRow(pageContext, row, heights);
-          const nextContainer = this.getCurrentPageContainer(outputContainer);
-          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
-          currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
-          DomHelpers.appendRowItem(nextContainer, row, null, index, baseClass);
-          if (logFn) {
-            const resolvedLabel = baseClass || "prowitem";
-            logFn(`append ${resolvedLabel} ${index}`);
-          }
-          currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
-          if (this.debug) {
-            console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
-          }
-          if (!isPtacRow) {
-            pageContext.isPtacPage = false;
-          }
-          if (!isPaddtRow) {
-            pageContext.isPaddtPage = false;
-          }
+          continue;
         }
-      });
+        const container = this.getCurrentPageContainer(outputContainer);
+        const priorHeight = currentHeight;
+        const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
+        const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
+        if (this.debug) {
+          console.log(`[printform]   row[${index}] height=${rowHeight}px, currentHeight=${measuredHeight}px, limit=${pageContext.limit}px`);
+        }
+        if (measuredHeight <= pageContext.limit) {
+          if (logFn) {
+            const resolvedLabel = baseClass || "prowitem";
+            logFn(`append ${resolvedLabel} ${index}`);
+          }
+          currentHeight = measuredHeight;
+          if (!isPtacRow) {
+            pageContext.isPtacPage = false;
+          }
+          if (!isPaddtRow) {
+            pageContext.isPaddtPage = false;
+          }
+          continue;
+        }
+        if (clone && clone.parentNode === container) {
+          container.removeChild(clone);
+        }
+        if (this.debug) {
+          console.log(`[printform]   >> PAGE BREAK (overflow) at row[${index}]`);
+        }
+        const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+        const nextSkipRowHeader = this.shouldSkipRowHeaderForRow(row);
+        currentHeight = this.prepareNextPage(
+          outputContainer,
+          sections,
+          logFn,
+          pageContext.limit,
+          priorHeight,
+          footerState,
+          footerSpacerTemplate,
+          nextSkipRowHeader,
+          skipDummyRowItems,
+          pageContext.repeatingHeight
+        );
+        this.refreshPageContextForRow(pageContext, row, heights);
+        const nextContainer = this.getCurrentPageContainer(outputContainer);
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+        DomHelpers.appendRowItem(nextContainer, row, null, index, baseClass);
+        if (logFn) {
+          const resolvedLabel = baseClass || "prowitem";
+          logFn(`append ${resolvedLabel} ${index}`);
+        }
+        currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
+        if (this.debug) {
+          console.log(`[printform] Page ${this.currentPage} start: currentHeight=${currentHeight}px, limit=${pageContext.limit}px`);
+        }
+        if (!isPtacRow) {
+          pageContext.isPtacPage = false;
+        }
+        if (!isPaddtRow) {
+          pageContext.isPaddtPage = false;
+        }
+      }
       if (this.debug) {
         console.log(`[printform] ===== renderRows END (page ${this.currentPage}, finalHeight=${currentHeight}px) =====`);
       }
@@ -1510,6 +1583,8 @@ var PrintForm = function() {
         repeatingHeight
       };
     };
+  }
+  function attachPaginationSpacingMethods(FormatterClass) {
     FormatterClass.prototype.prepareNextPage = function prepareNextPage(outputContainer, sections, logFn, pageLimit, currentHeight, footerState, spacerTemplate, skipRowHeader, skipDummyRowItems, repeatingHeight) {
       const container = this.getCurrentPageContainer(outputContainer);
       const filledHeight = this.applyRemainderSpacing(
@@ -2111,7 +2186,10 @@ var PrintForm = function() {
   attachPaddtSegmentMethods(PrintFormFormatter);
   attachPtacSegmentMethods(PrintFormFormatter);
   attachRenderingMethods(PrintFormFormatter);
+  attachPaginationContextMethods(PrintFormFormatter);
+  attachPaginationDummyMethods(PrintFormFormatter);
   attachPaginationRenderMethods(PrintFormFormatter);
+  attachPaginationSpacingMethods(PrintFormFormatter);
   attachPaginationFinalizeMethods(PrintFormFormatter);
   function isMobileDevice() {
     const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";

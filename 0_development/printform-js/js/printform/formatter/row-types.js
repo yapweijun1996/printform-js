@@ -32,6 +32,13 @@ export function attachRowTypeMethods(FormatterClass) {
     return row.classList.contains("prowitem_subtotal");
   };
 
+  FormatterClass.prototype.isFooterRow = function isFooterRow(row) {
+    if (!row) {
+      return false;
+    }
+    return row.classList.contains("prowitem_footer");
+  };
+
   FormatterClass.prototype.getRowBaseClass = function getRowBaseClass(row) {
     if (!row) {
       return "prowitem";
