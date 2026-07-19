@@ -47,7 +47,8 @@
       regenerateData: "重新生成示例数据",
       exportPackage: "导出数据绑定包",
       regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?",
-      moreMenu: "更多选项"
+      moreMenu: "更多选项",
+      printformNotInlined: "printform.js 尚未内联 —— 此导出文件只有留在本仓库目录内打开才能正常运行,移到别处会报脚本 404。请稍候几秒后重新导出。"
     },
     en: {
       compare: "Compare",
@@ -82,7 +83,8 @@
       regenerateData: "Regenerate sample data",
       exportPackage: "Export data-bound package",
       regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?",
-      moreMenu: "More options"
+      moreMenu: "More options",
+      printformNotInlined: "printform.js isn't inlined yet — this export will only run while it stays inside this repo folder; moving it elsewhere will 404. Wait a few seconds and export again."
     }
   };
 
@@ -446,9 +448,17 @@
       // Export must be a self-contained file: inline printform.js (no on-disk
       // "dist/" folder travels with a download) and drop the <base> tag,
       // which only resolved correctly inside this repo's own folder layout.
-      inlinePrintformScript(doc);
-      var b = doc.querySelector("head > base");
-      if (b) b.remove();
+      // If inlining fails — state.printformSource hasn't loaded yet, or an
+      // imported template references its script by a path that doesn't
+      // resolve under templateBaseHref — leave the <base> tag in place
+      // rather than dropping it anyway: a base-relative export still works
+      // when opened from inside this repo, whereas a bare relative src with
+      // no base at all 404s unconditionally, everywhere, including here.
+      var inlined = inlinePrintformScript(doc);
+      if (inlined) {
+        var b = doc.querySelector("head > base");
+        if (b) b.remove();
+      }
     }
 
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
@@ -674,6 +684,7 @@
   }
 
   function exportDataPackage() {
+    warnIfPrintformNotInlined();
     var html = synthesizePackageHtml();
     if (html === null) return;
     var blob = new Blob([html], { type: "text/html" });
@@ -879,7 +890,14 @@
     reloadAll();
   }
 
+  function warnIfPrintformNotInlined() {
+    if (state.printformSource) return;
+    logBuffers[state.activeSide].push({ level: "warn", text: t("printformNotInlined") });
+    renderLogs();
+  }
+
   function exportHtml() {
+    warnIfPrintformNotInlined();
     var html = synthesizeHtml(state.activeSide, true);
     if (html === null) return;
     var blob = new Blob([html], { type: "text/html" });
