@@ -31,6 +31,7 @@
       copyAB: "复制 A→B",
       loading: "加载中…",
       pages: "页",
+      blocks: "个区块",
       copied: "已复制",
       resetConfirm: "重置当前侧所有配置修改?",
       import: "导入 HTML",
@@ -65,6 +66,7 @@
       copyAB: "Copy A→B",
       loading: "Loading…",
       pages: "pages",
+      blocks: "blocks",
       copied: "Copied",
       resetConfirm: "Reset all config changes on the current side?",
       import: "Import HTML",
@@ -821,8 +823,13 @@
       var range = $("#row-count-range");
       range.max = Math.max(10, state.rowCount + 20);
       range.value = state.rowCount;
-      // Structure mode never sends "done" (no pagination runs), so read the
-      // rendered height directly — same-origin blob: iframe, safe to reach in.
+      $("#row-count-value").textContent = state.rowCount;
+      // Structure mode never sends "done" (no pagination runs), so the status
+      // line and scale must be driven from this message instead — otherwise
+      // it's stuck on whatever "N pages"/"Loading…" text preview mode left
+      // behind, which reads as a hung/broken preview.
+      var structStatus = side === "A" ? $("#status-a") : $("#status-b");
+      structStatus.textContent = data.payload.count + " " + t("blocks");
       var structFrame = side === "A" ? $("#frame-a") : $("#frame-b");
       var structDoc = structFrame && structFrame.contentDocument;
       if (structDoc) {
@@ -830,7 +837,6 @@
         state.metrics[side].docHeight = structDoc.documentElement.scrollHeight;
       }
       applyPreviewScale(side);
-      $("#row-count-value").textContent = state.rowCount;
     } else if (data.type === "block-select") {
       state.selectedBlockIndex = data.payload.index;
       state.selectedBlockSide = side;
