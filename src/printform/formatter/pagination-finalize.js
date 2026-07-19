@@ -1,0 +1,161 @@
+/* eslint-disable no-console */
+
+export function attachPaginationFinalizeMethods(FormatterClass) {
+  FormatterClass.prototype.computeHeightPerPage = function computeHeightPerPage(sections, heights) {
+    let available = this.config.papersizeHeight;
+    if (this.debug) {
+      console.log(`[printform] ===== computeHeightPerPage =====`);
+      console.log(`[printform] papersizeHeight (config): ${this.config.papersizeHeight}px`);
+      console.log(`[printform] papersizeWidth (config): ${this.config.papersizeWidth}px`);
+    }
+    if (this.config.repeatHeader && sections.header) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatHeader: ${heights.header}px`);
+      }
+      available -= heights.header;
+    }
+    sections.docInfos.forEach((docInfo) => {
+      if (this.config[docInfo.repeatFlag]) {
+        const h = heights.docInfos[docInfo.key] || 0;
+        if (this.debug) {
+          console.log(`[printform]   - repeat ${docInfo.className}: ${h}px`);
+        }
+        available -= h;
+      }
+    });
+    if (this.config.repeatRowheader && sections.rowHeader) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatRowheader: ${heights.rowHeader}px`);
+      }
+      available -= heights.rowHeader;
+    }
+    sections.footerVariants.forEach((footer) => {
+      if (this.config[footer.repeatFlag]) {
+        const h = heights.footerVariants[footer.key] || 0;
+        if (this.debug) {
+          console.log(`[printform]   - repeat ${footer.className}: ${h}px`);
+        }
+        available -= h;
+      }
+    });
+    if (this.config.repeatFooterLogo && sections.footerLogo) {
+      if (this.debug) {
+        console.log(`[printform]   - repeatFooterLogo: ${heights.footerLogo}px`);
+      }
+      available -= heights.footerLogo;
+    }
+    if (this.config.repeatFooterPagenum && sections.footerPagenum) {
+      const h = heights.footerPagenum || 0;
+      if (this.debug) {
+        console.log(`[printform]   - repeatFooterPagenum: ${h}px`);
+      }
+      available -= h;
+    }
+    if (this.debug) {
+      console.log(`[printform] heightPerPage (available for content): ${Math.max(0, available)}px`);
+      console.log(`[printform] ================================`);
+    }
+    return Math.max(0, available);
+  };
+
+  FormatterClass.prototype.computeFooterState = function computeFooterState(sections, heights) {
+    const footerLogoHeight = heights.footerLogo || 0;
+    const footerPagenumHeight = heights.footerPagenum || 0;
+    const totalFooterHeight = sections.footerVariants.reduce((sum, footer) => {
+      const height = heights.footerVariants[footer.key] || 0;
+      return sum + height;
+    }, 0);
+    const totalFinal = totalFooterHeight + footerLogoHeight + footerPagenumHeight;
+    const repeatingFooterHeight = sections.footerVariants.reduce((sum, footer) => {
+      const height = heights.footerVariants[footer.key] || 0;
+      return this.config[footer.repeatFlag] ? sum + height : sum;
+    }, 0);
+    let repeating = repeatingFooterHeight;
+    if (this.config.repeatFooterLogo) {
+      repeating += footerLogoHeight;
+    }
+    if (this.config.repeatFooterPagenum) {
+      repeating += footerPagenumHeight;
+    }
+    const nonRepeating = Math.max(0, totalFinal - repeating);
+    return {
+      totalFinal,
+      repeating,
+      nonRepeating
+    };
+  };
+
+  FormatterClass.prototype.finalizeDocument = function finalizeDocument(
+    outputContainer,
+    sections,
+    heights,
+    footerState,
+    defaultHeightPerPage,
+    renderState,
+    spacerTemplate,
+    logFn
+  ) {
+    const baseHeight = renderState ? renderState.currentHeight : 0;
+    const lastPageLimit = renderState && renderState.pageLimit
+      ? renderState.pageLimit
+      : defaultHeightPerPage;
+    const repeatingHeight = renderState && Number.isFinite(renderState.repeatingHeight)
+      ? renderState.repeatingHeight
+      : 0;
+    const skipDummyRowItems = Boolean(
+      renderState &&
+      (
+        (renderState.isPtacPage && !this.config.insertPtacDummyRowItems) ||
+        (renderState.isPaddtPage && !(this.paddtConfig && this.paddtConfig.insertPaddtDummyRowItems))
+      )
+    );
+    const allowance = footerState.totalFinal - footerState.repeating;
+    const heightWithFinalFooters = baseHeight + allowance;
+    if (heightWithFinalFooters <= lastPageLimit) {
+      const container = this.getCurrentPageContainer(outputContainer);
+      this.applyRemainderSpacing(
+        container,
+        lastPageLimit,
+        heightWithFinalFooters,
+        footerState,
+        spacerTemplate,
+        {
+          skipDummyRowItems,
+          repeatingHeight,
+          useCurrentHeight: true
+        }
+      );
+      this.appendFinalFooters(container, sections, logFn);
+      return;
+    }
+
+    this.prepareNextPage(
+      outputContainer,
+      sections,
+      logFn,
+      lastPageLimit,
+      baseHeight,
+      footerState,
+      spacerTemplate,
+      false,
+      skipDummyRowItems,
+      repeatingHeight
+    );
+
+    const finalPageStartHeight = allowance;
+    const container = this.getCurrentPageContainer(outputContainer);
+    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, false);
+    this.applyRemainderSpacing(
+      container,
+      defaultHeightPerPage,
+      finalPageStartHeight,
+      footerState,
+      spacerTemplate,
+      {
+        repeatingHeight: nextRepeatingHeight,
+        useCurrentHeight: true
+      }
+    );
+    this.appendFinalFooters(container, sections, logFn);
+  };
+}

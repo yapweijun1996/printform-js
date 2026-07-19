@@ -176,6 +176,7 @@ For the full list, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 | `data-insert-footer-spacer-while-format-table` | `y` / `n` | Insert a footer spacer to push footers down. |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | `y` / `n` | Use dummy row items as the footer spacer. |
 | `data-custom-dummy-row-item-content` | HTML | Custom dummy row item markup (or use `<template class="custom-dummy-row-item-content">`). |
+| `data-custom-dummy-spacer-content` | HTML | Custom dummy spacer markup (or use `<template class="custom-dummy-spacer-content">`). |
 | `data-div-page-break-before-class-append` | `pagebreak_bf_processed` | Append extra class(es) (space-separated) onto generated `div_page_break_before` nodes (legacy HTML-to-PDF support). |
 
 ### PADDT Controls
@@ -216,6 +217,14 @@ If a page is not full, PrintForm automatically inserts empty rows to push the fo
   <tr style="height:20px;"><td style="border:0;">...</td></tr>
 </template>
 ```
+- You can customize the page-height spacer (single root element; height is auto-filled):
+```html
+<template class="custom-dummy-spacer-content">
+  <table style="width:100%; table-layout:fixed;" cellpadding="0" cellspacing="0">
+    <tr><td style="border-top:1px solid #000;"></td></tr>
+  </table>
+</template>
+```
 
 ### 2. Force Page Break
 Add `tb_page_break_before` to the row to start a new page before it.
@@ -248,7 +257,7 @@ Notes:
 - The formatter removes the original `.printform` node and inserts a processed container in its place.
 
 ### 5. Build for Production
-If you modify the source (`js/` directory), rebuild:
+If you modify the source (`src/` directory), rebuild:
 
 ```bash
 npm run build
@@ -271,8 +280,8 @@ A: Physical margins are controlled by the browser and printer driver. In the pri
 
 ## Directory Structure
 
-- `js/printform.js` - Entry point
-- `js/printform/formatter/` - **Core Logic** (Pagination calculation)
-- `js/printform/config.js` - Configuration definitions
-- `js/printform/dom.js` - DOM helpers
+- `src/printform.js` - Entry point
+- `src/printform/formatter/` - **Core Logic** (Pagination calculation)
+- `src/printform/config.js` - Configuration definitions
+- `src/printform/dom.js` - DOM helpers
 - `index.html` - Full test case

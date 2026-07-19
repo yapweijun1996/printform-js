@@ -176,7 +176,7 @@ configRef.mainConfig.forEach(config => {
 {
   "scripts": {
     "docs": "node scripts/generate-config-docs.js",
-    "docs:watch": "nodemon --watch js/printform/config.js --exec npm run docs",
+    "docs:watch": "nodemon --watch src/printform/config.js --exec npm run docs",
     "prebuild": "npm run docs"
   }
 }
