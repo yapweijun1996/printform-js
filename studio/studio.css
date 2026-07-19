@@ -165,6 +165,40 @@ html, body {
   justify-content: flex-start;
 }
 
+/* ---------- Restore-session banner ---------- */
+.restore-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent);
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.restore-banner span {
+  flex: 1;
+}
+
+.restore-banner button {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.restore-banner button:hover { border-color: var(--accent); color: var(--accent); }
+
+#restore-banner-dismiss {
+  padding: 4px 8px;
+  font-size: 15px;
+  line-height: 1;
+}
+
 /* ---------- Main 3-pane layout ---------- */
 #main {
   display: flex;

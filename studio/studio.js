@@ -48,7 +48,8 @@
       exportPackage: "导出数据绑定包",
       regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?",
       moreMenu: "更多选项",
-      printformNotInlined: "printform.js 尚未内联 —— 此导出文件只有留在本仓库目录内打开才能正常运行,移到别处会报脚本 404。请稍候几秒后重新导出。"
+      printformNotInlined: "printform.js 尚未内联 —— 此导出文件只有留在本仓库目录内打开才能正常运行,移到别处会报脚本 404。请稍候几秒后重新导出。",
+      restoredNotice: "已恢复上次会话的配置修改(A 侧 {a} 项、B 侧 {b} 项),下方面板可能不是模板默认值。"
     },
     en: {
       compare: "Compare",
@@ -84,7 +85,8 @@
       exportPackage: "Export data-bound package",
       regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?",
       moreMenu: "More options",
-      printformNotInlined: "printform.js isn't inlined yet — this export will only run while it stays inside this repo folder; moving it elsewhere will 404. Wait a few seconds and export again."
+      printformNotInlined: "printform.js isn't inlined yet — this export will only run while it stays inside this repo folder; moving it elsewhere will 404. Wait a few seconds and export again.",
+      restoredNotice: "Restored config changes from your last session (side A: {a}, side B: {b}) — the panel below may not match the template's defaults."
     }
   };
 
@@ -937,6 +939,36 @@
     scheduleReload(state.activeSide);
   }
 
+  // localStorage restores state.overrides silently on every load (see the
+  // top of the file) — a returning user gets that back deliberately, so the
+  // config panel reflects their last session instead of resetting every
+  // reload. But a FIRST-TIME-LOOKING visitor (or a returning one who forgot)
+  // has no way to tell "this panel shows the template's real defaults" from
+  // "this panel shows leftover edits from three sessions ago" — the panel
+  // looks identical either way. Surface the difference once, non-blocking,
+  // dismissible, with a one-click way to actually start fresh.
+  function setupRestoreBanner() {
+    var countA = Object.keys(state.overrides.A).length;
+    var countB = Object.keys(state.overrides.B).length;
+    if (countA + countB === 0) return;
+
+    var banner = $("#restore-banner");
+    var text = $("#restore-banner-text");
+    text.textContent = t("restoredNotice").replace("{a}", countA).replace("{b}", countB);
+    banner.style.display = "";
+
+    $("#restore-banner-dismiss").addEventListener("click", function () {
+      banner.style.display = "none";
+    });
+    $("#restore-banner-reset").addEventListener("click", function () {
+      state.overrides = { A: {}, B: {} };
+      persist();
+      buildConfigPanel();
+      reloadAll();
+      banner.style.display = "none";
+    });
+  }
+
   // ---------- template loading ----------
   function parseBaseline(html) {
     // Read the template's own data-* declarations — they are the config
@@ -1171,6 +1203,7 @@
     checkTopbarFit = setupResponsiveTopbar();
     setupMobilePanels();
     setupPreviewScaling();
+    setupRestoreBanner();
 
     fetch("./mustache-lite.js")
       .then(function (r) { return r.text(); })
@@ -1217,6 +1250,12 @@
       // whether the topbar fits — re-measure now that applyI18n() swapped
       // every label's text.
       if (checkTopbarFit) checkTopbarFit();
+      var restoreBanner = $("#restore-banner");
+      if (restoreBanner.style.display !== "none") {
+        var countA = Object.keys(state.overrides.A).length;
+        var countB = Object.keys(state.overrides.B).length;
+        $("#restore-banner-text").textContent = t("restoredNotice").replace("{a}", countA).replace("{b}", countB);
+      }
     });
     $("#compare-toggle").addEventListener("click", function () { setCompare(!state.compare); });
     $("#mode-toggle").addEventListener("click", function () {
