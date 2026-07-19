@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintForm Studio</title>
+  <link rel="stylesheet" href="./studio.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <span class="brand">PrintForm Studio</span>
+      <select id="template-select" title="Template"></select>
+      <button id="compare-toggle" data-i18n="compare"></button>
+      <span class="spacer"></span>
+      <button id="toggle-config" data-i18n="panelConfig"></button>
+      <button id="toggle-inspector" data-i18n="panelInspector"></button>
+      <button id="lang-toggle">EN</button>
+      <button id="print-preview" data-i18n="printPreview"></button>
+      <button id="export-html" class="primary" data-i18n="export"></button>
+    </header>
+
+    <div id="main">
+      <aside id="config-pane" class="pane">
+        <input id="config-search" type="search" data-i18n-placeholder="search">
+        <div id="ab-selector">
+          <button id="side-a-btn" class="active">A</button>
+          <button id="side-b-btn">B</button>
+        </div>
+        <div id="config-groups"></div>
+      </aside>
+
+      <section id="preview-pane">
+        <div class="preview-slot" id="slot-a">
+          <div class="slot-head"><span class="badge">A</span><span id="status-a"></span></div>
+          <iframe id="frame-a" title="Preview A"></iframe>
+        </div>
+        <div class="preview-slot" id="slot-b" style="display:none;">
+          <div class="slot-head"><span class="badge">B</span><span id="status-b"></span>
+            <button id="copy-a-to-b" style="margin-left:auto;font-size:11px;" data-i18n="copyAB"></button>
+          </div>
+          <iframe id="frame-b" title="Preview B"></iframe>
+        </div>
+      </section>
+
+      <aside id="inspector-pane" class="pane">
+        <h3 data-i18n="inspector"></h3>
+        <div class="metrics">
+          <div class="metric"><div class="value" id="m-logical">–</div><div class="name" data-i18n="logicalPages"></div></div>
+          <div class="metric"><div class="value" id="m-physical">–</div><div class="name" data-i18n="physicalPages"></div></div>
+        </div>
+        <div class="actions">
+          <button id="copy-config" data-i18n="copyConfig"></button>
+          <button id="reset-all" data-i18n="resetAll"></button>
+        </div>
+        <h3 data-i18n="logs"></h3>
+        <div id="log-view"></div>
+        <p class="hint" data-i18n="printHint"></p>
+      </aside>
+    </div>
+  </div>
+
+  <script src="./studio.js"></script>
+</body>
+</html>
