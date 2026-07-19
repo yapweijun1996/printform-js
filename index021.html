@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Delivery Note</title>
+    <style>
+/* Global Reset & Typography */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #000;
+}
+
+* {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-sizing: border-box;
+}
+
+/* Printform Container - Flat, no shadow */
+.printform,
+.printform_formatter_processed {
+    width: 750px;
+    /* Fixed width matching A4/layout */
+    margin: 0 auto;
+    background: #fff;
+    /* Optional: temporary border to see edges during dev, remove for final */
+}
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .printform,
+    .printform_formatter_processed {
+        margin: 0;
+    }
+}
+
+/* Utilities */
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.text-blue {
+    color: #003366;
+}
+
+.bg-navy {
+    background-color: #003366;
+    color: white;
+}
+
+.bg-gray-light {
+    background-color: #f3f3f3;
+}
+
+/* For value cells and zebra stripes */
+
+/* Tables */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+td {
+    vertical-align: top;
+    padding: 2px;
+}
+
+/* Specific Component Styles matching the Image */
+
+/* Top Right Table (Order Info) */
+.order-info-table td {
+    border: 1px solid #ccc;
+    padding: 4px 5px;
+    font-size: 11px;
+}
+
+.order-info-label {
+    text-align: right;
+    font-weight: bold;
+    width: 40%;
+    border-right: none !important;
+    /* Visual trick if needed, but standard border is fine */
+}
+
+.order-info-value {
+    background-color: #f9f9f9;
+    /* Light grey from image? Actually looks clearer in crop */
+    width: 60%;
+}
+
+/* Fix for specific border look in image: It looks like a single grid. 
+   We will use standard borders on cells. */
+
+/* Address Headers */
+.addr-header {
+    background-color: #003366;
+    color: white;
+    font-weight: bold;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* Item Table Headers */
+.item-header-cell {
+    background-color: #003366;
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+    font-size: 11px;
+    border-right: 1px solid #fff;
+    /* Separator lines in header */
+}
+
+.item-header-cell:last-child {
+    border-right: none;
+}
+
+/* Item Rows */
+.item-row-cell {
+    padding: 5px;
+    font-size: 11px;
+    border-right: 1px solid #ccc;
+    /* Vertical grid lines */
+    border-left: 1px solid #ccc;
+    /* First one needs left too? No, use border strategy */
+}
+
+/* Row Item Table Styling - to simulate the single big table look */
+/* We need to use specific border strategies because printform splits tables */
+
+/* Border Strategy: 
+   Row items will have Border Right (Standard). 
+   First col will have Border Left.
+   All will match the header vertical lines.
+*/
+.col-border-right {
+    border-right: 1px solid #ccc;
+}
+
+.col-border-left {
+    border-left: 1px solid #ccc;
+}
+
+/* Zebra Striping */
+/* prowitem is the class for the TABLE. 
+   We can target alternating prowitem tables */
+.printform_formatter_processed .prowitem_processed:nth-of-type(even) .item-row-cell,
+.printform .prowitem:nth-of-type(even) .item-row-cell {
+    background-color: #f3f3f3;
+}
+
+/* Logo Placeholder Box */
+.logo-placeholder {
+    width: 300px;
+    height: 80px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 18px;
+    margin-top: 10px;
+}
+      </style>
+</head>
+
+<body>
+
+    <div class="printform" data-papersize-width="750" data-papersize-height="1050" data-repeat-header="y"
+        data-repeat-rowheader="y" data-insert-dummy-row-item-while-format-table="y" data-height-of-dummy-row-item="24"
+        data-show-logical-page-number="y" data-repeat-footer-pagenum="y">
+        <!-- Image doesn't show page numbers, but good to have option hidden if not requested -->
+
+        <template class="custom-dummy-spacer-content">
+<table style="width:750px; table-layout: fixed;" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px;">
+                <col style="width:inherit;">
+                <col style="width:15px;">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td style="border-top:1px solid #000;"></td>
+                <td></td>
+            </tr>
+        </table>
+</template>
+
+        <!-- Header Section -->
+        <table class="pheader" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col>
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td>
+                    <!-- Top Row: Company Info & Title -->
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
+                        <!-- Left: Company Name -->
+                        <div style="width: 50%;">
+                            <span style="display:block; font-size: 24pt; color: #000; line-height: 1.2;">My Company
+                                name</span>
+                            <span style="display:block; font-size: 11pt; color: #000; margin-top: 5px;">My company
+                                slogan</span>
+
+                            <!-- Logo Placeholder matching image -->
+                            <div class="logo-placeholder">
+                                Insert Your Logo
+                            </div>
+                        </div>
+
+                        <!-- Right: Delivery Note Title & Info Table -->
+                        <div style="width: 45%; text-align: right;">
+                            <span
+                                style="display:block; font-size: 22pt; font-weight: bold; color: #003366; margin-bottom: 35px;">Delivery
+                                Note</span>
+
+                            <!-- Order Info Table -->
+                            <table class="order-info-table" cellpadding="0" cellspacing="0"
+                                style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td class="text-right" style="width: 40%;">Order Date</td>
+                                    <td style="width: 60%; background: #fff;">September 6, 2013</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right">Order #</td>
+                                    <td style="background: #f3f3f3;">[123456]</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right">Delivery Note #</td>
+                                    <td style="background: #f3f3f3;">[100]</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right">Customer ID</td>
+                                    <td style="background: #f3f3f3;">[ABC12345]</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right">Despatch Date</td>
+                                    <td style="background: #fff;">September 6, 2013</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right">Delivery Method</td>
+                                    <td style="background: #f3f3f3;">[UPS]</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Addresses Section -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 30px; margin-bottom: 20px;">
+                        <!-- Shipping Address -->
+                        <div style="width: 48%;">
+                            <div class="addr-header">Shipping Address</div>
+                            <div style="padding: 5px; font-size: 11px; line-height: 16px;">
+                                <span style="display: block;">[Name]</span>
+                                <span style="display: block;">[Company Name]</span>
+                                <span style="display: block;">[Street Address]</span>
+                                <span style="display: block;">[City, ST ZIP Code]</span>
+                                <span style="display: block;">[Phone]</span>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Address -->
+                        <div style="width: 48%;">
+                            <div class="addr-header">Invoice Address</div>
+                            <div style="padding: 5px; font-size: 11px; line-height: 16px;">
+                                <span style="display: block;">[Name]</span>
+                                <span style="display: block;">[Company Name]</span>
+                                <span style="display: block;">[Street Address]</span>
+                                <span style="display: block;">[City, ST ZIP Code]</span>
+                                <span style="display: block;">[Phone]</span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Table Column Headers -->
+        <table class="prowheader" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px"> <!-- Item # -->
+                <col> <!-- Description -->
+                <col style="width:80px"> <!-- Ordered -->
+                <col style="width:80px"> <!-- Delivered -->
+                <col style="width:100px"> <!-- Outstanding -->
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-header-cell">Item #</td>
+                <td class="item-header-cell" style="border-left: 1px solid white;">Description</td>
+                <td class="item-header-cell text-center" style="border-left: 1px solid white;">Ordered</td>
+                <td class="item-header-cell text-center" style="border-left: 1px solid white;">Delivered</td>
+                <td class="item-header-cell text-center" style="border-left: 1px solid white;">Outstanding</td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Row Items -->
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55146</td>
+                <td class="item-row-cell col-border-left">Product 1</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55147</td>
+                <td class="item-row-cell col-border-left">Product 2</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55148</td>
+                <td class="item-row-cell col-border-left">Product 3</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55149</td>
+                <td class="item-row-cell col-border-left">Product 4</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55150</td>
+                <td class="item-row-cell col-border-left">Product 5</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55151</td>
+                <td class="item-row-cell col-border-left">Product 6</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55152</td>
+                <td class="item-row-cell col-border-left">Product 7</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55153</td>
+                <td class="item-row-cell col-border-left">Product 8</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55154</td>
+                <td class="item-row-cell col-border-left">Product 9</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55155</td>
+                <td class="item-row-cell col-border-left">Product 10</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55156</td>
+                <td class="item-row-cell col-border-left">Product 11</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55157</td>
+                <td class="item-row-cell col-border-left">Product 12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55158</td>
+                <td class="item-row-cell col-border-left">Product 13</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55159</td>
+                <td class="item-row-cell col-border-left">Product 14</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55160</td>
+                <td class="item-row-cell col-border-left">Product 15</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55161</td>
+                <td class="item-row-cell col-border-left">Product 16</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55162</td>
+                <td class="item-row-cell col-border-left">Product 17</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55163</td>
+                <td class="item-row-cell col-border-left">Product 18</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55164</td>
+                <td class="item-row-cell col-border-left">Product 19</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+        <table class="prowitem" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="item-row-cell col-border-left">55165</td>
+                <td class="item-row-cell col-border-left">Product 20</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left text-center">12</td>
+                <td class="item-row-cell col-border-left col-border-right text-center">0</td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Footer Section -->
+        <table class="pfooter" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col>
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td style="padding-top: 20px;">
+                    <!-- Terms Text -->
+                    <div class="text-center" style="font-size: 10pt; line-height: 1.4; margin-bottom: 20px;">
+                        Notice must be given to us of any goods not received within 10 days taken from the date of
+                        despatch stated on invoice.<br>
+                        Any Shortage or damage must be notified within 72 hours of receipt of goods.<br>
+                        Complaints can only be accepted if made in writing within 30 days of receipt of goods.<br>
+                        No goods may be returned without prior authorisation from company
+                    </div>
+
+                    <!-- Thank You -->
+                    <div class="text-center font-bold" style="font-size: 14pt; margin-bottom: 10px;">
+                        Thank you for your business!
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="text-center" style="font-size: 10pt; margin-bottom: 20px;">
+                        Should you have any enquiries concerning this delivery note, please contact John Doe on
+                        0-000-000-0000
+                    </div>
+
+                    <!-- Footer Line -->
+                    <div class="text-center" style="border-top: 1px solid #000; padding-top: 5px; font-size: 9pt;">
+                        111 Street, Town/City, County, ST, 00000<br>
+                        Tel: 0-000-000-0000 Fax: 0-000-000-0000 E-mail: info@yourcompanysite.com Web:
+                        www.yourcompanysite.com
+                    </div>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Page Number Section -->
+        <table class="pfooter_pagenum" cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col style="width:15px">
+                <col>
+                <col style="width:15px">
+            </colgroup>
+            <tr>
+                <td></td>
+                <td class="text-right" style="padding-top: 5px; padding-bottom: 20px;">
+                    <span style="font-size: 8pt;">Page <span data-page-number>1</span> of <span
+                            data-page-total>1</span></span>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Dummy Row Template -->
+        <template class="custom-dummy-row-item-content">
+            <colgroup>
+                <col style="width:15px">
+                <col style="width:80px">
+                <col>
+                <col style="width:80px">
+                <col style="width:80px">
+                <col style="width:100px">
+                <col style="width:15px">
+            </colgroup>
+            <tr style="height:24px;">
+                <td></td>
+                <td class="item-row-cell col-border-left">&nbsp;</td>
+                <td class="item-row-cell col-border-left">&nbsp;</td>
+                <td class="item-row-cell col-border-left">&nbsp;</td>
+                <td class="item-row-cell col-border-left">&nbsp;</td>
+                <td class="item-row-cell col-border-left col-border-right">&nbsp;</td>
+                <td></td>
+            </tr>
+        </template>
+
+    </div>
+
+		<script src="./dist/printform.js"></script>
+</body>
+
+</html>

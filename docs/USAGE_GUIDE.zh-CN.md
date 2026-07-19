@@ -137,6 +137,9 @@ PADDT（`.paddt`）：
 - 可用以下方式自定义空白行结构：
   - `data-custom-dummy-row-item-content`
   - `<template class="custom-dummy-row-item-content">...</template>`
+- 可用以下方式自定义页面填充 spacer（必须单一根元素，高度自动填充）：
+  - `data-custom-dummy-spacer-content`
+  - `<template class="custom-dummy-spacer-content">...</template>`
 
 ---
 

@@ -138,6 +138,9 @@ PADDT (`.paddt`):
 - You can override the dummy row markup via:
   - `data-custom-dummy-row-item-content`, or
   - `<template class="custom-dummy-row-item-content">...</template>`
+- You can override the page-height spacer via (single root element; height auto-filled):
+  - `data-custom-dummy-spacer-content`, or
+  - `<template class="custom-dummy-spacer-content">...</template>`
 
 ---
 
