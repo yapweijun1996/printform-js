@@ -45,7 +45,8 @@
       dataEmptyHint: "此模板不含 {{占位符}},无需绑定数据。可在结构编辑模式下手动添加 {{field}} 或 {{#items}}...{{/items}}。",
       regenerateData: "重新生成示例数据",
       exportPackage: "导出数据绑定包",
-      regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?"
+      regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?",
+      moreMenu: "更多选项"
     },
     en: {
       compare: "Compare",
@@ -78,7 +79,8 @@
       dataEmptyHint: "This template has no {{placeholders}}. Add {{field}} or {{#items}}...{{/items}} via Structure mode to enable data binding.",
       regenerateData: "Regenerate sample data",
       exportPackage: "Export data-bound package",
-      regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?"
+      regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?",
+      moreMenu: "More options"
     }
   };
 
@@ -143,6 +145,9 @@
     });
     document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
       el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(function (el) {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
     });
     $("#lang-toggle").textContent = state.lang === "zh" ? "EN" : "中文";
     document.documentElement.lang = state.lang;
@@ -852,9 +857,91 @@
     sel.value = state.templateId;
   }
 
+  // ---------- responsive topbar (mobile "more" menu) ----------
+  // Below COMPACT_QUERY's width, secondary buttons move into #more-menu.
+  // These are the SAME DOM nodes (moved via append/before), never copies —
+  // that way toggled state and translated label text stay correct no
+  // matter which container currently holds them, with nothing to keep in
+  // sync by hand.
+  var COMPACT_QUERY = "(max-width: 680px)";
+  var SECONDARY_BUTTON_IDS = [
+    "import-html", "compare-toggle", "mode-toggle",
+    "toggle-config", "toggle-inspector", "lang-toggle", "print-preview"
+  ];
+
+  function setupResponsiveTopbar() {
+    var topbar = $("#topbar");
+    var moreMenu = $("#more-menu");
+    var moreToggle = $("#more-menu-toggle");
+    var spacer = topbar.querySelector(".spacer");
+    var mql = window.matchMedia(COMPACT_QUERY);
+
+    function closeMenu() {
+      moreMenu.classList.remove("open");
+      moreToggle.setAttribute("aria-expanded", "false");
+    }
+
+    function openMenu() {
+      // position:fixed, so this must be computed fresh from the toggle
+      // button's live screen position every time — it's viewport-relative,
+      // not relative to any scrolled/clipped ancestor.
+      var rect = moreToggle.getBoundingClientRect();
+      moreMenu.style.top = (rect.bottom + 6) + "px";
+      moreMenu.style.right = (window.innerWidth - rect.right) + "px";
+      moreMenu.style.left = "auto";
+      moreMenu.classList.add("open");
+      moreToggle.setAttribute("aria-expanded", "true");
+    }
+
+    function applyLayout(isCompact) {
+      topbar.classList.toggle("compact", isCompact);
+      if (isCompact) {
+        moreMenu.append.apply(moreMenu, SECONDARY_BUTTON_IDS.map(function (id) { return $("#" + id); }));
+      } else {
+        closeMenu();
+        // import-html / compare-toggle / mode-toggle sit before the spacer;
+        // the rest sit after it, right before Export HTML.
+        spacer.before($("#import-html"), $("#compare-toggle"), $("#mode-toggle"));
+        $("#export-html").before($("#toggle-config"), $("#toggle-inspector"), $("#lang-toggle"), $("#print-preview"));
+      }
+    }
+
+    moreToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (moreMenu.classList.contains("open")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    moreMenu.addEventListener("click", function (e) {
+      if (e.target.closest("button")) closeMenu();
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!$("#more-menu-wrap").contains(e.target)) closeMenu();
+    });
+
+    window.addEventListener("resize", closeMenu);
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+
+    applyLayout(mql.matches);
+    mql.addEventListener("change", function (e) { applyLayout(e.matches); });
+    // Belt-and-suspenders: some environments resize the viewport without
+    // firing matchMedia's change event (seen with a few automated/embedded
+    // browser contexts). A plain resize listener re-checks mql.matches
+    // directly, so layout never gets stuck compact/expanded.
+    window.addEventListener("resize", function () { applyLayout(mql.matches); });
+  }
+
   // ---------- boot ----------
   function boot() {
     applyI18n();
+    setupResponsiveTopbar();
 
     fetch("./mustache-lite.js")
       .then(function (r) { return r.text(); })

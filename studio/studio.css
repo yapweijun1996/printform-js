@@ -97,6 +97,74 @@ html, body {
   color: var(--accent);
 }
 
+/* ---------- Mobile "more" menu ----------
+ * Hidden by default (desktop shows every button inline). studio.js flips
+ * #topbar into .compact mode below a width threshold, which is when this
+ * becomes visible and JS reparents the secondary buttons into #more-menu —
+ * the SAME button elements, not copies, so their state (toggled class,
+ * translated label text) never needs to be kept in sync in two places. */
+.more-menu-wrap {
+  display: none;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#topbar.compact .more-menu-wrap {
+  display: block;
+}
+
+/* Compact mode already moved 7 buttons into the menu, but brand + the
+   template name + ⋯ + Export HTML can still outgrow a phone width on
+   their own (a long template name eats the select's whole max-width) —
+   shrink what's left so the remaining core controls fit without relying
+   on horizontal scroll. */
+#topbar.compact .brand {
+  display: none;
+}
+
+#topbar.compact #template-select {
+  min-width: 70px;
+  max-width: 150px;
+}
+
+#more-menu-toggle {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px 12px;
+}
+
+/* position: fixed (not absolute) is load-bearing: #topbar has
+   overflow-x: auto (for its own horizontal-scroll fallback), and any
+   non-visible overflow-x forces overflow-y to behave as non-visible too
+   per spec — an absolutely-positioned dropdown inside that ancestor gets
+   silently clipped the moment it extends past the topbar's own height.
+   Fixed positioning is viewport-relative and immune to that; studio.js
+   sets its top/right from the toggle button's live bounding rect. */
+#more-menu {
+  display: none;
+  position: fixed;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  padding: 6px;
+  min-width: 190px;
+  z-index: 100;
+}
+
+#more-menu.open {
+  display: flex;
+}
+
+#more-menu button {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+}
+
 /* ---------- Main 3-pane layout ---------- */
 #main {
   display: flex;
