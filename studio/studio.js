@@ -1095,10 +1095,47 @@
     window.addEventListener("resize", function () { applyLayout(mql.matches); });
   }
 
+  // Below PANEL_QUERY's width, #config-pane and #inspector-pane switch (via
+  // CSS, see the matching @media block) from permanent 240px/220px columns
+  // to full-screen overlays inside #main — three fixed-width columns don't
+  // fit on a phone, and squeezing them together left preview-pane a sliver.
+  // Both start hidden on mobile so the preview is what a phone visitor sees
+  // first; toggle-config/toggle-inspector (already in the topbar's ⋯ menu at
+  // this width) and each pane's own close (×) button open/close them.
+  var PANEL_QUERY = "(max-width: 900px)";
+
+  function setupMobilePanels() {
+    var mql = window.matchMedia(PANEL_QUERY);
+
+    function closeConfig() { document.body.classList.add("hide-config"); }
+    function closeInspector() { document.body.classList.add("hide-inspector"); }
+
+    $("#close-config").addEventListener("click", closeConfig);
+    $("#close-inspector").addEventListener("click", closeInspector);
+
+    function applyDefault(isMobile) {
+      if (isMobile) {
+        // Force both closed — never enter the squeezed 3-column state,
+        // whether this is the initial mobile load or a mid-session resize
+        // down from desktop with panels already open.
+        closeConfig();
+        closeInspector();
+      }
+      // Becoming desktop again intentionally leaves hide-config/hide-inspector
+      // untouched — don't fight whatever the user had open there.
+    }
+
+    applyDefault(mql.matches);
+    mql.addEventListener("change", function (e) { applyDefault(e.matches); });
+    // Same belt-and-suspenders reasoning as setupResponsiveTopbar.
+    window.addEventListener("resize", function () { applyDefault(mql.matches); });
+  }
+
   // ---------- boot ----------
   function boot() {
     applyI18n();
     setupResponsiveTopbar();
+    setupMobilePanels();
     setupPreviewScaling();
 
     fetch("./mustache-lite.js")
