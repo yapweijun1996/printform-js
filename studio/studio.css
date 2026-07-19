@@ -216,11 +216,36 @@ html, body {
   color: var(--accent);
 }
 
-.preview-slot iframe {
+.preview-slot .slot-head .zoom-readout {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The scrollable region: sized to the slot, content inside can exceed it. */
+.preview-viewport {
   flex: 1;
-  width: 100%;
+  overflow: auto;
+  padding: 16px;
+  min-height: 0;
+}
+
+/* Sized by JS to the SCALED (visual) footprint of the page, so the
+   scrollbars in .preview-viewport reflect what's actually visible —
+   the iframe inside keeps its native unscaled size and is shrunk purely
+   at paint time via transform, which never affects layout/scroll size. */
+.page-scale-sizer {
+  position: relative;
+  margin: 0 auto;
+}
+
+.page-scale-sizer iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
   border: 0;
   background: #ffffff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
 }
 
 #inspector-pane {

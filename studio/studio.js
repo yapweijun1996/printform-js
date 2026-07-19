@@ -701,11 +701,76 @@
     blobUrls[side] = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     frame.src = blobUrls[side];
     clearLogs(side);
+    // Re-apply the last known scale immediately (avoids a flash of
+    // full-size, overflowing content while the new page reformats); the
+    // "done" bridge message refines it once the real height is known.
+    applyPreviewScale(side);
   }
 
   function reloadAll() {
     reload("A");
     if (state.compare) reload("B");
+  }
+
+  // ---------- scale-to-fit preview ----------
+  // The paper is a fixed-pixel-width document (750px etc. — configured, not
+  // responsive), rendered inside an iframe whose CSS pixels don't shrink on
+  // their own. Below the "Actual size" width, the only way to see the whole
+  // page without horizontal scrolling is to visually scale it down, the way
+  // every print-preview UI (browser print dialog, Google Docs, PDF.js) does.
+  function getPaperWidthForSide(side) {
+    var d = state.descriptors.find(function (x) { return x.htmlAttr === "data-papersize-width"; });
+    var fallback = 750;
+    if (!d) return fallback;
+    var o = state.overrides[side];
+    var raw;
+    if (Object.prototype.hasOwnProperty.call(o, d.htmlAttr)) raw = o[d.htmlAttr];
+    else if (Object.prototype.hasOwnProperty.call(state.templateBaseline, d.htmlAttr)) raw = state.templateBaseline[d.htmlAttr];
+    else raw = d.defaultValue;
+    var n = parseFloat(raw);
+    return n > 0 ? n : fallback;
+  }
+
+  function applyPreviewScale(side) {
+    var frame = side === "A" ? $("#frame-a") : $("#frame-b");
+    var sizer = side === "A" ? $("#sizer-a") : $("#sizer-b");
+    var viewport = side === "A" ? $("#viewport-a") : $("#viewport-b");
+    var zoomEl = side === "A" ? $("#zoom-a") : $("#zoom-b");
+    if (!frame || !sizer || !viewport) return;
+
+    var naturalWidth = getPaperWidthForSide(side);
+    var m = state.metrics[side];
+    // Before the first "done" message, fall back to a plausible single-page
+    // aspect ratio rather than 0 — a 0-height sizer would hide the iframe
+    // entirely (0-height clip) during the reformat flash reload() guards.
+    var naturalHeight = m && m.docHeight ? m.docHeight : naturalWidth * 1.4;
+
+    var available = viewport.clientWidth - 32; // minus .preview-viewport padding
+    var scale = available > 0 ? Math.min(1, available / naturalWidth) : 1;
+    if (!isFinite(scale) || scale <= 0) scale = 1;
+
+    frame.style.width = naturalWidth + "px";
+    frame.style.height = naturalHeight + "px";
+    frame.style.transform = "scale(" + scale + ")";
+    sizer.style.width = Math.round(naturalWidth * scale) + "px";
+    sizer.style.height = Math.round(naturalHeight * scale) + "px";
+    if (zoomEl) zoomEl.textContent = Math.round(scale * 100) + "%";
+  }
+
+  function setupPreviewScaling() {
+    ["A", "B"].forEach(function (side) {
+      var viewport = side === "A" ? $("#viewport-a") : $("#viewport-b");
+      if (!viewport || typeof ResizeObserver === "undefined") return;
+      new ResizeObserver(function () { applyPreviewScale(side); }).observe(viewport);
+    });
+    // Belt-and-suspenders, same rationale as setupResponsiveTopbar: some
+    // automated/embedded browser contexts don't reliably deliver
+    // ResizeObserver callbacks. A plain window resize listener re-applies
+    // scale directly so it never gets stuck at a stale percentage.
+    window.addEventListener("resize", function () {
+      applyPreviewScale("A");
+      applyPreviewScale("B");
+    });
   }
 
   // ---------- inspector ----------
@@ -749,12 +814,22 @@
       var status = side === "A" ? $("#status-a") : $("#status-b");
       status.textContent = data.payload.logicalPages + " " + t("pages");
       renderMetrics();
+      applyPreviewScale(side);
     } else if (data.type === "blocks-ready") {
       state.blockCount = data.payload.count;
       state.rowCount = data.payload.rowCount;
       var range = $("#row-count-range");
       range.max = Math.max(10, state.rowCount + 20);
       range.value = state.rowCount;
+      // Structure mode never sends "done" (no pagination runs), so read the
+      // rendered height directly — same-origin blob: iframe, safe to reach in.
+      var structFrame = side === "A" ? $("#frame-a") : $("#frame-b");
+      var structDoc = structFrame && structFrame.contentDocument;
+      if (structDoc) {
+        state.metrics[side] = state.metrics[side] || {};
+        state.metrics[side].docHeight = structDoc.documentElement.scrollHeight;
+      }
+      applyPreviewScale(side);
       $("#row-count-value").textContent = state.rowCount;
     } else if (data.type === "block-select") {
       state.selectedBlockIndex = data.payload.index;
@@ -1018,6 +1093,7 @@
   function boot() {
     applyI18n();
     setupResponsiveTopbar();
+    setupPreviewScaling();
 
     fetch("./mustache-lite.js")
       .then(function (r) { return r.text(); })

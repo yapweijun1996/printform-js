@@ -59,14 +59,22 @@
 
       <section id="preview-pane">
         <div class="preview-slot" id="slot-a">
-          <div class="slot-head"><span class="badge">A</span><span id="status-a"></span></div>
-          <iframe id="frame-a" title="Preview A"></iframe>
+          <div class="slot-head"><span class="badge">A</span><span id="status-a"></span><span class="zoom-readout" id="zoom-a"></span></div>
+          <div class="preview-viewport" id="viewport-a">
+            <div class="page-scale-sizer" id="sizer-a">
+              <iframe id="frame-a" title="Preview A"></iframe>
+            </div>
+          </div>
         </div>
         <div class="preview-slot" id="slot-b" style="display:none;">
-          <div class="slot-head"><span class="badge">B</span><span id="status-b"></span>
+          <div class="slot-head"><span class="badge">B</span><span id="status-b"></span><span class="zoom-readout" id="zoom-b"></span>
             <button id="copy-a-to-b" style="margin-left:auto;font-size:11px;" data-i18n="copyAB"></button>
           </div>
-          <iframe id="frame-b" title="Preview B"></iframe>
+          <div class="preview-viewport" id="viewport-b">
+            <div class="page-scale-sizer" id="sizer-b">
+              <iframe id="frame-b" title="Preview B"></iframe>
+            </div>
+          </div>
         </div>
       </section>
 
