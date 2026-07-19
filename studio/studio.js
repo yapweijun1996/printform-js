@@ -1033,12 +1033,11 @@
   }
 
   // ---------- responsive topbar (mobile "more" menu) ----------
-  // Below COMPACT_QUERY's width, secondary buttons move into #more-menu.
-  // These are the SAME DOM nodes (moved via append/before), never copies —
-  // that way toggled state and translated label text stay correct no
-  // matter which container currently holds them, with nothing to keep in
-  // sync by hand.
-  var COMPACT_QUERY = "(max-width: 680px)";
+  // When the topbar's content would overflow its own width, secondary
+  // buttons move into #more-menu. These are the SAME DOM nodes (moved via
+  // append/before), never copies — that way toggled state and translated
+  // label text stay correct no matter which container currently holds
+  // them, with nothing to keep in sync by hand.
   var SECONDARY_BUTTON_IDS = [
     "import-html", "compare-toggle", "mode-toggle",
     "toggle-config", "toggle-inspector", "lang-toggle", "print-preview"
@@ -1049,7 +1048,6 @@
     var moreMenu = $("#more-menu");
     var moreToggle = $("#more-menu-toggle");
     var spacer = topbar.querySelector(".spacer");
-    var mql = window.matchMedia(COMPACT_QUERY);
 
     function closeMenu() {
       moreMenu.classList.remove("open");
@@ -1098,19 +1096,35 @@
       if (!$("#more-menu-wrap").contains(e.target)) closeMenu();
     });
 
-    window.addEventListener("resize", closeMenu);
-
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeMenu();
     });
 
-    applyLayout(mql.matches);
-    mql.addEventListener("change", function (e) { applyLayout(e.matches); });
+    // Whether the topbar needs to go compact is a function of its actual
+    // content width, not the viewport — a fixed px breakpoint (the previous
+    // approach) mismatches reality both ways: a long template name or the
+    // longer English button labels can overflow well above any reasonable
+    // breakpoint, while a short name in a narrow-but-not-tiny window fits
+    // fine below one. Force-expand, measure real overflow, then commit the
+    // layout that's actually correct for the content currently on screen.
+    function checkFit() {
+      applyLayout(false);
+      var isOverflowing = topbar.scrollWidth > topbar.clientWidth + 1;
+      if (isOverflowing) applyLayout(true);
+    }
+
+    checkFit();
+    window.addEventListener("resize", checkFit);
     // Belt-and-suspenders: some environments resize the viewport without
-    // firing matchMedia's change event (seen with a few automated/embedded
-    // browser contexts). A plain resize listener re-checks mql.matches
-    // directly, so layout never gets stuck compact/expanded.
-    window.addEventListener("resize", function () { applyLayout(mql.matches); });
+    // firing resize reliably either (seen with a few automated/embedded
+    // browser contexts) — a ResizeObserver on the topbar itself catches
+    // container-width changes resize sometimes misses.
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(checkFit).observe(topbar);
+    }
+    window.addEventListener("resize", closeMenu);
+
+    return checkFit;
   }
 
   // Below PANEL_QUERY's width, #config-pane and #inspector-pane switch (via
@@ -1150,9 +1164,11 @@
   }
 
   // ---------- boot ----------
+  var checkTopbarFit = null;
+
   function boot() {
     applyI18n();
-    setupResponsiveTopbar();
+    checkTopbarFit = setupResponsiveTopbar();
     setupMobilePanels();
     setupPreviewScaling();
 
@@ -1197,6 +1213,10 @@
         }
       });
       $("#mode-toggle").textContent = t(state.viewMode === "structure" ? "modePreview" : "modeStructure");
+      // English/Chinese button labels differ in length enough to flip
+      // whether the topbar fits — re-measure now that applyI18n() swapped
+      // every label's text.
+      if (checkTopbarFit) checkTopbarFit();
     });
     $("#compare-toggle").addEventListener("click", function () { setCompare(!state.compare); });
     $("#mode-toggle").addEventListener("click", function () {
