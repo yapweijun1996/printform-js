@@ -11,7 +11,10 @@
     <header id="topbar">
       <span class="brand">PrintForm Studio</span>
       <select id="template-select" title="Template"></select>
+      <button id="import-html" data-i18n="import"></button>
+      <input id="import-file-input" type="file" accept=".html,.htm" style="display:none;">
       <button id="compare-toggle" data-i18n="compare"></button>
+      <button id="mode-toggle" data-i18n="modeStructure"></button>
       <span class="spacer"></span>
       <button id="toggle-config" data-i18n="panelConfig"></button>
       <button id="toggle-inspector" data-i18n="panelInspector"></button>
@@ -27,6 +30,25 @@
           <button id="side-a-btn" class="active">A</button>
           <button id="side-b-btn">B</button>
         </div>
+
+        <div id="block-editor" style="display:none;">
+          <div class="be-row-slider">
+            <label data-i18n="rowCount"></label>
+            <input type="range" id="row-count-range" min="0" max="60" value="0">
+            <span id="row-count-value">0</span>
+          </div>
+          <div id="be-selected" style="display:none;">
+            <div class="be-type-badge" id="be-type"></div>
+            <textarea id="be-html" spellcheck="false"></textarea>
+            <div class="be-actions">
+              <button id="be-apply" class="primary" data-i18n="apply"></button>
+              <button id="be-duplicate" data-i18n="duplicate"></button>
+              <button id="be-delete" data-i18n="delete"></button>
+            </div>
+          </div>
+          <p class="hint" id="be-hint" data-i18n="clickBlockHint"></p>
+        </div>
+
         <div id="config-groups"></div>
       </aside>
 

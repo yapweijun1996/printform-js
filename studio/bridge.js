@@ -1,12 +1,37 @@
 /*
  * PrintForm Studio bridge — injected into every preview iframe.
- * Captures debug console output and formatted-page metrics, then reports
- * them to the Studio shell via postMessage. Must stay dependency-free.
+ *
+ * Two modes, read from <html data-studio-mode="...">:
+ *   "preview"   (default) — printform.js runs normally; bridge reports
+ *                console output + page-count metrics once formatting settles.
+ *   "structure" — printform.js is NOT loaded (Studio strips the script tag
+ *                before injecting this file); bridge instead makes each
+ *                direct child of .printform clickable/selectable so the
+ *                Block Editor panel can edit raw pre-pagination blocks.
+ *
+ * Must stay dependency-free — it runs inside a blob: document with no
+ * bundler.
  */
 (function () {
   "use strict";
 
   var SIDE = document.documentElement.getAttribute("data-studio-side") || "A";
+  var MODE = document.documentElement.getAttribute("data-studio-mode") || "preview";
+
+  var BLOCK_TYPES = [
+    "pheader", "pdocinfo", "pdocinfo002", "pdocinfo003", "pdocinfo004", "pdocinfo005",
+    "prowheader", "prowitem", "ptac", "paddt",
+    "pfooter", "pfooter002", "pfooter003", "pfooter004", "pfooter005",
+    "pfooter_logo", "pfooter_pagenum"
+  ];
+
+  function classify(el) {
+    var classes = (el.className || "").toString().split(/\s+/);
+    for (var i = 0; i < BLOCK_TYPES.length; i += 1) {
+      if (classes.indexOf(BLOCK_TYPES[i]) !== -1) return BLOCK_TYPES[i];
+    }
+    return el.tagName ? el.tagName.toLowerCase() : "unknown";
+  }
 
   function post(type, payload) {
     try {
@@ -35,6 +60,7 @@
     post("console", { level: "error", text: event.message + " (" + event.filename + ":" + event.lineno + ")" });
   });
 
+  // ---------------------------------------------------------------- preview
   function collectMetrics() {
     var logicalPages = document.querySelectorAll(".printform_page");
     var physicalPages = document.querySelectorAll(".physical_page_wrapper");
@@ -61,11 +87,77 @@
     setTimeout(waitForFormat, 100);
   }
 
-  if (document.readyState === "complete") {
-    waitForFormat();
-  } else {
-    window.addEventListener("load", function () {
-      setTimeout(waitForFormat, 50);
+  // --------------------------------------------------------------- structure
+  var STRUCTURE_STYLE = [
+    ".studio-block { outline: 1px dashed rgba(37,99,235,0.35); outline-offset: -1px; cursor: pointer; position: relative; }",
+    ".studio-block:hover { outline: 1px dashed #2563eb; background: rgba(37,99,235,0.04); }",
+    ".studio-block.studio-selected { outline: 2px solid #2563eb; outline-offset: -2px; background: rgba(37,99,235,0.08); }",
+    ".studio-block::before { content: attr(data-studio-label); position: absolute; top: -1px; left: -1px; font: 10px/1.4 monospace; background: #2563eb; color: #fff; padding: 0 4px; opacity: 0; pointer-events: none; z-index: 999; }",
+    ".studio-block:hover::before, .studio-block.studio-selected::before { opacity: 1; }"
+  ].join("\n");
+
+  function setupStructureMode() {
+    var style = document.createElement("style");
+    style.textContent = STRUCTURE_STYLE;
+    document.head.appendChild(style);
+
+    var form = document.querySelector(".printform");
+    if (!form) {
+      post("blocks-ready", { count: 0, rowCount: 0 });
+      return;
+    }
+
+    var children = Array.prototype.slice.call(form.children);
+    children.forEach(function (el, index) {
+      var type = classify(el);
+      el.classList.add("studio-block");
+      el.setAttribute("data-studio-index", String(index));
+      el.setAttribute("data-studio-label", type);
+      el.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        children.forEach(function (c) { c.classList.remove("studio-selected"); });
+        el.classList.add("studio-selected");
+        post("block-select", { index: index, type: type, outerHTML: el.outerHTML });
+      });
     });
+
+    var rowCount = children.filter(function (el) { return classify(el) === "prowitem"; }).length;
+    post("blocks-ready", { count: children.length, rowCount: rowCount });
+  }
+
+  window.addEventListener("message", function (event) {
+    var data = event.data;
+    if (!data || data.source !== "printform-studio") return;
+    if (data.type === "highlight") {
+      var form = document.querySelector(".printform");
+      if (!form) return;
+      Array.prototype.forEach.call(form.children, function (c) { c.classList.remove("studio-selected"); });
+      var target = form.children[data.payload.index];
+      if (target) {
+        target.classList.add("studio-selected");
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+  });
+
+  function boot() {
+    if (MODE === "structure") {
+      setupStructureMode();
+      return;
+    }
+    if (document.readyState === "complete") {
+      waitForFormat();
+    } else {
+      window.addEventListener("load", function () {
+        setTimeout(waitForFormat, 50);
+      });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 })();

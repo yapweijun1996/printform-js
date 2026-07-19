@@ -32,7 +32,15 @@
       loading: "加载中…",
       pages: "页",
       copied: "已复制",
-      resetConfirm: "重置当前侧所有配置修改?"
+      resetConfirm: "重置当前侧所有配置修改?",
+      import: "导入 HTML",
+      modeStructure: "结构编辑",
+      modePreview: "返回预览",
+      rowCount: "行数",
+      apply: "应用",
+      duplicate: "复制",
+      delete: "删除",
+      clickBlockHint: "点击预览中的任一区块进行编辑;仅 .prowitem 支持复制/删除。"
     },
     en: {
       compare: "Compare",
@@ -52,9 +60,32 @@
       loading: "Loading…",
       pages: "pages",
       copied: "Copied",
-      resetConfirm: "Reset all config changes on the current side?"
+      resetConfirm: "Reset all config changes on the current side?",
+      import: "Import HTML",
+      modeStructure: "Edit Blocks",
+      modePreview: "Back to Preview",
+      rowCount: "Rows",
+      apply: "Apply",
+      duplicate: "Duplicate",
+      delete: "Delete",
+      clickBlockHint: "Click any block in the preview to edit it; only .prowitem supports duplicate/delete."
     }
   };
+
+  var BLOCK_TYPES = [
+    "pheader", "pdocinfo", "pdocinfo002", "pdocinfo003", "pdocinfo004", "pdocinfo005",
+    "prowheader", "prowitem", "ptac", "paddt",
+    "pfooter", "pfooter002", "pfooter003", "pfooter004", "pfooter005",
+    "pfooter_logo", "pfooter_pagenum"
+  ];
+
+  function classify(el) {
+    var classes = (el.className || "").toString().split(/\s+/);
+    for (var i = 0; i < BLOCK_TYPES.length; i += 1) {
+      if (classes.indexOf(BLOCK_TYPES[i]) !== -1) return BLOCK_TYPES[i];
+    }
+    return el.tagName ? el.tagName.toLowerCase() : "unknown";
+  }
 
   // ---------- state ----------
   var state = {
@@ -66,9 +97,15 @@
     overrides: { A: {}, B: {} },
     descriptors: [],       // flattened main + paddt descriptors
     templates: [],
-    templateHtml: null,    // raw HTML of the selected template
+    templateHtml: null,    // pristine fetched/imported HTML (Phase-2 edits never touch this)
+    workingHtml: null,     // templateHtml + Phase-2 block edits — what preview/export render from
     templateBaseline: {},  // data-* attrs actually present on the template's .printform
-    metrics: { A: null, B: null }
+    metrics: { A: null, B: null },
+    viewMode: "preview",   // "preview" | "structure"
+    selectedBlockIndex: null,
+    selectedBlockSide: null,
+    blockCount: 0,
+    rowCount: 0
   };
 
   try {
@@ -288,7 +325,7 @@
   }
 
   function synthesizeHtml(side, forExport) {
-    var html = state.templateHtml;
+    var html = state.workingHtml;
     if (!html) return null;
     var overrides = state.overrides[side];
 
@@ -313,6 +350,7 @@
     // 3. Preview-only additions (never in export): side marker + bridge script.
     if (!forExport) {
       doc.documentElement.setAttribute("data-studio-side", side);
+      doc.documentElement.setAttribute("data-studio-mode", "preview");
       var bridge = doc.createElement("script");
       bridge.setAttribute("src", new URL("./bridge.js", location.href).href);
       var body = doc.querySelector("body");
@@ -327,6 +365,101 @@
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
   }
 
+  // Structure view: same overrides applied for visual context, but the
+  // printform.js script tag is stripped so pagination never runs — the raw
+  // .pheader/.prowitem/... blocks stay on screen for the block editor to
+  // click and edit.
+  function synthesizeStructureHtml(side) {
+    var html = state.workingHtml;
+    if (!html) return null;
+    var overrides = state.overrides[side];
+
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var forms = doc.querySelectorAll(".printform");
+    forms.forEach(function (form) {
+      Object.keys(overrides).forEach(function (attr) {
+        form.setAttribute(attr, overrides[attr]);
+      });
+    });
+
+    Array.prototype.slice.call(doc.querySelectorAll('script[src*="printform"]')).forEach(function (s) {
+      s.remove();
+    });
+
+    var base = doc.createElement("base");
+    base.setAttribute("href", state.templateBaseHref);
+    var head = doc.querySelector("head");
+    if (head) head.insertBefore(base, head.firstChild);
+
+    doc.documentElement.setAttribute("data-studio-side", side);
+    doc.documentElement.setAttribute("data-studio-mode", "structure");
+    var bridge = doc.createElement("script");
+    bridge.setAttribute("src", new URL("./bridge.js", location.href).href);
+    var body = doc.querySelector("body");
+    if (body) body.insertBefore(bridge, body.firstChild);
+
+    return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+  }
+
+  // Parses workingHtml, hands the .printform element + its direct children
+  // to `mutator`, then re-serializes and reloads every preview. This is the
+  // single write path for all Phase-2 block edits.
+  function withWorkingDoc(mutator) {
+    var doc = new DOMParser().parseFromString(state.workingHtml, "text/html");
+    var form = doc.querySelector(".printform");
+    if (!form) return;
+    var children = Array.prototype.slice.call(form.children);
+    mutator(doc, form, children);
+    state.workingHtml = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+    reloadAll();
+  }
+
+  function applyBlockEdit(index, html) {
+    withWorkingDoc(function (doc, form, children) {
+      var target = children[index];
+      if (!target) return;
+      var wrapper = doc.createElement("div");
+      wrapper.innerHTML = html;
+      var replacement = wrapper.firstElementChild;
+      if (replacement) target.replaceWith(replacement);
+    });
+  }
+
+  function duplicateBlock(index) {
+    withWorkingDoc(function (doc, form, children) {
+      var target = children[index];
+      if (!target) return;
+      target.after(target.cloneNode(true));
+    });
+  }
+
+  function deleteBlock(index) {
+    withWorkingDoc(function (doc, form, children) {
+      var target = children[index];
+      if (!target) return;
+      var rows = children.filter(function (c) { return classify(c) === "prowitem"; });
+      if (classify(target) === "prowitem" && rows.length <= 1) return; // keep at least one row
+      target.remove();
+    });
+  }
+
+  function setRowCount(n) {
+    withWorkingDoc(function (doc, form, children) {
+      var rows = children.filter(function (c) { return classify(c) === "prowitem"; });
+      if (!rows.length) return;
+      var last = rows[rows.length - 1];
+      while (rows.length < n) {
+        var clone = last.cloneNode(true);
+        last.after(clone);
+        last = clone;
+        rows.push(clone);
+      }
+      while (rows.length > n && rows.length > 1) {
+        rows.pop().remove();
+      }
+    });
+  }
+
   // ---------- preview ----------
   var reloadTimers = { A: null, B: null };
   var blobUrls = { A: null, B: null };
@@ -337,7 +470,7 @@
   }
 
   function reload(side) {
-    var html = synthesizeHtml(side, false);
+    var html = state.viewMode === "structure" ? synthesizeStructureHtml(side) : synthesizeHtml(side, false);
     if (html === null) return;
     var frame = side === "A" ? $("#frame-a") : $("#frame-b");
     var status = side === "A" ? $("#status-a") : $("#status-b");
@@ -394,6 +527,22 @@
       var status = side === "A" ? $("#status-a") : $("#status-b");
       status.textContent = data.payload.logicalPages + " " + t("pages");
       renderMetrics();
+    } else if (data.type === "blocks-ready") {
+      state.blockCount = data.payload.count;
+      state.rowCount = data.payload.rowCount;
+      var range = $("#row-count-range");
+      range.max = Math.max(10, state.rowCount + 20);
+      range.value = state.rowCount;
+      $("#row-count-value").textContent = state.rowCount;
+    } else if (data.type === "block-select") {
+      state.selectedBlockIndex = data.payload.index;
+      state.selectedBlockSide = side;
+      $("#be-selected").style.display = "";
+      $("#be-type").textContent = data.payload.type;
+      $("#be-html").value = data.payload.outerHTML;
+      var isRow = data.payload.type === "prowitem";
+      $("#be-duplicate").disabled = !isRow;
+      $("#be-delete").disabled = !isRow;
     }
   });
 
@@ -415,6 +564,16 @@
     if (!on) setActiveSide("A");
     persist();
     if (on) reload("B");
+  }
+
+  function setViewMode(mode) {
+    state.viewMode = mode;
+    $("#mode-toggle").textContent = t(mode === "structure" ? "modePreview" : "modeStructure");
+    $("#mode-toggle").classList.toggle("toggled", mode === "structure");
+    $("#block-editor").style.display = mode === "structure" ? "" : "none";
+    state.selectedBlockIndex = null;
+    $("#be-selected").style.display = "none";
+    reloadAll();
   }
 
   function exportHtml() {
@@ -458,35 +617,62 @@
   }
 
   // ---------- template loading ----------
+  function parseBaseline(html) {
+    // Read the template's own data-* declarations — they are the config
+    // panel's resting baseline, not the library defaults.
+    state.templateBaseline = {};
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var form = doc.querySelector(".printform");
+    if (form) {
+      Array.prototype.forEach.call(form.attributes, function (attr) {
+        if (attr.name.indexOf("data-") === 0) {
+          state.templateBaseline[attr.name] = attr.value;
+        }
+      });
+    }
+  }
+
   function loadTemplate(id) {
     var tpl = state.templates.find(function (x) { return x.id === id; });
     if (!tpl) return Promise.reject(new Error("unknown template: " + id));
     state.templateId = id;
     persist();
-    var url = new URL(tpl.path, location.href);
-    state.templateBaseHref = new URL("./", url).href;
-    return fetch(url)
-      .then(function (r) {
+
+    var htmlPromise;
+    if (tpl.html !== undefined) {
+      // Imported file: no known folder, assume it was exported from the repo
+      // root (matching how every built-in template resolves ./dist, ./img).
+      state.templateBaseHref = new URL("../", location.href).href;
+      htmlPromise = Promise.resolve(tpl.html);
+    } else {
+      var url = new URL(tpl.path, location.href);
+      state.templateBaseHref = new URL("./", url).href;
+      htmlPromise = fetch(url).then(function (r) {
         if (!r.ok) throw new Error("fetch " + r.status);
         return r.text();
-      })
-      .then(function (html) {
-        state.templateHtml = html;
-        // Read the template's own data-* declarations — they are the panel's
-        // resting baseline, not the library defaults.
-        state.templateBaseline = {};
-        var doc = new DOMParser().parseFromString(html, "text/html");
-        var form = doc.querySelector(".printform");
-        if (form) {
-          Array.prototype.forEach.call(form.attributes, function (attr) {
-            if (attr.name.indexOf("data-") === 0) {
-              state.templateBaseline[attr.name] = attr.value;
-            }
-          });
-        }
-        buildConfigPanel();
-        reloadAll();
       });
+    }
+
+    return htmlPromise.then(function (html) {
+      state.templateHtml = html;
+      state.workingHtml = html;
+      parseBaseline(html);
+      buildConfigPanel();
+      reloadAll();
+    });
+  }
+
+  function importTemplateFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var html = String(reader.result || "");
+      var id = "imported:" + Date.now();
+      state.templates.push({ id: id, html: html, name: { zh: "📥 " + file.name, en: "📥 " + file.name } });
+      buildTemplatePicker();
+      $("#template-select").value = id;
+      loadTemplate(id);
+    };
+    reader.readAsText(file);
   }
 
   function buildTemplatePicker() {
@@ -540,12 +726,22 @@
           status.textContent = m.logicalPages + " " + t("pages");
         }
       });
+      $("#mode-toggle").textContent = t(state.viewMode === "structure" ? "modePreview" : "modeStructure");
     });
     $("#compare-toggle").addEventListener("click", function () { setCompare(!state.compare); });
+    $("#mode-toggle").addEventListener("click", function () {
+      setViewMode(state.viewMode === "structure" ? "preview" : "structure");
+    });
     $("#toggle-config").addEventListener("click", function () { document.body.classList.toggle("hide-config"); });
     $("#toggle-inspector").addEventListener("click", function () { document.body.classList.toggle("hide-inspector"); });
     $("#export-html").addEventListener("click", exportHtml);
     $("#print-preview").addEventListener("click", openPrintPreview);
+    $("#import-html").addEventListener("click", function () { $("#import-file-input").click(); });
+    $("#import-file-input").addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (file) importTemplateFile(file);
+      e.target.value = "";
+    });
 
     // config pane events
     $("#config-search").addEventListener("input", buildConfigPanel);
@@ -561,6 +757,30 @@
     // inspector events
     $("#copy-config").addEventListener("click", copyConfigJson);
     $("#reset-all").addEventListener("click", resetAll);
+
+    // block editor events (Phase 2)
+    $("#be-apply").addEventListener("click", function () {
+      if (state.selectedBlockIndex === null) return;
+      applyBlockEdit(state.selectedBlockIndex, $("#be-html").value);
+    });
+    $("#be-duplicate").addEventListener("click", function () {
+      if (state.selectedBlockIndex === null) return;
+      duplicateBlock(state.selectedBlockIndex);
+      $("#be-selected").style.display = "none";
+      state.selectedBlockIndex = null;
+    });
+    $("#be-delete").addEventListener("click", function () {
+      if (state.selectedBlockIndex === null) return;
+      deleteBlock(state.selectedBlockIndex);
+      $("#be-selected").style.display = "none";
+      state.selectedBlockIndex = null;
+    });
+    var rowTimer = null;
+    $("#row-count-range").addEventListener("input", function (e) {
+      $("#row-count-value").textContent = e.target.value;
+      clearTimeout(rowTimer);
+      rowTimer = setTimeout(function () { setRowCount(Number(e.target.value)); }, 400);
+    });
   }
 
   boot();
