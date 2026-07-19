@@ -120,6 +120,8 @@ PrintForm.js 识别以下区块类型:
 | **查看所有配置** | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | **开发和扩展** | [DEVELOPER_BOOK.md](DEVELOPER_BOOK.md) |
 | **了解自动化文档** | [docs/AUTO_DOC_GENERATION_GUIDE.md](docs/AUTO_DOC_GENERATION_GUIDE.md) |
+| **可视化调参 / 不写代码试模板** | [studio/index.html](studio/index.html)(设计文档见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md)) |
+| **接 ERP / 后端数据绑定** | [docs/ERP_INTEGRATION.zh-CN.md](docs/ERP_INTEGRATION.zh-CN.md) |
 
 ---
 

@@ -19,6 +19,18 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 | **Use it correctly (full guide)** | [Usage Guide](docs/USAGE_GUIDE.md) - Structure, API, PTAC/PADDT, pitfalls |
 | **See all configuration options** | [Configuration Reference](docs/CONFIGURATION.md) - All `data-*` attributes |
 
+### 🎨 PrintForm Studio
+
+A zero-dependency visual workbench for building and tuning templates — no code required.
+
+| I want to... | Read this |
+|--------------|-----------|
+| **Try it now** | Open [studio/index.html](studio/index.html) (needs a local server — see [Quick Start](#1-start-server) below) |
+| **See what it can do** | [Studio Design Doc](docs/STUDIO_DESIGN.zh-CN.md) - Config playground, block editor, data binding (Chinese) |
+| **Bind a template to real data / connect an ERP backend** | [ERP Integration Guide](docs/ERP_INTEGRATION.zh-CN.md) - `{{ }}` placeholders, `PrintFormTemplate.render(data)`, ColdFusion example (Chinese) |
+
+Studio has three tiers, each usable on its own: tweak `data-*` config live and compare two setups side by side; click any block in the raw template to edit/duplicate/delete it and test different row counts; or bind `{{field}}` / `{{#items}}...{{/items}}` placeholders to a JSON payload and export a self-contained package that any backend can drive with one line — `PrintFormTemplate.render(data)`.
+
 ### 💻 Development
 
 | I want to... | Read this |

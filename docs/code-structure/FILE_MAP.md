@@ -48,12 +48,32 @@ src/
 - `USAGE_GUIDE.md` / `USAGE_GUIDE.zh-CN.md`: usage rules and pitfalls
 - `LOGIC_DIAGRAM.md` / `LOGIC_DIAGRAM.zh-CN.md`: flowchart
 - `AUTO_DOC_GENERATION_GUIDE.md`, `MAINTAINING_DOCS.md`: doc maintenance
+- `STUDIO_DESIGN.zh-CN.md`: PrintForm Studio design doc (Phases 1–3, acceptance criteria)
+- `ERP_INTEGRATION.zh-CN.md`: data-binding placeholder syntax + backend integration guide
 
 ---
 
 ## Demos / fixtures
 
 - `index.html`: primary demo
-- `index001.html`..`index017.html`: scenario variants
-- `examples/`, `tests/`: extra samples
+- `index001.html`..`index021.html`: scenario variants
+- `tests/`: unit test suite (vitest)
+
+---
+
+## Studio (`studio/`)
+
+Zero-dependency visual tool for building/tuning templates — no bundler, no build step, opened directly as a static HTML file (see [STUDIO_DESIGN.zh-CN.md](../STUDIO_DESIGN.zh-CN.md)).
+
+```
+studio/
+├── index.html                        # App shell
+├── studio.js                         # Config panel, block editor, data binding, A/B compare
+├── studio.css
+├── bridge.js                         # Injected into preview iframes: console/metrics relay + block click handling
+├── mustache-lite.js                  # Zero-dependency {{ }} template renderer (also inlined into data-bound exports)
+├── templates.json                    # Built-in template picker entries
+└── sample-templates/
+    └── invoice-databound.html        # Example template demonstrating {{field}} / {{#items}}...{{/items}}
+```
 

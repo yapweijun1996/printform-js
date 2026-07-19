@@ -6,7 +6,7 @@
 
 ## 🗂️ 顶层结构一览
 
-`src/` 源代码、`docs/` 文档、`scripts/` 构建脚本、`tests/` 单元测试、`dist/` 构建输出(不进 git)、`index*.html` 演示页面。完整文件树见 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)。
+`src/` 源代码、`docs/` 文档、`scripts/` 构建脚本、`tests/` 单元测试、`dist/` 构建输出(不进 git)、`index*.html` 演示页面、`studio/` 可视化调参工具(独立静态工具,不依赖构建,详见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md))。完整文件树见 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)。
 
 ---
 

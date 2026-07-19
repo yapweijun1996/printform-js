@@ -14,6 +14,16 @@
 - 配置参考: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 - 代码结构: [CODE_STRUCTURE.md](CODE_STRUCTURE.md)
 
+### 🎨 PrintForm Studio —— 可视化调试工具
+
+不用写代码,打开 [studio/index.html](studio/index.html)(需要先起本地服务器,见下方「快速开始」)即可:
+
+- **配置游乐场**:实时调整全部 `data-*` 配置项,支持 A/B 两套配置并排对比
+- **结构编辑**:点击预览里的任一区块直接编辑、复制、删除,拖动滑杆模拟不同行数下的分页效果
+- **数据绑定**:模板里写 `{{field}}` / `{{#items}}...{{/items}}` 占位符,导出的包让任何后端一行代码 `PrintFormTemplate.render(data)` 完成数据注入 + 分页
+
+详细设计与验收标准见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md);要接 ERP/后端(含 ColdFusion 完整示例)见 [docs/ERP_INTEGRATION.zh-CN.md](docs/ERP_INTEGRATION.zh-CN.md)。
+
 ## 核心逻辑图解 (Logic Diagram)
 
 为了帮助理解 `printform.js` 是如何工作的，请参考下方的流程图：
