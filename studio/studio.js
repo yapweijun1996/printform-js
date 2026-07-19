@@ -51,7 +51,8 @@
       printformNotInlined: "printform.js 尚未内联 —— 此导出文件只有留在本仓库目录内打开才能正常运行,移到别处会报脚本 404。请稍候几秒后重新导出。",
       restoredNotice: "已恢复上次会话的配置修改(A 侧 {a} 项、B 侧 {b} 项),下方面板可能不是模板默认值。",
       cancel: "取消",
-      ok: "确定"
+      ok: "确定",
+      popupBlocked: "打印预览被浏览器拦截了 —— 请在地址栏允许本站弹出窗口,然后重试。"
     },
     en: {
       compare: "Compare",
@@ -90,7 +91,8 @@
       printformNotInlined: "printform.js isn't inlined yet — this export will only run while it stays inside this repo folder; moving it elsewhere will 404. Wait a few seconds and export again.",
       restoredNotice: "Restored config changes from your last session (side A: {a}, side B: {b}) — the panel below may not match the template's defaults.",
       cancel: "Cancel",
-      ok: "OK"
+      ok: "OK",
+      popupBlocked: "The browser blocked the print preview popup — allow popups for this site in the address bar, then try again."
     }
   };
 
@@ -918,7 +920,13 @@
     var html = synthesizeHtml(state.activeSide, false);
     if (html === null) return;
     var w = window.open("about:blank");
-    if (!w) return;
+    if (!w) {
+      // Popup blockers make window.open() return null/undefined instead of
+      // throwing — silently doing nothing here reads as a dead button.
+      logBuffers[state.activeSide].push({ level: "warn", text: t("popupBlocked") });
+      renderLogs();
+      return;
+    }
     w.document.open();
     w.document.write(html);
     w.document.close();
