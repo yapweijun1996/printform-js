@@ -119,7 +119,8 @@
     blockCount: 0,
     rowCount: 0,
     sampleData: {},        // JSON data bound to {{ }} placeholders (Phase 3)
-    mustacheLiteSource: null // cached source text of mustache-lite.js, for package export
+    mustacheLiteSource: null, // cached source text of mustache-lite.js, for package export
+    printformSource: null   // cached source text of the current template's printform.js, for export inlining
   };
 
   try {
@@ -369,6 +370,45 @@
     if (el) el.style.display = "none";
   }
 
+  function findPrintformScriptTag(doc) {
+    var scripts = Array.prototype.slice.call(doc.querySelectorAll("script[src]"));
+    return scripts.find(function (s) {
+      return /printform(\.min)?\.js(\?|$)/i.test(s.getAttribute("src") || "");
+    }) || null;
+  }
+
+  // Replaces the template's <script src="…printform.js"> with the inlined
+  // source text IN PLACE, so the exported file has no on-disk dependency once
+  // the <base> tag (only valid inside this repo) is stripped for export.
+  // Safe whenever the script's original document position already executes
+  // before anything that needs window.PrintForm (true for a plain HTML
+  // export, since it's the same load order the template already runs with).
+  function inlinePrintformScript(doc) {
+    if (!state.printformSource) return false;
+    var target = findPrintformScriptTag(doc);
+    if (!target) return false;
+    target.removeAttribute("src");
+    target.textContent = state.printformSource;
+    return true;
+  }
+
+  // Same inlining, but REMOVES the script from its original spot and hands
+  // it back so the caller can place it explicitly. synthesizePackageHtml's
+  // bootstrap script calls window.PrintForm.formatAll() as soon as it runs —
+  // if the printform.js tag were left in its original template position
+  // (typically at the end of <body>, after where .printform used to sit),
+  // it would still execute AFTER that call, and formatAll() would silently
+  // no-op because window.PrintForm doesn't exist yet.
+  function extractInlinedPrintformScript(doc) {
+    if (!state.printformSource) return null;
+    var target = findPrintformScriptTag(doc);
+    if (!target) return null;
+    target.remove();
+    target.removeAttribute("src");
+    target.textContent = state.printformSource;
+    return target;
+  }
+
   function synthesizeHtml(side, forExport) {
     var html = renderWithData(state.workingHtml);
     if (!html) return null;
@@ -401,8 +441,10 @@
       var body = doc.querySelector("body");
       if (body) body.insertBefore(bridge, body.firstChild);
     } else {
-      // Export keeps overrides but not the <base> (paths were relative to the
-      // template's own folder, where the export will typically live too).
+      // Export must be a self-contained file: inline printform.js (no on-disk
+      // "dist/" folder travels with a download) and drop the <base> tag,
+      // which only resolved correctly inside this repo's own folder layout.
+      inlinePrintformScript(doc);
       var b = doc.querySelector("head > base");
       if (b) b.remove();
     }
@@ -579,6 +621,13 @@
 
     var rawOuterHtml = form.outerHTML;
 
+    // Pull printform.js out of wherever the template originally put it (often
+    // the end of <body>) so it can be re-inserted BEFORE the bootstrap script
+    // below — that script calls window.PrintForm.formatAll() as soon as it
+    // runs, so the library must already be loaded by then, not merely
+    // "present somewhere later in the document."
+    var printformScript = extractInlinedPrintformScript(doc);
+
     var mountDiv = doc.createElement("div");
     mountDiv.id = "printform-mount";
     form.replaceWith(mountDiv);
@@ -608,12 +657,16 @@
       "window.PrintFormTemplate.render(" + sampleDataJson + ");"
     ].join("\n");
 
-    mountDiv.after(templateEl, mustacheScript, bootstrapScript);
-
-    var base = doc.createElement("base");
-    base.setAttribute("href", state.templateBaseHref);
-    var head = doc.querySelector("head");
-    if (head) head.insertBefore(base, head.firstChild);
+    // Order matters: the library (PrintForm, MustacheLite) must be defined
+    // before the bootstrap script that calls into it.
+    if (printformScript) {
+      mountDiv.after(templateEl, printformScript, mustacheScript, bootstrapScript);
+    } else {
+      // state.printformSource hasn't finished loading yet (rare — it's
+      // fetched right after the template loads); ship without pagination
+      // rather than silently mis-ordering scripts.
+      mountDiv.after(templateEl, mustacheScript, bootstrapScript);
+    }
 
     return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
   }
@@ -801,6 +854,28 @@
     }
   }
 
+  // Finds the template's own <script src="…printform(.min).js"> tag, resolves
+  // it against templateBaseHref, and caches the fetched source text so export
+  // can inline it — a downloaded file has no "../../dist/" folder next to it,
+  // so shipping it as a src reference would 404 the moment it leaves this repo.
+  function loadPrintformSource(html) {
+    state.printformSource = null;
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var scripts = Array.prototype.slice.call(doc.querySelectorAll("script[src]"));
+    var target = scripts.find(function (s) {
+      return /printform(\.min)?\.js(\?|$)/i.test(s.getAttribute("src") || "");
+    });
+    if (!target) return;
+    var url = new URL(target.getAttribute("src"), state.templateBaseHref).href;
+    fetch(url)
+      .then(function (r) {
+        if (!r.ok) throw new Error("fetch " + r.status);
+        return r.text();
+      })
+      .then(function (src) { state.printformSource = src; })
+      .catch(function () { /* export falls back to a src reference if inlining fails */ });
+  }
+
   function loadTemplate(id) {
     var tpl = state.templates.find(function (x) { return x.id === id; });
     if (!tpl) return Promise.reject(new Error("unknown template: " + id));
@@ -829,6 +904,7 @@
       initSampleDataForTemplate(html);
       buildConfigPanel();
       reloadAll();
+      loadPrintformSource(html);
     });
   }
 
