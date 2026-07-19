@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Data-bound Invoice (Phase 3 demo)</title>
+	<style>
+		body {
+			color-scheme: light;
+			background: #fff;
+			margin: 0px;
+			font-family: Arial, sans-serif;
+			padding: 0px;
+		}
+
+		.paper_width {
+			width: 750px;
+		}
+
+		td {
+			line-height: 20px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="paper_width printform" data-papersize-width="750" data-papersize-height="1050"
+		data-height-of-dummy-row-item="26" data-repeat-header="y" data-repeat-docinfo="y"
+		data-repeat-rowheader="y" data-repeat-footer="n" data-repeat-footer-pagenum="y"
+		data-insert-dummy-row-item-while-format-table="y"
+		data-insert-footer-spacer-while-format-table="y"
+		data-insert-footer-spacer-with-dummy-row-item-while-format-table="y">
+
+		<!-- Header: company / address are plain top-level placeholders -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pheader">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<font style="font-weight:600;font-size:20px;">{{company}}</font><br>
+					<font style="font-size:13px;color:#666;">{{address}}</font>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+		</table>
+
+		<!-- Doc info: invoiceNo / date are also top-level placeholders, still
+		     readable from inside the item loop further down because
+		     mustache-lite falls back up the context stack. -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pdocinfo">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<font style="font-weight:600;font-size:18px;">INVOICE</font><br>
+					<font style="font-size:13px;">Invoice No: {{invoiceNo}} &nbsp;|&nbsp; Date: {{date}}</font>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+			<tr style="height:10px;"></tr>
+		</table>
+
+		<!-- Row header -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowheader">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:80px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;background:#f0f9ff;">
+								<div style="padding:6px 4px;">No.</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;">
+								<div style="padding:6px 4px;">Description</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;" align="right">
+								<div style="padding:6px 4px;">Qty</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;" align="right">
+								<div style="padding:6px 4px;">Price</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:14px;font-weight:600;box-shadow:0px -1px 0 #000 inset, 0px 1px 0 #000 inset;border-right:1px solid black;background:#f0f9ff;" align="right">
+								<div style="padding:6px 4px;">Subtotal</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+
+		<!-- Row items: the loop section wraps one *entire* standalone
+		     <table class="prowitem">, matching the sibling-table convention
+		     every other PrintForm demo uses for rows. This keeps every
+		     placeholder token sitting at the .printform <div>'s child-node
+		     level, never inside a <table> between <tr>s, so parsing it is
+		     always safe. (Do not write literal mustache syntax in HTML
+		     comments here — mustache-lite scans the raw string and cannot
+		     tell a comment from a real instruction.) -->
+		{{#items}}
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width prowitem">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;" border="0">
+						<tr>
+							<td style="box-sizing:border-box;width:50px;"></td>
+							<td style="box-sizing:border-box;width:inherit;"></td>
+							<td style="box-sizing:border-box;width:60px;"></td>
+							<td style="box-sizing:border-box;width:80px;"></td>
+							<td style="box-sizing:border-box;width:90px;"></td>
+						</tr>
+						<tr>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;border-left:1px solid black;">
+								<div style="padding:3px 4px;">{{no}}</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;">
+								<div style="padding:3px 4px;">{{name}}</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;" align="right">
+								<div style="padding:3px 4px;">{{qty}}</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;" align="right">
+								<div style="padding:3px 4px;">{{price}}</div>
+							</td>
+							<td style="line-height:20px;box-sizing:border-box;font-size:13px;box-shadow:0px -1px 0 #000 inset;border-right:1px solid black;" align="right">
+								<div style="padding:3px 4px;">{{subtotal}}</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+		{{/items}}
+
+		<!-- Page number -->
+		<table cellpadding="0" cellspacing="0" style="table-layout:fixed;" border="0" class="paper_width pfooter_pagenum">
+			<tr>
+				<td style="box-sizing:border-box;width:15px;"></td>
+				<td style="box-sizing:border-box;width:inherit;"></td>
+				<td style="box-sizing:border-box;width:15px;"></td>
+			</tr>
+			<tr>
+				<td style="box-sizing:border-box;"></td>
+				<td style="box-sizing:border-box;">
+					<div style="font-size:11px;line-height:16px;text-align:center;color:#666;padding:8px 0px;">
+						Page <span data-page-number></span> of <span data-page-total></span>
+					</div>
+				</td>
+				<td style="box-sizing:border-box;"></td>
+			</tr>
+		</table>
+	</div>
+
+	<script src="../../dist/printform.js"></script>
+</body>
+
+</html>

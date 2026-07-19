@@ -40,7 +40,12 @@
       apply: "应用",
       duplicate: "复制",
       delete: "删除",
-      clickBlockHint: "点击预览中的任一区块进行编辑;仅 .prowitem 支持复制/删除。"
+      clickBlockHint: "点击预览中的任一区块进行编辑;仅 .prowitem 支持复制/删除。",
+      dataBinding: "数据绑定",
+      dataEmptyHint: "此模板不含 {{占位符}},无需绑定数据。可在结构编辑模式下手动添加 {{field}} 或 {{#items}}...{{/items}}。",
+      regenerateData: "重新生成示例数据",
+      exportPackage: "导出数据绑定包",
+      regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?"
     },
     en: {
       compare: "Compare",
@@ -68,7 +73,12 @@
       apply: "Apply",
       duplicate: "Duplicate",
       delete: "Delete",
-      clickBlockHint: "Click any block in the preview to edit it; only .prowitem supports duplicate/delete."
+      clickBlockHint: "Click any block in the preview to edit it; only .prowitem supports duplicate/delete.",
+      dataBinding: "Data Binding",
+      dataEmptyHint: "This template has no {{placeholders}}. Add {{field}} or {{#items}}...{{/items}} via Structure mode to enable data binding.",
+      regenerateData: "Regenerate sample data",
+      exportPackage: "Export data-bound package",
+      regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?"
     }
   };
 
@@ -105,7 +115,9 @@
     selectedBlockIndex: null,
     selectedBlockSide: null,
     blockCount: 0,
-    rowCount: 0
+    rowCount: 0,
+    sampleData: {},        // JSON data bound to {{ }} placeholders (Phase 3)
+    mustacheLiteSource: null // cached source text of mustache-lite.js, for package export
   };
 
   try {
@@ -324,8 +336,36 @@
       .replace(/>/g, "&gt;");
   }
 
+  // Data binding (Phase 3): {{ }} tokens must be resolved on the RAW STRING,
+  // before DOMParser ever sees the markup — parsing first and templating
+  // second would let the parser reshuffle stray text nodes (e.g. inside
+  // <table>) before mustache-lite gets a chance to see them as one block.
+  function renderWithData(html) {
+    if (!html || !window.MustacheLite || !window.MustacheLite.hasPlaceholders(html)) return html;
+    try {
+      var rendered = window.MustacheLite.render(html, state.sampleData || {});
+      hideDataJsonError();
+      return rendered;
+    } catch (e) {
+      showDataJsonError((state.lang === "zh" ? "渲染错误: " : "Render error: ") + (e && e.message ? e.message : e));
+      return html;
+    }
+  }
+
+  function showDataJsonError(message) {
+    var el = $("#data-json-error");
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = "";
+  }
+
+  function hideDataJsonError() {
+    var el = $("#data-json-error");
+    if (el) el.style.display = "none";
+  }
+
   function synthesizeHtml(side, forExport) {
-    var html = state.workingHtml;
+    var html = renderWithData(state.workingHtml);
     if (!html) return null;
     var overrides = state.overrides[side];
 
@@ -370,7 +410,7 @@
   // .pheader/.prowitem/... blocks stay on screen for the block editor to
   // click and edit.
   function synthesizeStructureHtml(side) {
-    var html = state.workingHtml;
+    var html = renderWithData(state.workingHtml);
     if (!html) return null;
     var overrides = state.overrides[side];
 
@@ -458,6 +498,130 @@
         rows.pop().remove();
       }
     });
+  }
+
+  // ---------- data binding (Phase 3) ----------
+  function buildSampleSkeleton(html) {
+    if (!window.MustacheLite) return {};
+    var scan = window.MustacheLite.scan(html);
+    var data = {};
+    scan.fields.forEach(function (name) {
+      data[name] = (state.lang === "zh" ? "示例 " : "Sample ") + name;
+    });
+    scan.sections.forEach(function (section) {
+      var rows = [];
+      for (var i = 1; i <= 3; i += 1) {
+        var row = {};
+        section.fields.forEach(function (f) {
+          if (/qty|count|num|quantity/i.test(f)) row[f] = i;
+          else if (/price|amount|subtotal|total|cost/i.test(f)) row[f] = (i * 10).toFixed(2);
+          else row[f] = f + " " + i;
+        });
+        rows.push(row);
+      }
+      data[section.name] = rows;
+    });
+    return data;
+  }
+
+  function initSampleDataForTemplate(html) {
+    var hasPlaceholders = window.MustacheLite && window.MustacheLite.hasPlaceholders(html);
+    var panel = $("#data-panel");
+    var emptyHint = $("#data-empty-hint");
+    var jsonArea = $("#data-json");
+    var actions = $("#data-actions");
+
+    hideDataJsonError();
+
+    if (!hasPlaceholders) {
+      state.sampleData = {};
+      emptyHint.style.display = "";
+      jsonArea.style.display = "none";
+      actions.style.display = "none";
+      panel.open = false;
+      return;
+    }
+
+    emptyHint.style.display = "none";
+    jsonArea.style.display = "";
+    actions.style.display = "flex";
+    panel.open = true;
+
+    var saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem("pfstudio.data." + state.templateId) || "null");
+    } catch (e) { /* corrupted storage — fall back to a fresh skeleton */ }
+
+    state.sampleData = saved || buildSampleSkeleton(html);
+    jsonArea.value = JSON.stringify(state.sampleData, null, 2);
+  }
+
+  // Package export: ships the RAW template (placeholders intact) inside a
+  // <template> element — not a <script type="text/plain">, because <script>
+  // is a raw-text element whose content ends at the first literal
+  // "</script" sequence, which would corrupt arbitrary template HTML.
+  // <template> content is parsed as normal DOM, so {{ }} tokens (which never
+  // contain "<" or ">") round-trip through it untouched.
+  function synthesizePackageHtml() {
+    var html = state.workingHtml;
+    if (!html) return null;
+    var overrides = state.overrides[state.activeSide];
+
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var form = doc.querySelector(".printform");
+    if (!form) return null;
+    Object.keys(overrides).forEach(function (attr) { form.setAttribute(attr, overrides[attr]); });
+
+    var rawOuterHtml = form.outerHTML;
+
+    var mountDiv = doc.createElement("div");
+    mountDiv.id = "printform-mount";
+    form.replaceWith(mountDiv);
+
+    var templateEl = doc.createElement("template");
+    templateEl.id = "printform-raw-template";
+    templateEl.innerHTML = rawOuterHtml;
+
+    var mustacheScript = doc.createElement("script");
+    mustacheScript.textContent = state.mustacheLiteSource || "";
+
+    var sampleDataJson = JSON.stringify(state.sampleData || {}).replace(/<\/script/gi, "<\\/script");
+    var bootstrapScript = doc.createElement("script");
+    bootstrapScript.textContent = [
+      "window.PrintFormTemplate = {",
+      "  render: function (data) {",
+      "    var raw = document.getElementById('printform-raw-template').innerHTML;",
+      "    var rendered = window.MustacheLite.render(raw, data || {});",
+      "    var mount = document.getElementById('printform-mount');",
+      "    mount.innerHTML = rendered;",
+      "    if (window.PrintForm && typeof window.PrintForm.formatAll === 'function') {",
+      "      return window.PrintForm.formatAll({ force: true });",
+      "    }",
+      "    return Promise.resolve();",
+      "  }",
+      "};",
+      "window.PrintFormTemplate.render(" + sampleDataJson + ");"
+    ].join("\n");
+
+    mountDiv.after(templateEl, mustacheScript, bootstrapScript);
+
+    var base = doc.createElement("base");
+    base.setAttribute("href", state.templateBaseHref);
+    var head = doc.querySelector("head");
+    if (head) head.insertBefore(base, head.firstChild);
+
+    return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+  }
+
+  function exportDataPackage() {
+    var html = synthesizePackageHtml();
+    if (html === null) return;
+    var blob = new Blob([html], { type: "text/html" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = state.templateId + "-package.html";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
 
   // ---------- preview ----------
@@ -657,6 +821,7 @@
       state.templateHtml = html;
       state.workingHtml = html;
       parseBaseline(html);
+      initSampleDataForTemplate(html);
       buildConfigPanel();
       reloadAll();
     });
@@ -690,6 +855,11 @@
   // ---------- boot ----------
   function boot() {
     applyI18n();
+
+    fetch("./mustache-lite.js")
+      .then(function (r) { return r.text(); })
+      .then(function (src) { state.mustacheLiteSource = src; })
+      .catch(function () { /* package export unavailable without it; regular preview still works */ });
 
     Promise.all([
       fetch("../docs/config-reference.json").then(function (r) { return r.json(); }),
@@ -781,6 +951,33 @@
       clearTimeout(rowTimer);
       rowTimer = setTimeout(function () { setRowCount(Number(e.target.value)); }, 400);
     });
+
+    // data binding events (Phase 3)
+    var dataTimer = null;
+    $("#data-json").addEventListener("input", function (e) {
+      clearTimeout(dataTimer);
+      var text = e.target.value;
+      dataTimer = setTimeout(function () {
+        try {
+          var parsed = JSON.parse(text);
+          state.sampleData = parsed;
+          localStorage.setItem("pfstudio.data." + state.templateId, JSON.stringify(parsed));
+          hideDataJsonError();
+          reloadAll();
+        } catch (err) {
+          showDataJsonError((state.lang === "zh" ? "JSON 解析错误: " : "JSON parse error: ") + err.message);
+        }
+      }, 500);
+    });
+    $("#data-regenerate").addEventListener("click", function () {
+      if (!confirm(t("regenerateConfirm"))) return;
+      state.sampleData = buildSampleSkeleton(state.workingHtml);
+      $("#data-json").value = JSON.stringify(state.sampleData, null, 2);
+      localStorage.setItem("pfstudio.data." + state.templateId, JSON.stringify(state.sampleData));
+      hideDataJsonError();
+      reloadAll();
+    });
+    $("#data-export-package").addEventListener("click", exportDataPackage);
   }
 
   boot();

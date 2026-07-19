@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PrintForm Studio</title>
   <link rel="stylesheet" href="./studio.css">
+  <script src="./mustache-lite.js"></script>
 </head>
 <body>
   <div id="app">
@@ -66,6 +67,17 @@
       </section>
 
       <aside id="inspector-pane" class="pane">
+        <details id="data-panel" class="data-panel">
+          <summary data-i18n="dataBinding"></summary>
+          <p class="hint" id="data-empty-hint" data-i18n="dataEmptyHint"></p>
+          <textarea id="data-json" spellcheck="false" style="display:none;"></textarea>
+          <p class="hint error" id="data-json-error" style="display:none;"></p>
+          <div class="actions" id="data-actions" style="display:none;">
+            <button id="data-regenerate" data-i18n="regenerateData"></button>
+            <button id="data-export-package" data-i18n="exportPackage"></button>
+          </div>
+        </details>
+
         <h3 data-i18n="inspector"></h3>
         <div class="metrics">
           <div class="metric"><div class="value" id="m-logical">–</div><div class="name" data-i18n="logicalPages"></div></div>

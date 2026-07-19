@@ -1,6 +1,6 @@
 # PrintForm Studio — 产品设计文档
 
-> 状态: v1.2 (Phase 1、Phase 2 均已实现并验证;验收标准见对应章节)
+> 状态: v1.3 (Phase 1、Phase 2、Phase 3 均已实现并验证;验收标准见对应章节;ERP 对接见 [ERP_INTEGRATION.zh-CN.md](ERP_INTEGRATION.zh-CN.md))
 > 日期: 2026-07-19
 > 前置阅读: [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md), [docs/CONFIGURATION.md](CONFIGURATION.md)
 

@@ -6,6 +6,7 @@
     { "id": "index014", "path": "../index014.html", "name": { "zh": "PTAC 条款分段", "en": "PTAC terms segmentation" } },
     { "id": "index017", "path": "../index017.html", "name": { "zh": "PTAC + PADDT 组合", "en": "PTAC + PADDT combined" } },
     { "id": "subtotal", "path": "../index_subtotal_test.html", "name": { "zh": "小计行推底测试", "en": "Subtotal bottom-anchor test" } },
-    { "id": "delivery", "path": "../delivery_order_test.html", "name": { "zh": "送货单 (DO)", "en": "Delivery Order (DO)" } }
+    { "id": "delivery", "path": "../delivery_order_test.html", "name": { "zh": "送货单 (DO)", "en": "Delivery Order (DO)" } },
+    { "id": "databound", "path": "./sample-templates/invoice-databound.html", "name": { "zh": "🔗 数据绑定发票 (Phase 3 示例)", "en": "🔗 Data-bound Invoice (Phase 3 demo)" } }
   ]
 }

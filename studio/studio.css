@@ -438,3 +438,62 @@ body.hide-inspector #inspector-pane { display: none; }
 .be-actions button:hover:not(:disabled) { border-color: var(--accent); }
 
 #block-editor .hint { margin: 4px 0 0; }
+
+/* ---------- Data binding panel (Phase 3) ---------- */
+.data-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  margin-bottom: 12px;
+  background: var(--bg);
+}
+.data-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  list-style: none;
+}
+.data-panel summary::-webkit-details-marker { display: none; }
+.data-panel summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 11px;
+  transition: transform 0.15s;
+}
+.data-panel[open] summary::before { transform: rotate(90deg); }
+
+#data-json {
+  width: 100%;
+  min-height: 160px;
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  resize: vertical;
+}
+
+.hint.error {
+  color: var(--danger);
+  margin-top: 6px;
+}
+
+#data-actions {
+  margin-top: 8px;
+}
+#data-actions button {
+  flex: 1;
+  font: inherit;
+  font-size: 12px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  cursor: pointer;
+}
+#data-actions button:hover { border-color: var(--accent); color: var(--accent); }
