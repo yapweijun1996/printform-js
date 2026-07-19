@@ -30,15 +30,22 @@ html, body {
   height: 100vh;
 }
 
-/* ---------- Top bar ---------- */
+/* ---------- Top bar ----------
+ * Always a single row: no wrap, ever. If the window is too narrow to fit
+ * every control, the bar scrolls horizontally instead of collapsing to a
+ * second line (which would push the preview pane down and jump the layout
+ * every time a template with a longer name is selected). */
 #topbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   padding: 8px 14px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 #topbar .brand {
@@ -46,17 +53,33 @@ html, body {
   font-size: 15px;
   margin-right: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 #topbar select,
 #topbar button {
   font: inherit;
-  padding: 6px 10px;
+  font-size: 13px;
+  padding: 6px 9px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#template-select {
+  min-width: 120px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#topbar .spacer {
+  flex: 1 1 16px;
+  min-width: 16px;
 }
 
 #topbar button:hover { border-color: var(--accent); color: var(--accent); }
@@ -73,8 +96,6 @@ html, body {
   border-color: var(--accent);
   color: var(--accent);
 }
-
-#topbar .spacer { flex: 1; }
 
 /* ---------- Main 3-pane layout ---------- */
 #main {
