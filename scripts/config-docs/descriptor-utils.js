@@ -59,6 +59,12 @@ function buildDocDescriptors(configDescriptors, metadataMap, options) {
       category,
       description
     };
+    if (meta && meta.categoryEn) {
+      entry.categoryEn = meta.categoryEn;
+    }
+    if (meta && meta.descriptionEn) {
+      entry.descriptionEn = meta.descriptionEn;
+    }
     if (meta && meta.options) {
       entry.options = meta.options;
     }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-18T05:22:21.276Z",
+  "generatedAt": "2026-07-19T03:19:30.948Z",
   "version": "1.0",
   "mainConfig": [
     {
@@ -9,7 +9,9 @@
       "type": "Number",
       "defaultValue": 750,
       "category": "纸张尺寸",
-      "description": "页面宽度(像素),打印目标应 <= 750px"
+      "description": "页面宽度(像素),打印目标应 <= 750px",
+      "categoryEn": "Paper Size",
+      "descriptionEn": "Page width in pixels; print target should be <= 750px"
     },
     {
       "key": "papersizeHeight",
@@ -18,7 +20,9 @@
       "type": "Number",
       "defaultValue": 1050,
       "category": "纸张尺寸",
-      "description": "页面高度(像素)"
+      "description": "页面高度(像素)",
+      "categoryEn": "Paper Size",
+      "descriptionEn": "Page height in pixels"
     },
     {
       "key": "paperSize",
@@ -28,6 +32,8 @@
       "defaultValue": "",
       "category": "纸张尺寸",
       "description": "预设纸张大小 (A4, A5, LETTER, LEGAL)",
+      "categoryEn": "Paper Size",
+      "descriptionEn": "Preset paper size (A4, A5, LETTER, LEGAL)",
       "options": [
         "",
         "A4",
@@ -44,6 +50,8 @@
       "defaultValue": "portrait",
       "category": "纸张尺寸",
       "description": "纸张方向",
+      "categoryEn": "Paper Size",
+      "descriptionEn": "Paper orientation",
       "options": [
         "portrait",
         "landscape"
@@ -56,7 +64,9 @@
       "type": "Number",
       "defaultValue": 96,
       "category": "纸张尺寸",
-      "description": "DPI 设置,用于从预设纸张大小计算像素尺寸"
+      "description": "DPI 设置,用于从预设纸张大小计算像素尺寸",
+      "categoryEn": "Paper Size",
+      "descriptionEn": "DPI used to derive pixel dimensions from the preset paper size"
     },
     {
       "key": "nUp",
@@ -65,7 +75,9 @@
       "type": "Number",
       "defaultValue": 1,
       "category": "N-Up 打印",
-      "description": "每个物理页面包含的逻辑页面数量"
+      "description": "每个物理页面包含的逻辑页面数量",
+      "categoryEn": "N-Up Printing",
+      "descriptionEn": "Number of logical pages packed into one physical sheet"
     },
     {
       "key": "showLogicalPageNumber",
@@ -74,7 +86,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "N-Up 打印",
-      "description": "显示逻辑页码 (Page 1 of 3)"
+      "description": "显示逻辑页码 (Page 1 of 3)",
+      "categoryEn": "N-Up Printing",
+      "descriptionEn": "Show logical page numbers (Page 1 of 3)"
     },
     {
       "key": "showPhysicalPageNumber",
@@ -83,7 +97,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "N-Up 打印",
-      "description": "显示物理页码 (Sheet 1 of 2)"
+      "description": "显示物理页码 (Sheet 1 of 2)",
+      "categoryEn": "N-Up Printing",
+      "descriptionEn": "Show physical page numbers (Sheet 1 of 2)"
     },
     {
       "key": "heightOfDummyRowItem",
@@ -92,7 +108,9 @@
       "type": "Number",
       "defaultValue": 18,
       "category": "虚拟行填充",
-      "description": "虚拟行项目的高度(像素)"
+      "description": "虚拟行项目的高度(像素)",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Height of each dummy row item in pixels"
     },
     {
       "key": "repeatHeader",
@@ -101,7 +119,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pheader 头部"
+      "description": "每页重复 .pheader 头部",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pheader on every page"
     },
     {
       "key": "repeatDocinfo",
@@ -110,7 +130,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pdocinfo 文档信息"
+      "description": "每页重复 .pdocinfo 文档信息",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pdocinfo on every page"
     },
     {
       "key": "repeatDocinfo002",
@@ -119,7 +141,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pdocinfo002 文档信息"
+      "description": "每页重复 .pdocinfo002 文档信息",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pdocinfo002 on every page"
     },
     {
       "key": "repeatDocinfo003",
@@ -128,7 +152,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pdocinfo003 文档信息"
+      "description": "每页重复 .pdocinfo003 文档信息",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pdocinfo003 on every page"
     },
     {
       "key": "repeatDocinfo004",
@@ -137,7 +163,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pdocinfo004 文档信息"
+      "description": "每页重复 .pdocinfo004 文档信息",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pdocinfo004 on every page"
     },
     {
       "key": "repeatDocinfo005",
@@ -146,7 +174,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .pdocinfo005 文档信息"
+      "description": "每页重复 .pdocinfo005 文档信息",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pdocinfo005 on every page"
     },
     {
       "key": "repeatRowheader",
@@ -155,7 +185,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "每页重复 .prowheader 表格行头"
+      "description": "每页重复 .prowheader 表格行头",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .prowheader table header on every page"
     },
     {
       "key": "repeatPtacRowheader",
@@ -164,7 +196,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "重复元素",
-      "description": "PTAC 页面重复 .prowheader 表格行头"
+      "description": "PTAC 页面重复 .prowheader 表格行头",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .prowheader on PTAC pages"
     },
     {
       "key": "repeatFooter",
@@ -173,7 +207,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter 页脚"
+      "description": "每页重复 .pfooter 页脚",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter on every page"
     },
     {
       "key": "repeatFooter002",
@@ -182,7 +218,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter002 页脚"
+      "description": "每页重复 .pfooter002 页脚",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter002 on every page"
     },
     {
       "key": "repeatFooter003",
@@ -191,7 +229,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter003 页脚"
+      "description": "每页重复 .pfooter003 页脚",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter003 on every page"
     },
     {
       "key": "repeatFooter004",
@@ -200,7 +240,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter004 页脚"
+      "description": "每页重复 .pfooter004 页脚",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter004 on every page"
     },
     {
       "key": "repeatFooter005",
@@ -209,7 +251,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter005 页脚"
+      "description": "每页重复 .pfooter005 页脚",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter005 on every page"
     },
     {
       "key": "repeatFooterLogo",
@@ -218,7 +262,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter_logo 页脚 Logo"
+      "description": "每页重复 .pfooter_logo 页脚 Logo",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter_logo on every page"
     },
     {
       "key": "repeatFooterPagenum",
@@ -227,7 +273,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "重复元素",
-      "description": "每页重复 .pfooter_pagenum 页码区域"
+      "description": "每页重复 .pfooter_pagenum 页码区域",
+      "categoryEn": "Repeating Elements",
+      "descriptionEn": "Repeat .pfooter_pagenum page-number area on every page"
     },
     {
       "key": "fillPageHeightAfterFooter",
@@ -236,7 +284,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "虚拟行填充",
-      "description": "页脚之后补齐页面高度"
+      "description": "页脚之后补齐页面高度",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Fill remaining page height after the footer"
     },
     {
       "key": "insertDummyRowItemWhileFormatTable",
@@ -245,7 +295,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "虚拟行填充",
-      "description": "插入虚拟行项目填充剩余空间"
+      "description": "插入虚拟行项目填充剩余空间",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Insert dummy row items to fill leftover space"
     },
     {
       "key": "insertPtacDummyRowItems",
@@ -254,7 +306,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "虚拟行填充",
-      "description": "PTAC 页面允许虚拟行项目"
+      "description": "PTAC 页面允许虚拟行项目",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Allow dummy row items on PTAC pages"
     },
     {
       "key": "insertDummyRowWhileFormatTable",
@@ -263,7 +317,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "虚拟行填充",
-      "description": "插入单个完整高度虚拟表格"
+      "description": "插入单个完整高度虚拟表格",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Insert a single full-height dummy table"
     },
     {
       "key": "insertFooterSpacerWhileFormatTable",
@@ -272,7 +328,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "虚拟行填充",
-      "description": "在页脚前插入间隔符"
+      "description": "在页脚前插入间隔符",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Insert a spacer before the footer"
     },
     {
       "key": "insertFooterSpacerWithDummyRowItemWhileFormatTable",
@@ -281,7 +339,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "虚拟行填充",
-      "description": "使用虚拟行项目填充页脚间隔"
+      "description": "使用虚拟行项目填充页脚间隔",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Fill the footer spacer using dummy row items"
     },
     {
       "key": "customDummyRowItemContent",
@@ -290,7 +350,20 @@
       "type": "String",
       "defaultValue": "",
       "category": "虚拟行填充",
-      "description": "自定义虚拟行项目 HTML 内容"
+      "description": "自定义虚拟行项目 HTML 内容",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Custom HTML content for dummy row items"
+    },
+    {
+      "key": "customDummySpacerContent",
+      "datasetKey": "customDummySpacerContent",
+      "htmlAttr": "data-custom-dummy-spacer-content",
+      "type": "String",
+      "defaultValue": "",
+      "category": "虚拟行填充",
+      "description": "自定义页面高度间隔符内容(单根元素,高度自动填充);也可用 <template class=\"custom-dummy-spacer-content\">",
+      "categoryEn": "Dummy Row Filling",
+      "descriptionEn": "Custom page-height spacer content (single root element; height auto-filled); can also use <template class=\"custom-dummy-spacer-content\">"
     },
     {
       "key": "debug",
@@ -299,7 +372,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "调试",
-      "description": "启用详细控制台日志"
+      "description": "启用详细控制台日志",
+      "categoryEn": "Debug",
+      "descriptionEn": "Enable verbose console logging"
     }
   ],
   "paddtConfig": [
@@ -310,7 +385,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "重复 PADDT (保留,暂未使用)"
+      "description": "重复 PADDT (保留,暂未使用)",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat PADDT (reserved, not consumed yet)"
     },
     {
       "key": "insertPaddtDummyRowItems",
@@ -319,7 +396,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面允许虚拟行项目"
+      "description": "PADDT 页面允许虚拟行项目",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Allow dummy row items on PADDT pages"
     },
     {
       "key": "paddtMaxWordsPerSegment",
@@ -328,7 +407,9 @@
       "type": "Number",
       "defaultValue": 200,
       "category": "PADDT",
-      "description": "每个 PADDT 段落的最大单词数"
+      "description": "每个 PADDT 段落的最大单词数",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Maximum words per PADDT segment"
     },
     {
       "key": "repeatPaddtRowheader",
@@ -337,7 +418,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复行头"
+      "description": "PADDT 页面重复行头",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat row header on PADDT pages"
     },
     {
       "key": "paddtDebug",
@@ -346,7 +429,9 @@
       "type": "Boolean",
       "defaultValue": false,
       "category": "PADDT",
-      "description": "启用 PADDT 调试日志"
+      "description": "启用 PADDT 调试日志",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Enable PADDT debug logging"
     },
     {
       "key": "repeatPaddtDocinfo",
@@ -355,7 +440,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复 .pdocinfo 文档信息"
+      "description": "PADDT 页面重复 .pdocinfo 文档信息",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat .pdocinfo on PADDT pages"
     },
     {
       "key": "repeatPaddtDocinfo002",
@@ -364,7 +451,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复 .pdocinfo002 文档信息"
+      "description": "PADDT 页面重复 .pdocinfo002 文档信息",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat .pdocinfo002 on PADDT pages"
     },
     {
       "key": "repeatPaddtDocinfo003",
@@ -373,7 +462,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复 .pdocinfo003 文档信息"
+      "description": "PADDT 页面重复 .pdocinfo003 文档信息",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat .pdocinfo003 on PADDT pages"
     },
     {
       "key": "repeatPaddtDocinfo004",
@@ -382,7 +473,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复 .pdocinfo004 文档信息"
+      "description": "PADDT 页面重复 .pdocinfo004 文档信息",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat .pdocinfo004 on PADDT pages"
     },
     {
       "key": "repeatPaddtDocinfo005",
@@ -391,7 +484,9 @@
       "type": "Boolean",
       "defaultValue": true,
       "category": "PADDT",
-      "description": "PADDT 页面重复 .pdocinfo005 文档信息"
+      "description": "PADDT 页面重复 .pdocinfo005 文档信息",
+      "categoryEn": "PADDT",
+      "descriptionEn": "Repeat .pdocinfo005 on PADDT pages"
     }
   ]
 }

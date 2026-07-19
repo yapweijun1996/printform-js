@@ -1,6 +1,6 @@
 # PrintForm.js 配置参考
 
-> 自动生成于: 2026-01-18T05:22:21.254Z
+> 自动生成于: 2026-07-19T03:19:30.822Z
 > 来源: src/printform/config.js
 
 ## 使用说明
@@ -57,7 +57,7 @@
 | `data-insert-footer-spacer-while-format-table` | Boolean | true | 在页脚前插入间隔符 |
 | `data-insert-footer-spacer-with-dummy-row-item-while-format-table` | Boolean | true | 使用虚拟行项目填充页脚间隔 |
 | `data-custom-dummy-row-item-content` | String | "" | 自定义虚拟行项目 HTML 内容 |
-| `data-custom-dummy-spacer-content` | String | "" | 自定义 dummy spacer HTML 内容（单一根元素） |
+| `data-custom-dummy-spacer-content` | String | "" | 自定义页面高度间隔符内容(单根元素,高度自动填充);也可用 <template class="custom-dummy-spacer-content"> |
 
 ### 调试
 
