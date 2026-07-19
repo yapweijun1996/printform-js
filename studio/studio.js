@@ -49,7 +49,9 @@
       regenerateConfirm: "用新的示例数据骨架覆盖当前 JSON?",
       moreMenu: "更多选项",
       printformNotInlined: "printform.js 尚未内联 —— 此导出文件只有留在本仓库目录内打开才能正常运行,移到别处会报脚本 404。请稍候几秒后重新导出。",
-      restoredNotice: "已恢复上次会话的配置修改(A 侧 {a} 项、B 侧 {b} 项),下方面板可能不是模板默认值。"
+      restoredNotice: "已恢复上次会话的配置修改(A 侧 {a} 项、B 侧 {b} 项),下方面板可能不是模板默认值。",
+      cancel: "取消",
+      ok: "确定"
     },
     en: {
       compare: "Compare",
@@ -86,7 +88,9 @@
       regenerateConfirm: "Overwrite the current JSON with a fresh sample skeleton?",
       moreMenu: "More options",
       printformNotInlined: "printform.js isn't inlined yet — this export will only run while it stays inside this repo folder; moving it elsewhere will 404. Wait a few seconds and export again.",
-      restoredNotice: "Restored config changes from your last session (side A: {a}, side B: {b}) — the panel below may not match the template's defaults."
+      restoredNotice: "Restored config changes from your last session (side A: {a}, side B: {b}) — the panel below may not match the template's defaults.",
+      cancel: "Cancel",
+      ok: "OK"
     }
   };
 
@@ -931,12 +935,47 @@
     });
   }
 
+  // window.confirm() blocks the page's JS thread — on some embedded/webview
+  // contexts (observed firsthand: an in-app preview browser) the native
+  // dialog never actually renders, so the block never lifts and the whole
+  // app appears to hang with no way to recover short of a reload. This is a
+  // plain DOM overlay instead: never blocks, resolves a Promise<boolean>.
+  function showConfirm(message) {
+    return new Promise(function (resolve) {
+      var modal = $("#confirm-modal");
+      var okBtn = $("#confirm-modal-ok");
+      var cancelBtn = $("#confirm-modal-cancel");
+      $("#confirm-modal-text").textContent = message;
+      modal.style.display = "flex";
+
+      function cleanup(result) {
+        modal.style.display = "none";
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      }
+      function onOk() { cleanup(true); }
+      function onCancel() { cleanup(false); }
+      function onBackdrop(e) { if (e.target === modal) cleanup(false); }
+      function onKeydown(e) { if (e.key === "Escape") cleanup(false); }
+
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKeydown);
+    });
+  }
+
   function resetAll() {
-    if (!confirm(t("resetConfirm"))) return;
-    state.overrides[state.activeSide] = {};
-    persist();
-    buildConfigPanel();
-    scheduleReload(state.activeSide);
+    showConfirm(t("resetConfirm")).then(function (ok) {
+      if (!ok) return;
+      state.overrides[state.activeSide] = {};
+      persist();
+      buildConfigPanel();
+      scheduleReload(state.activeSide);
+    });
   }
 
   // localStorage restores state.overrides silently on every load (see the
@@ -1329,12 +1368,14 @@
       }, 500);
     });
     $("#data-regenerate").addEventListener("click", function () {
-      if (!confirm(t("regenerateConfirm"))) return;
-      state.sampleData = buildSampleSkeleton(state.workingHtml);
-      $("#data-json").value = JSON.stringify(state.sampleData, null, 2);
-      localStorage.setItem("pfstudio.data." + state.templateId, JSON.stringify(state.sampleData));
-      hideDataJsonError();
-      reloadAll();
+      showConfirm(t("regenerateConfirm")).then(function (ok) {
+        if (!ok) return;
+        state.sampleData = buildSampleSkeleton(state.workingHtml);
+        $("#data-json").value = JSON.stringify(state.sampleData, null, 2);
+        localStorage.setItem("pfstudio.data." + state.templateId, JSON.stringify(state.sampleData));
+        hideDataJsonError();
+        reloadAll();
+      });
     });
     $("#data-export-package").addEventListener("click", exportDataPackage);
   }

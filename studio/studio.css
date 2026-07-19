@@ -684,3 +684,52 @@ body.hide-inspector #inspector-pane { display: none; }
   cursor: pointer;
 }
 #data-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- In-page confirm modal (replaces window.confirm()) ----------
+ * window.confirm() blocks the page's JS thread on some embedded/webview
+ * contexts without ever showing a dialog, hanging the app with no way to
+ * recover short of reloading. This is a plain, non-blocking overlay. */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.confirm-modal-box {
+  width: min(320px, calc(100vw - 32px));
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-modal-box p {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-modal-actions button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 12.5px;
+}
+
+.confirm-modal-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
