@@ -4,28 +4,32 @@ This file explains the main directories and their responsibilities.
 
 ---
 
-## Source code (`js/`)
+## Source code (`src/`)
 
 ```
-js/
+src/
 ├── printform.js             # Public API + auto-init
 ├── vite-entry.js            # Vite entry (bundling)
 └── printform/
     ├── config.js            # Config descriptors + parsing
     ├── dom.js               # DOM measurement + helpers
-    ├── helpers.js           # Parsing + sizing + page number helpers
-    ├── text.js              # PTAC/PADDT paragraph splitting
-    ├── formatter.js         # Formatter export
+    ├── debug.js              # Debug session helpers
+    ├── helpers.js            # Parsing + sizing + page number helpers
+    ├── text.js               # PTAC/PADDT paragraph splitting
+    ├── formatter.js          # Formatter export
     └── formatter/
-        ├── PrintFormFormatter.js  # Orchestrator class
-        ├── pages.js               # Page container logic (n-up wrappers)
-        ├── sections.js            # Collect header/docinfo/rows/footers
-        ├── row-types.js           # PTAC/PADDT row detection + header rules
-        ├── rendering.js           # Core height/footers calculations
-        ├── pagination-render.js   # Row-by-row pagination
-        ├── pagination-finalize.js # Footer fill + page totals
-        ├── segments-ptac.js       # PTAC splitting
-        └── segments-paddt.js      # PADDT splitting
+        ├── PrintFormFormatter.js   # Orchestrator class
+        ├── pages.js                # Page container logic (n-up wrappers)
+        ├── pagination-context.js   # Shared pagination state
+        ├── pagination-dummy.js     # Dummy row/spacer fill logic
+        ├── pagination-spacing.js   # Spacing calculations
+        ├── sections.js             # Collect header/docinfo/rows/footers
+        ├── row-types.js            # PTAC/PADDT row detection + header rules
+        ├── rendering.js            # Core height/footers calculations
+        ├── pagination-render.js    # Row-by-row pagination
+        ├── pagination-finalize.js  # Footer fill + page totals
+        ├── segments-ptac.js        # PTAC splitting
+        └── segments-paddt.js       # PADDT splitting
 ```
 
 ---

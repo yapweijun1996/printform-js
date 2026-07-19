@@ -6,7 +6,7 @@ This file describes the end-to-end pagination flow.
 
 ## 1) Entry and auto-init
 
-- Entry: `js/printform.js`
+- Entry: `src/printform.js`
 - Auto-runs after `load` (with a small delay; longer on mobile)
 - Exposes `PrintForm.formatAll()` and `PrintForm.format()`
 

@@ -6,18 +6,7 @@
 
 ## 🗂️ 顶层结构一览
 
-```
-printform-js/
-├── js/                     # 源代码
-├── docs/                   # 文档
-├── scripts/                # 构建与工具脚本
-├── dist/                   # 构建输出
-├── index*.html             # 演示与测试页面
-├── README.md               # 英文说明
-├── README.zh-CN.md          # 中文说明
-├── QUICK_START.md           # 快速上手（精简版）
-└── PROJECT_OVERVIEW.md      # 项目概览
-```
+`src/` 源代码、`docs/` 文档、`scripts/` 构建脚本、`tests/` 单元测试、`dist/` 构建输出(不进 git)、`index*.html` 演示页面。完整文件树见 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)。
 
 ---
 

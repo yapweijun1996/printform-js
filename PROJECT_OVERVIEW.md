@@ -24,54 +24,7 @@
 
 ## 🏗️ 项目架构
 
-### 文件结构
-
-```
-printform-js/
-│
-├── js/                          # 源代码目录
-│   ├── printform.js             # 📍 入口文件,公共 API
-│   └── printform/               # 核心模块
-│       ├── config.js            # 📍 配置定义和读取
-│       ├── dom.js               # DOM 操作辅助函数
-│       ├── helpers.js           # 通用辅助函数
-│       ├── text.js              # 文本处理
-│       └── formatter/           # 分页格式化核心
-│           ├── PrintFormFormatter.js  # 📍 主格式化类
-│           ├── pages.js         # 页面管理
-│           ├── sections.js      # 区块收集
-│           ├── row-types.js     # 行类型处理
-│           ├── rendering.js     # 渲染逻辑
-│           ├── pagination-render.js    # 分页渲染
-│           ├── pagination-finalize.js  # 分页完成
-│           ├── segments-ptac.js # PTAC 段落处理
-│           └── segments-paddt.js # PADDT 段落处理
-│
-├── scripts/                     # 构建和工具脚本
-│   ├── generate-config-docs.js  # 📍 自动生成配置文档
-│   ├── run-vite.js              # Vite 运行脚本
-│   └── postbuild-generate-preview.js  # 构建后处理
-│
-├── docs/                        # 文档目录
-│   ├── CONFIGURATION.md         # 配置参考(自动生成)
-│   ├── USAGE_GUIDE.md           # 使用指南(英文)
-│   ├── USAGE_GUIDE.zh-CN.md      # 使用指南(中文)
-│   ├── quick-start/             # 快速上手拆分文档
-│   ├── code-structure/          # 代码结构拆分文档
-│   ├── configuration.html       # 配置参考 HTML 版
-│   └── config-reference.json    # 配置参考 JSON 版
-│
-├── dist/                        # 构建输出目录
-│   └── printform.js             # 📍 打包后的单文件库
-│
-├── index*.html                  # 测试和演示文件
-├── index001.html                # 基础示例
-│
-├── README.md                    # 项目说明
-├── DEVELOPER_BOOK.md            # 开发者手册
-├── QUICK_START.md               # 快速上手指南
-└── CODE_STRUCTURE.md            # 代码结构说明
-```
+完整文件结构与各模块职责见 [CODE_STRUCTURE.md](CODE_STRUCTURE.md)(索引)与 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)(详细文件树),此处不重复列出,避免两处目录树漂移不一致。
 
 ---
 
@@ -216,9 +169,8 @@ data-n-up="2"
 
 欢迎贡献代码、报告问题或提出建议!
 
-- 📖 查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与
-- 🐛 [提交 Issue](https://github.com/your-repo/issues)
-- 💡 [提交 Pull Request](https://github.com/your-repo/pulls)
+- 🐛 [提交 Issue](https://github.com/yapweijun1996/printform-js/issues)
+- 💡 [提交 Pull Request](https://github.com/yapweijun1996/printform-js/pulls)
 
 ---
 
