@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; never cancel one mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,3 +37,55 @@ jobs:
           name: dist
           path: dist/
           retention-days: 14
+
+  # Publishes the live site on every push to main. GitHub Pages was serving
+  # the raw repo root directly (legacy "deploy from a branch" mode), which
+  # never included dist/printform.js — it's gitignored as a build artifact,
+  # so every demo page and Studio template referencing "./dist/printform.js"
+  # 404'd on the deployed site and pagination silently never ran at all.
+  #
+  # Fix: build ONLY the JS bundle (not the full `npm run build`, which also
+  # runs scripts/postbuild-generate-preview.js — that copies every root HTML
+  # file into dist/ with rewritten paths for local `npm run preview`, and
+  # does not include studio/ at all; using dist/ itself as the deploy root
+  # would both bloat the site and silently drop Studio from production).
+  # Instead, publish the checked-out repo root as-is — everything that
+  # already worked keeps working — with the freshly built dist/printform.js
+  # dropped into place alongside it.
+  #
+  # Requires the repo's Pages source to be switched to "GitHub Actions" in
+  # Settings → Pages → Build and deployment (still "Deploy from a branch"
+  # as of this workflow being added — this job's deploy step is a no-op
+  # until that's switched).
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Vite lib build only — produces dist/printform.js, skips the
+      # local-preview postbuild step (see comment above).
+      - run: node scripts/run-vite.js build
+
+      # Neither is needed to serve the static site; .git would otherwise
+      # publish full repo history as world-readable files under /.git/, and
+      # node_modules would bloat the artifact for no reason.
+      - run: rm -rf node_modules .git
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
