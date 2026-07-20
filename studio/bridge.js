@@ -108,16 +108,29 @@
     }
 
     var children = Array.prototype.slice.call(form.children);
+    var wrappers = [];
     children.forEach(function (el, index) {
       var type = classify(el);
-      el.classList.add("studio-block");
-      el.setAttribute("data-studio-index", String(index));
-      el.setAttribute("data-studio-label", type);
-      el.addEventListener("click", function (event) {
+      // Every printform template lays out blocks with <table style="table-layout:
+      // fixed"> plus a "width:inherit" column that's meant to take the remaining
+      // space. Putting .studio-block's outline/::before label directly on that
+      // <table> corrupts Chromium's fixed-table column-width algorithm — even an
+      // empty ::before rule alone collapses a 15px/auto/15px split into three
+      // equal thirds, squashing every product row. Wrap the block in a plain div
+      // instead and keep the table itself undecorated; the click handler and
+      // outerHTML capture still target the original element.
+      var wrapper = document.createElement("div");
+      wrapper.className = "studio-block";
+      wrapper.setAttribute("data-studio-index", String(index));
+      wrapper.setAttribute("data-studio-label", type);
+      el.parentNode.insertBefore(wrapper, el);
+      wrapper.appendChild(el);
+      wrappers.push(wrapper);
+      wrapper.addEventListener("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        children.forEach(function (c) { c.classList.remove("studio-selected"); });
-        el.classList.add("studio-selected");
+        wrappers.forEach(function (w) { w.classList.remove("studio-selected"); });
+        wrapper.classList.add("studio-selected");
         post("block-select", { index: index, type: type, outerHTML: el.outerHTML });
       });
     });
