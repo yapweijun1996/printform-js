@@ -209,9 +209,52 @@
     } else {
       o[d.htmlAttr] = value;
     }
+
+    var touchedSiblings = clearConflictingPaperSizeFields(d, value);
+
     persist();
     scheduleReload(state.activeSide);
-    refreshItemState(d);
+    if (touchedSiblings) {
+      buildConfigPanel();
+    } else {
+      refreshItemState(d);
+    }
+  }
+
+  // papersize-width/height and the paper-size preset are mutually exclusive
+  // in the library — explicit pixel dimensions always win over the preset
+  // (see the manualWidthProvided/manualHeightProvided check in
+  // src/printform/config.js, which treats ANY non-empty width/height —
+  // including ones baked straight into the template's own HTML — as
+  // "manually provided" and skips the preset entirely). Every built-in
+  // template hard-codes papersize-width/height, so picking "A4" from the
+  // config panel was a complete, silent no-op: nothing in the UI explained
+  // why the page never changed size. Whichever field the user just touched
+  // wins; the other is cleared back to auto/empty so it can't block it.
+  function clearConflictingPaperSizeFields(d, value) {
+    if (value === "") return false; // clearing back to baseline never conflicts
+    var o = currentOverrides();
+    var touched = false;
+    function clearField(htmlAttr) {
+      var fd = state.descriptors.find(function (x) { return x.htmlAttr === htmlAttr; });
+      if (!fd) return;
+      if (baselineValue(fd) === "") {
+        if (Object.prototype.hasOwnProperty.call(o, htmlAttr)) {
+          delete o[htmlAttr];
+          touched = true;
+        }
+      } else if (o[htmlAttr] !== "") {
+        o[htmlAttr] = "";
+        touched = true;
+      }
+    }
+    if (d.htmlAttr === "data-paper-size") {
+      clearField("data-papersize-width");
+      clearField("data-papersize-height");
+    } else if (d.htmlAttr === "data-papersize-width" || d.htmlAttr === "data-papersize-height") {
+      clearField("data-paper-size");
+    }
+    return touched;
   }
 
   function refreshItemState(d) {
