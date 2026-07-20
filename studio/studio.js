@@ -278,6 +278,16 @@
 
   function buildConfigPanel() {
     var host = $("#config-groups");
+
+    // Rebuilding replaces every <details>, which would otherwise reset
+    // open/closed state — annoying when a rebuild is triggered by an edit
+    // inside the very group the user has open (e.g. clearConflictingPaperSizeFields).
+    var previouslyOpen = {};
+    host.querySelectorAll("details.config-group").forEach(function (el) {
+      var label = el.querySelector("summary span");
+      if (label) previouslyOpen[label.textContent] = el.open;
+    });
+
     host.innerHTML = "";
     var filter = ($("#config-search").value || "").toLowerCase();
 
@@ -298,7 +308,9 @@
     groups.forEach(function (cat) {
       var details = document.createElement("details");
       details.className = "config-group";
-      details.open = Boolean(filter) || groups.length <= 2;
+      details.open = Object.prototype.hasOwnProperty.call(previouslyOpen, cat)
+        ? previouslyOpen[cat]
+        : (Boolean(filter) || groups.length <= 2);
       var summary = document.createElement("summary");
       summary.innerHTML = "<span>" + cat + "</span> <span class='count'>(" + byCat[cat].length + ")</span>";
       details.appendChild(summary);
