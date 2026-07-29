@@ -18,6 +18,8 @@ export default {
   "inspector.webmcp": "WebMCP", "inspector.cdp": "CDP Gateway", "inspector.exposed": "Exposed", "inspector.review": "AI layout review",
   "inspector.dataPolicy": "Data policy", "inspector.metrics": "Render metrics", "inspector.noMetrics": "No metrics yet", "inspector.undo": "Undo revision",
   "inspector.resetTrust": "Remove scripts and reset trust", "inspector.diagnostics": "Download redacted diagnostics",
+  "agentSetup.title": "Connect Codex or Claude Code", "agentSetup.summary": "Give your AI agent this Studio URL. It can discover the verified MCP setup, request approval, restart, and connect through WebMCP.",
+  "agentSetup.guide": "Step-by-step guide", "agentSetup.manifest": "Machine manifest", "agentSetup.handoff": "AI agent: read the linked setup manifest before editing this document.",
   "quality.pass": "Production quality gate passed · {count} notices", "quality.blocked": "Blocked · {count} errors", "review.pass": "Passed · Revision {revision}", "review.pending": "Pending",
   "agent.checking": "Checking", "webmcp.registered": "{count} tools registered", "webmcp.unavailable": "Browser disabled (UI/CDP available)", "data.synthetic": "Synthetic data only", "data.real": "Real data: session only, not cached",
   "toast.loaded": "Loaded: {title}", "confirm.discardSample": "Switching the standard sample will discard the current unexported draft. Continue?",

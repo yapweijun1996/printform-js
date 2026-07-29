@@ -6,6 +6,21 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
 });
 
+test("publishes link-only setup for Codex and Claude Code", async ({ page }) => {
+  const manifest = await page.evaluate(async () => {
+    const response = await fetch("./agent-setup.json");
+    if (!response.ok) throw new Error(`Agent manifest HTTP ${response.status}`);
+    return response.json();
+  });
+  expect(manifest.schemaVersion).toBe("1.0.0");
+  expect(manifest.clients).toHaveProperty("codex");
+  expect(manifest.clients).toHaveProperty("claudeCode");
+  expect(manifest.verification.expectedWebMcpToolCount).toBe(15);
+  await expect(page.locator(".agent-bootstrap")).toBeVisible();
+  await expect(page.locator('.agent-bootstrap a[href="./agent-setup.json"]')).toHaveText("Machine manifest");
+  await expect(page.locator('link[rel="help"]')).toHaveAttribute("href", "./agent-setup.json");
+});
+
 async function passLayoutReview(page) {
   return page.evaluate(async () => {
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");

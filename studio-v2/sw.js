@@ -3,6 +3,7 @@ const CACHE_VERSION = "2.1.0-__PRINTFORM_BUILD__";
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const APP_SHELL = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
+  "./agent-setup.json", "./agent-setup.schema.json", "./AGENT_SETUP.md", "./llms.txt",
   "./styles/base.css", "./styles/layout.css", "./styles/components.css",
   "./ui/app.js", "./ui/file-io.js", "./ui/draft-cache.js", "./ui/preview.js", "./ui/status-view.js", "./ui/ui-i18n.js",
   "./ui/locales/en.js", "./ui/locales/zh.js", "./ui/locales/ms.js", "./ui/locales/ja.js", "./ui/locales/vi.js",

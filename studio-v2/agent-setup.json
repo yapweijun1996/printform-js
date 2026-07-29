@@ -1,0 +1,132 @@
+{
+  "$schema": "./agent-setup.schema.json",
+  "schemaVersion": "1.0.0",
+  "kind": "printform-studio-agent-bootstrap",
+  "studio": {
+    "name": "PrintForm Studio v2",
+    "url": "https://yapweijun1996.github.io/printform-js/studio-v2/",
+    "protocolVersion": "2.0.0",
+    "commandContractVersion": "1.1.0",
+    "humanGuide": "https://yapweijun1996.github.io/printform-js/studio-v2/AGENT_SETUP.md",
+    "llmsText": "https://yapweijun1996.github.io/printform-js/studio-v2/llms.txt"
+  },
+  "handoffPrompt": "Open this Studio URL, read its linked agent-setup.json, explain any MCP configuration change before applying it, restart the agent client when instructed, then verify WebMCP with get_capabilities before editing the print form.",
+  "requirements": [
+    {
+      "id": "node",
+      "minimumVersion": "20.19.0",
+      "checkCommands": ["node --version", "npm --version", "npx --version"]
+    },
+    {
+      "id": "chrome",
+      "minimumVersion": "149",
+      "recommendedVersion": "150",
+      "checkCommands": ["\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --version", "google-chrome --version", "chrome --version"]
+    }
+  ],
+  "mcpServer": {
+    "name": "chrome-devtools",
+    "transport": "stdio",
+    "command": "npx",
+    "package": "chrome-devtools-mcp@1.6.0",
+    "args": [
+      "-y",
+      "chrome-devtools-mcp@1.6.0",
+      "--isolated=true",
+      "--categoryExperimentalWebmcp=true",
+      "--chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport",
+      "--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*",
+      "--usageStatistics=false",
+      "--performanceCrux=false"
+    ]
+  },
+  "clients": {
+    "codex": {
+      "displayName": "Codex CLI or Codex desktop",
+      "detectCommand": "codex --version",
+      "inspectCommand": "codex mcp list",
+      "removeCommand": "codex mcp remove chrome-devtools",
+      "installCommand": "codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@1.6.0 --isolated=true --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport '--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*' --usageStatistics=false --performanceCrux=false",
+      "configScope": "user",
+      "restartInstruction": "Restart the Codex CLI process or Codex desktop app so its MCP tool list is reloaded."
+    },
+    "claudeCode": {
+      "displayName": "Claude Code",
+      "detectCommand": "claude --version",
+      "inspectCommand": "claude mcp list",
+      "removeCommand": "claude mcp remove --scope user chrome-devtools",
+      "installCommand": "claude mcp add --scope user chrome-devtools -- npx -y chrome-devtools-mcp@1.6.0 --isolated=true --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport '--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*' --usageStatistics=false --performanceCrux=false",
+      "configScope": "user",
+      "restartInstruction": "Restart Claude Code so its MCP tool list is reloaded."
+    }
+  },
+  "procedure": [
+    {
+      "id": "read-manifest",
+      "mode": "read-only",
+      "instruction": "Read this entire manifest and select the matching client entry. Do not guess flags or use an unpinned package version."
+    },
+    {
+      "id": "check-prerequisites",
+      "mode": "read-only",
+      "instruction": "Run the client detection command and the applicable Node and Chrome version checks. Report missing prerequisites before changing configuration."
+    },
+    {
+      "id": "inspect-existing-mcp",
+      "mode": "read-only",
+      "instruction": "Run inspectCommand. If chrome-devtools already exists, compare its command and args with mcpServer."
+    },
+    {
+      "id": "approve-replacement",
+      "mode": "human-confirmation",
+      "instruction": "Before removing or replacing an existing user-scoped MCP server, explain the exact difference and obtain user approval. Skip removal when no conflicting entry exists."
+    },
+    {
+      "id": "configure-mcp",
+      "mode": "write-user-config",
+      "instruction": "When approved, run removeCommand only if required, then run installCommand. Verify the resulting entry with inspectCommand."
+    },
+    {
+      "id": "restart-client",
+      "mode": "human-action",
+      "instruction": "Ask the user to follow restartInstruction. Do not claim WebMCP is ready until the restarted client exposes Chrome DevTools MCP tools."
+    },
+    {
+      "id": "open-studio",
+      "mode": "mcp-call",
+      "instruction": "Call new_page with the Studio URL.",
+      "mcpTool": "new_page",
+      "arguments": { "url": "https://yapweijun1996.github.io/printform-js/studio-v2/" }
+    },
+    {
+      "id": "discover-webmcp",
+      "mode": "mcp-call",
+      "instruction": "Call list_webmcp_tools and require all expected Studio tools before editing.",
+      "mcpTool": "list_webmcp_tools",
+      "expectedToolCount": 15
+    },
+    {
+      "id": "verify-capabilities",
+      "mode": "mcp-call",
+      "instruction": "Execute get_capabilities and verify the protocol and command contract versions.",
+      "mcpTool": "execute_webmcp_tool",
+      "arguments": { "toolName": "get_capabilities", "input": "{}" }
+    }
+  ],
+  "verification": {
+    "requiredMcpTools": ["new_page", "list_webmcp_tools", "execute_webmcp_tool"],
+    "requiredStudioTools": ["get_capabilities", "get_project_summary", "preview_changes", "apply_changes", "validate_project", "get_layout_review_status", "begin_layout_review", "complete_layout_review", "request_export"],
+    "expectedProtocolVersion": "2.0.0",
+    "expectedCommandContractVersion": "1.1.0",
+    "expectedWebMcpToolCount": 15
+  },
+  "safety": {
+    "isolatedTemporaryProfileRequired": true,
+    "dailyChromeAutoConnectAllowed": false,
+    "realErpDataDefault": "deny",
+    "mutationRequiresPreview": true,
+    "revisionConflictPolicy": "fail-closed",
+    "humanProductionExportRequired": true,
+    "agentMustCompleteLayoutReview": true
+  }
+}

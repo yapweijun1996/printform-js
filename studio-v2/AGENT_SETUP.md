@@ -2,6 +2,22 @@
 
 PrintForm Studio v2 exposes one versioned command contract through two thin bridges. Both routes modify only the Studio draft. A person must still approve the final production export in the PWA.
 
+## Link-only agent bootstrap
+
+An end user may provide only this URL:
+
+```text
+https://yapweijun1996.github.io/printform-js/studio-v2/
+```
+
+The page exposes `agent-setup.json` through a visible link, an HTML `rel="help"` link and `llms.txt`. Codex CLI and Claude Code should read the machine manifest first; it is the versioned source for prerequisites, commands, restart instructions, verification and safety rules.
+
+Recommended user handoff:
+
+```text
+Open this Studio URL. Read its linked agent-setup.json, explain any MCP configuration change before applying it, restart when instructed, then verify WebMCP with get_capabilities before editing the print form.
+```
+
 ## Safety boundary
 
 - Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
@@ -29,6 +45,22 @@ args = [
 ```
 
 Restart the MCP client after changing its configuration. Then open the production Studio with the Chrome DevTools `new_page` tool and call `list_webmcp_tools`; execute `get_capabilities` before any revision-bound command.
+
+Codex CLI installation:
+
+```bash
+codex mcp list
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@1.6.0 --isolated=true --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport '--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*' --usageStatistics=false --performanceCrux=false
+```
+
+Claude Code user-scope installation:
+
+```bash
+claude mcp list
+claude mcp add --scope user chrome-devtools -- npx -y chrome-devtools-mcp@1.6.0 --isolated=true --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport '--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*' --usageStatistics=false --performanceCrux=false
+```
+
+If `chrome-devtools` already exists, compare it with the manifest. Explain the difference and get user approval before running the matching `mcp remove` command. Restart Codex or Claude Code after installation; a running client does not automatically gain the new tool category.
 
 `--autoConnect` can attach to a running Chrome 144+ profile after the user enables remote debugging at `chrome://inspect/#remote-debugging`. It is not the production default: it exposes every open tab in the selected profile, and `--chromeArg` cannot inject WebMCP feature flags into a browser that MCP did not launch.
 

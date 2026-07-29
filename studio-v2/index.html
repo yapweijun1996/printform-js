@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#173d9a">
   <meta name="description" content="Production-oriented, agent-compatible PrintForm Studio">
+  <meta name="printform-agent-bootstrap" content="./agent-setup.json">
   <title>PrintForm Studio v2</title>
+  <link rel="help" href="./agent-setup.json" type="application/json" title="AI agent setup manifest">
+  <link rel="alternate" href="./llms.txt" type="text/plain" title="AI-readable Studio guide">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles/base.css">
@@ -89,7 +92,14 @@
 
     <aside class="inspector-panel" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
       <section><h2 data-ui-i18n="inspector.quality">Quality gate</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>
-      <section><h2 data-ui-i18n="inspector.agent">Agent connection</h2><dl class="facts"><div><dt data-ui-i18n="inspector.contract">Command contract</dt><dd>1.1.0</dd></div><div><dt data-ui-i18n="inspector.webmcp">WebMCP</dt><dd id="webmcp-status" data-ui-i18n="agent.checking">Checking</dd></div><div><dt data-ui-i18n="inspector.cdp">CDP Gateway</dt><dd data-ui-i18n="inspector.exposed">Exposed</dd></div><div><dt data-ui-i18n="inspector.review">AI layout review</dt><dd id="review-status" data-ui-i18n="review.pending">Pending</dd></div><div><dt data-ui-i18n="inspector.dataPolicy">Data policy</dt><dd id="data-policy" data-ui-i18n="data.synthetic">Synthetic data only</dd></div></dl></section>
+      <section><h2 data-ui-i18n="inspector.agent">Agent connection</h2><dl class="facts"><div><dt data-ui-i18n="inspector.contract">Command contract</dt><dd>1.1.0</dd></div><div><dt data-ui-i18n="inspector.webmcp">WebMCP</dt><dd id="webmcp-status" data-ui-i18n="agent.checking">Checking</dd></div><div><dt data-ui-i18n="inspector.cdp">CDP Gateway</dt><dd data-ui-i18n="inspector.exposed">Exposed</dd></div><div><dt data-ui-i18n="inspector.review">AI layout review</dt><dd id="review-status" data-ui-i18n="review.pending">Pending</dd></div><div><dt data-ui-i18n="inspector.dataPolicy">Data policy</dt><dd id="data-policy" data-ui-i18n="data.synthetic">Synthetic data only</dd></div></dl>
+        <div class="agent-bootstrap" aria-labelledby="agent-setup-title">
+          <h3 id="agent-setup-title" data-ui-i18n="agentSetup.title">Connect Codex or Claude Code</h3>
+          <p data-ui-i18n="agentSetup.summary">Give your AI agent this Studio URL. It can discover the verified MCP setup, request approval, restart, and connect through WebMCP.</p>
+          <p class="agent-bootstrap-links"><a href="./AGENT_SETUP.md" data-ui-i18n="agentSetup.guide">Step-by-step guide</a><a href="./agent-setup.json" data-ui-i18n="agentSetup.manifest">Machine manifest</a></p>
+          <p class="agent-handoff" data-ui-i18n="agentSetup.handoff">AI agent: read the linked setup manifest before editing this document.</p>
+        </div>
+      </section>
       <section><h2 data-ui-i18n="inspector.metrics">Render metrics</h2><pre id="metrics-output" data-ui-i18n="inspector.noMetrics">No metrics yet</pre></section>
       <section class="inspector-actions"><button id="undo-button" class="secondary" type="button" data-ui-i18n="inspector.undo">Undo revision</button><button id="reset-trust-button" class="secondary hidden" type="button" data-ui-i18n="inspector.resetTrust">Remove scripts and reset trust</button><button id="diagnostics-button" class="secondary" type="button" data-ui-i18n="inspector.diagnostics">Download redacted diagnostics</button></section>
     </aside>

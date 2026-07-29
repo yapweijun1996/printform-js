@@ -1,0 +1,27 @@
+# PrintForm Studio v2
+
+> A production-oriented, agent-compatible print-form generator that exports one self-contained HTML file.
+
+## Agent bootstrap
+
+When an end user gives you this Studio URL, read the machine manifest before attempting setup or editing:
+
+- Machine manifest: https://yapweijun1996.github.io/printform-js/studio-v2/agent-setup.json
+- Manifest schema: https://yapweijun1996.github.io/printform-js/studio-v2/agent-setup.schema.json
+- Human guide: https://yapweijun1996.github.io/printform-js/studio-v2/AGENT_SETUP.md
+- Studio: https://yapweijun1996.github.io/printform-js/studio-v2/
+
+The manifest contains verified Codex CLI and Claude Code setup commands for Chrome DevTools MCP 1.6.0, the required Chrome WebMCP feature flags, restart instructions, verification calls, and safety policy.
+
+## Required behavior
+
+1. Check Node, npm, Chrome, and the selected agent CLI before changing configuration.
+2. Inspect the existing chrome-devtools MCP entry.
+3. Explain and obtain approval before replacing an existing user-scoped MCP entry.
+4. Use the pinned isolated-profile and URL-allowlisted configuration from the manifest.
+5. Ask the user to restart the agent client.
+6. Open Studio with new_page, call list_webmcp_tools, then execute get_capabilities.
+7. Never claim readiness unless protocol 2.0.0, contract 1.1.0, and 15 Studio WebMCP tools are confirmed.
+8. Dry-run changes before applying them, complete the mandatory layout review, and leave final production export to the human.
+
+Do not use autoConnect with a daily Chrome profile and do not enable real ERP data unless the user explicitly authorizes it for the current session.
