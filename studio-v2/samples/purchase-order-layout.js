@@ -12,8 +12,8 @@ ${PRINT_TYPOGRAPHY_CSS}
 #pf-mount .printform_page { width: 750px; background: #fff; }
 #pf-mount table { border-collapse: collapse; table-layout: fixed; }
 #pf-mount .pf-pad { padding-left: 15px; padding-right: 15px; }
-#pf-mount .pf-topline { height: 8px; background: #8f1525; }
-#pf-mount .pf-header { padding-top: 18px; }
+#pf-mount .pf-topline { height: 8px; margin-bottom: 10px; background: #8f1525; }
+#pf-mount .pf-header { padding-top: 12px; }
 #pf-mount .pf-header-grid { display: grid; grid-template-columns: 1fr 230px; gap: 22px; align-items: start; }
 #pf-mount .pf-brand-lockup { display: grid; grid-template-columns: 82px 1fr; gap: 12px; align-items: center; }
 #pf-mount .pf-letterhead-logo { display: block; width: 82px; height: 42px; object-fit: contain; }

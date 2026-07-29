@@ -70,6 +70,12 @@ test("opens the generated Crimson purchase order as one self-contained HTML", as
   expect(await page.locator(".printform_page").nth(2).locator(".prowheader,.prowheader_processed").count()).toBe(0);
   await expect(page.locator(".printform_page").nth(2)).toContainText("Grand total");
   expect(await page.locator('script[src],link[rel="stylesheet"][href]').count()).toBe(0);
+  const headerGaps = await page.locator(".printform_page").evaluateAll((pages) => pages.map((node) => {
+    const line = node.querySelector(".pf-topline").getBoundingClientRect();
+    const grid = node.querySelector(".pf-header-grid").getBoundingClientRect();
+    return grid.top - line.bottom;
+  }));
+  expect(headerGaps.every((gap) => gap >= 8)).toBe(true);
 });
 
 test("covers Crimson purchase order empty, 1, 45 and 500-row boundaries", async ({ page, browserName }) => {
