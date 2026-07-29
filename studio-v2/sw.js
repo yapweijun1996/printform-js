@@ -1,10 +1,11 @@
 const CACHE_PREFIX = "printform-studio-v2";
-const CACHE_VERSION = "2.0.0-__PRINTFORM_BUILD__";
+const CACHE_VERSION = "2.1.0-__PRINTFORM_BUILD__";
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const APP_SHELL = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
   "./styles/base.css", "./styles/layout.css", "./styles/components.css",
-  "./ui/app.js", "./ui/file-io.js", "./ui/draft-cache.js", "./ui/preview.js",
+  "./ui/app.js", "./ui/file-io.js", "./ui/draft-cache.js", "./ui/preview.js", "./ui/status-view.js", "./ui/ui-i18n.js",
+  "./ui/locales/en.js", "./ui/locales/zh.js", "./ui/locales/ms.js", "./ui/locales/ja.js", "./ui/locales/vi.js",
   "./adapters/gateway.js", "./adapters/webmcp.js",
   "./core/constants.js", "./core/json.js", "./core/schema.js", "./core/binding.js", "./core/typography.js", "./core/i18n.js", "./core/business-rules.js",
   "./core/acceptance.js", "./core/project-model.js", "./core/operations.js",

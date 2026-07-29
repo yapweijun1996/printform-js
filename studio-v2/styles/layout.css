@@ -9,6 +9,7 @@
   background: linear-gradient(110deg, #112d73, #2457d6);
 }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.ui-locale-select { min-height: 38px; padding: 0 30px 0 10px; border: 1px solid #b9c8e9; border-radius: 8px; color: var(--blue); background: #fff; font-weight: 700; }
 .workspace { display: grid; grid-template-columns: minmax(300px, 24vw) minmax(480px, 1fr) minmax(260px, 20vw); height: calc(100vh - 70px); }
 .editor-panel, .inspector-panel { min-width: 0; overflow: auto; padding: 14px; background: var(--surface); }
 .editor-panel { border-right: 1px solid var(--border); }

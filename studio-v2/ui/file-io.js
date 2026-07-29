@@ -13,11 +13,11 @@ export function downloadHtml(html, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-export async function saveHtmlWithPicker(html, suggestedName) {
+export async function saveHtmlWithPicker(html, suggestedName, description = "Self-contained PrintForm HTML") {
   if (!("showSaveFilePicker" in window)) return false;
   const handle = await window.showSaveFilePicker({
     suggestedName,
-    types: [{ description: "Self-contained PrintForm HTML", accept: { "text/html": [".html"] } }]
+    types: [{ description, accept: { "text/html": [".html"] } }]
   });
   const writable = await handle.createWritable();
   await writable.write(html);

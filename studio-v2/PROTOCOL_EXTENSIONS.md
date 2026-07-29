@@ -1,5 +1,14 @@
 # PrintForm Studio v2 declarative extensions
 
+## Studio interface language
+
+The Studio interface and the printed document have independent locale controls.
+Studio defaults to `en-MY`, persists the engineer's explicit selection locally,
+and lazy-loads `zh-CN`, `ms-MY`, `ja-JP`, or `vi-VN` before switching the UI in
+place. A UI-language change does not modify the project revision, print locale,
+sample data, editor focus, or layout-review receipt. Missing UI keys fall back to
+English; exported HTML contains only the document locale catalogs it needs.
+
 ## Five-language print content
 
 The optional `pf-i18n` JSON section stores flat, escaped message catalogs. A

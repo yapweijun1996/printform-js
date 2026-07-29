@@ -9,6 +9,8 @@ import { installWebMcpAdapter } from "../adapters/webmcp.js";
 import { clearRecoveryDraft, loadRecoveryDraft, saveRecoveryDraft } from "./draft-cache.js";
 import { downloadHtml, readHtmlFile, saveHtmlWithPicker } from "./file-io.js";
 import { listenForPreview, renderPreview } from "./preview.js";
+import { currentUiLocale, initUiI18n, setUiLocale, t } from "./ui-i18n.js";
+import { renderDataPolicy, renderMetrics, renderQualityView, renderStatus, renderWebMcpStatus, refreshStatusText } from "./status-view.js";
 
 const $ = (selector) => document.querySelector(selector);
 const editors = {
@@ -39,39 +41,22 @@ function setEditors(project) {
   editors.template.value = project.templateHtml;
   editors.sampleData.value = stableStringify(project.sampleData);
   $("#locale-select").value = project.manifest.locale || "en-MY";
-  $("#revision-label").textContent = `Revision ${bus.revision}`;
+  $("#revision-label").textContent = t("editor.revision", { revision: bus.revision });
 }
 
 function renderQuality(validation) {
   lastValidation = validation;
-  const summary = $("#quality-summary");
-  summary.textContent = validation.productionValid
-    ? `生产质量门通过 · ${validation.warnings.length} 项提醒`
-    : `已阻断 · ${validation.errors.length} 项错误`;
-  const list = $("#issue-list");
-  list.replaceChildren();
-  [...validation.errors, ...validation.warnings].slice(0, 30).forEach((item) => {
-    const li = document.createElement("li");
-    li.className = item.severity || (validation.errors.includes(item) ? "error" : "warning");
-    li.textContent = `${item.code}: ${item.message}`;
-    list.appendChild(li);
-  });
-  $("#export-button").disabled = !validation.productionValid;
-  const review = validation.reviewReceipt;
-  $("#review-status").textContent = review ? `通过 · Revision ${review.reviewedRevision}` : "待完成";
-  $("#reset-trust-button").classList.toggle("hidden", bus.project.trust !== "untrusted");
+  renderQualityView(validation, bus.project.trust);
 }
 
 function schedulePreview() {
   clearTimeout(previewTimer);
   renderQuality(bus.readiness());
-  $("#render-status").className = "status pending";
-  $("#render-status").textContent = "渲染中";
+  renderStatus("status.rendering", "pending");
   previewTimer = setTimeout(async () => {
     try { await renderPreview($("#preview-frame"), bus.project, bus.revision); }
     catch (error) {
-      $("#render-status").className = "status blocked";
-      $("#render-status").textContent = "预览失败";
+      renderStatus("status.failed", "blocked");
       toast(error.message);
     }
   }, 180);
@@ -82,7 +67,7 @@ function installBus(project, reason = "load") {
   bus = new CommandBus(project);
   installAgentGateway(bus);
   webMcp = installWebMcpAdapter(bus);
-  $("#webmcp-status").textContent = webMcp.supported ? `已注册 ${webMcp.registered.length} tools` : "浏览器未启用（UI/CDP 可用）";
+  renderWebMcpStatus(webMcp);
   bus.addEventListener("change", (event) => {
     dirty = true;
     setEditors(event.detail.project);
@@ -94,11 +79,11 @@ function installBus(project, reason = "load") {
   setEditors(project);
   renderQuality(bus.readiness());
   schedulePreview();
-  if (reason !== "initial") toast(`已载入：${project.manifest.title || "PrintForm"}`);
+  if (reason !== "initial") toast(t("toast.loaded", { title: project.manifest.title || "PrintForm" }));
 }
 
 function selectSample(key) {
-  if (dirty && !window.confirm("切换标准样本会舍弃当前未导出的草稿，继续？")) {
+  if (dirty && !window.confirm(t("confirm.discardSample"))) {
     $("#document-select").value = activeSampleKey;
     return;
   }
@@ -126,26 +111,26 @@ async function applySource() {
     const operations = sourceOperations();
     const preview = await bus.execute("preview_changes", { expectedRevision: bus.revision, operations });
     if (!preview.ok) throw new Error(preview.error.message);
-    const changed = preview.result.diff.changedSections.join(", ") || "无";
-    const approved = window.confirm(`源码逃生口将修改：${changed}\n错误：${preview.result.validation.errors.length}\n确认原子应用到草稿？`);
+    const changed = preview.result.diff.changedSections.join(", ") || t("source.none");
+    const approved = window.confirm(t("confirm.applySource", { changed, errors: preview.result.validation.errors.length }));
     if (!approved) return;
     const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "human-approved source edit" });
     if (!result.ok) throw new Error(result.error.message);
-    toast(`已应用 Revision ${result.result.revision}`);
-  } catch (error) { toast(`无法应用：${error.message}`); }
+    toast(t("toast.applied", { revision: result.result.revision }));
+  } catch (error) { toast(t("toast.applyFailed", { message: error.message })); }
 }
 
 async function applyLogoSources() {
   try {
     const sources = [["letterhead-logo", $("#letterhead-logo-source")], ["footer-logo", $("#footer-logo-source")]].filter(([, input]) => input.value.trim());
-    if (!sources.length) throw new Error("请先填写至少一个 Logo URL");
+    if (!sources.length) throw new Error(t("error.logoRequired"));
     for (const [slot, input] of sources) {
       const result = await bus.execute("set_asset_source", { expectedRevision: bus.revision, slot, source: input.value.trim() });
       if (!result.ok) throw new Error(result.error.message);
       input.value = "";
     }
-    toast("Logo 已写入隔离草稿；请等待重新分页并完成 AI 布局审查");
-  } catch (error) { toast(`Logo 替换失败：${error.message}`); }
+    toast(t("toast.logoApplied"));
+  } catch (error) { toast(t("toast.logoFailed", { message: error.message })); }
 }
 
 async function importFile(file) {
@@ -154,16 +139,16 @@ async function importFile(file) {
     const parsed = parseProjectHtml(html);
     const verified = await verifyImportedProject(parsed, html);
     const migration = analyzeMigration(verified.project);
-    if (migration.action === "read-only") throw new Error(`Protocol ${migration.source} can only be opened read-only by this Studio version`);
+    if (migration.action === "read-only") throw new Error(t("error.protocolReadOnly", { source: migration.source }));
     let project = verified.project;
     if (migration.action === "preview") {
-      if (!window.confirm(`检测到协议 ${migration.source}。查看并应用到 ${migration.target} 的同主版本迁移草稿？`)) throw new Error("Migration was not approved");
+      if (!window.confirm(t("confirm.migration", { source: migration.source, target: migration.target }))) throw new Error(t("error.migrationRejected"));
       project = migration.candidate;
     }
     fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
     dirty = false;
     installBus(project, "import");
-  } catch (error) { toast(`导入被拒绝：${error.message}`); }
+  } catch (error) { toast(t("toast.importRejected", { message: error.message })); }
 }
 
 async function exportDocument(trusted) {
@@ -172,27 +157,27 @@ async function exportDocument(trusted) {
     let productionValidation;
     if (trusted) {
       const readiness = await bus.execute("request_export");
-      if (!readiness.result?.ready) throw new Error("生产质量门尚未通过");
+      if (!readiness.result?.ready) throw new Error(t("error.qualityNotReady"));
       productionValidation = readiness.result.validation;
-      if (!window.confirm(`即将生成生产有效 HTML。\n错误 0；警告 ${readiness.result.validation.warnings.length}。\n请在下载后完成系统打印预览。`)) return;
-    } else if (!window.confirm("此文件将标记为 Untrusted，不能作为 Studio 生产验证制品。继续？")) { blank?.close(); return; }
+      if (!window.confirm(t("confirm.productionExport", { warnings: readiness.result.validation.warnings.length }))) return;
+    } else if (!window.confirm(t("confirm.untrustedExport"))) { blank?.close(); return; }
     const result = await createStandaloneHtml(bus.project, { requireTrusted: trusted, validation: productionValidation });
     const filename = `${bus.project.manifest.documentId || "printform"}${trusted ? "" : "-untrusted"}.html`;
     if (trusted && "showSaveFilePicker" in window) {
-      const usePicker = window.confirm("使用浏览器“另存为”选择位置？选择取消将改用普通下载。 ");
-      if (usePicker && await saveHtmlWithPicker(result.html, filename)) {
-        dirty = false; clearRecoveryDraft(); toast(`已保存 ${filename}`); return;
+      const usePicker = window.confirm(t("confirm.savePicker"));
+      if (usePicker && await saveHtmlWithPicker(result.html, filename, t("picker.description"))) {
+        dirty = false; clearRecoveryDraft(); toast(t("toast.saved", { filename })); return;
       }
     }
     downloadHtml(result.html, filename);
-    dirty = false; clearRecoveryDraft(); toast(`已导出 ${filename} · ${result.bytes} bytes`);
+    dirty = false; clearRecoveryDraft(); toast(t("toast.exported", { filename, bytes: result.bytes }));
     blank?.close();
-  } catch (error) { blank?.close(); toast(`导出失败：${error.message}`); }
+  } catch (error) { blank?.close(); toast(t("toast.exportFailed", { message: error.message })); }
 }
 
 async function openPrintPreview() {
   const target = window.open("", "_blank");
-  if (!target) return toast("浏览器阻止了预览窗口");
+  if (!target) return toast(t("toast.popupBlocked"));
   try {
     const result = await createStandaloneHtml(bus.project, { requireTrusted: false, networkDisabled: true });
     const url = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
@@ -210,16 +195,34 @@ function downloadDiagnostics() {
 }
 
 function resetTrust() {
-  if (!window.confirm("确认已审查此项目？这会移除全部工程师自定义脚本，并在下次导出时换回 Studio 固定 runtime。")) return;
+  if (!window.confirm(t("confirm.resetTrust"))) return;
   const project = { ...bus.project, customScripts: [], trust: "trusted", trustReasons: [], runtime: null, attestation: null };
   installBus(project, "trust reset");
   dirty = true;
 }
 
+async function changeUiLocale(event) {
+  const previous = currentUiLocale();
+  try { await setUiLocale(event.target.value); }
+  catch {
+    event.target.value = previous;
+    toast(t("toast.languageFailed"));
+  }
+}
+
+function refreshLocalizedUi() {
+  if (!bus) return;
+  renderQuality(lastValidation || bus.readiness());
+  renderWebMcpStatus(webMcp);
+  renderDataPolicy($("#real-data-mode").checked);
+  refreshStatusText();
+  $("#revision-label").textContent = t("editor.revision", { revision: bus.revision });
+}
+
 function bindUi() {
   $("#apply-source-button").addEventListener("click", applySource);
   $("#import-file").addEventListener("change", (event) => importFile(event.target.files[0]));
-  $("#validate-button").addEventListener("click", () => { renderQuality(bus.readiness()); toast("已完成本地质量检查"); });
+  $("#validate-button").addEventListener("click", () => { renderQuality(bus.readiness()); toast(t("toast.validationDone")); });
   $("#export-button").addEventListener("click", () => exportDocument(true));
   $("#export-untrusted-button").addEventListener("click", () => exportDocument(false));
   $("#print-button").addEventListener("click", openPrintPreview);
@@ -230,7 +233,9 @@ function bindUi() {
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);
-  $("#real-data-mode").addEventListener("change", (event) => { $("#data-policy").textContent = event.target.checked ? "真实数据：仅本会话，不缓存" : "仅合成数据"; if (event.target.checked) clearRecoveryDraft(); });
+  $("#ui-locale-select").addEventListener("change", changeUiLocale);
+  $("#real-data-mode").addEventListener("change", (event) => { renderDataPolicy(event.target.checked); if (event.target.checked) clearRecoveryDraft(); });
+  window.addEventListener("printform:ui-locale", refreshLocalizedUi);
   window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
 }
 
@@ -249,7 +254,7 @@ function setupServiceWorker() {
       const worker = registration.installing;
       worker?.addEventListener("statechange", () => { if (worker.state === "installed" && navigator.serviceWorker.controller) $("#update-banner").classList.remove("hidden"); });
     });
-    $("#update-button").addEventListener("click", () => { if (dirty) return toast("请先导出或保存当前草稿"); registration.waiting?.postMessage({ type: "SKIP_WAITING" }); });
+    $("#update-button").addEventListener("click", () => { if (dirty) return toast(t("toast.saveBeforeUpdate")); registration.waiting?.postMessage({ type: "SKIP_WAITING" }); });
   }).catch((error) => console.warn("PWA registration failed", error));
   navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
 }
@@ -260,15 +265,15 @@ listenForPreview((message) => {
     bus.recordRenderReport(message.payload);
     renderQuality(bus.readiness());
     const ready = message.payload.status === "ready";
-    $("#render-status").className = `status ${ready ? "ready" : "blocked"}`;
-    $("#render-status").textContent = ready ? "可打印" : "已阻断";
-    $("#metrics-output").textContent = JSON.stringify(message.payload.metrics, null, 2);
-  } else toast(`预览脚本错误：${message.payload.message}`);
+    renderStatus(ready ? "status.ready" : "status.blocked", ready ? "ready" : "blocked");
+    renderMetrics(message.payload.metrics);
+  } else toast(t("toast.previewError", { message: message.payload.message }));
 });
 
+await initUiI18n();
 bindUi();
 $("#document-select").value = activeSampleKey;
 installBus(createSampleDocument(activeSampleKey), "initial");
 setupRecovery();
 setupServiceWorker();
-loadRuntimeSources().catch((error) => toast(`Runtime 载入失败：${error.message}`));
+loadRuntimeSources().catch((error) => toast(t("toast.runtimeFailed", { message: error.message })));

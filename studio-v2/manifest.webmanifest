@@ -2,6 +2,7 @@
   "name": "PrintForm Studio v2",
   "short_name": "PrintForm",
   "description": "Production-oriented WebMCP PrintForm generator",
+  "lang": "en-MY",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
