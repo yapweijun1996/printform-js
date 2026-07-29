@@ -3,7 +3,7 @@ import { createStandaloneHtml, loadRuntimeSources } from "../core/exporter.js";
 import { parseProjectHtml, verifyImportedProject } from "../core/project-model.js";
 import { stableStringify } from "../core/json.js";
 import { analyzeMigration } from "../core/migrations.js";
-import { createSalesInvoiceProject } from "../samples/sales-invoice.js";
+import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
 import { installAgentGateway } from "../adapters/gateway.js";
 import { installWebMcpAdapter } from "../adapters/webmcp.js";
 import { clearRecoveryDraft, loadRecoveryDraft, saveRecoveryDraft } from "./draft-cache.js";
@@ -19,7 +19,8 @@ let bus;
 let webMcp;
 let previewTimer;
 let dirty = false;
-let fingerprint = "sales-invoice-pilot";
+let activeSampleKey = sampleDocumentKey();
+let fingerprint = createSampleDocument(activeSampleKey).manifest.documentId;
 let lastValidation;
 
 function toast(message) {
@@ -94,6 +95,19 @@ function installBus(project, reason = "load") {
   renderQuality(bus.readiness());
   schedulePreview();
   if (reason !== "initial") toast(`已载入：${project.manifest.title || "PrintForm"}`);
+}
+
+function selectSample(key) {
+  if (dirty && !window.confirm("切换标准样本会舍弃当前未导出的草稿，继续？")) {
+    $("#document-select").value = activeSampleKey;
+    return;
+  }
+  activeSampleKey = key;
+  const project = createSampleDocument(key);
+  fingerprint = project.manifest.documentId;
+  dirty = false;
+  history.replaceState(null, "", `${location.pathname}?sample=${encodeURIComponent(key)}`);
+  installBus(project, "sample");
 }
 
 function sourceOperations() {
@@ -213,6 +227,7 @@ function bindUi() {
   $("#scenario-select").addEventListener("change", async (event) => { const result = await bus.execute("set_sample_scenario", { expectedRevision: bus.revision, scenario: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#locale-select").addEventListener("change", async (event) => { const result = await bus.execute("set_locale", { expectedRevision: bus.revision, locale: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#apply-logo-button").addEventListener("click", applyLogoSources);
+  $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);
   $("#real-data-mode").addEventListener("change", (event) => { $("#data-policy").textContent = event.target.checked ? "真实数据：仅本会话，不缓存" : "仅合成数据"; if (event.target.checked) clearRecoveryDraft(); });
@@ -252,7 +267,8 @@ listenForPreview((message) => {
 });
 
 bindUi();
-installBus(createSalesInvoiceProject(), "initial");
+$("#document-select").value = activeSampleKey;
+installBus(createSampleDocument(activeSampleKey), "initial");
 setupRecovery();
 setupServiceWorker();
 loadRuntimeSources().catch((error) => toast(`Runtime 载入失败：${error.message}`));

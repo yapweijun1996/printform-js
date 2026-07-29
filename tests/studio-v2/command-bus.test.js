@@ -34,6 +34,15 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.project.sampleData.items).toHaveLength(45);
   });
 
+  it("builds every scenario from the immutable default sample", async () => {
+    const bus = new CommandBus(createSalesInvoiceProject());
+    expect((await bus.execute("set_sample_scenario", { expectedRevision: 0, scenario: "empty" })).result.validation.valid).toBe(false);
+    const one = await bus.execute("set_sample_scenario", { expectedRevision: 1, scenario: "one" });
+    expect(one.result.validation.valid).toBe(true);
+    expect(bus.project.sampleData.items).toHaveLength(1);
+    expect(bus.project.sampleData.items[0]).toHaveProperty("unitPrice");
+  });
+
   it("keeps agent mutations read-only for untrusted projects", async () => {
     const project = createSalesInvoiceProject();
     project.trust = "untrusted";

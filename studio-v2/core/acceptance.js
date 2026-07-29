@@ -2,6 +2,7 @@ import { LIMITS, PROTOCOL_VERSION, TRUST, protocolMajor } from "./constants.js";
 import { validateData, validateSchemaProfile } from "./schema.js";
 import { validateAssetSlots } from "./assets.js";
 import { validateI18n } from "./i18n.js";
+import { validateBusinessRules } from "./business-rules.js";
 
 function error(code, message, path = "/") {
   return { code, message, path, severity: "error" };
@@ -78,6 +79,7 @@ export function validateProject(project, options = {}) {
   if (profile.valid) {
     const dataReport = validateData(project.schema, project.sampleData);
     errors.push(...dataReport.errors);
+    if (dataReport.valid) errors.push(...validateBusinessRules(project.sampleData).errors);
   }
   errors.push(...validateI18n(project).errors);
   errors.push(...validateAssetSlots(project).errors);

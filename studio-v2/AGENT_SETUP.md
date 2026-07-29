@@ -64,7 +64,7 @@ Chrome 149 or newer currently requires `--enable-features=WebMCPTesting,DevTools
 
 ## Connection check
 
-1. Open the Studio v2 PWA in the isolated profile.
+1. Open the Studio v2 PWA in the isolated profile. Use `?sample=purchase-order-red` for the Crimson purchase-order pilot or select it from **标准样本**.
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
 4. Use `preview_changes` with the current revision before `apply_changes`.
@@ -73,3 +73,7 @@ Chrome 149 or newer currently requires `--enable-features=WebMCPTesting,DevTools
 7. Confirm `request_export` returns `ready: true`, then ask the engineer to click **生产导出**.
 
 Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming completion. Studio limits automated review to three passes per revision.
+
+## Production sample artifacts
+
+`npm run build:site` emits two self-contained reference documents under `site-dist/studio-v2/samples/`: `sales-invoice-v2.html` and `purchase-order-red-v2.html`. They are generated from the same structured source modules loaded by Studio; do not hand-edit a generated artifact and expect its trusted attestation to remain valid.

@@ -119,8 +119,7 @@ export class CommandBus extends EventTarget {
       }
       if (name === "set_sample_scenario") {
         this.ensureRevision(input.expectedRevision);
-        const source = input.scenario === "default" ? this.defaultSample : this.project.sampleData;
-        const preview = this.preview([{ type: "replace_sample_data", value: createScenario(source, input.scenario) }], input.expectedRevision);
+        const preview = this.preview([{ type: "replace_sample_data", value: createScenario(this.defaultSample, input.scenario) }], input.expectedRevision);
         const revision = this.commit(preview.candidate, `sample scenario: ${input.scenario}`);
         return this.success({ revision, validation: preview.validation });
       }

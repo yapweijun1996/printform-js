@@ -42,6 +42,53 @@ test("renders all five locales and visible replaceable logo slots", async ({ pag
   expect(await logos.evaluateAll((nodes) => nodes.every((node) => node.naturalWidth > 0 && node.alt))).toBe(true);
 });
 
+test("renders the Crimson purchase order in five languages and boundary layouts", async ({ page }) => {
+  await page.goto("/studio-v2/?sample=purchase-order-red");
+  await expect(page.locator("#render-status")).toHaveText("可打印", { timeout: 20_000 });
+  await expect(page.locator("#document-select")).toHaveValue("purchase-order-red");
+  let metrics = JSON.parse(await page.locator("#metrics-output").textContent());
+  expect(metrics).toMatchObject({ rows: 32, overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 });
+  const expected = { "en-MY": "Purchase Order", "zh-CN": "采购订单", "ms-MY": "Pesanan Belian", "ja-JP": "発注書", "vi-VN": "Đơn đặt hàng" };
+  for (const [locale, title] of Object.entries(expected)) {
+    await page.locator("#locale-select").selectOption(locale);
+    await expect(page.locator("#render-status")).toHaveText("可打印", { timeout: 20_000 });
+    await expect(page.frameLocator("#preview-frame").locator(".pf-po-box h2").first()).toHaveText(title);
+  }
+  const logos = page.frameLocator("#preview-frame").locator("[data-pf-asset-slot]");
+  expect(await logos.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.dataset.pfAssetSlot))].sort())).toEqual(["footer-logo", "letterhead-logo"]);
+  await page.locator("#scenario-select").selectOption("long-text");
+  await expect(page.locator("#render-status")).toHaveText("可打印", { timeout: 20_000 });
+  metrics = JSON.parse(await page.locator("#metrics-output").textContent());
+  expect(metrics.logicalPages).toBeLessThanOrEqual(100);
+  expect(metrics).toMatchObject({ overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 });
+});
+
+test("opens the generated Crimson purchase order as one self-contained HTML", async ({ page }) => {
+  await page.goto("/studio-v2/samples/purchase-order-red-v2.html");
+  await expect(page.locator("html")).toHaveAttribute("data-printform-status", "ready", { timeout: 20_000 });
+  await expect(page.locator(".printform_page")).toHaveCount(3);
+  expect(await page.locator(".printform_page").nth(2).locator(".prowheader,.prowheader_processed").count()).toBe(0);
+  await expect(page.locator(".printform_page").nth(2)).toContainText("Grand total");
+  expect(await page.locator('script[src],link[rel="stylesheet"][href]').count()).toBe(0);
+});
+
+test("covers Crimson purchase order empty, 1, 45 and 500-row boundaries", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Large boundary budgets use the Chromium reference environment");
+  await page.goto("/studio-v2/?sample=purchase-order-red");
+  await page.locator("#scenario-select").selectOption("empty");
+  await expect(page.locator("#render-status")).toHaveText("已阻断", { timeout: 20_000 });
+  await expect(page.locator("#issue-list")).toContainText("MIN_ITEMS");
+  for (const [scenario, rows] of [["one", 1], ["45-rows", 45], ["500-rows", 500]]) {
+    await page.locator("#scenario-select").selectOption(scenario);
+    await expect(page.locator("#render-status")).toHaveText("可打印", { timeout: 20_000 });
+    const metrics = JSON.parse(await page.locator("#metrics-output").textContent());
+    expect(metrics.rows).toBe(rows);
+    expect(metrics.logicalPages).toBeLessThanOrEqual(100);
+    expect(metrics).toMatchObject({ overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 });
+    if (rows === 500) expect(metrics.durationMs).toBeLessThanOrEqual(5000);
+  }
+});
+
 test("uses the public command gateway for transactional changes", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");

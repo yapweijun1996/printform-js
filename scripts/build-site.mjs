@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { JSDOM } from "jsdom";
 import { createSalesInvoiceProject } from "../studio-v2/samples/sales-invoice.js";
+import { createPurchaseOrderProject } from "../studio-v2/samples/purchase-order.js";
 import { validateProject } from "../studio-v2/core/acceptance.js";
 import { serializeStandalone } from "../studio-v2/core/project-model.js";
 
@@ -32,16 +33,21 @@ function copyAllowlist() {
   });
 }
 
-async function writePilotExport() {
+async function writePilotExports() {
   const runtimeSource = fs.readFileSync(path.resolve(root, "dist/printform-document.js"), "utf8");
   const printformSource = fs.readFileSync(path.resolve(root, "dist/printform.js"), "utf8");
-  const project = createSalesInvoiceProject();
   globalThis.DOMParser = new JSDOM("").window.DOMParser;
-  const validation = validateProject(project);
-  const html = await serializeStandalone(project, { documentRuntime: runtimeSource, printform: printformSource, runtimeVersion: "2.0.0" }, validation);
   const samples = path.resolve(output, "studio-v2/samples");
   fs.mkdirSync(samples, { recursive: true });
-  fs.writeFileSync(path.resolve(samples, "sales-invoice-v2.html"), html, "utf8");
+  const pilots = [
+    ["sales-invoice-v2.html", createSalesInvoiceProject()],
+    ["purchase-order-red-v2.html", createPurchaseOrderProject()]
+  ];
+  for (const [filename, project] of pilots) {
+    const validation = validateProject(project);
+    const html = await serializeStandalone(project, { documentRuntime: runtimeSource, printform: printformSource, runtimeVersion: "2.0.0" }, validation);
+    fs.writeFileSync(path.resolve(samples, filename), html, "utf8");
+  }
 }
 
 function finalizePwa() {
@@ -53,6 +59,6 @@ function finalizePwa() {
 
 prepareOutput();
 copyAllowlist();
-await writePilotExport();
+await writePilotExports();
 finalizePwa();
 console.log(`GitHub Pages artifact ready: ${output}`);

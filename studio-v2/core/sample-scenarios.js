@@ -1,4 +1,5 @@
 import { cloneJson } from "./json.js";
+import { calculateFinancialTotals } from "./business-rules.js";
 
 function findArray(value) {
   if (Array.isArray(value)) return value;
@@ -14,6 +15,8 @@ export function createScenario(sampleData, scenario) {
   const data = cloneJson(sampleData);
   const items = findArray(data);
   if (!items) return data;
+  const previousSubtotal = Number(data.totals?.subtotal) || 0;
+  const taxRate = previousSubtotal ? (Number(data.totals?.tax) || 0) / previousSubtotal : 0;
   if (scenario === "empty") items.splice(0);
   if (["one", "45-rows", "100-rows", "500-rows"].includes(scenario)) {
     const count = scenario === "one" ? 1 : Number.parseInt(scenario, 10);
@@ -22,6 +25,12 @@ export function createScenario(sampleData, scenario) {
   }
   if (scenario === "long-text") {
     items.forEach((item, index) => { item.description = `Row ${index + 1}: ${"Long multilingual description 长文本 penerangan panjang ".repeat(8)}`; });
+  }
+  if (data.totals) {
+    const subtotal = calculateFinancialTotals(data).subtotal;
+    data.totals.subtotal = subtotal;
+    if (typeof data.totals.tax === "number") data.totals.tax = Math.round(subtotal * taxRate * 100) / 100;
+    data.totals.grandTotal = calculateFinancialTotals(data).grandTotal;
   }
   return data;
 }

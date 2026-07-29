@@ -45,10 +45,15 @@
         <div><h2>项目源</h2><p id="revision-label">Revision 0</p></div>
         <button id="apply-source-button" type="button">预演并应用</button>
       </div>
+      <label for="document-select">标准样本</label>
+      <select id="document-select">
+        <option value="sales-invoice">Sales Invoice — Blue</option>
+        <option value="purchase-order-red">Purchase Order — Crimson</option>
+      </select>
       <label class="privacy-toggle"><input id="real-data-mode" type="checkbox"> 本会话含真实 ERP 数据（禁用恢复缓存）</label>
       <label for="scenario-select">边界样本</label>
       <select id="scenario-select">
-        <option value="default">默认 45 行</option><option value="empty">空数组</option><option value="one">1 行</option>
+        <option value="default">默认样本</option><option value="empty">空数组</option><option value="one">1 行</option>
         <option value="45-rows">45 行</option><option value="100-rows">100 行</option><option value="500-rows">500 行</option><option value="long-text">长多语言文本</option>
       </select>
       <label for="locale-select">打印语言</label>
