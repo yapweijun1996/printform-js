@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#173d9a">
+  <meta name="description" content="Production-oriented, agent-compatible PrintForm Studio">
+  <title>PrintForm Studio v2</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/components.css">
+</head>
+<body>
+  <a class="skip-link" href="#preview-panel">跳至预览</a>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">PRINTFORM STUDIO</p>
+      <h1>Studio v2 <span class="badge">Protocol 2.0</span></h1>
+    </div>
+    <nav class="actions" aria-label="文件与验证操作">
+      <label class="button secondary" for="import-file">导入 HTML</label>
+      <input id="import-file" class="visually-hidden" type="file" accept="text/html,.html">
+      <button id="validate-button" class="secondary" type="button">验证</button>
+      <button id="print-button" class="secondary" type="button">打印预览</button>
+      <button id="export-untrusted-button" class="secondary" type="button">导出 Untrusted</button>
+      <button id="export-button" type="button">生产导出</button>
+    </nav>
+  </header>
+
+  <aside id="update-banner" class="banner hidden" role="status">
+    新版 PWA 已准备好。请先保存草稿，再切换版本。
+    <button id="update-button" type="button">安全升级</button>
+  </aside>
+  <aside id="restore-banner" class="banner hidden" role="status">
+    找到七天内的非权威恢复草稿。
+    <button id="restore-button" type="button">恢复</button>
+    <button id="discard-restore-button" class="secondary" type="button">忽略</button>
+  </aside>
+
+  <main class="workspace">
+    <aside class="editor-panel" aria-label="结构化源文件编辑器">
+      <div class="panel-heading">
+        <div><h2>项目源</h2><p id="revision-label">Revision 0</p></div>
+        <button id="apply-source-button" type="button">预演并应用</button>
+      </div>
+      <label class="privacy-toggle"><input id="real-data-mode" type="checkbox"> 本会话含真实 ERP 数据（禁用恢复缓存）</label>
+      <label for="scenario-select">边界样本</label>
+      <select id="scenario-select">
+        <option value="default">默认 45 行</option><option value="empty">空数组</option><option value="one">1 行</option>
+        <option value="45-rows">45 行</option><option value="100-rows">100 行</option><option value="500-rows">500 行</option><option value="long-text">长多语言文本</option>
+      </select>
+      <details open><summary>Manifest</summary><label class="visually-hidden" for="manifest-editor">Manifest JSON</label><textarea id="manifest-editor" spellcheck="false"></textarea></details>
+      <details><summary>JSON Schema</summary><label class="visually-hidden" for="schema-editor">JSON Schema</label><textarea id="schema-editor" spellcheck="false"></textarea></details>
+      <details><summary>Theme CSS</summary><label class="visually-hidden" for="theme-editor">Theme CSS</label><textarea id="theme-editor" spellcheck="false"></textarea></details>
+      <details><summary>Template HTML</summary><label class="visually-hidden" for="template-editor">Template HTML</label><textarea id="template-editor" spellcheck="false"></textarea></details>
+      <details><summary>Synthetic sample data</summary><label class="visually-hidden" for="sample-editor">Sample data JSON</label><textarea id="sample-editor" spellcheck="false"></textarea></details>
+    </aside>
+
+    <section id="preview-panel" class="preview-panel" aria-labelledby="preview-title">
+      <div class="panel-heading">
+        <div><h2 id="preview-title">隔离预览</h2><p>无同源权限 · 禁止网络 · 与导出共用 runtime</p></div>
+        <span id="render-status" class="status pending">等待渲染</span>
+      </div>
+      <div class="preview-viewport"><iframe id="preview-frame" title="PrintForm 隔离打印预览" sandbox="allow-scripts"></iframe></div>
+    </section>
+
+    <aside class="inspector-panel" aria-label="验证与代理状态">
+      <section><h2>质量门</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>
+      <section><h2>代理连接</h2><dl class="facts"><div><dt>命令契约</dt><dd>1.0.0</dd></div><div><dt>WebMCP</dt><dd id="webmcp-status">检测中</dd></div><div><dt>CDP Gateway</dt><dd>已暴露</dd></div><div><dt>数据策略</dt><dd id="data-policy">仅合成数据</dd></div></dl></section>
+      <section><h2>渲染指标</h2><pre id="metrics-output">尚无指标</pre></section>
+      <section class="inspector-actions"><button id="undo-button" class="secondary" type="button">撤销一版</button><button id="reset-trust-button" class="secondary hidden" type="button">移除脚本并重置信任</button><button id="diagnostics-button" class="secondary" type="button">下载脱敏诊断</button></section>
+    </aside>
+  </main>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <script type="module" src="./ui/app.js"></script>
+</body>
+</html>

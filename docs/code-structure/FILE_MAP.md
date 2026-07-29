@@ -77,3 +77,26 @@ studio/
     └── invoice-databound.html        # Example template demonstrating {{field}} / {{#items}}...{{/items}}
 ```
 
+---
+
+## Studio v2 (`studio-v2/`)
+
+The production single-HTML editor. The legacy `studio/` remains independent.
+
+```
+studio-v2/
+├── index.html                  # PWA shell
+├── core/                       # Protocol, binding, validation, runtime, history, command bus
+├── adapters/                   # WebMCP and browser command gateway
+├── ui/                         # Editors, preview sandbox, files and draft recovery
+├── samples/                    # Sales invoice pilot and boundary scenarios
+├── styles/                     # Studio UI styles, each kept below 300 lines
+├── sw.js                       # Offline shell and confirmed-update flow
+└── AGENT_SETUP.md              # CDP, Codex, Claude Code and Chrome DevTools MCP setup
+```
+
+- `mcp/`: first-party stdio MCP bridge using a CDP origin allowlist.
+- `src/document-runtime-entry.js`: standalone document runtime bundle entry.
+- `scripts/build-site.mjs`: creates the dedicated Pages artifact in `site-dist/`.
+- `scripts/validate-printform-v2.mjs`: machine-readable headless protocol validator.
+- `e2e/studio-v2.spec.js`: Chromium, Firefox and WebKit contract, pagination, performance and offline tests.

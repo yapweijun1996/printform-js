@@ -4,17 +4,27 @@
   "version": "0.0.0",
   "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
   "scripts": {
-    "build": "npm run test -- --run && node scripts/run-vite.js build && node scripts/postbuild-generate-preview.js",
+    "build": "npm run test -- --run && npm run build:assets && node scripts/postbuild-generate-preview.js",
+    "build:assets": "node scripts/run-vite.js build && node scripts/build-document-runtime.mjs",
+    "build:site": "npm run build && node scripts/build-site.mjs",
     "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist/printform.js',{force:true}); fs.rmSync('dist/printform.iife.js',{force:true}); fs.rmSync('dist/assets',{recursive:true,force:true}); fs.rmSync('dist/index.html',{force:true}); fs.rmSync('dist/footer_logo.jpg',{force:true}); fs.rmSync('dist/img',{recursive:true,force:true});\"",
     "check": "node --check dist/printform.js",
+    "predev": "npm run build:assets",
     "dev": "node scripts/run-vite.js",
     "preview": "node scripts/run-vite.js preview",
     "test": "vitest",
+    "pretest:e2e": "npm run build:site",
+    "test:e2e": "playwright test",
+    "validate:v2": "node scripts/validate-printform-v2.mjs",
+    "studio:mcp": "node mcp/server.mjs",
+    "studio:agent-browser": "node scripts/launch-studio-agent-browser.mjs",
     "docs": "node scripts/generate-config-docs.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "jsdom": "^27.0.1",
-    "vite": "^5.4.0",
-    "vitest": "^3.2.4"
+    "vite": "^8.1.5",
+    "vitest": "^3.2.4",
+    "ws": "^8.21.1"
   }
 }

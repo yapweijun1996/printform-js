@@ -1,0 +1,11 @@
+{
+  "name": "PrintForm Studio v2",
+  "short_name": "PrintForm",
+  "description": "Production-oriented WebMCP PrintForm generator",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e9eef6",
+  "theme_color": "#173d9a",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

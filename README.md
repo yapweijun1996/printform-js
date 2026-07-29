@@ -25,11 +25,13 @@ A zero-dependency visual workbench for building and tuning templates — no code
 
 | I want to... | Read this |
 |--------------|-----------|
+| **Build a production single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
 | **Try it now** | Open [studio/index.html](studio/index.html) (needs a local server — see [Quick Start](#1-start-server) below) |
+| **Understand the v2 single-HTML contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
 | **See what it can do** | [Studio Design Doc](docs/STUDIO_DESIGN.zh-CN.md) - Config playground, block editor, data binding (Chinese) |
 | **Bind a template to real data / connect an ERP backend** | [ERP Integration Guide](docs/ERP_INTEGRATION.zh-CN.md) - `{{ }}` placeholders, `PrintFormTemplate.render(data)`, ColdFusion example (Chinese) |
 
-Studio has three tiers, each usable on its own: tweak `data-*` config live and compare two setups side by side; click any block in the raw template to edit/duplicate/delete it and test different row counts; or bind `{{field}}` / `{{#items}}...{{/items}}` placeholders to a JSON payload and export a self-contained package that any backend can drive with one line — `PrintFormTemplate.render(data)`.
+Studio v2 is the production path and exports one self-contained `.html` with declarative JSON Pointer bindings, a pinned runtime and validation attestation. The original Studio remains available as the legacy playground and is not migrated automatically.
 
 ### 💻 Development
 

@@ -1,5 +1,9 @@
 node_modules/
 dist/
+site-dist/
+.printform-studio/
+test-results/
+playwright-report/
 .DS_Store
 *.log
 coverage/

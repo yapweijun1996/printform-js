@@ -13,11 +13,6 @@ export default defineConfig({
       name: "PrintForm",
       formats: ["iife"],
       fileName: () => "printform.js"
-    },
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true
-      }
     }
   },
   test: {
