@@ -11,6 +11,7 @@ describe("PrintForm v2 single HTML protocol", () => {
     const parsed = parseProjectHtml(html);
     expect(parsed.manifest).toEqual(project.manifest);
     expect(parsed.schema).toEqual(project.schema);
+    expect(parsed.i18n).toEqual(project.i18n);
     expect(parsed.sampleData.items).toHaveLength(45);
     expect(parsed.templateHtml).toContain("data-pf-each=\"/items\"");
     expect(parsed.trust).toBe("trusted");
@@ -38,5 +39,17 @@ describe("PrintForm v2 single HTML protocol", () => {
   it("rejects duplicated protocol sections", () => {
     const html = `<script id="pf-manifest" type="application/json">{}</script><script id="pf-manifest" type="application/json">{}</script>`;
     expect(() => parseProjectHtml(html)).toThrow(/exactly one/);
+  });
+
+  it("keeps legacy files without the optional i18n section verifiable", async () => {
+    const project = createSalesInvoiceProject();
+    project.i18n = {};
+    project.manifest = { ...project.manifest, i18n: undefined };
+    project.templateHtml = project.templateHtml.replace(/\sdata-pf-i18n="[^"]+"/g, "");
+    const html = await serializeStandalone(project, { documentRuntime: "legacy=true;", printform: "print=true;", runtimeVersion: "2.0.0" }, validateProject(project));
+    const legacy = html.replace(/\s*<script id="pf-i18n"[^>]*>[\s\S]*?<\/script>/, "");
+    const parsed = parseProjectHtml(legacy);
+    expect(parsed.i18n).toEqual({});
+    expect((await verifyImportedProject(parsed, legacy)).verification.trusted).toBe(true);
   });
 });

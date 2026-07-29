@@ -4,18 +4,22 @@ import { RevisionHistory, revisionConflict } from "./history.js";
 import { applyOperations, diffProjects, previewSourceEdit } from "./operations.js";
 import { createScenario, SAMPLE_SCENARIOS } from "./sample-scenarios.js";
 import { TOOL_CONTRACTS } from "./tool-contracts.js";
+import { PRINT_LOCALES } from "./i18n.js";
+import { createLayoutReviewReceipt, layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST } from "./layout-review.js";
 
 function inspectTemplate(html) {
   const template = document.createElement("template");
   template.innerHTML = html;
-  const bindings = Array.from(template.content.querySelectorAll("[data-pf-text],[data-pf-each],[data-pf-if],[data-pf-href]")).map((node) => ({
+  const bindings = Array.from(template.content.querySelectorAll("[data-pf-text],[data-pf-each],[data-pf-if],[data-pf-href],[data-pf-i18n],[data-pf-asset-slot]")).map((node) => ({
     tag: node.tagName.toLowerCase(),
     id: node.id || null,
     className: node.className || null,
     text: node.getAttribute("data-pf-text"),
     each: node.getAttribute("data-pf-each"),
     condition: node.getAttribute("data-pf-if"),
-    href: node.getAttribute("data-pf-href")
+    href: node.getAttribute("data-pf-href"),
+    i18nKey: node.getAttribute("data-pf-i18n"),
+    assetSlot: node.getAttribute("data-pf-asset-slot")
   }));
   return { blocks: template.content.children.length, bindings };
 }
@@ -26,6 +30,8 @@ export class CommandBus extends EventTarget {
     this.history = new RevisionHistory(initialProject);
     this.defaultSample = structuredClone(initialProject.sampleData);
     this.renderReport = null;
+    this.reviewReceipt = null;
+    this.reviewAttempts = 0;
   }
 
   get project() { return this.history.project; }
@@ -52,10 +58,12 @@ export class CommandBus extends EventTarget {
   recordRenderReport(report) { this.renderReport = structuredClone(report); }
 
   readiness() {
-    if (this.renderReport) return this.validation();
     const base = this.validation();
-    const pending = { code: "PREVIEW_REQUIRED", message: "A current browser layout report is required before production export", path: "/", severity: "error" };
-    return { ...base, valid: false, productionValid: false, errors: [...base.errors, pending] };
+    const pending = [];
+    if (!this.renderReport) pending.push({ code: "PREVIEW_REQUIRED", message: "A current browser layout report is required before production export", path: "/", severity: "error" });
+    const review = layoutReviewStatus(this.reviewReceipt, this.revision);
+    if (review.status !== "pass") pending.push({ code: "LAYOUT_REVIEW_REQUIRED", message: "A current AI full-page UI/UX review is required before production export", path: "/review", severity: "error" });
+    return { ...base, valid: base.valid && !pending.length, productionValid: base.productionValid && !pending.length, errors: [...base.errors, ...pending], reviewReceipt: review.status === "pass" ? this.reviewReceipt : null };
   }
 
   preview(operations, expectedRevision) {
@@ -66,6 +74,8 @@ export class CommandBus extends EventTarget {
 
   commit(candidate, reason) {
     this.renderReport = null;
+    this.reviewReceipt = null;
+    this.reviewAttempts = 0;
     const revision = this.history.commit(candidate, reason);
     this.dispatchEvent(new CustomEvent("change", { detail: { revision, project: candidate, reason } }));
     return revision;
@@ -73,10 +83,26 @@ export class CommandBus extends EventTarget {
 
   async execute(name, input = {}) {
     try {
-      if (name === "get_capabilities") return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, humanExportRequired: true });
-      if (name === "get_project_summary") return this.success({ revision: this.revision, title: this.project.manifest.title, locale: this.project.manifest.locale, trust: this.project.trust, protocolVersion: this.project.manifest.protocolVersion, validation: this.validation() });
+      if (name === "get_capabilities") return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
+      if (name === "get_project_summary") return this.success({ revision: this.revision, title: this.project.manifest.title, locale: this.project.manifest.locale, trust: this.project.trust, protocolVersion: this.project.manifest.protocolVersion, review: layoutReviewStatus(this.reviewReceipt, this.revision), validation: this.validation() });
       if (name === "inspect_document") return this.success({ revision: this.revision, ...inspectTemplate(this.project.templateHtml) });
       if (name === "validate_project") return this.success({ revision: this.revision, validation: this.validation() });
+      if (name === "get_layout_review_status") return this.success({ revision: this.revision, review: layoutReviewStatus(this.reviewReceipt, this.revision), checklist: LAYOUT_REVIEW_CHECKLIST });
+      if (name === "begin_layout_review") {
+        this.ensureRevision(input.expectedRevision);
+        if (this.renderReport?.status !== "ready") throw Object.assign(new Error("Wait for a ready browser preview before starting review"), { code: "LAYOUT_PREVIEW_NOT_READY" });
+        this.reviewReceipt = null;
+        this.reviewAttempts += 1;
+        if (this.reviewAttempts > 3) throw Object.assign(new Error("The three-pass automatic review limit is exhausted for this revision"), { code: "REVIEW_ATTEMPT_LIMIT" });
+        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, metrics: this.renderReport.metrics });
+      }
+      if (name === "complete_layout_review") {
+        this.ensureRevision(input.expectedRevision);
+        if (!this.reviewAttempts) throw Object.assign(new Error("begin_layout_review must be called first"), { code: "REVIEW_NOT_STARTED" });
+        this.reviewReceipt = createLayoutReviewReceipt(this.revision, this.renderReport, input, this.reviewAttempts);
+        this.dispatchEvent(new CustomEvent("review", { detail: { revision: this.revision, review: this.reviewReceipt } }));
+        return this.success({ revision: this.revision, review: this.reviewReceipt });
+      }
       if (name === "preview_changes") {
         const preview = this.preview(input.operations, input.expectedRevision);
         return this.success({ revision: preview.revision, diff: preview.diff, validation: preview.validation });
@@ -98,10 +124,23 @@ export class CommandBus extends EventTarget {
         const revision = this.commit(preview.candidate, `sample scenario: ${input.scenario}`);
         return this.success({ revision, validation: preview.validation });
       }
+      if (name === "set_locale") {
+        if (!PRINT_LOCALES.includes(input.locale)) throw Object.assign(new Error(`Unsupported locale: ${input.locale}`), { code: "LOCALE_UNSUPPORTED" });
+        const preview = this.preview([{ type: "set_manifest_value", path: "/locale", value: input.locale }], input.expectedRevision);
+        const revision = preview.diff.changed ? this.commit(preview.candidate, `locale: ${input.locale}`) : this.revision;
+        return this.success({ revision, locale: input.locale, validation: preview.validation });
+      }
+      if (name === "set_asset_source") {
+        const preview = this.preview([{ type: "set_asset_slot", slot: input.slot, source: input.source }], input.expectedRevision);
+        const revision = preview.diff.changed ? this.commit(preview.candidate, `asset slot: ${input.slot}`) : this.revision;
+        return this.success({ revision, slot: input.slot, validation: preview.validation });
+      }
       if (name === "undo_revision") {
         const result = this.history.undo(input.expectedRevision);
         if (result.changed) {
           this.renderReport = null;
+          this.reviewReceipt = null;
+          this.reviewAttempts = 0;
           this.dispatchEvent(new CustomEvent("change", { detail: { revision: result.revision, project: result.project, reason: "undo" } }));
         }
         return this.success(result);

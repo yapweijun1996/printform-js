@@ -1,7 +1,7 @@
 import { LIMITS, PROTOCOL_VERSION, SECTION_IDS, TRUST } from "./constants.js";
 import { parseJson, sha256, sha256Base64, stableStringify } from "./json.js";
+import { withPrintTypography } from "./typography.js";
 
-const JSON_SECTIONS = ["manifest", "schema", "sampleData", "attestation"];
 const ALLOWED_EXECUTABLE_IDS = new Set(["pf-document-runtime", "pf-printform-runtime"]);
 
 function requireElement(doc, id) {
@@ -48,6 +48,7 @@ export function parseProjectHtml(html) {
   return {
     manifest,
     schema: readJsonSection(doc, "schema"),
+    i18n: readJsonSection(doc, "i18n", {}),
     themeCss: theme.textContent,
     templateHtml: template.innerHTML.trim(),
     sampleData: readJsonSection(doc, "sampleData"),
@@ -67,8 +68,10 @@ function readRuntimeMetadata(doc) {
 export function canonicalProjectContent(project) {
   const templateDoc = new DOMParser().parseFromString(`<template id="pf-canonical">${project.templateHtml}</template>`, "text/html");
   const normalizedTemplate = templateDoc.getElementById("pf-canonical").innerHTML.trim();
+  const sections = [stableStringify(project.manifest), stableStringify(project.schema)];
+  if (Object.keys(project.i18n || {}).length) sections.push(stableStringify(project.i18n));
   return [
-    stableStringify(project.manifest), stableStringify(project.schema), project.themeCss.trim(),
+    ...sections, project.themeCss.trim(),
     normalizedTemplate, stableStringify(project.sampleData), project.runtime?.version || "",
     project.runtime?.hash || "", ...(project.customScripts || [])
   ].join("\n---printform-section---\n");
@@ -86,6 +89,7 @@ export async function createAttestation(project, validation, runtimeSource, runt
     validator: "PrintForm Studio v2",
     result: validation.valid ? "pass" : "fail",
     summary: { errors: validation.errors.length, warnings: validation.warnings.length },
+    layoutReview: validation.reviewReceipt || null,
     browsers: ["Chromium", "Firefox", "WebKit"]
   };
 }
@@ -152,6 +156,7 @@ export async function serializeStandalone(project, sources, validation, options 
   <title>${escapeHtml(title)}</title>
   ${jsonBlock(SECTION_IDS.manifest, "application/json", project.manifest)}
   ${jsonBlock(SECTION_IDS.schema, "application/schema+json", project.schema)}
+  ${jsonBlock(SECTION_IDS.i18n, "application/json", project.i18n || {})}
   <style id="${SECTION_IDS.theme}">\n${project.themeCss.trim()}\n</style>
 </head>
 <body>
@@ -170,7 +175,8 @@ export function createEmptyProject() {
   return {
     manifest: { protocolVersion: PROTOCOL_VERSION, title: "Untitled PrintForm", locale: "en-MY", currency: "MYR", timeZone: "Asia/Kuala_Lumpur", acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxLogicalPages: LIMITS.logicalPages } },
     schema: { $schema: "https://json-schema.org/draft/2020-12/schema", type: "object", properties: {}, additionalProperties: false },
-    themeCss: "#pf-mount { color: #111; font-family: Arial, sans-serif; }",
+    i18n: {},
+    themeCss: withPrintTypography("#pf-mount { color: #111; font-family: Arial, sans-serif; }"),
     templateHtml: "<div class=\"printform\"><div class=\"pheader\"><h1 data-pf-text=\"/title\"></h1></div></div>",
     sampleData: {}, attestation: null, runtime: null, trust: TRUST.trusted, trustReasons: [], customScripts: [], sourceHtml: ""
   };

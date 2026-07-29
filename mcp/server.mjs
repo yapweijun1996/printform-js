@@ -26,8 +26,8 @@ async function handle(request) {
     return success(id, {
       protocolVersion: params.protocolVersion || "2025-06-18",
       capabilities: { tools: { listChanged: false } },
-      serverInfo: { name: "printform-studio-mcp", version: "1.0.0" },
-      instructions: "Connects only to an isolated Chrome tab whose URL contains /studio-v2/. Production export still requires a human click."
+      serverInfo: { name: "printform-studio-mcp", version: "1.1.0" },
+      instructions: "Act as a PrintForm engineer. Before telling the user a design is complete, inspect full-page browser screenshots, begin_layout_review, fix every major or critical UI/UX issue, complete_layout_review for the current revision with default and long-text evidence, and confirm request_export is ready. Never claim completion from metrics alone. Production export still requires a human click."
     });
   }
   if (method === "ping") return success(id, {});

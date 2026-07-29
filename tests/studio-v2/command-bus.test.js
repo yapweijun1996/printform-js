@@ -49,6 +49,13 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(request.result.ready).toBe(false);
     expect(request.result.validation.errors.some((item) => item.code === "PREVIEW_REQUIRED")).toBe(true);
     bus.recordRenderReport({ status: "ready", validation: { errors: [], warnings: [] }, metrics: { logicalPages: 3 } });
+    await bus.execute("begin_layout_review", { expectedRevision: 0 });
+    const review = await bus.execute("complete_layout_review", {
+      expectedRevision: 0, reviewer: "ai-agent", browser: "Chromium test",
+      scenarios: ["default", "long-text"], evidence: ["full-page-screenshot", "layout-metrics"],
+      findings: [], summary: "No visual issues"
+    });
+    expect(review.ok).toBe(true);
     request = await bus.execute("request_export");
     expect(request.result.ready).toBe(true);
     expect(request.result.validation.metrics.logicalPages).toBe(3);

@@ -51,8 +51,19 @@
         <option value="default">默认 45 行</option><option value="empty">空数组</option><option value="one">1 行</option>
         <option value="45-rows">45 行</option><option value="100-rows">100 行</option><option value="500-rows">500 行</option><option value="long-text">长多语言文本</option>
       </select>
+      <label for="locale-select">打印语言</label>
+      <select id="locale-select">
+        <option value="en-MY">English (Malaysia)</option><option value="zh-CN">简体中文</option>
+        <option value="ms-MY">Bahasa Melayu</option><option value="ja-JP">日本語</option><option value="vi-VN">Tiếng Việt</option>
+      </select>
+      <fieldset class="asset-slots"><legend>Logo 资源</legend>
+        <label for="letterhead-logo-source">Letterhead Logo URL</label><input id="letterhead-logo-source" type="text" placeholder="HTTPS 或 data:image URL">
+        <label for="footer-logo-source">Footer Logo URL</label><input id="footer-logo-source" type="text" placeholder="HTTPS 或 data:image URL">
+        <button id="apply-logo-button" class="secondary" type="button">预演并替换 Logo</button>
+      </fieldset>
       <details open><summary>Manifest</summary><label class="visually-hidden" for="manifest-editor">Manifest JSON</label><textarea id="manifest-editor" spellcheck="false"></textarea></details>
       <details><summary>JSON Schema</summary><label class="visually-hidden" for="schema-editor">JSON Schema</label><textarea id="schema-editor" spellcheck="false"></textarea></details>
+      <details><summary>Translations</summary><label class="visually-hidden" for="i18n-editor">Translations JSON</label><textarea id="i18n-editor" spellcheck="false"></textarea></details>
       <details><summary>Theme CSS</summary><label class="visually-hidden" for="theme-editor">Theme CSS</label><textarea id="theme-editor" spellcheck="false"></textarea></details>
       <details><summary>Template HTML</summary><label class="visually-hidden" for="template-editor">Template HTML</label><textarea id="template-editor" spellcheck="false"></textarea></details>
       <details><summary>Synthetic sample data</summary><label class="visually-hidden" for="sample-editor">Sample data JSON</label><textarea id="sample-editor" spellcheck="false"></textarea></details>
@@ -68,7 +79,7 @@
 
     <aside class="inspector-panel" aria-label="验证与代理状态">
       <section><h2>质量门</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>
-      <section><h2>代理连接</h2><dl class="facts"><div><dt>命令契约</dt><dd>1.0.0</dd></div><div><dt>WebMCP</dt><dd id="webmcp-status">检测中</dd></div><div><dt>CDP Gateway</dt><dd>已暴露</dd></div><div><dt>数据策略</dt><dd id="data-policy">仅合成数据</dd></div></dl></section>
+      <section><h2>代理连接</h2><dl class="facts"><div><dt>命令契约</dt><dd>1.1.0</dd></div><div><dt>WebMCP</dt><dd id="webmcp-status">检测中</dd></div><div><dt>CDP Gateway</dt><dd>已暴露</dd></div><div><dt>AI 布局审查</dt><dd id="review-status">待完成</dd></div><div><dt>数据策略</dt><dd id="data-policy">仅合成数据</dd></div></dl></section>
       <section><h2>渲染指标</h2><pre id="metrics-output">尚无指标</pre></section>
       <section class="inspector-actions"><button id="undo-button" class="secondary" type="button">撤销一版</button><button id="reset-trust-button" class="secondary hidden" type="button">移除脚本并重置信任</button><button id="diagnostics-button" class="secondary" type="button">下载脱敏诊断</button></section>
     </aside>

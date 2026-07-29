@@ -10,6 +10,31 @@ function isEmbeddableUrl(url) {
   return true;
 }
 
+export function validAssetSource(source) {
+  const value = String(source || "").trim();
+  if (/^data:image\/(?:png|jpeg|gif|webp|svg\+xml)(?:;[^,]*)?,/i.test(value)) return true;
+  if (/^https:\/\//i.test(value)) return true;
+  return /^(?:\.\.?\/|\/)[^\s]+/.test(value);
+}
+
+export function validateAssetSlots(project) {
+  const errors = [];
+  const doc = new DOMParser().parseFromString(`<template id="pf-asset-scan">${project.templateHtml || ""}</template>`, "text/html");
+  const nodes = Array.from(doc.getElementById("pf-asset-scan").content.querySelectorAll("[data-pf-asset-slot]"));
+  nodes.forEach((node) => {
+    const slot = node.getAttribute("data-pf-asset-slot") || "";
+    const path = `/template/assets/${slot || "unknown"}`;
+    if (!/^[a-z][a-z0-9-]*$/.test(slot)) errors.push({ code: "ASSET_SLOT_INVALID", message: `Invalid asset slot: ${slot}`, path, severity: "error" });
+    if (!validAssetSource(node.getAttribute("src"))) errors.push({ code: "ASSET_SOURCE_UNSAFE", message: `Asset slot ${slot} requires an inline image, relative path, or HTTPS URL`, path, severity: "error" });
+    if (!node.getAttribute("alt")?.trim()) errors.push({ code: "ASSET_ALT_MISSING", message: `Asset slot ${slot} requires alt text`, path, severity: "error" });
+  });
+  (project.manifest?.assets?.requiredSlots || []).forEach((slot) => {
+    const count = nodes.filter((node) => node.getAttribute("data-pf-asset-slot") === slot).length;
+    if (count !== 1) errors.push({ code: "ASSET_SLOT_REQUIRED", message: `Required asset slot ${slot} must occur exactly once; found ${count}`, path: `/manifest/assets/requiredSlots/${slot}`, severity: "error" });
+  });
+  return { valid: errors.length === 0, errors, slots: nodes.map((node) => node.getAttribute("data-pf-asset-slot")) };
+}
+
 async function toDataUrl(url) {
   const response = await fetch(url, { credentials: "omit" });
   if (!response.ok) throw new Error(`Asset ${url} returned HTTP ${response.status}`);

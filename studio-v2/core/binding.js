@@ -1,5 +1,6 @@
 import { resolvePointer } from "./json.js";
 import { SAFE_URL_PROTOCOLS } from "./constants.js";
+import { translateFragment } from "./i18n.js";
 
 function formatValue(value, format, manifest, options = {}) {
   if (value === undefined || value === null) return "";
@@ -85,9 +86,12 @@ function bindChildren(parent, rootData, scope, manifest, report) {
   });
 }
 
-export function bindTemplate(template, data, manifest = {}) {
+export function bindTemplate(template, data, manifest = {}, options = {}) {
   const fragment = template.content.cloneNode(true);
-  const report = { bindings: 0, rows: 0, errors: [], warnings: [] };
-  bindChildren(fragment, data, data, manifest, report);
+  const locale = options.locale || manifest.locale || "en-MY";
+  const effectiveManifest = { ...manifest, locale };
+  const translation = translateFragment(fragment, options.i18n || {}, locale, manifest.i18n?.fallbackLocale || "en-MY");
+  const report = { bindings: 0, rows: 0, errors: [...translation.errors], warnings: [], translations: translation.translated, locale };
+  bindChildren(fragment, data, data, effectiveManifest, report);
   return { fragment, report };
 }

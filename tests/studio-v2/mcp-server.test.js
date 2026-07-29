@@ -31,7 +31,7 @@ describe("printform-studio-mcp stdio contract", () => {
       const tools = await server.receive();
       expect(tools.result.tools.map((tool) => tool.name)).toContain("preview_changes");
       expect(tools.result.tools.map((tool) => tool.name)).toContain("request_export");
-      expect(tools.result.tools).toHaveLength(10);
+      expect(tools.result.tools).toHaveLength(15);
     } finally { server.close(); }
   });
 });

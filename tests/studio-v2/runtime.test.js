@@ -7,7 +7,8 @@ function installSections(project) {
   document.head.innerHTML = `
     <title>Runtime test</title>
     <script id="pf-manifest" type="application/json">${JSON.stringify(project.manifest)}</script>
-    <script id="pf-schema" type="application/schema+json">${JSON.stringify(project.schema)}</script>`;
+    <script id="pf-schema" type="application/schema+json">${JSON.stringify(project.schema)}</script>
+    <script id="pf-i18n" type="application/json">${JSON.stringify(project.i18n)}</script>`;
   document.body.innerHTML = `
     <main id="pf-mount"></main>
     <template id="pf-template">${project.templateHtml}</template>
@@ -33,6 +34,7 @@ describe("PrintFormDocument runtime", () => {
   it("binds valid rows and returns a layout report", async () => {
     const project = createSalesInvoiceProject();
     project.sampleData.items = project.sampleData.items.slice(0, 1);
+    project.templateHtml = project.templateHtml.replace(/<img\b[^>]*>/gi, "");
     installSections(project);
     window.PrintForm = { formatAll: async () => {
       const form = document.querySelector(".printform");

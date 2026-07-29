@@ -1,7 +1,7 @@
 import { AGENT_CONTRACT_VERSION } from "../core/constants.js";
 import { TOOL_CONTRACTS } from "../core/tool-contracts.js";
 
-const MUTATIONS = new Set(["apply_changes", "set_sample_scenario", "undo_revision"]);
+const MUTATIONS = new Set(["apply_changes", "set_sample_scenario", "set_locale", "set_asset_source", "undo_revision"]);
 
 export function executeAgentCommand(bus, name, input) {
   if (bus.project.trust === "untrusted" && MUTATIONS.has(name)) {

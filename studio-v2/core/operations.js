@@ -6,6 +6,7 @@ export function cloneProject(project) {
     ...project,
     manifest: cloneJson(project.manifest),
     schema: cloneJson(project.schema),
+    i18n: cloneJson(project.i18n || {}),
     sampleData: cloneJson(project.sampleData),
     attestation: cloneJson(project.attestation),
     runtime: cloneJson(project.runtime),
@@ -47,9 +48,17 @@ function applyOperation(project, operation) {
   if (operation.type === "set_manifest_value") setJsonPath(project.manifest, operation.path, cloneJson(operation.value));
   else if (operation.type === "replace_manifest") project.manifest = cloneJson(operation.value);
   else if (operation.type === "replace_schema") project.schema = cloneJson(operation.value);
+  else if (operation.type === "replace_i18n") project.i18n = cloneJson(operation.value);
   else if (operation.type === "replace_sample_data") project.sampleData = cloneJson(operation.value);
   else if (operation.type === "replace_theme") project.themeCss = String(operation.value || "");
   else if (operation.type === "replace_template") project.templateHtml = String(operation.value || "");
+  else if (operation.type === "set_asset_slot") {
+    const template = templateDocument(project.templateHtml);
+    const matches = Array.from(template.content.querySelectorAll("[data-pf-asset-slot]")).filter((node) => node.getAttribute("data-pf-asset-slot") === operation.slot);
+    if (matches.length !== 1) throw Object.assign(new Error(`Asset slot must match exactly once: ${operation.slot} (matched ${matches.length})`), { code: "ASSET_SLOT_CARDINALITY" });
+    matches[0].setAttribute("src", String(operation.source || ""));
+    project.templateHtml = template.innerHTML.trim();
+  }
   else if (operation.type === "set_text") {
     const template = templateDocument(project.templateHtml);
     requireSelector(template, operation.selector).textContent = String(operation.value ?? "");
@@ -82,16 +91,17 @@ export function previewSourceEdit(project, section, content) {
     return candidate;
   }
   if (section === "schema") operation.type = "replace_schema";
+  else if (section === "i18n") operation.type = "replace_i18n";
   else if (section === "sampleData") operation.type = "replace_sample_data";
   else if (section === "theme") operation.type = "replace_theme";
   else if (section === "template") operation.type = "replace_template";
   else throw Object.assign(new Error(`Unknown section: ${section}`), { code: "UNKNOWN_SECTION" });
-  operation.value = ["schema", "sampleData"].includes(section) ? parseJson(content, section) : content;
+  operation.value = ["schema", "i18n", "sampleData"].includes(section) ? parseJson(content, section) : content;
   return applyOperations(project, [operation]);
 }
 
 export function diffProjects(before, after) {
-  const sections = ["manifest", "schema", "themeCss", "templateHtml", "sampleData", "trust"];
+  const sections = ["manifest", "schema", "i18n", "themeCss", "templateHtml", "sampleData", "trust"];
   const changedSections = sections.filter((key) => {
     const left = typeof before[key] === "object" ? stableStringify(before[key]) : String(before[key]);
     const right = typeof after[key] === "object" ? stableStringify(after[key]) : String(after[key]);

@@ -68,4 +68,8 @@ Chrome 149 or newer currently requires `--enable-features=WebMCPTesting,DevTools
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
 4. Use `preview_changes` with the current revision before `apply_changes`.
-5. Resolve validation errors in Studio, then ask the engineer to click **生产导出**.
+5. Exercise `default` and `long-text`, then inspect full-page screenshots rather than relying on metrics alone.
+6. Call `begin_layout_review`, repair every major or critical finding, and call `complete_layout_review` with screenshot and layout-metric evidence for the current revision.
+7. Confirm `request_export` returns `ready: true`, then ask the engineer to click **生产导出**.
+
+Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming completion. Studio limits automated review to three passes per revision.

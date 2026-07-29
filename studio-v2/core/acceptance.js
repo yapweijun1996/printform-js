@@ -1,5 +1,7 @@
 import { LIMITS, PROTOCOL_VERSION, TRUST, protocolMajor } from "./constants.js";
 import { validateData, validateSchemaProfile } from "./schema.js";
+import { validateAssetSlots } from "./assets.js";
+import { validateI18n } from "./i18n.js";
 
 function error(code, message, path = "/") {
   return { code, message, path, severity: "error" };
@@ -77,6 +79,8 @@ export function validateProject(project, options = {}) {
     const dataReport = validateData(project.schema, project.sampleData);
     errors.push(...dataReport.errors);
   }
+  errors.push(...validateI18n(project).errors);
+  errors.push(...validateAssetSlots(project).errors);
   const limits = {
     maxHtmlBytes: LIMITS.htmlBytes,
     maxRows: LIMITS.rows,
@@ -113,6 +117,12 @@ export function inspectRenderedDocument(doc, manifest) {
     });
   });
   if (overflow.length) errors.push(error("HORIZONTAL_OVERFLOW", `${overflow.length} rendered elements overflow horizontally`));
+  const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
+  const expectedPageHeight = Number(templateRoot?.dataset.papersizeHeight) || 0;
+  const verticalOverflow = expectedPageHeight
+    ? Array.from(pages).filter((page) => Math.max(page.scrollHeight, page.getBoundingClientRect().height) > expectedPageHeight + 1)
+    : [];
+  if (verticalOverflow.length) errors.push(error("VERTICAL_OVERFLOW", `${verticalOverflow.length} logical pages exceed the ${expectedPageHeight}px page height`));
   if (!doc.documentElement.lang) errors.push(error("LANG_MISSING", "Exported document requires an html lang attribute"));
   if (!doc.title.trim()) errors.push(error("TITLE_MISSING", "Exported document requires a title"));
   doc.querySelectorAll("img:not([alt])").forEach(() => errors.push(error("IMAGE_ALT_MISSING", "Every image requires alt text")));
@@ -121,5 +131,5 @@ export function inspectRenderedDocument(doc, manifest) {
   const lowContrast = contrastFailures(doc);
   if (lowContrast.length) errors.push(error("CONTRAST_FAILURE", `${lowContrast.length} text elements do not meet WCAG contrast thresholds`));
   warnings.push(warning("PRINT_PREVIEW_REQUIRED", "Confirm fonts, DPI and page margins in the system print preview"));
-  return { valid: errors.length === 0, errors, warnings, metrics: { logicalPages: pages.length, overflowElements: overflow.length, contrastFailures: lowContrast.length } };
+  return { valid: errors.length === 0, errors, warnings, metrics: { logicalPages: pages.length, overflowElements: overflow.length, verticalOverflowPages: verticalOverflow.length, contrastFailures: lowContrast.length } };
 }

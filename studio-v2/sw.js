@@ -6,11 +6,12 @@ const APP_SHELL = [
   "./styles/base.css", "./styles/layout.css", "./styles/components.css",
   "./ui/app.js", "./ui/file-io.js", "./ui/draft-cache.js", "./ui/preview.js",
   "./adapters/gateway.js", "./adapters/webmcp.js",
-  "./core/constants.js", "./core/json.js", "./core/schema.js", "./core/binding.js",
+  "./core/constants.js", "./core/json.js", "./core/schema.js", "./core/binding.js", "./core/typography.js", "./core/i18n.js",
   "./core/acceptance.js", "./core/project-model.js", "./core/operations.js",
   "./core/history.js", "./core/command-bus.js", "./core/tool-contracts.js",
   "./core/sample-scenarios.js", "./core/migrations.js", "./core/assets.js", "./core/exporter.js",
-  "./samples/sales-invoice.js", "../dist/printform.js", "../dist/printform-document.js"
+  "./core/layout-review.js", "./core/logo-placeholder.js",
+  "./samples/sales-invoice.js", "./samples/sales-invoice-i18n.js", "../dist/printform.js", "../dist/printform-document.js"
 ];
 
 self.addEventListener("install", (event) => {

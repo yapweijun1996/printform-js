@@ -64,6 +64,7 @@ export function installPrintFormDocument(globalScope = globalThis) {
     const current = ++generation;
     const startedAt = performance.now();
     const manifest = readJson(doc, SECTION_IDS.manifest);
+    const i18n = doc.getElementById(SECTION_IDS.i18n) ? readJson(doc, SECTION_IDS.i18n) : {};
     const actualData = data === undefined ? readJson(doc, SECTION_IDS.sampleData) : data;
     const template = doc.getElementById(SECTION_IDS.template);
     const mount = doc.getElementById("pf-mount");
@@ -73,7 +74,12 @@ export function installPrintFormDocument(globalScope = globalThis) {
       return finish({ status: "blocked", validation, metrics: { durationMs: performance.now() - startedAt } }, mount, true);
     }
     if (!template || !mount) return finish({ status: "blocked", validation: { valid: false, errors: [{ code: "RUNTIME_MOUNT", path: "/", message: "Template or mount is missing" }], warnings: [] } }, mount, true);
-    const bound = bindTemplate(template, actualData, manifest);
+    const locale = options.locale || manifest.locale || "en-MY";
+    if (manifest.i18n?.supportedLocales?.length && !manifest.i18n.supportedLocales.includes(locale)) {
+      return finish({ status: "blocked", validation: { valid: false, errors: [{ code: "LOCALE_UNSUPPORTED", path: "/options/locale", message: `Locale ${locale} is not supported by this document` }], warnings: [] } }, mount, true);
+    }
+    doc.documentElement.lang = locale;
+    const bound = bindTemplate(template, actualData, manifest, { i18n, locale });
     validation.errors.push(...bound.report.errors);
     validation.warnings.push(...bound.report.warnings);
     if (validation.errors.length) return finish({ status: "blocked", validation: { ...validation, valid: false }, binding: bound.report }, mount, true);

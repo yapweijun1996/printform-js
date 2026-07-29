@@ -12,7 +12,7 @@ import { listenForPreview, renderPreview } from "./preview.js";
 
 const $ = (selector) => document.querySelector(selector);
 const editors = {
-  manifest: $("#manifest-editor"), schema: $("#schema-editor"), theme: $("#theme-editor"),
+  manifest: $("#manifest-editor"), schema: $("#schema-editor"), i18n: $("#i18n-editor"), theme: $("#theme-editor"),
   template: $("#template-editor"), sampleData: $("#sample-editor")
 };
 let bus;
@@ -33,9 +33,11 @@ function toast(message) {
 function setEditors(project) {
   editors.manifest.value = stableStringify(project.manifest);
   editors.schema.value = stableStringify(project.schema);
+  editors.i18n.value = stableStringify(project.i18n || {});
   editors.theme.value = project.themeCss;
   editors.template.value = project.templateHtml;
   editors.sampleData.value = stableStringify(project.sampleData);
+  $("#locale-select").value = project.manifest.locale || "en-MY";
   $("#revision-label").textContent = `Revision ${bus.revision}`;
 }
 
@@ -54,6 +56,8 @@ function renderQuality(validation) {
     list.appendChild(li);
   });
   $("#export-button").disabled = !validation.productionValid;
+  const review = validation.reviewReceipt;
+  $("#review-status").textContent = review ? `通过 · Revision ${review.reviewedRevision}` : "待完成";
   $("#reset-trust-button").classList.toggle("hidden", bus.project.trust !== "untrusted");
 }
 
@@ -85,6 +89,7 @@ function installBus(project, reason = "load") {
     schedulePreview();
     if (!$("#real-data-mode").checked) saveRecoveryDraft(event.detail.project, fingerprint);
   });
+  bus.addEventListener("review", () => renderQuality(bus.readiness()));
   setEditors(project);
   renderQuality(bus.readiness());
   schedulePreview();
@@ -95,6 +100,7 @@ function sourceOperations() {
   return [
     { type: "replace_manifest", value: JSON.parse(editors.manifest.value) },
     { type: "replace_schema", value: JSON.parse(editors.schema.value) },
+    { type: "replace_i18n", value: JSON.parse(editors.i18n.value) },
     { type: "replace_theme", value: editors.theme.value },
     { type: "replace_template", value: editors.template.value },
     { type: "replace_sample_data", value: JSON.parse(editors.sampleData.value) }
@@ -113,6 +119,19 @@ async function applySource() {
     if (!result.ok) throw new Error(result.error.message);
     toast(`已应用 Revision ${result.result.revision}`);
   } catch (error) { toast(`无法应用：${error.message}`); }
+}
+
+async function applyLogoSources() {
+  try {
+    const sources = [["letterhead-logo", $("#letterhead-logo-source")], ["footer-logo", $("#footer-logo-source")]].filter(([, input]) => input.value.trim());
+    if (!sources.length) throw new Error("请先填写至少一个 Logo URL");
+    for (const [slot, input] of sources) {
+      const result = await bus.execute("set_asset_source", { expectedRevision: bus.revision, slot, source: input.value.trim() });
+      if (!result.ok) throw new Error(result.error.message);
+      input.value = "";
+    }
+    toast("Logo 已写入隔离草稿；请等待重新分页并完成 AI 布局审查");
+  } catch (error) { toast(`Logo 替换失败：${error.message}`); }
 }
 
 async function importFile(file) {
@@ -192,6 +211,8 @@ function bindUi() {
   $("#print-button").addEventListener("click", openPrintPreview);
   $("#undo-button").addEventListener("click", async () => { const result = await bus.execute("undo_revision", { expectedRevision: bus.revision }); if (!result.ok) toast(result.error.message); });
   $("#scenario-select").addEventListener("change", async (event) => { const result = await bus.execute("set_sample_scenario", { expectedRevision: bus.revision, scenario: event.target.value }); if (!result.ok) toast(result.error.message); });
+  $("#locale-select").addEventListener("change", async (event) => { const result = await bus.execute("set_locale", { expectedRevision: bus.revision, locale: event.target.value }); if (!result.ok) toast(result.error.message); });
+  $("#apply-logo-button").addEventListener("click", applyLogoSources);
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);
   $("#real-data-mode").addEventListener("change", (event) => { $("#data-policy").textContent = event.target.checked ? "真实数据：仅本会话，不缓存" : "仅合成数据"; if (event.target.checked) clearRecoveryDraft(); });
