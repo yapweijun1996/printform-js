@@ -16,7 +16,9 @@
 
 ### 🎨 PrintForm Studio —— 可视化调试工具
 
-生产项目请打开 [studio-v2/index.html](studio-v2/index.html)：它以单一 `.html` 为事实来源，提供声明式 JSON Pointer 数据绑定、固定哈希 runtime、质量门、WebMCP 渐进增强和离线 PWA。工程师下载后仍可直接阅读和手改 HTML。协议说明见 [docs/PRINTFORM_V2_PROTOCOL.zh-CN.md](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md)。
+Studio v2 当前是面向 ERP 工程师的 **Production Pilot**，不是无代码自由画布。请打开 [studio-v2/index.html](studio-v2/index.html)：它以单一 `.html` 为事实来源，提供声明式 JSON Pointer 数据绑定、内嵌 runtime、质量门、WebMCP 渐进增强和离线 PWA。工程师下载后仍可阅读和手改 HTML。
+
+先阅读 [Studio v2 文档索引](docs/STUDIO_V2_INDEX.zh-CN.md)了解 Current、Target 与 Backlog；当前文件契约见[单 HTML 协议](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md)，Codex／Claude Code 接入见 [Agent setup](studio-v2/AGENT_SETUP.md)。只有六项 P0 生产硬门全部完成后，v2 才可改称 Production Ready。
 
 原有 [studio/index.html](studio/index.html) 继续作为冻结的 v1 调试工具，不自动迁移旧模板：
 
@@ -76,8 +78,8 @@ npm run dev
 
 ```html
 <!-- 容器：定义纸张大小 (例如 A4 宽 750px 高 1050px) -->
-<div class="printform" 
-     data-papersize-width="750" 
+<div class="printform"
+     data-papersize-width="750"
      data-papersize-height="1050">
 
     <!-- 1. 页眉 (每页顶部重复) -->
@@ -96,7 +98,7 @@ npm run dev
 
     <!-- 5. 页脚 (默认只在最后一页，可配置重复) -->
     <div class="pfooter">...</div>
-    
+
 </div>
 
 <!-- 引入脚本 -->

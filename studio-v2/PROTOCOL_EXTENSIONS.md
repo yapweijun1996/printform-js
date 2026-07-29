@@ -1,5 +1,7 @@
 # PrintForm Studio v2 declarative extensions
 
+> Maturity: **Production Pilot**. The locale, print i18n and image-slot sections describe Current behavior. The review section distinguishes the current Pilot gate from the Production Ready target.
+
 ## Studio interface language
 
 The Studio interface and the printed document have independent locale controls.
@@ -43,8 +45,13 @@ the content attestation remain valid.
 
 ## AI layout review gate
 
-Production readiness requires a layout review receipt bound to the current
-revision. The agent must provide full-page screenshot and layout-metric evidence
-for default and long-text scenarios. Major and critical findings must be fixed.
-Any subsequent change invalidates the receipt; a person still performs the final
-production export click and system print-preview confirmation.
+Current Pilot behavior requires a layout review receipt bound to the current
+revision. The agent submits `full-page-screenshot` and `layout-metrics` labels
+for default and long-text scenarios. Major and critical findings must be fixed,
+and any subsequent change invalidates the receipt. These labels are policy-level
+claims; Studio does not currently store and sign the underlying screenshots.
+
+The Production Ready target replaces labels with Studio-issued evidence IDs
+bound to browser, scenario, revision, candidate hash, screenshot hash and render
+report. Until that target is implemented, a person must inspect system print
+preview and treat the result as a controlled Pilot export.

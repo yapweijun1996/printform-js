@@ -6,8 +6,6 @@
 
 Its core function is: **automatically splitting a long HTML container (`.printform`) into multiple pages that fit the print paper size**. It handles headers, footers, repeated table headers, page number updates, and dummy row filling automatically.
 
----
-
 ## 📚 Documentation Navigator
 
 ### 🚀 Getting Started
@@ -21,17 +19,18 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 
 ### 🎨 PrintForm Studio
 
-A zero-dependency visual workbench for building and tuning templates — no code required.
+Studio v2 is a Production Pilot for ERP engineers. It builds inspectable, self-contained print-form HTML; it is not a no-code freeform canvas.
 
 | I want to... | Read this |
 |--------------|-----------|
-| **Build a production single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
-| **Try it now** | Open [studio/index.html](studio/index.html) (needs a local server — see [Quick Start](#1-start-server) below) |
+| **Build a Pilot single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
+| **Understand v2 status and roadmap** | [Studio v2 documentation index](docs/STUDIO_V2_INDEX.zh-CN.md) (authoritative Chinese) |
 | **Understand the v2 single-HTML contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
-| **See what it can do** | [Studio Design Doc](docs/STUDIO_DESIGN.zh-CN.md) - Config playground, block editor, data binding (Chinese) |
+| **Connect Codex or Claude Code** | [Agent setup](studio-v2/AGENT_SETUP.md) |
+| **Maintain the legacy v1 Studio** | [Studio v1 Design Doc](docs/STUDIO_DESIGN.zh-CN.md) (Chinese) |
 | **Bind a template to real data / connect an ERP backend** | [ERP Integration Guide](docs/ERP_INTEGRATION.zh-CN.md) - `{{ }}` placeholders, `PrintFormTemplate.render(data)`, ColdFusion example (Chinese) |
 
-Studio v2 is the production path and exports one self-contained `.html` with declarative JSON Pointer bindings, a pinned runtime and validation attestation. The original Studio remains available as the legacy playground and is not migrated automatically.
+Studio v2 is the intended production path and currently has **Production Pilot** maturity. It exports one self-contained `.html` with declarative JSON Pointer bindings, embedded runtimes and current validation records. Production Ready remains gated by the documented transaction, evidence, channel-security, attestation and content-integrity work. The original Studio remains a frozen legacy playground and is not migrated automatically.
 
 ### 💻 Development
 
@@ -102,8 +101,8 @@ Create a `div` with `class="printform"` and configure the paper size.
 
 ```html
 <!-- Container: Define paper size (e.g. A4 width 750px height 1050px) -->
-<div class="printform" 
-     data-papersize-width="750" 
+<div class="printform"
+     data-papersize-width="750"
      data-papersize-height="1050">
 
     <!-- 1. Header (Repeated at top of every page) -->
@@ -122,7 +121,7 @@ Create a `div` with `class="printform"` and configure the paper size.
 
     <!-- 5. Footer (Defaults to last page; configurable) -->
     <div class="pfooter">...</div>
-    
+
 </div>
 
 <!-- Include script -->

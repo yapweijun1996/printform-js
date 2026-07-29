@@ -1,5 +1,8 @@
 # PrintForm Studio — 产品设计文档
 
+> **Legacy v1 文档：本文只描述冻结的 `studio/`，不是 Studio v2 的产品、协议或安全规范。**
+>
+> Studio v2 请从 [v2 文档索引](STUDIO_V2_INDEX.zh-CN.md) 开始阅读。
 > 状态: v1.3 (Phase 1、Phase 2、Phase 3 均已实现并验证;验收标准见对应章节;ERP 对接见 [ERP_INTEGRATION.zh-CN.md](ERP_INTEGRATION.zh-CN.md))
 > 日期: 2026-07-19
 > 前置阅读: [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md), [docs/CONFIGURATION.md](CONFIGURATION.md)

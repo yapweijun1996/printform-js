@@ -1,36 +1,55 @@
 # PrintForm Studio v2 发布检查表
 
-## 自动质量门
+> 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和未来 Production Ready 硬门；不得把 Target 项勾选为当前已实现。
+
+## Production Pilot 自动检查
 
 - `npm ci`
 - `npm audit --audit-level=moderate`
+- `npm test -- --run`
+- `npm run build:site`
 - `npm run test:e2e`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
+- `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
 - 确认 Pages artifact 只包含 `site-dist/`，不包含源码仓库或开发凭证。
 
-## 真实浏览器烟测
+## Production Pilot 浏览器烟测
 
-每次发布在 Chrome、Edge、Firefox、Safari 当前稳定版执行；前一稳定版至少回归“导入 → 预览 → 导出 → 独立打开”。移动浏览器只验证查看与数据渲染。
+在 Chrome、Edge、Firefox、Safari 当前稳定版检查 Sales Invoice 与 Purchase Order。前一稳定版至少回归“导入 → 预览 → 人工导出 → 独立打开”。移动浏览器只验证查看与数据渲染。
 
-对销售发票依次检查：
+- 切换空值、1、45、100、500 行、长文本和五种语言场景。
+- 人工检查内容数量、顺序、重复、遗漏、重叠、越界、页码及重复区。
+- 检查采购订单每页 document info、表头，以及最后页合计、条款和签名。
+- 非法类型、坏 URL、资源失败、容量超限和已支持的 hash 错误必须阻断。
+- WebMCP、第一方 CDP bridge 和 Studio UI 对当前命令返回一致结果与错误码。
+- 自定义脚本必须降级为 `Untrusted`，且不能生成生产有效凭证。
+- 导出的单 HTML 在断网状态自动渲染，并可重复调用 `PrintFormDocument.render(data)`。
 
-- 45 行默认样本无丢失、重叠、越界，页码及顺序正确。
-- 切换空值、1、100、500 行、长文本和多语言场景。
-- 非法类型、坏 URL、资源失败、超过限制和 runtime 哈希错误必须阻断。
-- WebMCP、第一方 CDP bridge 和 Studio UI 对同一命令返回一致结果与错误码。
-- 自定义脚本会降级为 `Untrusted`；清除脚本并人工确认后才可恢复受信状态。
-- 导出的单 HTML 在断网状态可独立自动渲染，也可重复调用 `PrintFormDocument.render(data)`。
+当前布局指标不能单独证明“无重叠、无遗漏”；Pilot 必须保留人工全页审查。
 
 ## 系统打印预览
 
-- 在每个桌面浏览器打开系统打印预览，使用默认缩放、正确纸张和边距。
-- 检查字体替换、DPI、页眉页脚、表格列、分页边界和最后一页合计。
-- 浏览器之间不要求像素一致，但共同硬标准是不丢内容、不重叠、不越界、顺序及页码正确。
-- 保存每个浏览器自己的截图／打印基线并记录可接受容差。
+- 使用默认缩放、正确纸张和边距，检查字体替换、DPI、表格列和分页边界。
+- 四个浏览器分别保存自己的截图／打印基线和容差。
+- 不要求跨引擎像素一致；共同硬标准是不丢失、不重复、不乱序、不重叠、不越界，页码与重复区正确。
+- 工程师确认打印驱动设置，并保留最后一次人工验收记录。
+
+## Production Ready 硬门（Target）
+
+以下六项必须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免：
+
+1. 候选项目真实分页 dry-run，并返回绑定 candidate hash 的 preview receipt。
+2. revision 永不复用，所有写入按有效 receipt 原子提交。
+3. Studio 签发截图与场景 Evidence Receipt，Agent 不能自我声明证据。
+4. Preview channel 验证目标 frame、nonce、revision 和 candidate hash。
+5. Attestation 覆盖两段 runtime、CSP、权威内容与真实浏览器 receipt。
+6. 自动验证内容数量、顺序、重复、遗漏、重叠、越界与重复区完整性。
+
+硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 
 - 没有未保存草稿时才接受 PWA 更新。
-- 人工点击“生产有效”并下载最终 HTML；AI/MCP 不得代替此确认。
-- 记录协议版本、runtime SHA-256、浏览器矩阵和验证摘要。
-- 不上传真实 ERP 数据、缓存、日志或默认遥测；诊断包只由用户主动导出和分享。
+- AI/MCP 只能取得 readiness；工程师必须亲自确认系统打印预览并点击导出。
+- 记录协议、Studio、runtime 版本及当前实际完成的浏览器矩阵。
+- 未知导入按真实 ERP 数据处理；不默认上传缓存、日志、截图或遥测。

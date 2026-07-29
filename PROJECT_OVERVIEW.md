@@ -45,7 +45,7 @@ flowchart TD
         Measure[c. 测量高度 (dom.js)]
         Render[d. 分页渲染 (pagination-render.js)]
         Finalize[e. 填充和完成 (pagination-finalize.js)]
-        
+
         Config --> Collect --> Measure --> Render --> Finalize
     end
 
@@ -99,7 +99,7 @@ PrintForm.js 识别以下区块类型:
 | 技术 | 版本 | 用途 |
 |------|------|------|
 | **JavaScript** | ES6+ | 核心逻辑 |
-| **Vite** | 5.4.0 | 构建工具 |
+| **Vite** | 8.1.5 | 构建工具 |
 | **无外部依赖** | - | 纯 Vanilla JS |
 
 ---
@@ -120,7 +120,8 @@ PrintForm.js 识别以下区块类型:
 | **查看所有配置** | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | **开发和扩展** | [DEVELOPER_BOOK.md](DEVELOPER_BOOK.md) |
 | **了解自动化文档** | [docs/AUTO_DOC_GENERATION_GUIDE.md](docs/AUTO_DOC_GENERATION_GUIDE.md) |
-| **可视化调参 / 不写代码试模板** | [studio/index.html](studio/index.html)(设计文档见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md)) |
+| **使用 Studio v2 Production Pilot** | [studio-v2/index.html](studio-v2/index.html)（先读 [v2 文档索引](docs/STUDIO_V2_INDEX.zh-CN.md)） |
+| **维护冻结的 Studio v1** | [studio/index.html](studio/index.html)（设计文档见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md)） |
 | **接 ERP / 后端数据绑定** | [docs/ERP_INTEGRATION.zh-CN.md](docs/ERP_INTEGRATION.zh-CN.md) |
 
 ---
@@ -178,7 +179,7 @@ data-n-up="2"
 
 ## 📄 许可证
 
-[查看 LICENSE 文件]
+当前仓库尚未提供 LICENSE 文件；在 P3 发布治理完成前，不应推定额外授权条款。
 
 ---
 
@@ -188,5 +189,5 @@ data-n-up="2"
 
 ---
 
-**最后更新:** 2026-01-16  
+**最后更新:** 2026-07-30
 **版本:** 0.0.0

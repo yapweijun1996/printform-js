@@ -1,6 +1,8 @@
 # Codex / Claude Code agent setup
 
-PrintForm Studio v2 exposes one versioned command contract through two thin bridges. Both routes modify only the Studio draft. A person must still approve the final production export in the PWA.
+> Maturity: **Production Pilot**. This file documents the current Agent Contract returned by `get_capabilities`; the Production Ready target is documented in the [Chinese v2 index](../docs/STUDIO_V2_INDEX.zh-CN.md) and [trust model](../docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md).
+
+PrintForm Studio v2 exposes one versioned command contract through two thin bridges. Both routes modify only the Studio draft. A person must still inspect system print preview and approve the final export in the PWA.
 
 ## Link-only agent bootstrap
 
@@ -23,7 +25,7 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 - Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
 - Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
 - The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
-- WebMCP and CDP tools never return sample row values. Enable real-data mode only for the current session; it disables draft recovery caching.
+- WebMCP and CDP tools never return sample row values. In the current Pilot UI, engineers must enable real-data mode for the current session to disable draft recovery caching. The Production Ready target treats every unknown import as possible real ERP data by default.
 
 ## Recommended Chrome DevTools MCP WebMCP route
 
@@ -92,15 +94,19 @@ The fallback launcher now uses Chrome 150's `WebMCP,DevToolsWebMCPSupport` featu
 
 ## Connection check
 
+The steps below exercise the **current Pilot contract**. Its review evidence values are Agent-submitted labels, not Studio-issued screenshot receipts; passing them does not by itself prove Production Ready.
+
 1. Open the Studio v2 PWA in the isolated profile. Use `?sample=purchase-order-red` for the Crimson purchase-order pilot or select it from **Standard sample**.
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
 4. Use `preview_changes` with the current revision before `apply_changes`.
-5. Exercise `default` and `long-text`, then inspect full-page screenshots rather than relying on metrics alone.
-6. Call `begin_layout_review`, repair every major or critical finding, and call `complete_layout_review` with screenshot and layout-metric evidence for the current revision.
-7. Confirm `request_export` returns `ready: true`, then ask the engineer to click **Production export**.
+5. Exercise `default` and `long-text`, then manually inspect full-page screenshots rather than relying on metrics alone.
+6. Call `begin_layout_review`, repair every major or critical finding, and call the current `complete_layout_review` with `full-page-screenshot` and `layout-metrics` evidence labels for the current revision.
+7. Treat the resulting receipt as Pilot evidence only. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.
 
-Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming completion. Studio limits automated review to three passes per revision.
+Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. Studio limits automated review to three passes per revision. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
+
+Agent Contract 2.0 will replace self-declared evidence labels with Studio-issued evidence IDs and make `apply_changes` consume a real preview receipt. This is Target behavior and is not available until `get_capabilities` reports the 2.0 contract.
 
 ## Production sample artifacts
 

@@ -1,5 +1,7 @@
 # PrintForm 单 HTML 协议 v2
 
+> 状态：**Current / Production Pilot**。本文只描述仓库当前实现；Production Ready 目标接口与硬门见 [v2 文档索引](STUDIO_V2_INDEX.zh-CN.md) 和 [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)。
+
 ## 目标
 
 v2 文件是一份可直接打开、可复制、可手改、可离线打印的 HTML。Studio、WebMCP、第一方 MCP 和 Headless validator 都读取同一组区块；不存在隐藏项目文件。
@@ -43,7 +45,9 @@ await PrintFormDocument.render(data, options)
 
 - 受信文件只能包含两个固定 executable script：`pf-document-runtime` 和 `pf-printform-runtime`。
 - 任意工程师脚本会把文件降级为 `Untrusted`；Studio 可在无同源、无网络 sandbox 预览，也可人工导出，但不能产生生产有效凭证。
-- `pf-attestation` 是防篡改记录，不是组织数字签名。手改任何权威内容或 runtime 后，Headless validator 会报告哈希失配。
+- `pf-attestation` 是防篡改记录，不是组织数字签名。当前 validator 会验证已支持的内容与 document runtime hash；完整覆盖两段 runtime、CSP 和真实浏览器证据属于 Target。
+
+当前 review receipt 依赖 Agent 提交的证据标签，`preview_changes` 也尚未真实分页候选项目。因此当前文件与 Studio 只能按 Production Pilot 验收，不能仅凭 receipt 宣称 Production Ready。
 
 ## JSON Schema Profile
 
@@ -56,3 +60,5 @@ npm run validate:v2 -- path/to/document.html
 ```
 
 命令输出机器可读 JSON，只做协议、数据、信任、容量与哈希验证。分页、越界和字体仍必须使用 Playwright／真实浏览器验证。
+
+Current validator 不等于浏览器布局证明。内容数量、顺序、遗漏、重叠和双 runtime 完整证明的 Target 设计见[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。

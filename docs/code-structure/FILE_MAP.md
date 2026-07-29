@@ -48,7 +48,11 @@ src/
 - `USAGE_GUIDE.md` / `USAGE_GUIDE.zh-CN.md`: usage rules and pitfalls
 - `LOGIC_DIAGRAM.md` / `LOGIC_DIAGRAM.zh-CN.md`: flowchart
 - `AUTO_DOC_GENERATION_GUIDE.md`, `MAINTAINING_DOCS.md`: doc maintenance
-- `STUDIO_DESIGN.zh-CN.md`: PrintForm Studio design doc (Phases 1–3, acceptance criteria)
+- `STUDIO_V2_INDEX.zh-CN.md`: authoritative v2 documentation entry and maturity matrix
+- `STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md`: ERP-engineer product positioning and metrics
+- `STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md`: Current Pilot limits and Target Agent Contract 2.0
+- `STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md`: P0–P3 implementation sequence and exit criteria
+- `STUDIO_DESIGN.zh-CN.md`: frozen Studio v1 design history
 - `ERP_INTEGRATION.zh-CN.md`: data-binding placeholder syntax + backend integration guide
 
 ---
@@ -63,7 +67,7 @@ src/
 
 ## Studio (`studio/`)
 
-Zero-dependency visual tool for building/tuning templates — no bundler, no build step, opened directly as a static HTML file (see [STUDIO_DESIGN.zh-CN.md](../STUDIO_DESIGN.zh-CN.md)).
+Frozen zero-dependency v1 visual tool for building/tuning templates — no bundler, no build step, opened directly as a static HTML file (see [STUDIO_DESIGN.zh-CN.md](../STUDIO_DESIGN.zh-CN.md)).
 
 ```
 studio/
@@ -81,7 +85,7 @@ studio/
 
 ## Studio v2 (`studio-v2/`)
 
-The production single-HTML editor. The legacy `studio/` remains independent.
+The intended production single-HTML editor, currently at Production Pilot maturity. The legacy `studio/` remains independent; see the [v2 documentation index](../STUDIO_V2_INDEX.zh-CN.md).
 
 ```
 studio-v2/
