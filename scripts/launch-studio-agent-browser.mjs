@@ -22,7 +22,7 @@ const child = spawn(chrome, [
   "--remote-debugging-port=9222",
   "--no-first-run",
   "--no-default-browser-check",
-  "--enable-features=WebMCPTesting,DevToolsWebMCPSupport",
+  "--enable-features=WebMCP,DevToolsWebMCPSupport",
   `--app=${studioUrl}`
 ], { detached: true, stdio: "ignore" });
 child.unref();

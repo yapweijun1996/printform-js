@@ -4,11 +4,35 @@ PrintForm Studio v2 exposes one versioned command contract through two thin brid
 
 ## Safety boundary
 
-- Use the dedicated Chrome profile launched by this repository. Do not connect the bridge to a daily authenticated browser profile.
-- The bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`.
+- Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
+- Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
+- The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
 - WebMCP and CDP tools never return sample row values. Enable real-data mode only for the current session; it disables draft recovery caching.
 
-## First-party CDP bridge
+## Recommended Chrome DevTools MCP WebMCP route
+
+Studio progressively registers `document.modelContext` tools when the browser enables WebMCP. The configuration below was verified against Chrome 150 and `chrome-devtools-mcp` 1.6.0 on 2026-07-30. Chrome DevTools MCP launches Chrome itself, injects the required feature flags, and creates an isolated temporary profile; engineers do not run or clean up a separate browser profile.
+
+```toml
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = [
+  "-y",
+  "chrome-devtools-mcp@1.6.0",
+  "--isolated=true",
+  "--categoryExperimentalWebmcp=true",
+  "--chromeArg=--enable-features=WebMCP,DevToolsWebMCPSupport",
+  "--allowedUrlPattern=https://yapweijun1996.github.io/printform-js/*",
+  "--usageStatistics=false",
+  "--performanceCrux=false",
+]
+```
+
+Restart the MCP client after changing its configuration. Then open the production Studio with the Chrome DevTools `new_page` tool and call `list_webmcp_tools`; execute `get_capabilities` before any revision-bound command.
+
+`--autoConnect` can attach to a running Chrome 144+ profile after the user enables remote debugging at `chrome://inspect/#remote-debugging`. It is not the production default: it exposes every open tab in the selected profile, and `--chromeArg` cannot inject WebMCP feature flags into a browser that MCP did not launch.
+
+## First-party CDP fallback
 
 From the repository:
 
@@ -32,35 +56,7 @@ Configure an MCP client with an absolute repository path:
 
 For local development, launch the browser with `PRINTFORM_STUDIO_URL=http://127.0.0.1:5173/studio-v2/`. A non-default origin must also be passed to the server with `--studio-origin`.
 
-## Official Chrome DevTools MCP WebMCP bridge
-
-Studio progressively registers `document.modelContext` tools when the browser enables WebMCP. The configuration below was verified against Chrome 150 and `chrome-devtools-mcp` 1.6.0 on 2026-07-29. Start the repository's isolated browser first so the required `WebMCPTesting,DevToolsWebMCPSupport` Chrome features and non-default profile are always present:
-
-```bash
-npm run studio:agent-browser
-```
-
-Then pin the MCP bridge and connect it to that dedicated debugging port:
-
-```json
-{
-  "mcpServers": {
-    "chrome-devtools": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@1.6.0",
-        "--browser-url=http://127.0.0.1:9222",
-        "--category-experimental-webmcp=true",
-        "--usage-statistics=false",
-        "--performance-crux=false"
-      ]
-    }
-  }
-}
-```
-
-Chrome 149 or newer currently requires `--enable-features=WebMCPTesting,DevToolsWebMCPSupport`. Verify the official flag names before upgrading Chrome DevTools MCP; the Studio core remains usable through UI and the first-party bridge if the experimental API changes. The usage-statistics and CrUX switches are disabled above to preserve Studio's no-default-telemetry policy.
+The fallback launcher now uses Chrome 150's `WebMCP,DevToolsWebMCPSupport` features and an explicit repository-local profile on port 9222. Use it when an MCP client cannot launch Chrome directly. Verify the official flag names before upgrading Chrome DevTools MCP; the Studio core remains usable through UI and the first-party bridge if the experimental API changes.
 
 ## Connection check
 
