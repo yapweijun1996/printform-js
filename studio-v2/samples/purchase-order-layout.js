@@ -56,7 +56,7 @@ ${PRINT_TYPOGRAPHY_CSS}
 
 export const PURCHASE_ORDER_TEMPLATE = `
 <section class="printform" data-papersize-width="750" data-papersize-height="1050"
-  data-height-of-dummy-row-item="26" data-repeat-header="y" data-repeat-docinfo="n"
+  data-height-of-dummy-row-item="26" data-repeat-header="y" data-repeat-docinfo="y"
   data-repeat-rowheader="y" data-repeat-footer="n" data-repeat-footer-logo="y" data-repeat-footer-pagenum="y"
   data-repeat-ptac-rowheader="n"
   data-insert-dummy-row-item-while-format-table="n" data-insert-footer-spacer-while-format-table="n"

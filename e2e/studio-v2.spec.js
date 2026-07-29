@@ -107,9 +107,12 @@ test("renders the Crimson purchase order in five languages and boundary layouts"
 test("opens the generated Crimson purchase order as one self-contained HTML", async ({ page }) => {
   await page.goto("/studio-v2/samples/purchase-order-red-v2.html");
   await expect(page.locator("html")).toHaveAttribute("data-printform-status", "ready", { timeout: 20_000 });
-  await expect(page.locator(".printform_page")).toHaveCount(3);
-  expect(await page.locator(".printform_page").nth(2).locator(".prowheader,.prowheader_processed").count()).toBe(0);
-  await expect(page.locator(".printform_page").nth(2)).toContainText("Grand total");
+  const pages = page.locator(".printform_page");
+  await expect(pages).toHaveCount(3);
+  expect(await pages.locator(".pdocinfo_processed").count()).toBe(3);
+  expect(await pages.nth(2).locator(".prowitem_processed").count()).toBeGreaterThan(0);
+  expect(await pages.nth(2).locator(".prowheader_processed").count()).toBe(1);
+  await expect(pages.nth(2)).toContainText("Grand total");
   expect(await page.locator('script[src],link[rel="stylesheet"][href]').count()).toBe(0);
   const headerGaps = await page.locator(".printform_page").evaluateAll((pages) => pages.map((node) => {
     const line = node.querySelector(".pf-topline").getBoundingClientRect();
