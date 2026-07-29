@@ -137,14 +137,14 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
       baseHeight,
       footerState,
       spacerTemplate,
-      false,
+      true,
       skipDummyRowItems,
       repeatingHeight
     );
 
     const finalPageStartHeight = allowance;
     const container = this.getCurrentPageContainer(outputContainer);
-    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, false);
+    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, true);
     this.applyRemainderSpacing(
       container,
       defaultHeightPerPage,
