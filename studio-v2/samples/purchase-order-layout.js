@@ -103,7 +103,7 @@ export const PURCHASE_ORDER_TEMPLATE = `
     <td style="width:7%" class="pf-center" data-pf-text="./uom"></td><td style="width:14%" class="pf-number" data-pf-text="./unitPrice" data-pf-format="currency"></td>
     <td style="width:15%" class="pf-number" data-pf-text="./lineTotal" data-pf-format="currency"></td>
   </tr></tbody></table>
-  <section class="ptac">
+  <footer class="pfooter pf-order-footer">
     <div class="pf-footer-zone"><div class="pf-notes"><strong data-pf-i18n="notes.title"></strong><p data-pf-text="/notes"></p></div>
       <table class="pf-summary"><tbody>
         <tr><td data-pf-i18n="summary.subtotal"></td><td class="pf-number" data-pf-text="/totals/subtotal" data-pf-format="currency"></td></tr>
@@ -113,7 +113,7 @@ export const PURCHASE_ORDER_TEMPLATE = `
       </tbody></table></div>
     <div class="pf-signatures"><div class="pf-sign"><span data-pf-i18n="approval.preparedBy"></span>: <strong data-pf-text="/approval/preparedBy"></strong></div>
       <div class="pf-sign"><span data-pf-i18n="approval.approvedBy"></span>: <strong data-pf-text="/approval/approvedBy"></strong></div></div>
-  </section>
+  </footer>
   <footer class="pfooter_logo"><img class="pf-footer-logo" data-pf-asset-slot="footer-logo" src="${LOGO_PLACEHOLDER_DATA_URL}" alt="Footer logo"></footer>
   <footer class="pfooter_pagenum pf-page-footer"><span data-pf-i18n="page.document"></span> · <span data-pf-i18n="page.page"></span> <span data-page-number></span> <span data-pf-i18n="page.of"></span> <span data-page-total></span></footer>
 </section>`;

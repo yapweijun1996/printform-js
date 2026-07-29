@@ -13,6 +13,8 @@ describe("Crimson purchase order production sample", () => {
     expect(validateProject(project)).toMatchObject({ valid: true, productionValid: true, errors: [] });
     expect(project.templateHtml).toContain('data-pf-asset-slot="letterhead-logo"');
     expect(project.templateHtml).toContain('data-pf-asset-slot="footer-logo"');
+    expect(project.templateHtml).toContain('<footer class="pfooter pf-order-footer">');
+    expect(project.templateHtml).not.toContain('<section class="ptac">');
   });
 
   it("recalculates financial truth for generated boundary rows", () => {
