@@ -359,6 +359,30 @@ test("meets the 100-row and 500-row render budgets", async ({ page, browserName 
   expect(metrics.durationMs).toBeLessThanOrEqual(5000);
 });
 
+test("meets the render budget for 500 rows at an enlarged font scale", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Absolute performance budget uses the Chromium reference environment");
+  // Locks in the P2 row-height pre-measurement fix (pagination-render.js):
+  // this exact combination -- 500 rows + a base font size above the 9pt
+  // default -- was measured before that fix at 47+ seconds in a real
+  // sandboxed browser (DESIGN.md §4.4), because every row's own standalone
+  // height was re-measured one at a time, interleaved with page-container
+  // measurements, forcing a synchronous layout reflow per row. Regressing
+  // back to that pattern would make this test time out well before the
+  // budget below is ever checked.
+  await page.locator("#scenario-select").selectOption("500-rows");
+  await page.evaluate(async () => {
+    const summary = await window.PrintFormStudioAgent.execute("get_project_summary", {});
+    await window.PrintFormStudioAgent.execute("apply_changes", {
+      expectedRevision: summary.result.revision,
+      operations: [{ type: "set_font_scale", basePt: 13 }]
+    });
+  });
+  await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 15_000 });
+  const metrics = JSON.parse(await page.locator("#metrics-output").textContent());
+  expect(metrics.rows).toBe(500);
+  expect(metrics.durationMs).toBeLessThanOrEqual(5000);
+});
+
 test("serves the installed PWA shell while offline", async ({ page, context, browserName }) => {
   test.skip(browserName !== "chromium", "Service worker offline contract is browser-independent and covered once");
   await page.evaluate(() => navigator.serviceWorker.ready);

@@ -2,6 +2,22 @@
 
 import { DomHelpers } from "../dom.js";
 
+// P2 perf investigation (spike/perf-500-rows.html, see ROADMAP.md/EPIC.md E9):
+// profiling a 500-row document found getBoundingClientRect calls -- almost all
+// of them the append-then-measureContentHeight(container) round trip below --
+// accounted for ~72% of total format() time (3.6s of 5s), each one forcing a
+// synchronous reflow of the whole growing page container. rowHeight is already
+// measured standalone per row (line ~17) regardless of whether the fast path
+// below fires, so predicting the post-append height arithmetically costs
+// nothing extra. This is a safe upper-bound prediction, not a guess: rows
+// carry their own fixed width (the `paper_width` class / explicit `width`,
+// never a percentage of a variable-width ancestor), so a row measured
+// standalone renders at the same height once cloned into a same-width page
+// container -- text wrapping cannot differ between the two contexts. The
+// margin below exists only as a hedge against templates this reasoning
+// doesn't anticipate; it does not paper over a known gap.
+const ROW_HEIGHT_PREDICTION_SAFETY_MARGIN_PX = 50;
+
 export function attachPaginationRenderMethods(FormatterClass) {
   FormatterClass.prototype.renderRows = function renderRows(outputContainer, sections, heights, footerState, heightPerPage, footerSpacerTemplate, logFn) {
     let currentHeight = 0;
@@ -11,10 +27,21 @@ export function attachPaginationRenderMethods(FormatterClass) {
       console.log(`[printform] Total rows: ${sections.rows.length}, heightPerPage: ${heightPerPage}px`);
     }
 
+    // Pre-measure every row's own height in one batch, before any row is
+    // cloned/appended into a page container. This is the other half of the P2
+    // perf fix above: measuring one row at a time INSIDE the loop still forces
+    // a synchronous layout flush every iteration even when the container
+    // measurement itself is skipped, because a forced layout read anywhere
+    // flushes ALL pending DOM mutations, not just the queried element's own
+    // subtree -- so interleaving one read per write defeats the fast path
+    // above almost entirely. Measuring everything up front, before the loop's
+    // first append, means these reads never interleave with the loop's writes.
+    const rowHeightCache = sections.rows.map((row) => DomHelpers.measureHeight(row));
+
     for (let index = 0; index < sections.rows.length; index++) {
       const row = sections.rows[index];
       const nextRow = sections.rows[index + 1];
-      const rowHeight = DomHelpers.measureHeight(row);
+      const rowHeight = rowHeightCache[index];
       const baseClass = this.getRowBaseClass(row);
       const isPtacRow = this.isPtacRow(row);
       const isPaddtRow = this.isPaddtRow(row);
@@ -23,7 +50,7 @@ export function attachPaginationRenderMethods(FormatterClass) {
       const hasFooterCombo = isSubtotal && nextRow && this.isFooterRow(nextRow);
       const footerRow = hasFooterCombo ? nextRow : null;
       const footerBaseClass = footerRow ? this.getRowBaseClass(footerRow) : null;
-      const footerHeight = footerRow ? DomHelpers.measureHeight(footerRow) : 0;
+      const footerHeight = footerRow ? rowHeightCache[index + 1] : 0;
       const comboHeight = rowHeight + footerHeight;
 
       if (!rowHeight && (!hasFooterCombo || !footerHeight)) {
@@ -202,6 +229,26 @@ export function attachPaginationRenderMethods(FormatterClass) {
 
       const container = this.getCurrentPageContainer(outputContainer);
       const priorHeight = currentHeight;
+      const predictedHeight = currentHeight + rowHeight;
+
+      if (predictedHeight + ROW_HEIGHT_PREDICTION_SAFETY_MARGIN_PX <= pageContext.limit) {
+        DomHelpers.appendRowItem(container, row, null, index, baseClass);
+        if (this.debug) {
+          console.log(`[printform]   row[${index}] height=${rowHeight}px, predictedHeight=${predictedHeight}px, limit=${pageContext.limit}px (fast path, no reflow)`);
+        }
+        if (logFn) {
+          const resolvedLabel = baseClass || "prowitem";
+          logFn(`append ${resolvedLabel} ${index}`);
+        }
+        currentHeight = predictedHeight;
+        if (!isPtacRow) {
+          pageContext.isPtacPage = false;
+        }
+        if (!isPaddtRow) {
+          pageContext.isPaddtPage = false;
+        }
+        continue;
+      }
 
       const clone = DomHelpers.appendRowItem(container, row, null, index, baseClass);
       const measuredHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
