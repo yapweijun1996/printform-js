@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-07-31（对齐 `af64b25`；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板；成熟度仍是 Production Pilot——见 E7 说明）。
+> 最后核对：2026-07-31（对齐 `5d06702`；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板；成熟度仍是 Production Pilot——见 E7 说明）。
 
 | # | Epic | 状态 | 说明 / 证据 |
 |---|---|---|---|
@@ -15,5 +15,5 @@
 | E7 | P0-B 信任闭环（证据体系） | ✅ | `event.source` 目标 iframe 校验、元素级越界/对比度定位、渲染内容数量+顺序+identity 完整性校验（`ROW_*` 四项）、重复区缺失+重叠检测（`535c58c`）、Studio 签发布局证据 receipt + Agent Contract 2.0.0（#18，`1e6cb3e`，证据形态经确认为几何指纹而非像素截图）、attestation 覆盖两段 runtime hash + CSP script hash + 真实浏览器凭证（#19，待提交）。原 nonce 需求（原 #15）已并入 E6/#12。**代码硬门全完成，但成熟度仍是 Production Pilot**——路线图 P0-B 退出条件含"两模板 × 四浏览器 × 全场景矩阵"这类发布流程验收，非代码可达成 |
 | E8 | P1 工程师结构化工作流 | 🔶 | 已完成：高层语义工具第一批 `set_column_widths`/`set_font_scale`（`46254d6`）、semantic diff drawer 取代 confirm 对话框（`ebf3931`，供 Apply 前变更审查用）、Table columns + Print font scale 可视化面板（`90a6c70`）、Page settings + Repeated areas 可视化面板（`8f0718b`，复用通用 `set_attribute` 操作，因为这两类字段没有专属操作类型）。待办：Branding（配色，需先约定 CSS 变量）/Data contract（表单编辑器级别）面板——目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达，范围待与用户另行确认 |
 | E9 | P2 分页引擎演进 | ⬜ | PaginationSession、结构化 trace、性能预算（100 行 <2s、500 行 <5s）；硬约束：v1 ERP DOM 行为不变 |
-| E10 | P3 发布治理 | 🔶 | 已完成：LICENSE（MIT）、SW precache manifest 构建期自动生成（`eebcae1`）、[CHANGELOG.md](CHANGELOG.md)（Keep a Changelog 格式，`[Unreleased]`，待提交）。待办：独立 SemVer + 兼容矩阵、GitHub Release 附试点导出、版本化模板目录 |
+| E10 | P3 发布治理 | 🔶 | 已完成：LICENSE（MIT）、SW precache manifest 构建期自动生成（`eebcae1`）、[CHANGELOG.md](CHANGELOG.md)（Keep a Changelog 格式，`[Unreleased]`，`5d06702`）。待办：独立 SemVer + 兼容矩阵、GitHub Release 附试点导出、版本化模板目录 |
 | E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（`4a0c5e0`）、PR 模板（`c081a91`）、3 页分页黄金样本（`c081a91`，Playwright 共 21 测试）。待办：文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |
