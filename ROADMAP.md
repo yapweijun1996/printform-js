@@ -50,8 +50,7 @@
 ### 2.2 Debug 能力（降低排查成本）
 
 - Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）、`npm run doctor`（一条命令跑单测+生产构建+两个试点 `validate:v2`，逐步实时输出 + 结尾一页 PASS/FAIL 汇总；刻意不含 e2e——那是 CI 每次 push 都跑的三引擎慢检查，doctor 是给"我这份工作树健不健康"的快速一问）。
-- 计划：
-  1. v2 结构化 trace 事件替代 console 依赖（P2 前置项，先定义事件形状）。
+- ✅ 已评估（2026-07-31，见 TASK.md）：v2 结构化 trace 事件替代 console 依赖——原计划的唯一目的是给 P2 的 `PaginationSession` 类重构铺路，重构本身经评估判定暂不做，trace 事件随之一并延后，不单独实现。
 
 ### 2.3 仓库形态收编（减少认知负担）
 
@@ -80,7 +79,7 @@
 
 | 风险 | 缓解 |
 |---|---|
-| P2 分页重构回归 ERP 旧行为 | 先落 2.1 的黄金样本断言，重构每步跑旧样本 |
+| P2 分页重构回归 ERP 旧行为 | 已落 2.1 的黄金样本断言（`4c50a35` 的行高预测量缓存已验证字节不差）；`PaginationSession` 类重构本身经评估判定暂不做，此风险随之收窄——见 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) P2 节 |
 | SW 缓存导致"改了没生效"误判 | 已实现开发模式网络优先；部署版本号盖章缺失会构建失败 |
 | ~~`sw.js` 手写 `APP_SHELL` 清单随新增文件漂移~~ | ✅ **已根治（2026-07-31，`eebcae1`）**：改为构建时由 `scripts/app-shell.mjs` 走产物目录生成，新增模块无需登记。此前一天内漂移两次（`core/operation-schemas.js`、`ui/diff-view.js`），都是被 PWA 离线用例抓到；改造时还发现旧清单本就漏了 `core/runtime.js`，从没人察觉——这正是"该生成而非手写"的论据 |
 | v1/v2 双 Studio 长期并存的双倍维护 | v1 冻结纪律 + 文档明示"新需求一律进 v2" |
