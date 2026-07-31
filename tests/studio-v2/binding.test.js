@@ -14,6 +14,19 @@ describe("PrintForm v2 declarative binding", () => {
     expect(result.report.rows).toBe(2);
   });
 
+  it("tags each expanded row with its source-array position for downstream order/identity checks", () => {
+    const template = document.createElement("template");
+    template.innerHTML = `<div><div data-pf-each="/items"><span data-pf-text="./name"></span></div></div>`;
+    const result = bindTemplate(template, { items: [{ name: "A" }, { name: "B" }, { name: "C" }] }, {});
+    const host = document.createElement("div");
+    host.append(result.fragment);
+    const rows = Array.from(host.querySelectorAll("[data-pf-each], [data-pf-row-index]"));
+    // data-pf-each is removed from the clone; data-pf-row-index replaces it as
+    // the row's stable identity going into pagination.
+    expect(rows.every((row) => !row.hasAttribute("data-pf-each"))).toBe(true);
+    expect(rows.map((row) => row.getAttribute("data-pf-row-index"))).toEqual(["0", "1", "2"]);
+  });
+
   it("accepts only the supported URL protocols", () => {
     expect(safeUrl("https://example.com")).toBe("https://example.com");
     expect(safeUrl("mailto:test@example.com")).toBe("mailto:test@example.com");

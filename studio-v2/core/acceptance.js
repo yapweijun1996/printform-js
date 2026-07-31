@@ -163,9 +163,35 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
   // means the pagination engine silently dropped or duplicated a data row,
   // which no other check here would otherwise catch.
   const expectedRowCount = options.expectedRowCount;
-  const actualRowCount = doc.querySelectorAll(".prowitem_processed").length;
+  const rowNodes = Array.from(doc.querySelectorAll(".prowitem_processed"));
+  const actualRowCount = rowNodes.length;
   if (Number.isFinite(expectedRowCount) && actualRowCount !== expectedRowCount) {
     errors.push(error("ROW_COUNT_MISMATCH", `Rendered ${actualRowCount} item row(s) but data binding produced ${expectedRowCount}; pagination may have dropped or duplicated a row`));
+  }
+  // Order/identity check: binding.js tags each row with its source-array
+  // position (data-pf-row-index) before pagination ever touches it. Older
+  // exported documents predating that attribute have none of these tags —
+  // skip gracefully rather than false-positive on every legacy export; the
+  // count check above still applies to them.
+  const taggedRows = rowNodes.filter((node) => node.hasAttribute("data-pf-row-index"));
+  if (taggedRows.length) {
+    const summarize = (values) => values.slice(0, 20).join(", ") + (values.length > 20 ? ` (+${values.length - 20} more)` : "");
+    const occurrences = new Map();
+    const sequence = taggedRows.map((node) => {
+      const index = Number(node.getAttribute("data-pf-row-index"));
+      occurrences.set(index, (occurrences.get(index) || 0) + 1);
+      return index;
+    });
+    const duplicates = Array.from(occurrences.entries()).filter(([, count]) => count > 1).map(([index]) => index).sort((a, b) => a - b);
+    if (duplicates.length) errors.push(error("ROW_DUPLICATE_INDEX", `Row index ${summarize(duplicates)} rendered more than once`));
+    if (Number.isFinite(expectedRowCount)) {
+      const missing = [];
+      for (let i = 0; i < expectedRowCount; i += 1) if (!occurrences.has(i)) missing.push(i);
+      if (missing.length) errors.push(error("ROW_MISSING_INDEX", `Row index ${summarize(missing)} never rendered`));
+    }
+    if (!sequence.every((value, i) => i === 0 || value > sequence[i - 1])) {
+      errors.push(error("ROW_ORDER_MISMATCH", "Rendered rows are not in the same order as the source data"));
+    }
   }
   const overflow = pageList.flatMap((page, pageIndex) => {
     const pageRect = page.getBoundingClientRect();

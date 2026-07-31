@@ -39,6 +39,7 @@ export default { ...EN,
   "issue.HORIZONTAL_OVERFLOW": "渲染内容发生水平越界", "issue.VERTICAL_OVERFLOW": "逻辑页超过纸张高度", "issue.CONTRAST_FAILURE": "文字对比度未达到要求",
   "issue.PAGINATION_FAILED": "PrintForm 未生成逻辑页", "issue.UNTRUSTED_SCRIPT": "自定义可执行脚本阻止生产凭证", "issue.I18N_KEY_MISSING": "缺少必要翻译键",
   "issue.ROW_COUNT_MISMATCH": "渲染行数与绑定数据不一致——分页可能丢失或重复了某一行",
+  "issue.ROW_DUPLICATE_INDEX": "同一源数据行被渲染了多次", "issue.ROW_MISSING_INDEX": "某个源数据行从未出现在渲染结果中", "issue.ROW_ORDER_MISMATCH": "渲染行的顺序与源数据不一致",
   "issue.ASSET_SLOT_REQUIRED": "必要资源槽缺失或重复", "issue.ASSET_SOURCE_UNSAFE": "资源来源不安全", "issue.TYPE_MISMATCH": "样本数据类型错误",
   "issue.REQUIRED": "缺少必填样本字段", "issue.SUBTOTAL_MISMATCH": "小计与明细合计不一致", "issue.GRAND_TOTAL_MISMATCH": "总计不一致", "issue.LINE_TOTAL_MISMATCH": "明细金额不一致"
 };

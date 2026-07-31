@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐待提交的渲染行数完整性校验批次，工作区基于 `ebf3931`，164 个单测 + 22 个 E2E 全绿；P0-A/P0-B 已拆分为 #12–19，见下方待办表）。
+> 最后核对：2026-07-31（对齐待提交的行顺序/identity 校验批次，工作区基于 `af73a23`，170 个单测 + 23 个 E2E 全绿；#16 已完成，剩余 P0-A/P0-B 见下方待办表）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -41,33 +41,34 @@
 | Apply 前并排 diff 面板：新增 `ui/diff-view.js`（LCS 逐行对比，JSON 段先 stableStringify 避免键序误判，>1500 行自动跳过高亮防卡顿），替换 `window.confirm` 单行文本；新增 `#source-diff-modal` + 6 个新 i18n key×5 语言，清理已失效的 `source.none`/`confirm.applySource` | `ebf3931` | 6 个 diffLines 纯逻辑单测 + 1 个新 e2e（apply/cancel/无变更三路径）；浏览器实测：JSON 段（manifest 标题变更）红绿高亮正确、原始 HTML 段（模板追加行）正确识别为纯新增、trust 降级单独渲染"trusted → untrusted"、Cancel 后 revision 与草稿完全不变、移动端视口正确堆叠为单列、全程控制台零报错；159 单测 + 22 E2E 全绿 |
 | P0-B #4（部分）：渲染行数完整性校验——`inspectRenderedDocument` 新增 `expectedRowCount` 参数，对比 `.prowitem_processed` 实际渲染数与 `bindTemplate` 绑定数，不一致报 `ROW_COUNT_MISMATCH`（新错误码，5 语言 i18n） | （待提交） | 5 个新单测（含修正 `runtime.test.js` 原有 mock 未模拟真实 class 改名的失真问题，并新增"丢一行"回归用例）；浏览器实测：Sales Invoice 1/45/100/500/长文本 5 个场景 + Purchase Order 空/1/45/500 4 个场景，`renderedRows`/`expectedRows` 全部相等、零误报；164 单测 + 22 E2E 全绿。**仅覆盖"数量"，不含稳定 identity/顺序校验**（见下方待办拆分） |
 
+| P0-B #16：行顺序 + 稳定 identity 校验——`binding.js` 给每个 `data-pf-each` 展开的行打 `data-pf-row-index`（源数组下标），`inspectRenderedDocument` 新增 `ROW_DUPLICATE_INDEX`/`ROW_MISSING_INDEX`/`ROW_ORDER_MISMATCH` 三个错误码，无标记的旧版导出文档自动跳过不误报 | （待提交） | 8 个新单测（binding.test.js 1 个验证打标、acceptance.test.js 6 个覆盖三种错误+通过+跳过、含"交换两行但数量和集合都对，只有顺序检查能抓到"的针对性用例）+ 1 个新 e2e；**验证方式的教训**：想在 Node 里手写脚本重新拼装 window/document/performance 全局对象来验证真实 dist 包渲染，撞上 jsdom 的 `Performance.now()` brand-check 死循环——放弃手工拼装，改用 Playwright 读取沙箱 iframe 内部 DOM（`page.frameLocator` 能穿透 `sandbox="allow-scripts"` 无 `allow-same-origin` 限制，因为走 CDP 而非页面自身 JS），拿到真实 45 行发票渲染后 `data-pf-row-index` 严格等于 `[0..44]` 的确凿证据；170 单测 + 23 E2E 全绿 |
+
 ## 🔄 进行中
 
 （无）
 
-## ⬜ 待办（P0-A / P0-B 拆分，按依赖顺序；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
+## ⬜ 待办（P0-A / P0-B 剩余拆分，按依赖顺序；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
 
-> 这两组是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），体量大、涉及信任模型的破坏性契约变更（Agent Contract 2.0 不保留 1.x 写路径）。#12–14 互相耦合，必须作为一组一起交付，不能拆开合并；其余各项相对独立，可单独排期。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
+> 这两组是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），体量大、涉及信任模型的破坏性契约变更（Agent Contract 2.0 不保留 1.x 写路径）。#12–14 互相耦合，必须作为一组一起交付，不能拆开合并；#17（重叠/缺失检测）风险低、独立，可随时单独做。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
 
 | # | 任务 | Epic | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| 12 | P0-A：候选项目在隐藏 sandbox iframe 中真实渲染（不复用当前草稿的 RenderReport）——`preview_changes` 内部序列化 candidate 为独立 HTML，注入隐藏 iframe，等待其自身 `printform:rendered`，取代当前"仅静态校验、不分页"的 `validation(candidate)` | E6 | 无（可先做，且可以是内部实现改进，不必立刻改变对外契约形状） | 对一个会导致真实溢出/换页数变化的 operations 调用 `preview_changes`，返回的 validation 反映**真实分页结果**而非仅 schema/业务规则；现有 145+ 单测与 22 e2e 不回归 |
+| 12 | P0-A：候选项目在隐藏 sandbox iframe 中真实渲染（不复用当前草稿的 RenderReport）——`preview_changes` 内部序列化 candidate 为独立 HTML，注入隐藏 iframe，等待其自身 `printform:rendered`，取代当前"仅静态校验、不分页"的 `validation(candidate)` | E6 | 无（可先做，且可以是内部实现改进，不必立刻改变对外契约形状）**——但会把 `CommandBus.preview()` 从环境无关同步纯函数变成依赖真实 DOM/iframe/postMessage 的重量级异步操作，500 行样本渲染约 1 秒，可能拖慢每次编辑防抖触发的 preview_changes；是否复用现有可见预览 iframe 而非新开隐藏一个，是需要用户拍板的性能/架构权衡，不建议在没有对齐的情况下直接动手** | 对一个会导致真实溢出/换页数变化的 operations 调用 `preview_changes`，返回的 validation 反映**真实分页结果**而非仅 schema/业务规则；现有 170 单测与 23 e2e 不回归 |
 | 13 | P0-A：`preview_changes` 返回 `previewId`/`candidateHash`/`scenarioReports`（含 default 与 long-text）/`expiresAt`；`apply_changes` 改为只消费有效 previewId+hash，不再接受新 operations | E6 | #12 | 路线图 P0-A 退出条件：stale/过期/hash 不符/未知 operation 都有稳定错误码；default 与 long-text 场景报告绑定同一 candidate hash；这是 Agent Contract 2.0 的破坏性核心，UI/WebMCP/CDP 必须同一提交内切换 |
 | 14 | P0-A：Agent Contract 2.0 切换——`get_capabilities` contract version 升级，旧 1.x 写命令返回升级提示而非静默兼容 | E6 | #12、#13 | 路线图"契约升级"条款；WebMCP/CDP/UI 三者对同一输入行为一致 |
 | 15 | P0-B：Preview bridge 加一次性 nonce（配合 #12 的隔离 iframe），阻止非本次预览的消息被接受 | E7 | #12 | 伪造/重放的 nonce 一律拒绝；与 2026-07-31 已有的 `event.source` 校验叠加，不替代 |
-| 16 | P0-B：稳定行 identity + 顺序校验（本批已交付"数量"部分，见上方已完成表；这里是剩余的"顺序/identity"部分）——给每个 `.prowitem` 打稳定 id（如 array index + 内容 hash），RenderReport 比对顺序而非只比对总数 | E7 | 无（可独立于 #12–14） | 人为交换两行数据顺序后重新渲染，报告能明确指出"顺序变化"而不仅是"数量不符" |
-| 17 | P0-B：矩形碰撞 + 重复区不变量检测重叠、越界及 header/docinfo/footer 缺失 | E7 | 无 | 人为让 header 缺失或两区块重叠时，产生专用错误码（现有 HORIZONTAL_OVERFLOW/VERTICAL_OVERFLOW 不覆盖"缺失"和"重叠"两类） |
+| 17 | P0-B：矩形碰撞 + 重复区不变量检测重叠、越界及 header/docinfo/footer 缺失 | E7 | 无 | 人为让 header 缺失或两区块重叠时，产生专用错误码（现有 HORIZONTAL_OVERFLOW/VERTICAL_OVERFLOW 不覆盖"缺失"和"重叠"两类）——可参照 #16 的模式（延伸 `inspectRenderedDocument`，不改外部契约） |
 | 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用隔离 iframe）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
 | 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前只有 runtime/content hash，无"真实浏览器测过"的证明） | E7 | #18 | 路线图"完整性与证明"条款 |
 
 ## 🚧 阻塞
 
-（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用；新增 `studio-v2/` 下被 import 的文件必须同步 `sw.js` 的 `APP_SHELL`（已发生两次，PR 模板已加提醒）。）
+（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用；新增 `studio-v2/` 下被 import 的文件必须同步 `sw.js` 的 `APP_SHELL`（已发生两次，PR 模板已加提醒）；jsdom 环境下手写脚本重建 window/performance 等全局对象会撞 `Performance.now()` brand-check 死循环，需要真实浏览器上下文验证时改用 Playwright 读取沙箱 iframe（CDP 能穿透 sandbox，页面自身 JS 不能）。）
 
 ## 📌 下一步（建议顺序）
 
-TASK.md 中优先级明确、体量适中的项目已全部完成（#1–7、#10、#11 均已提交，外加本批的 P0-B 行数校验）。剩余是 #12–19（P0-A/P0-B 拆分），体量大、涉及信任模型的破坏性契约变更，建议：
+TASK.md 中低风险、独立的项目已基本做完（#1–7、#10、#11、#16 均已提交）。剩余 #12–15、#17–19 中：
 
-1. #16、#17 相对独立、风险低，可参照本批"渲染行数完整性校验"的模式继续做（延伸 `inspectRenderedDocument`，不改外部契约）——适合作为下一批起点。
-2. #12 是 #13/#14 的前提，且可以先作为**内部实现改进**单独交付（不必与 #13 的破坏性契约变更同批）——建议先做 #12，验证"隔离 iframe 真实渲染 candidate"这个核心机制本身可靠，再决定 #13/#14 的契约形状。
-3. #18/#19 需要全新的截图/证据基础设施，且依赖 #12，建议放最后，先在小范围原型验证浏览器截图方案（如 `<canvas>` 光栅化 iframe 内容 vs 浏览器原生 API）再动手。
+1. **#17**（重叠/缺失检测）延续 #16 的模式（纯 `inspectRenderedDocument` 扩展，不改架构），可直接继续做。
+2. **#12 需要用户先对齐性能/架构取舍**再动手——不建议在没有明确"接受这个性能代价"或"先设计好复用现有预览 iframe 的方案"之前就写代码，因为这会实质性改变 Studio 编辑循环的响应速度，是产品体验决策而非纯技术细节。
+3. #13/#14（契约破坏性切换）、#18/#19（截图证据体系，全新基础设施）都排在 #12 之后，暂不安排。

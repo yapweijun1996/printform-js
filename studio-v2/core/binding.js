@@ -69,9 +69,15 @@ function expandRepeat(element, rootData, scope, manifest, report) {
     element.replaceWith(fragment);
     return;
   }
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     const clone = element.cloneNode(true);
     clone.removeAttribute("data-pf-each");
+    // Stable per-row identity, independent of anything the pagination engine
+    // does afterward (clone/measure/place across pages) — inspectRenderedDocument
+    // uses this to verify the rendered row SEQUENCE matches the source array
+    // (not just the count), catching drops/duplicates/reordering precisely
+    // instead of only "N rows total, something's off".
+    clone.setAttribute("data-pf-row-index", String(index));
     bindElement(clone, rootData, item, manifest, report);
     fragment.appendChild(clone);
   });

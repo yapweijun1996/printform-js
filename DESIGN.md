@@ -2,7 +2,7 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐待提交的渲染行数完整性校验批次）。
+> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐待提交的行顺序/identity 校验批次）。
 
 ---
 
@@ -105,7 +105,9 @@
 
 ### 4.5 渲染内容完整性——数量校验（Current，P0-B 部分实现）
 
-`inspectRenderedDocument(doc, manifest, { expectedRowCount })`：`.prowitem` 行由分页引擎克隆后放置、从不像 PTAC/PADDT 那样被词数切分，因此最终 DOM 里 `.prowitem_processed` 的数量必须精确等于 `bindTemplate` 通过 `data-pf-each` 绑定的行数。不一致（分页引擎丢行或重复行的 bug）报 `ROW_COUNT_MISMATCH`。`runtime.js` 的 `render()` 把 `bound.report.rows` 作为 `expectedRowCount` 传入；CLI 校验器（`validate-printform-v2.mjs`）没有真实浏览器渲染上下文，不传该参数，检查自动跳过（不误报）。这只证明"数量"，不证明顺序或具体是哪一行——顺序/identity 校验仍是 Target（TASK.md #16）。
+`inspectRenderedDocument(doc, manifest, { expectedRowCount })`：`.prowitem` 行由分页引擎克隆后放置、从不像 PTAC/PADDT 那样被词数切分，因此最终 DOM 里 `.prowitem_processed` 的数量必须精确等于 `bindTemplate` 通过 `data-pf-each` 绑定的行数。不一致（分页引擎丢行或重复行的 bug）报 `ROW_COUNT_MISMATCH`。`runtime.js` 的 `render()` 把 `bound.report.rows` 作为 `expectedRowCount` 传入；CLI 校验器（`validate-printform-v2.mjs`）没有真实浏览器渲染上下文，不传该参数，检查自动跳过（不误报）。
+
+**顺序/identity 校验（2026-07-31 补齐，TASK.md #16）**：`binding.js` 的 `expandRepeat` 给每个展开行打 `data-pf-row-index`（源数组下标），克隆穿过整个分页流程（clone/measure/place）后依然保留。`inspectRenderedDocument` 用这个标记做三项检查：`ROW_DUPLICATE_INDEX`（同一下标出现多次）、`ROW_MISSING_INDEX`（某下标从未出现，需要 `expectedRowCount`）、`ROW_ORDER_MISMATCH`（下标序列非严格递增——即使数量和集合都对，两行被交换顺序也能抓到，这是纯数量校验做不到的）。没有 `data-pf-row-index` 标记的旧版导出文档（该属性上线前生成的）自动跳过这三项检查，只保留数量校验，不误报。真实端到端证据来自 `e2e/studio-v2.spec.js`（Playwright 能读取沙箱 iframe 内部 DOM，jsdom 单测做不到这一步——手写脚本重新拼装 Node 全局对象验证过会撞上 jsdom 的 `performance.now()` brand-check 无限递归，遂放弃转而用 Playwright）：真实 45 行发票渲染后 `data-pf-row-index` 恰好是 `[0,1,...,44]`，与源数组顺序完全一致。
 
 ---
 

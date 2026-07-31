@@ -45,6 +45,21 @@ test("renders the 45-row sales invoice through the isolated runtime", async ({ p
   await expect(page.locator("#quality-summary")).toContainText("Production quality gate passed");
 });
 
+test("tags every rendered row with a stable, correctly ordered source-array index inside the sandboxed preview", async ({ page }) => {
+  // Regression proof that binding.js's data-pf-row-index tagging survives
+  // the real dist/printform.js pagination engine (clone/measure/place across
+  // pages) inside the actual sandboxed iframe — a jsdom-only unit test can't
+  // prove this because it either mocks formatAll() or fights Node's global
+  // shimming; this is the one place that exercises the real bundle end to end.
+  const rowFrame = page.frameLocator("#preview-frame");
+  const indices = await rowFrame.locator(".prowitem_processed").evaluateAll((nodes) => nodes.map((node) => Number(node.getAttribute("data-pf-row-index"))));
+  expect(indices).toHaveLength(45);
+  expect(indices).toEqual(Array.from({ length: 45 }, (_, i) => i)); // strictly 0..44, in document order, across every page
+  const validation = await page.evaluate(async () => (await window.PrintFormStudioAgent.execute("validate_project")).result.validation);
+  expect(validation.errors.some((item) => String(item.code).startsWith("ROW_"))).toBe(false);
+  expect(validation.metrics).toMatchObject({ renderedRows: 45, expectedRows: 45 });
+});
+
 test("renders all five locales and visible replaceable logo slots", async ({ page }) => {
   const expected = { "en-MY": "Sales Invoice", "zh-CN": "销售发票", "ms-MY": "Invois Jualan", "ja-JP": "売上請求書", "vi-VN": "Hóa đơn bán hàng" };
   for (const [locale, title] of Object.entries(expected)) {
