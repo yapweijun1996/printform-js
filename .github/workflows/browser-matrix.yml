@@ -1,0 +1,39 @@
+name: Browser matrix (release acceptance)
+
+# Manual only — this is a release-process acceptance check (scripts/browser-matrix.mjs),
+# not a per-commit gate. It takes ~15-25 minutes and drives four browser targets across
+# every boundary scenario and print locale for both pilot templates. CI's three-engine
+# Playwright run (ci.yml) stays the fast per-commit net; this job exists so the matrix
+# can be reproduced on a real Linux runner instead of only ever on a developer's macOS,
+# per the open recommendation in TASK.md/ROADMAP.md (§P0-B) to verify on another OS
+# before declaring Production Ready.
+on:
+  workflow_dispatch:
+
+jobs:
+  browser-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # chrome is a best-effort extra: browser-matrix.mjs already skips (not fails)
+      # any target whose launch() throws, recording it as "unavailable" in the report.
+      - run: npx playwright install --with-deps chromium firefox webkit chrome
+
+      - run: npm run build:site
+
+      - run: node scripts/browser-matrix.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-matrix-result
+          path: browser-matrix-result.json
+          retention-days: 90
