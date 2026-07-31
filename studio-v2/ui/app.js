@@ -28,6 +28,27 @@ let activeSampleKey = sampleDocumentKey();
 let fingerprint = createSampleDocument(activeSampleKey).manifest.documentId;
 let lastValidation;
 
+// Shared ordering space for the ONE visible #preview-frame: every render
+// request (human-edit debounce, or an agent's preview_changes/apply_changes
+// candidate) claims the next token before touching the iframe. Candidate
+// requests register themselves here and are resolved/rejected by the shared
+// listenForPreview callback below when their token comes back; the
+// committed-state path doesn't need to register (message.revision already
+// disambiguates it against bus.revision) but still draws from the same
+// counter so the two paths can never collide on a token value.
+let previewToken = 0;
+const pendingCandidateRenders = new Map();
+// Generous on purpose: a full candidate render pays for iframe reload +
+// runtime fetch + serializing the whole project (not just PrintForm's own
+// pagination, which is the only thing the 100/500-row perf BUDGET test
+// measures) — empirically well past a few seconds for large boundary
+// scenarios at non-default font scale. This is a "something is actually
+// stuck" backstop, not a perf budget; the committed-state schedulePreview()
+// path has no timeout at all today and this should not be tighter than that
+// without real profiling data (see ROADMAP.md P2/E9 — pagination perf work
+// is explicitly future, unstarted).
+const CANDIDATE_RENDER_TIMEOUT_MS = 30_000;
+
 function toast(message) {
   const node = $("#toast");
   node.textContent = message;
@@ -57,7 +78,8 @@ function schedulePreview() {
   renderQuality(bus.readiness());
   renderStatus("status.rendering", "pending");
   previewTimer = setTimeout(async () => {
-    try { await renderPreview($("#preview-frame"), bus.project, bus.revision, overlayEnabled); }
+    const token = ++previewToken;
+    try { await renderPreview($("#preview-frame"), bus.project, bus.revision, overlayEnabled, token); }
     catch (error) {
       renderStatus("status.failed", "blocked");
       toast(error.message);
@@ -65,9 +87,38 @@ function schedulePreview() {
   }, 180);
 }
 
+function setCandidatePreviewBanner(active) {
+  $("#candidate-preview-banner").classList.toggle("hidden", !active);
+}
+
+// Injected into CommandBus so preview_changes/apply_changes can get a REAL
+// render (not just static schema validation) by reusing this one visible
+// iframe instead of standing up a second hidden one. Runs concurrently with
+// schedulePreview()'s own committed-state renders; both share the token
+// counter and the same listenForPreview callback below, so a reply can only
+// ever be claimed by the request that's actually still waiting on it.
+function renderCandidateForPreview(project, revision) {
+  const token = ++previewToken;
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      if (pendingCandidateRenders.delete(token)) reject(new Error("Candidate render timed out"));
+      if (!pendingCandidateRenders.size) setCandidatePreviewBanner(false);
+    }, CANDIDATE_RENDER_TIMEOUT_MS);
+    pendingCandidateRenders.set(token, { resolve, reject, timer });
+    setCandidatePreviewBanner(true);
+    renderPreview($("#preview-frame"), project, revision, overlayEnabled, token).catch((error) => {
+      if (pendingCandidateRenders.delete(token)) { clearTimeout(timer); reject(error); }
+      if (!pendingCandidateRenders.size) setCandidatePreviewBanner(false);
+    });
+  });
+}
+
 function installBus(project, reason = "load") {
   webMcp?.dispose();
-  bus = new CommandBus(project);
+  pendingCandidateRenders.forEach(({ reject, timer }) => { clearTimeout(timer); reject(new Error("Studio project was replaced before the candidate render finished")); });
+  pendingCandidateRenders.clear();
+  setCandidatePreviewBanner(false);
+  bus = new CommandBus(project, { renderCandidate: renderCandidateForPreview });
   installAgentGateway(bus);
   webMcp = installWebMcpAdapter(bus);
   renderWebMcpStatus(webMcp);
@@ -340,6 +391,15 @@ function setupServiceWorker() {
 }
 
 listenForPreview($("#preview-frame"), (message) => {
+  const pendingCandidate = pendingCandidateRenders.get(message.token);
+  if (pendingCandidate) {
+    pendingCandidateRenders.delete(message.token);
+    clearTimeout(pendingCandidate.timer);
+    if (!pendingCandidateRenders.size) setCandidatePreviewBanner(false);
+    if (message.type === "rendered") pendingCandidate.resolve(message.payload);
+    else pendingCandidate.reject(new Error(message.payload?.message || "Candidate render failed"));
+    return;
+  }
   if (message.revision !== bus.revision) return;
   if (message.type === "rendered") {
     bus.recordRenderReport(message.payload);

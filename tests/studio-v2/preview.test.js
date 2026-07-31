@@ -1,5 +1,25 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { listenForPreview } from "../../studio-v2/ui/preview.js";
+import { listenForPreview, buildPreviewBridge } from "../../studio-v2/ui/preview.js";
+
+describe("buildPreviewBridge request token", () => {
+  // The bridge template is what a real browser executes inside the preview
+  // iframe and posts back via postMessage; createStandaloneHtml (the rest of
+  // renderPreview) needs a real fetch of the dist/ runtime sources and can
+  // only be exercised in a real browser — covered by e2e. This isolates just
+  // the NEW token-echoing logic, which is pure string templating.
+  it("embeds the caller's token in both the rendered and error postMessage payloads", () => {
+    const script = buildPreviewBridge(7, true, 42);
+    expect(script).toContain("token: 42");
+    expect(script).toContain("revision: 7");
+    // Both listeners (printform:rendered and window "error") must echo it.
+    expect(script.match(/token: 42/g)).toHaveLength(2);
+  });
+
+  it("JSON-encodes the token so a non-numeric value can't break out of the inline script", () => {
+    const script = buildPreviewBridge(1, true, "42;alert(1)//");
+    expect(script).toContain('token: "42;alert(1)//"');
+  });
+});
 
 describe("listenForPreview identity check", () => {
   let stop;

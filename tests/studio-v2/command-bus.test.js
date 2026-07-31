@@ -77,6 +77,91 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.revision).toBe(1);
   });
 
+  it("falls back to static-only validation for preview_changes/apply_changes when no renderCandidate is injected", async () => {
+    // The default constructor path (every existing unit test, the CLI
+    // validator) must behave exactly as before P0-A #12: no DOM, no real
+    // render, no candidateHash — just schema/business-rule validation.
+    const bus = new CommandBus(createSalesInvoiceProject());
+    const operations = [{ type: "set_manifest_value", path: "/title", value: "No renderer" }];
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
+    expect(preview.ok).toBe(true);
+    expect(preview.result.candidateHash).toBeNull();
+    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    expect(applied.result.candidateHash).toBeNull();
+    expect(applied.result.revision).toBe(1);
+  });
+
+  it("merges a real render report into preview_changes validation via an injected renderCandidate", async () => {
+    const calls = [];
+    const renderCandidate = async (candidate, revision) => {
+      calls.push({ title: candidate.manifest.title, revision });
+      return { status: "blocked", validation: { errors: [{ code: "HORIZONTAL_OVERFLOW", path: "/", message: "row too wide" }], warnings: [] }, issues: [{ code: "HORIZONTAL_OVERFLOW", pageIndex: 0 }], metrics: { logicalPages: 9 } };
+    };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
+    const operations = [{ type: "set_manifest_value", path: "/title", value: "Wide layout" }];
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
+    expect(preview.ok).toBe(true);
+    expect(preview.result.validation.valid).toBe(false);
+    expect(preview.result.validation.errors.some((item) => item.code === "HORIZONTAL_OVERFLOW")).toBe(true);
+    expect(preview.result.validation.metrics.logicalPages).toBe(9);
+    expect(preview.result.validation.issues).toHaveLength(1);
+    expect(preview.result.candidateHash).toEqual(expect.any(String));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({ title: "Wide layout", revision: 0 });
+    // The static candidate diff/validation was never committed — apply_changes
+    // and the injected renderer were never invoked by preview_changes alone.
+    expect(bus.revision).toBe(0);
+  });
+
+  it("reuses the cached candidate report by hash instead of re-rendering on apply_changes after an identical preview_changes", async () => {
+    let renderCount = 0;
+    const renderCandidate = async () => {
+      renderCount += 1;
+      return { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: { logicalPages: 3 } };
+    };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
+    const operations = [{ type: "set_manifest_value", path: "/title", value: "Cached path" }];
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
+    expect(renderCount).toBe(1);
+    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    expect(applied.ok).toBe(true);
+    expect(applied.result.candidateHash).toBe(preview.result.candidateHash);
+    expect(applied.result.validation.metrics.logicalPages).toBe(3);
+    // Same candidate content (same operations against the same base revision)
+    // hashes identically, so the second call must hit the cache, not render again.
+    expect(renderCount).toBe(1);
+  });
+
+  it("renders once per distinct candidate — apply_changes without a prior preview_changes still gets a real render", async () => {
+    let renderCount = 0;
+    const renderCandidate = async () => { renderCount += 1; return { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: { logicalPages: 1 } }; };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
+    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Direct apply" }] });
+    expect(applied.ok).toBe(true);
+    expect(renderCount).toBe(1);
+    expect(applied.result.candidateHash).toEqual(expect.any(String));
+  });
+
+  it("turns a rejected renderCandidate into a RENDER_FAILED error instead of throwing, and still lets the caller decide whether to commit", async () => {
+    const renderCandidate = async () => { throw new Error("iframe render timed out"); };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Will fail render" }] });
+    expect(preview.ok).toBe(true);
+    expect(preview.result.validation.valid).toBe(false);
+    expect(preview.result.validation.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "RENDER_FAILED" })]));
+  });
+
+  it("does not invoke renderCandidate for a no-op apply_changes (unchanged operations)", async () => {
+    let renderCount = 0;
+    const renderCandidate = async () => { renderCount += 1; return { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }; };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
+    const result = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: bus.project.manifest.title }] });
+    expect(result.ok).toBe(true);
+    expect(result.result.diff.changed).toBe(false);
+    expect(bus.revision).toBe(0);
+    expect(renderCount).toBe(0);
+  });
+
   it("requires the current browser layout report before production export", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
     let request = await bus.execute("request_export");

@@ -6,6 +6,32 @@ import { createScenario, SAMPLE_SCENARIOS } from "./sample-scenarios.js";
 import { TOOL_CONTRACTS } from "./tool-contracts.js";
 import { PRINT_LOCALES } from "./i18n.js";
 import { createLayoutReviewReceipt, layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST } from "./layout-review.js";
+import { sha256, stableStringify } from "./json.js";
+
+// In-memory only — a memory-management knob, not a correctness dependency.
+// Revision numbers are monotonic and never reused (history.js), so
+// ensureRevision() already rejects any write against a base that has since
+// moved on; a stale-but-still-cached candidate report can only ever be
+// looked up by a hash computed from the CURRENT candidate content, so it
+// can't be served against different content either.
+const CANDIDATE_REPORT_TTL_MS = 5 * 60 * 1000;
+
+// Shared by validation() (current project vs. its recorded renderReport) and
+// getCandidateReport() (a candidate vs. its own cached report) — same merge
+// semantics, two different sources for "report".
+function mergeRenderReport(base, report) {
+  if (!report) return base;
+  const unique = (items) => Array.from(new Map(items.map((item) => [`${item.code}:${item.path || "/"}:${item.message}`, item])).values());
+  return {
+    ...base,
+    valid: base.valid && report.status === "ready",
+    productionValid: base.productionValid && report.status === "ready",
+    errors: unique([...base.errors, ...(report.validation?.errors || [])]),
+    warnings: unique([...base.warnings, ...(report.validation?.warnings || [])]),
+    metrics: { ...base.metrics, ...(report.metrics || {}) },
+    issues: report.issues || []
+  };
+}
 
 function inspectTemplate(html) {
   const template = document.createElement("template");
@@ -25,13 +51,19 @@ function inspectTemplate(html) {
 }
 
 export class CommandBus extends EventTarget {
-  constructor(initialProject) {
+  constructor(initialProject, { renderCandidate } = {}) {
     super();
     this.history = new RevisionHistory(initialProject);
     this.defaultSample = structuredClone(initialProject.sampleData);
     this.renderReport = null;
     this.reviewReceipt = null;
     this.reviewAttempts = 0;
+    // Optional DOM-backed renderer injected by the UI layer (app.js), reusing
+    // its one visible preview iframe. Unset in every non-browser context
+    // (unit tests, the CLI validator) — preview_changes/apply_changes then
+    // fall back to today's static-only validation, unchanged.
+    this.renderCandidate = renderCandidate || null;
+    this.candidateReports = new Map();
   }
 
   get project() { return this.history.project; }
@@ -43,20 +75,35 @@ export class CommandBus extends EventTarget {
 
   validation(project = this.project) {
     const base = validateProject(project);
-    if (project !== this.project || !this.renderReport) return base;
-    const unique = (items) => Array.from(new Map(items.map((item) => [`${item.code}:${item.path || "/"}:${item.message}`, item])).values());
-    return {
-      ...base,
-      valid: base.valid && this.renderReport.status === "ready",
-      productionValid: base.productionValid && this.renderReport.status === "ready",
-      errors: unique([...base.errors, ...(this.renderReport.validation?.errors || [])]),
-      warnings: unique([...base.warnings, ...(this.renderReport.validation?.warnings || [])]),
-      metrics: { ...base.metrics, ...(this.renderReport.metrics || {}) },
-      issues: this.renderReport.issues || []
-    };
+    if (project !== this.project) return base;
+    return mergeRenderReport(base, this.renderReport);
   }
 
   recordRenderReport(report) { this.renderReport = structuredClone(report); }
+
+  // Real pagination for a not-yet-committed candidate, cached by content
+  // hash so a preview_changes immediately followed by the identical
+  // apply_changes doesn't pay for a second render. Returns null (not a
+  // rejected promise) when no renderer is available, so callers can treat
+  // "no real report" as a plain fallback rather than an error path.
+  async getCandidateReport(candidate, revision) {
+    if (!this.renderCandidate) return null;
+    const hash = await sha256(stableStringify(candidate));
+    const now = Date.now();
+    const cached = this.candidateReports.get(hash);
+    if (cached && cached.expiresAt > now) return { hash, report: cached.report };
+    let report;
+    try {
+      report = await this.renderCandidate(candidate, revision);
+    } catch (error) {
+      report = { status: "blocked", validation: { valid: false, errors: [{ code: "RENDER_FAILED", path: "/", message: error?.message || "Candidate render failed" }], warnings: [] }, issues: [], metrics: {} };
+    }
+    this.candidateReports.set(hash, { report, expiresAt: now + CANDIDATE_REPORT_TTL_MS });
+    for (const [key, entry] of this.candidateReports) {
+      if (entry.expiresAt <= now) this.candidateReports.delete(key);
+    }
+    return { hash, report };
+  }
 
   readiness() {
     const base = this.validation();
@@ -106,12 +153,17 @@ export class CommandBus extends EventTarget {
       }
       if (name === "preview_changes") {
         const preview = this.preview(input.operations, input.expectedRevision);
-        return this.success({ revision: preview.revision, diff: preview.diff, validation: preview.validation });
+        const candidateReport = await this.getCandidateReport(preview.candidate, preview.revision);
+        const validation = candidateReport ? mergeRenderReport(preview.validation, candidateReport.report) : preview.validation;
+        return this.success({ revision: preview.revision, diff: preview.diff, validation, candidateHash: candidateReport?.hash || null });
       }
       if (name === "apply_changes") {
         const preview = this.preview(input.operations, input.expectedRevision);
-        const revision = preview.diff.changed ? this.commit(preview.candidate, input.reason || "agent change") : this.revision;
-        return this.success({ revision, diff: preview.diff, validation: preview.validation });
+        if (!preview.diff.changed) return this.success({ revision: this.revision, diff: preview.diff, validation: preview.validation, candidateHash: null });
+        const candidateReport = await this.getCandidateReport(preview.candidate, preview.revision);
+        const validation = candidateReport ? mergeRenderReport(preview.validation, candidateReport.report) : preview.validation;
+        const revision = this.commit(preview.candidate, input.reason || "agent change");
+        return this.success({ revision, diff: preview.diff, validation, candidateHash: candidateReport?.hash || null });
       }
       if (name === "preview_source_edit") {
         this.ensureRevision(input.expectedRevision);

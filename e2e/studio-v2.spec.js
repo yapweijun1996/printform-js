@@ -205,6 +205,52 @@ test("uses the public command gateway for transactional changes", async ({ page 
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
 });
 
+test("renders a preview_changes candidate for real in the shared preview iframe before apply_changes reuses the same report", async ({ page }) => {
+  // P0-A #12: preview_changes must reflect REAL pagination for a
+  // not-yet-committed candidate, not just static schema validation — and
+  // apply_changes right after must reuse that same render rather than
+  // paying for a second one. Kept to the default 45-row sample: a real
+  // large-boundary candidate (500 rows) render pays for a full iframe
+  // reload + runtime fetch + serialization on top of PrintForm's own
+  // pagination, and was empirically observed to take upwards of tens of
+  // seconds in this environment at a bumped font scale — far past what's
+  // worth spending on an e2e assertion here (the 100/500-row perf budget
+  // test below already covers that scale on the committed-state path).
+  const baseline = JSON.parse(await page.locator("#metrics-output").textContent());
+  expect(baseline.rows).toBe(45);
+  await expect(page.locator("#candidate-preview-banner")).toBeHidden();
+
+  const result = await page.evaluate(async () => {
+    const summary = await window.PrintFormStudioAgent.execute("get_project_summary");
+    const ops = [{ type: "set_font_scale", basePt: 14 }];
+    const preview = await window.PrintFormStudioAgent.execute("preview_changes", { expectedRevision: summary.result.revision, operations: ops });
+    const applied = await window.PrintFormStudioAgent.execute("apply_changes", { expectedRevision: summary.result.revision, operations: ops, reason: "e2e candidate cache reuse" });
+    return { revision: summary.result.revision, preview, applied };
+  });
+
+  expect(result.preview.ok).toBe(true);
+  expect(result.preview.result.candidateHash).toEqual(expect.any(String));
+  expect(result.preview.result.validation.metrics.rows).toBe(45);
+  // Real pagination, not a static guess: a real font bump on 45 real rows
+  // must move the real page count, and expectedRows/renderedRows only ever
+  // appear when acceptance.js actually walked a real rendered DOM.
+  expect(result.preview.result.validation.metrics.logicalPages).toBeGreaterThan(baseline.logicalPages);
+  expect(result.preview.result.validation.metrics.expectedRows).toBe(45);
+  expect(result.preview.result.validation.metrics.renderedRows).toBe(45);
+  // Still unapplied at the moment preview_changes returned.
+  expect(result.revision).toBe(0);
+
+  expect(result.applied.ok).toBe(true);
+  // Same operations against the same base revision hash identically, so
+  // apply_changes must serve the cached report from preview_changes above
+  // instead of rendering the candidate a second time.
+  expect(result.applied.result.candidateHash).toBe(result.preview.result.candidateHash);
+  expect(result.applied.result.validation.metrics.logicalPages).toBe(result.preview.result.validation.metrics.logicalPages);
+  await expect(page.locator("#revision-label")).toHaveText("Revision 1");
+  await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await expect(page.locator("#candidate-preview-banner")).toBeHidden();
+});
+
 test("requires a human confirmation and downloads one trusted HTML", async ({ page, context, browserName }) => {
   test.skip(browserName !== "chromium", "Download contract is covered once; render invariants run in every engine");
   expect((await passLayoutReview(page)).ok).toBe(true);

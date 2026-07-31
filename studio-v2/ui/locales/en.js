@@ -3,6 +3,7 @@ export default {
   "actions.validate": "Validate", "actions.print": "Print preview", "actions.exportUntrusted": "Export Untrusted", "actions.exportProduction": "Production export",
   "ui.language": "Studio language", "banner.update": "A new PWA version is ready. Save your draft before switching.", "banner.updateAction": "Safe upgrade",
   "banner.restore": "A non-authoritative recovery draft from the last seven days was found.", "banner.restoreAction": "Restore", "banner.dismiss": "Ignore",
+  "banner.candidatePreview": "Previewing an unapplied AI-proposed change — the document below is not yet committed.",
   "editor.aria": "Structured source editor", "editor.projectSource": "Project source", "editor.applySource": "Preview and apply",
   "editor.revision": "Revision {revision}", "editor.standardSample": "Standard sample", "sample.invoice": "Sales Invoice — Blue", "sample.purchaseOrder": "Purchase Order — Crimson",
   "editor.realData": "This session contains real ERP data (disable recovery cache)", "editor.boundarySample": "Boundary sample",

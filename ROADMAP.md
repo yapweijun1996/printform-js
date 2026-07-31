@@ -39,6 +39,8 @@
 
 **顺带发现的本地验证陷阱**：`playwright.config.js` 的 `webServer.reuseExistingServer` 在非 CI 环境下为 `true`——如果本机手动起了另一个服务器占用 4174 端口（例如用浏览器工具单独预览某个页面），Playwright 会静默复用那个服务器而不是自己管理的 `site-dist` 服务器。只依赖仓库根目录也存在的文件（`demo001.html` 等）的用例不受影响，但依赖 `site-dist` 专属产物（如两个试点导出 HTML）的用例会遇到假失败（404 页面被当成真实响应，断言超时）。**验证 e2e 前先确认没有手动服务器占用 4174**，或直接看失败信息里是不是内容像"Not found"页面。CI 环境不受影响（`reuseExistingServer` 在 CI 下强制为 `false`）。
 
+**第二个陷阱（2026-07-31 新发现，比端口冲突更隐蔽）**：`playwright.config.js` 的 `webServer.command` 是不带参数的 `node scripts/serve-site.mjs`，其默认根目录是 `site-dist/`——`npm run build:site` 生成的**构建快照**（对 `studio-v2/`/`studio/`/`docs/`/`img/` 做的是纯文件拷贝，不是符号链接）。这和 `.claude/launch.json` 显式传 `"."` 参数、直接服务仓库根目录实时源码的开发预览完全不同。`package.json` 的 `test:e2e` 脚本本身有 `pretest:e2e: npm run build:site` 钩子，所以**正常使用 `npm run test:e2e`（CI 也是这样跑的）不受影响**——踩坑的前提是像本 session 调试时那样为了单独跑某条用例、图快而直接执行 `npx playwright test`（跳过了 pretest 钩子）。只跑过 `npm run build:assets`（只重建 `dist/printform.js`/`dist/printform-document.js`）也不够，因为 `site-dist/studio-v2/` 是整个目录的纯拷贝，`build:assets` 不会碰它。**不会有任何报错或警告**，只是新功能的断言莫名其妙对不上（真实案例：P0-A #12 的 `candidateHash` 字段在直接服务源码根目录的浏览器里工作正常，但同一个用 `npx playwright test` 直接跑的 e2e 用例稳定复现 `undefined`——用独立脚本对比两种服务方式才定位到是 `site-dist/` 陈旧快照，不是代码回归）。**结论：本地要单独用 `npx playwright test` 而不是 `npm run test:e2e` 时，先手动跑一次 `npm run build:site`**；否则就用 `npm run test:e2e -- --project=chromium` 这类形式，让 pretest 钩子自动兜底。
+
 ### 2.2 Debug 能力（降低排查成本）
 
 - Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）。

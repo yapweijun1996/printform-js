@@ -16,23 +16,23 @@
 
 1. ✅ 已实现（2026-07-31）：`operations[]` 按 `type` 判别联合校验（`core/operation-schemas.js`，复用 `core/schema.js` 引擎），已知类型的缺字段/多字段/类型错误统一 `INVALID_OPERATION_SHAPE`；命令执行层的共享 JSON Schema 校验（`preview_changes`/`apply_changes` 之外的其他工具入参）仍未覆盖。
 2. ✅ 已实现（2026-07-31，commit `1bc63d7`）：永不复用的 revision counter；undo 后提交产生新 revision identity。
-3. 🔶 设计已定稿、未实现（2026-07-31）：复用现有可见预览 iframe 渲染 candidate（用户拍板否决"新开隐藏 iframe"方案），不复用当前草稿的 RenderReport。`CommandBus` 通过依赖注入获得可选的 `renderCandidate` 异步渲染器；无 DOM 环境下保持现有静态校验行为，零回归。完整设计见 [DESIGN.md §4.4](../DESIGN.md)。
-4. 🔶 设计已定稿、未实现：`preview_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL，非正确性依赖——revision 单调不复用已经防住"底稿已变还想用旧预览"）；返回真实 issues/metrics 而非仅 schema 校验。`previewId`/`expiresAt` 等契约字段细节留待实现阶段确定。
-5. 🔶 设计已定稿、未实现：`apply_changes` 命中 candidateHash 缓存时直接复用已渲染的 report 提交（跳过重复渲染）；未命中（Agent 跳过 preview 直接 apply）时退化为内联做一次同样的真实渲染 round-trip 再提交，不接受"绕过真实渲染"的直接提交。
+3. ✅ 已实现（2026-07-31）：复用现有可见预览 iframe 渲染 candidate（用户拍板否决"新开隐藏 iframe"方案），不复用当前草稿的 RenderReport。`CommandBus` 通过依赖注入获得可选的 `renderCandidate` 异步渲染器；无 DOM 环境下保持现有静态校验行为，零回归。完整设计与实现细节见 [DESIGN.md §4.4](../DESIGN.md)。
+4. ✅ 已实现（2026-07-31）：`preview_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL，非正确性依赖——revision 单调不复用已经防住"底稿已变还想用旧预览"）；返回真实 issues/metrics 而非仅 schema 校验。`candidateHash` 已在响应中返回；`previewId`（独立于 hash 的显式回执标识）与 `expiresAt` 字段尚未加入契约——当前靠 revision 单调性 + hash 内容寻址已覆盖"防止用旧预览提交"的核心诉求，这两个字段更多是契约可读性/未来 Agent Contract 2.0（#14）的形状问题，不阻塞功能正确性。
+5. ✅ 已实现（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时直接复用已渲染的 report 提交（跳过重复渲染）；未命中（Agent 跳过 preview 直接 apply）时退化为内联做一次同样的真实渲染 round-trip 再提交，不接受"绕过真实渲染"的直接提交。
 6. 任一验证、分页、完整性或容量错误使整组提交回滚。
 
 退出条件：
 
-- stale revision、过期 preview、hash mismatch 和未知 operation 都有稳定错误码。
-- default 与 long-text candidate 报告绑定同一 candidate hash。
-- undo 后的旧写命令永远不能命中新状态。
-- UI、WebMCP、CDP 对相同输入返回一致结果。
+- stale revision（✅ `REVISION_CONFLICT`）、未知 operation（✅ `UNSUPPORTED_OPERATION`/`INVALID_OPERATION_SHAPE`）都有稳定错误码；「过期 preview」「hash mismatch」目前表现为下一次 `ensureRevision` 检查失败（同一错误码复用），没有独立于 revision 冲突之外的专属错误码——是否需要拆分待 #14（Agent Contract 2.0 契约形状）时再定。
+- default 与 long-text candidate 报告绑定同一 candidate hash：机制已具备（同内容必同 hash），但目前只在人工/e2e 层面验证过 default 场景，long-text 场景的针对性验证留给 #14 一起补齐。
+- undo 后的旧写命令永远不能命中新状态（✅，revision 单调 + candidateReports 按内容 hash 寻址，undo 不会让旧 hash 复活）。
+- UI、WebMCP、CDP 对相同输入返回一致结果（✅，三者共享同一 `CommandBus.execute`，没有分叉实现）。
 
 ## P0-B：信任闭环
 
 目标：生产导出依赖真实、可追溯、不可自我声明的浏览器证据。
 
-1. Preview channel 加入目标 frame（✅ 2026-07-31 已实现 `event.source` 校验）、nonce、revision 与 candidate hash 验证。🔶 设计已定稿、未实现（2026-07-31）：原「一次性 nonce」需求（TASK.md 原 #15）由 P0-A 候选渲染设计里的请求令牌排序机制天然满足（跨 iframe reload 的单调 token，只采纳最新一次请求的回执，过期回执直接丢弃）——**#15 并入 P0-A 第 3 项一起交付，不再单独排期**；candidate hash 见 P0-A 第 4 项。
+1. ✅ 已实现（2026-07-31）：Preview channel 加入目标 frame（`event.source` 校验）、nonce、revision 与 candidate hash 验证。原「一次性 nonce」需求（TASK.md 原 #15）由 P0-A 候选渲染的请求令牌排序机制满足（跨 iframe reload 的单调 token，只采纳最新一次请求的回执，过期回执直接丢弃，见 `ui/app.js` 的 `previewToken`/`pendingCandidateRenders`）——**#15 已并入 P0-A 第 3 项交付**；candidate hash 见 P0-A 第 4 项。
 2. Studio 捕获场景截图和 RenderReport，并签发 Evidence Receipt。
 3. `complete_layout_review` 改为引用 evidence IDs。
 4. ✅ 已实现（2026-07-31）：`binding.js` 给每个 `data-pf-each` 展开行打 `data-pf-row-index`（源数组下标，穿过整个分页流程不丢失）；`inspectRenderedDocument` 用它做 `ROW_COUNT_MISMATCH`（数量）、`ROW_DUPLICATE_INDEX`（重复）、`ROW_MISSING_INDEX`（遗漏）、`ROW_ORDER_MISMATCH`（顺序）四项检查，无标记的旧版导出文档自动跳过不误报。数量/顺序/重复/遗漏四项均已覆盖。

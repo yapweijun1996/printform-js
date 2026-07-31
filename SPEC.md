@@ -72,6 +72,7 @@
   - `set_font_scale({ basePt })`：整体平移 `core/typography.js` 的 7 级字号刻度（`--pf-font-minus-3`…`--pf-font-plus-3`，1pt 步进），`basePt` 范围 6–14pt；替换 themeCss 中已注入的旧刻度块，不会重复注入。
 - 布局审查：`begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 findings/evidence，major/critical open 阻断）；任何 mutation 使审查与渲染报告失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
+- `preview_changes`/`apply_changes` 在浏览器环境下对候选项目做**真实分页渲染**（复用 UI 的可见预览 iframe，不止 schema/业务规则校验）：返回的 `validation` 携带真实 `issues[]`/`metrics`（含 `logicalPages` 等只有真实渲染才有的字段），并附带 `candidateHash`（`sha256(stableStringify(candidate))`）。`apply_changes` 若命中与刚才 `preview_changes` 相同的 `candidateHash`（即同一组 operations 作用在同一 revision 上）直接复用已渲染的报告提交，不重新渲染；未命中（跳过 preview 直接 apply）则内联渲染一次再提交——不存在"绕过真实渲染直接提交"的路径。渲染失败/超时归为 `RENDER_FAILED` 校验错误，不会让调用挂起。无浏览器上下文（单测、CLI 校验器）时二者退化为原有的纯 schema/业务规则校验，`candidateHash` 为 `null`。
 
 ### 3.4 渲染报告与错误路径
 
@@ -97,8 +98,8 @@
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（175 个，37 文件） | `npm test -- --run` | 必须全绿 |
+| 单元测试（183 个，37 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Playwright，23 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 14） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1） |
+| E2E（Playwright，24 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 15） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1）；**改动 `studio-v2`/`studio`/`docs`/`img` 后必须先 `npm run build:site` 再跑，Playwright 默认 `webServer` 服务的是 `site-dist/` 构建快照而非实时源码**（见 ROADMAP.md §2.1） |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含两个已签名试点导出 |

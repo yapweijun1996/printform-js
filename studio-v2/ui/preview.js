@@ -7,7 +7,19 @@ const OVERLAY_COMMAND_SOURCE = "printform-studio-v2-command";
 // carry DOM references, only the plain data acceptance.js computed). Runs
 // entirely inside the sandboxed iframe — no parent round-trip needed to see
 // a box appear.
-const bridge = (revision, overlayEnabled) => `<script>
+//
+// `token` identifies THIS render request and is echoed back verbatim in
+// every postMessage reply. A full srcdoc reload destroys the previous
+// bridge's window/JS context, but the parent can't rely on that alone for
+// ordering — the caller (app.js) uses the echoed token to match a reply to
+// its own request and drop anything stale, whether the reply is for the
+// human-edit committed-state render or an agent's candidate preview.
+// Exported (not just used locally) so the token-echoing logic — pure string
+// templating with no DOM/network dependency — can be unit tested directly.
+// createStandaloneHtml (the rest of renderPreview) needs a real fetch of the
+// dist/ runtime sources and only runs in a real browser; that part is
+// covered by e2e instead.
+export const buildPreviewBridge = (revision, overlayEnabled, token) => `<script>
 (function () {
   "use strict";
   var overlayEnabled = ${overlayEnabled ? "true" : "false"};
@@ -48,7 +60,7 @@ const bridge = (revision, overlayEnabled) => `<script>
   window.addEventListener("printform:rendered", function (event) {
     lastIssues = (event.detail && event.detail.issues) || [];
     drawOverlays();
-    parent.postMessage({ source: "printform-studio-v2-preview", type: "rendered", revision: ${revision}, payload: event.detail }, "*");
+    parent.postMessage({ source: "printform-studio-v2-preview", type: "rendered", revision: ${revision}, token: ${JSON.stringify(token)}, payload: event.detail }, "*");
   });
 
   window.addEventListener("message", function (event) {
@@ -65,19 +77,23 @@ const bridge = (revision, overlayEnabled) => `<script>
   });
 
   window.addEventListener("error", function (event) {
-    parent.postMessage({ source: "printform-studio-v2-preview", type: "error", revision: ${revision}, payload: { message: event.message } }, "*");
+    parent.postMessage({ source: "printform-studio-v2-preview", type: "error", revision: ${revision}, token: ${JSON.stringify(token)}, payload: { message: event.message } }, "*");
   });
 })();
 </script>`;
 
-export async function renderPreview(iframe, project, revision, overlayEnabled = true) {
+// `token` defaults to `revision` so any caller that doesn't need request
+// disambiguation (there's only ever one committed project at a time) can
+// omit it; app.js always passes an explicit one shared with its candidate
+// requests so both compete in the same ordering space.
+export async function renderPreview(iframe, project, revision, overlayEnabled = true, token = revision) {
   const result = await createStandaloneHtml(project, { requireTrusted: false, networkDisabled: true });
   // Inject at the LAST </body>: sample data / template sections are serialized
   // before the real closing tag, so replacing the first occurrence would let a
   // data value containing the literal text "</body>" corrupt the JSON block.
   const marker = "</body>";
   const at = result.html.lastIndexOf(marker);
-  const injected = bridge(revision, overlayEnabled);
+  const injected = buildPreviewBridge(revision, overlayEnabled, token);
   iframe.srcdoc = at === -1
     ? result.html + injected
     : result.html.slice(0, at) + injected + result.html.slice(at);

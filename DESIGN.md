@@ -99,23 +99,24 @@
 - 「Preview and apply」不再用 `window.confirm` 单行文本确认，改为 `ui/diff-view.js` 的并排 diff 面板：LCS 逐行对比每个变更 section（JSON 段先经 `stableStringify` 再对比，避免键序不同被误判为变更），新增行绿色高亮、删除行红色高亮；`trust` 这类非文本伪 section 单独渲染一行说明。取消不调用 `apply_changes`，草稿不落盘；未变更时直接跳过面板显示提示。单侧行数超过 1500 行时跳过逐行高亮（避免 O(m·n) 在超大样本数据上卡顿），仅展示全文。
 - 注意：`core/acceptance.js` 会打进 `dist/printform-document.js`，改动后必须 `npm run build:assets` 才对预览生效。
 
-### 4.4 候选项目真实渲染——已设计未实现（Target，2026-07-31 设计定稿，TASK.md #12）
+### 4.4 候选项目真实渲染（Current，2026-07-31 落地，TASK.md #12–13）
 
 **决策**：复用现有可见预览 iframe（`#preview-frame`），不新开隐藏 sandbox iframe。用户在 2026-07-31 就这一取舍拍板——放弃"新开隐藏 iframe"的方案，理由是：省掉第二个常驻 iframe/PrintForm 运行时实例的内存与心智负担，并且让人类工程师能实时看到 Agent 提议的候选改动（与已有的 source-edit diff 面板体验一致），代价是需要一套跨 iframe reload 的请求排序机制（见下）。
 
-**架构变更**（实现阶段落地，当前为设计）：
+**架构**：
 
-1. **`CommandBus` 通过依赖注入获得可选的候选渲染器**：`new CommandBus(initialProject, { renderCandidate })`，`renderCandidate(project, revision)` 是一个返回 `Promise<RenderReport>` 的异步函数。不传（如现有单测直接 `new CommandBus(project)`、CLI 校验器等无 DOM 环境）时保持当前行为——`preview_changes` 退化为纯 schema/业务规则校验，不阻塞、不报错，这是既有"CLI 不产出 `expectedRows`"式优雅降级的延伸，向后兼容零回归。
-2. **`app.js` 的 `installBus()` 提供真实实现**：复用 `renderPreview()`/`listenForPreview()` 和 `#preview-frame`，而不是重新实现一套 iframe 生命周期管理。
-3. **新增一层请求令牌排序**（跨 iframe `srcdoc` reload 存活，是 `runtime.js` 内部 `generation` 计数器在"整个 iframe 重载"这一级别的对应物）：无论请求来自人类编辑防抖（`schedulePreview`）还是 Agent 的 `preview_changes`/`apply_changes`，发起渲染前先领取一个单调递增 token；`printform:rendered` 回执到达时只有 token 与"当前最新一次请求"相符才会被采纳，过期回执直接丢弃。这同时天然满足了 TASK.md 原 #15（"拒绝非本次预览的消息"）的需求——**#15 并入本项一起交付，不再单独排期**。
+1. **`CommandBus` 通过依赖注入获得可选的候选渲染器**：`new CommandBus(initialProject, { renderCandidate })`，`renderCandidate(project, revision)` 是一个返回 `Promise<RenderReport>` 的异步函数。不传（现有单测直接 `new CommandBus(project)`、CLI 校验器等无 DOM 环境）时保持原行为——`preview_changes` 退化为纯 schema/业务规则校验，不阻塞、不报错，这是既有"CLI 不产出 `expectedRows`"式优雅降级的延伸，向后兼容零回归（`tests/studio-v2/command-bus.test.js` 有专门回归用例）。
+2. **`app.js` 的 `installBus()` 提供真实实现**：`renderCandidateForPreview(project, revision)` 复用 `renderPreview()`/`listenForPreview()` 和 `#preview-frame`，不另开一套 iframe 生命周期管理。
+3. **一层跨 iframe reload 存活的请求 token**（`runtime.js` 内部 `generation` 计数器在"整个 iframe 重载"这一级别的对应物）：无论请求来自人类编辑防抖（`schedulePreview`）还是 Agent 的 `preview_changes`/`apply_changes`，发起渲染前先领取一个单调递增 token，`ui/preview.js` 的 `buildPreviewBridge()` 把 token 原样写进两个 postMessage 回执（`rendered`/`error`）；父页 `listenForPreview` 回调按 token 先查 `pendingCandidateRenders`，命中就是候选请求的回执，未命中再退回既有的按 `revision` 匹配的已提交状态路径。这同时天然满足了 TASK.md 原 #15（"拒绝非本次预览的消息"）的需求——**#15 已并入本项，不再单独存在**。
+4. **`preview_changes`**：`candidate = applyOperations(project, operations)` 之后，若注入了 `renderCandidate` 就等待其真实渲染回执；用 `sha256(stableStringify(candidate))`（`core/json.js` 已有）算出 `candidateHash`，按 hash 缓存真实 render report（内存级，5 分钟 TTL——纯内存管理考虑而非正确性依赖，因为 revision 单调且从不复用，`ensureRevision` 已经能拦掉任何"底稿已变还想用旧预览"的情况）；返回的 `validation` 携带真实 `issues[]`/`metrics`，不再只是静态 schema 校验；渲染器 reject 时不抛出，落成 `RENDER_FAILED` 校验错误，`candidateHash` 依旧返回（hash 在调用渲染器之前就已算好）。
+5. **`apply_changes`**：同样计算 candidate 与 `candidateHash`；命中缓存（Agent 刚 `preview_changes` 过同一组 operations）直接复用已缓存的 report 提交，不重新渲染；未命中缓存（Agent 跳过 preview 直接 apply）则退化为内联做一次同样的真实渲染 round-trip 再提交；`diff.changed === false` 时两者都直接短路，不调用渲染器、不占用缓存。
 
-**`preview_changes` 新行为**：`candidate = applyOperations(project, operations)` 之后，若 `renderCandidate` 可用，等待其真实渲染回执（复用 `waitForAssets` 已有的 5 秒超时模式，超时/渲染失败返回 `RENDER_FAILED` 而不是挂起）；用 `sha256(stableStringify(candidate))`（`core/json.js` 已有）算出 `candidateHash`，把真实 render report 按 `candidateHash` 缓存（内存级、短 TTL，建议初始 5 分钟——这是内存管理考虑而非正确性依赖，因为 revision 单调且从不复用，`ensureRevision` 已经能拦掉任何"底稿已变但还想用旧预览"的情况）；返回的 `validation` 现在包含真实 `issues[]`/`metrics`，不再只是静态 schema 校验。
+**人类可见性**：候选渲染期间 `#candidate-preview-banner`（`.banner` 复用既有 `#update-banner`/`#restore-banner` 样式）显示"正在预览 AI 提议的改动（未提交）"提示；`pendingCandidateRenders` 清空时（成功/失败/超时）自动隐藏。下一次真正的 commit（人类编辑或 Agent apply）发生时，`schedulePreview()` 既有的防抖流程会自动把 iframe 刷新回真实已提交状态，不需要额外的"回滚"代码路径；`installBus()` 切换项目（导入/切样本/重置信任）时会拒绝并清空所有仍在等待的候选渲染，避免悬挂 Promise。
 
-**`apply_changes` 新行为**：同样计算 candidate 与 `candidateHash`；命中缓存（即 Agent 刚 `preview_changes` 过同一组 operations）直接复用已缓存的 report 提交，不重新渲染——这是"先 preview 后 apply"这条常见路径的性能优化；未命中缓存（Agent 跳过 preview 直接 apply）则退化为内联做一次同样的真实渲染 round-trip 再提交，正确性优先，绝不提交未经真实分页验证的候选内容。
-
-**人类可见性**：候选渲染期间 iframe 会短暂显示"尚未提交的候选内容"而非当前已提交状态，这是设计选择而非缺陷，但 UI 必须有明确提示（如"正在预览 AI 提议的改动（未提交）"横幅）避免人类误以为已生效——具体文案/交互留给实现阶段。下一次真正的 commit（人类编辑或 Agent apply）发生时，`schedulePreview()` 既有的防抖流程会自动把 iframe 刷新回真实已提交状态，不需要额外的"回滚"代码路径。
-
-**仍是 Target、本次未设计**：Studio 签发截图 Evidence Receipt、双 runtime 完整 attestation（TASK.md #18–19，见[信任与代理模型](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)）。`previewId`/`expiresAt` 字段与 Agent Contract 2.0 版本切换本身（TASK.md #13–14）待本设计落地实现后再细化契约形状。
+**踩坑记录**：
+- 设计阶段曾估计"500 行样本渲染约 1 秒"，属于未经实测的乐观数字——真实测量下，500 行 + 较大字号（13pt）的候选渲染在本地沙箱浏览器里跑到 47 秒以上（`PrintForm.formatAll()` 自身的 clone/measure/place 尚未做 P2/E9 计划中的行高预测量缓存优化，见 ROADMAP.md）。候选渲染的超时不能按这个乐观估计设置——最终定为 30 秒的宽松兜底（`CANDIDATE_RENDER_TIMEOUT_MS`），只用来兜"确实卡死了"，不是性能预算；现有已提交状态的 `schedulePreview()` 路径本来就没有超时。500 行默认 9pt 场景仍稳定符合 `100/500-row render budgets` 测试的既有预算（`durationMs ≤ 5000`），说明变慢的是"大字号+大行数"这个不常见组合，不是回归。
+- `preview.js` 的 `bridge()` 改名并导出为 `buildPreviewBridge()`，只是为了能脱离 `createStandaloneHtml()`（需要真实 `fetch` 加载 `dist/` runtime，jsdom 单测环境无法解析相对 URL）单独对 token 回显逻辑做单测——纯字符串模板，无 DOM/网络依赖。
+- `playwright.config.js` 的 `webServer.command` 是不带参数的 `node scripts/serve-site.mjs`，其默认根目录是 `site-dist/`——一份 `npm run build:site` 生成的**构建快照**，不是 `studio-v2/` 实时源码（对比 `.claude/launch.json` 传了显式的 `"."` 参数，服务仓库根目录实时源码）。`package.json` 的 `test:e2e` 脚本有 `pretest:e2e` 钩子会自动先跑 `build:site`，所以正常用 `npm run test:e2e`（CI 也这样跑）不受影响；只有像调试时那样图快直接执行 `npx playwright test`（跳过 pretest 钩子）才会踩坑——此时只跑 `build:assets` 不够，必须重新跑完整的 `npm run build:site` 让 `site-dist/` 同步，否则 Playwright 测的是修改前的旧代码，且不会有任何明显报错、只是行为对不上（本次意外获得的教训：新功能的 candidateHash 用 `npx playwright test` 直接跑稳定复现 `undefined`，而同一段代码在直接服务仓库根目录的浏览器里工作正常，最终定位到这个快照陈旧问题）。
 
 ### 4.5 渲染内容完整性——数量校验（Current，P0-B 部分实现）
 

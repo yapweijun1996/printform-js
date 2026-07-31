@@ -11,7 +11,7 @@
 | E3 | 构建/脚本健壮化 | ✅ | serve-site 防崩、SW 占位符断言、v2 校验器区分未签名与被篡改（`ebd5d20`） |
 | E4 | Studio v2 安全闭环（第一批） | ✅ | 预览消息防伪造、opener 切断、原型污染防护、单调 revision、信任物理剥离（`1bc63d7`）；对应路线图 P0-A #2 与 P0-B #1 的 iframe 身份部分 |
 | E5 | Agent / 开发者可观测性 | ✅ | WebMCP 标准注册、元素级 issues、质量门可点击、开发模式 SW 网络优先（`53d4a52`）、预览问题元素红框 overlay（`1dc2856`）、Apply 前并排 diff 面板（`ebf3931`，取代 window.confirm 文本） |
-| E6 | P0-A 事务闭环（Agent Contract 2.0） | 🔶 | 已完成：单调 revision（`1bc63d7`）、operations 判别联合 schema 校验（`77d9722`）。用户已于 2026-07-31 就 #12 的架构方向拍板（复用可见预览 iframe，非新开隐藏 iframe）并完成设计（DESIGN.md §4.4，原 P0-B #15 nonce 需求并入 #12），代码尚未落地。拆分为 TASK.md #12–14（候选真实渲染 → candidateHash 缓存 + apply 快/慢路径 → Agent Contract 2.0 切换，三者耦合建议一起交付） |
+| E6 | P0-A 事务闭环（Agent Contract 2.0） | 🔶 | 已完成：单调 revision（`1bc63d7`）、operations 判别联合 schema 校验（`77d9722`）、候选项目在复用的可见预览 iframe 中真实渲染 + candidateHash 缓存（TASK.md #12+#13，含原 P0-B #15 nonce 需求，待提交）。剩余 TASK.md #14（Agent Contract 2.0 契约版本切换，需用户先确认切换时机） |
 | E7 | P0-B 信任闭环（证据体系） | 🔶 | 已完成：`event.source` 目标 iframe 校验、元素级越界/对比度定位、渲染内容数量+顺序+identity 完整性校验（`ROW_*` 四项）、重复区缺失+重叠检测（`HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP`，`535c58c`）。原 nonce 需求（TASK.md 原 #15）已并入 E6/#12 一起交付。剩余 TASK.md #18–19（截图 Evidence Receipt、完整 attestation） |
 | E8 | P1 工程师结构化工作流 | 🔶 | 已完成：高层语义工具第一批 `set_column_widths`/`set_font_scale`（`46254d6`）、semantic diff drawer 取代 confirm 对话框（`ebf3931`，供 Apply 前变更审查用）。待办：Branding/Page/Repeated areas/Table columns/Locale/Data contract 这类工程师可视化编辑面板——目前 Raw JSON/CSS/HTML 编辑器仍是唯一入口 |
 | E9 | P2 分页引擎演进 | ⬜ | PaginationSession、结构化 trace、性能预算（100 行 <2s、500 行 <5s）；硬约束：v1 ERP DOM 行为不变 |
