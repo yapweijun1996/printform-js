@@ -106,6 +106,105 @@ describe("operation shape validation (discriminated union by type)", () => {
   });
 });
 
+describe("set_column_widths (high-level semantic tool)", () => {
+  function projectWithTable() {
+    const project = createEmptyProject();
+    project.templateHtml = `<div class="printform"><table class="pf-items"><thead><tr><th>No</th><th>Description</th><th>Amount</th></tr></thead><tbody><tr><td>1</td><td>Widget</td><td>10.00</td></tr><tr><td>2</td><td>Gadget</td><td>20.00</td></tr></tbody></table></div>`;
+    return project;
+  }
+
+  // Matches the real shape used by studio-v2/samples/*: a .prowheader table
+  // (one header row) and a sibling .prowitem table (one repeating row
+  // template) rather than thead+tbody inside a single <table>.
+  function projectWithSplitHeaderAndRowTables() {
+    const project = createEmptyProject();
+    project.templateHtml = `<div class="printform">
+      <table class="prowheader pf-grid"><thead><tr><th style="width:7%">No</th><th>Description</th><th style="width:18%">Amount</th></tr></thead></table>
+      <table class="prowitem pf-grid" data-pf-each="/items"><tbody><tr><td style="width:7%">1</td><td>Widget</td><td style="width:18%">10.00</td></tr></tbody></table>
+    </div>`;
+    return project;
+  }
+
+  it("applies each width to the matching column across every row, header and body alike", () => {
+    const candidate = applyOperations(projectWithTable(), [
+      { type: "set_column_widths", tableSelector: ".pf-items", widths: ["10%", "70%", "20%"] }
+    ]);
+    const table = document.createElement("template");
+    table.innerHTML = candidate.templateHtml;
+    const rows = Array.from(table.content.querySelectorAll("tr"));
+    expect(rows).toHaveLength(3);
+    rows.forEach((row) => {
+      const widths = Array.from(row.cells).map((cell) => cell.style.width);
+      expect(widths).toEqual(["10%", "70%", "20%"]);
+    });
+  });
+
+  it("keeps a comma-separated selector's separate header/row tables in sync in one call", () => {
+    const candidate = applyOperations(projectWithSplitHeaderAndRowTables(), [
+      { type: "set_column_widths", tableSelector: ".prowheader, .prowitem", widths: ["9%", "73%", "18%"] }
+    ]);
+    const doc = document.createElement("template");
+    doc.innerHTML = candidate.templateHtml;
+    const headerWidths = Array.from(doc.content.querySelector(".prowheader tr").cells).map((cell) => cell.style.width);
+    const rowWidths = Array.from(doc.content.querySelector(".prowitem tr").cells).map((cell) => cell.style.width);
+    expect(headerWidths).toEqual(["9%", "73%", "18%"]);
+    expect(rowWidths).toEqual(["9%", "73%", "18%"]);
+  });
+
+  it("accepts an empty string or 'auto' to leave a column unconstrained (e.g. a flexible description column)", () => {
+    const candidate = applyOperations(projectWithTable(), [
+      { type: "set_column_widths", tableSelector: ".pf-items", widths: ["10%", "", "auto"] }
+    ]);
+    const table = document.createElement("template");
+    table.innerHTML = candidate.templateHtml;
+    const firstRowWidths = Array.from(table.content.querySelector("tr").cells).map((cell) => cell.style.width);
+    expect(firstRowWidths[0]).toBe("10%");
+    expect(firstRowWidths[1]).toBe("");
+  });
+
+  it("rejects a widths array whose length does not match the table's column count", () => {
+    expect(() => applyOperations(projectWithTable(), [
+      { type: "set_column_widths", tableSelector: ".pf-items", widths: ["50%", "50%"] }
+    ])).toThrowError(expect.objectContaining({ code: "COLUMN_WIDTHS_COUNT_MISMATCH" }));
+  });
+
+  it("rejects a selector that matches no <table> element at all", () => {
+    const project = projectWithTable();
+    expect(() => applyOperations(project, [
+      { type: "set_column_widths", tableSelector: ".pf-items thead", widths: ["1%"] }
+    ])).toThrowError(expect.objectContaining({ code: "COLUMN_WIDTHS_TARGET_INVALID" }));
+  });
+
+  it("rejects a width value with no recognized unit at the schema level", () => {
+    expect(() => applyOperations(projectWithTable(), [
+      { type: "set_column_widths", tableSelector: ".pf-items", widths: ["10%", "big", "20%"] }
+    ])).toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+});
+
+describe("set_font_scale (high-level semantic tool)", () => {
+  it("shifts the whole 7-step type scale from the new base, replacing the prior injection in place", () => {
+    const project = createEmptyProject();
+    expect(project.themeCss).toContain("--pf-font-default: 9pt");
+    const candidate = applyOperations(project, [{ type: "set_font_scale", basePt: 11 }]);
+    expect(candidate.themeCss).toContain("--pf-font-default: 11pt");
+    expect(candidate.themeCss).toContain("--pf-font-minus-3: 8pt");
+    expect(candidate.themeCss).toContain("--pf-font-plus-3: 14pt");
+    // Exactly one injected block, not a second copy alongside the old one.
+    expect(candidate.themeCss.match(/PrintForm type scale:/g)).toHaveLength(1);
+    // The rest of the theme (color, font-family) survives untouched.
+    expect(candidate.themeCss).toContain("color: #111");
+  });
+
+  it("rejects a base size outside the supported 6-14pt range", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_font_scale", basePt: 20 }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+    expect(() => applyOperations(project, [{ type: "set_font_scale", basePt: 2 }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+});
+
 describe("sanitizeExecutableContent", () => {
   it("strips <script>, on* handlers and javascript: URLs from the template", () => {
     const dirty = {

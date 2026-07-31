@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐待提交的 operations schema 校验批次，工作区基于 `c081a91`，145 个单测 + 21 个 E2E 全绿）。
+> 最后核对：2026-07-31（对齐待提交的高层语义工具批次，工作区基于 `77d9722`，153 个单测 + 21 个 E2E 全绿）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -36,6 +36,8 @@
 | 黄金样本分页断言：demo001（45 行+PTAC）、delivery_order_test（PTAC+PADDT 组合）、index015（2-up 物理/逻辑页拆分）三页固化页数+每页行分布 | `c081a91` | 新增 `e2e/golden-pagination.spec.js`；**过程记录**：首次手动用 MCP 浏览器抓取 demo001 数据时把 prowitem/ptac 数量看错位（误以为逐页混排），写断言后跑测试立刻炸出 diff——改用 Playwright 自身跑一遍单独探测脚本拿到真实数据（prowitem 全在 1-2 页 [23,22]，ptac 全在 3-7 页 [4,3,3,3,4]）才是准的；另发现一次误报：全量跑 21 条时 1 条 v2 自包含导出测试失败，根因是本机 Playwright 的 `reuseExistingServer` 复用了我手动开的仓库根目录服务器（4174 端口冲突），并非代码回归——清掉手动服务器后 21/21 全绿，此后不再在验证期间保留手动服务器占用该端口 |
 | P0-A：operations 判别联合 schema 校验（新增 `core/operation-schemas.js`，复用 `core/schema.js` 引擎，未知 operation 仍走既有 `UNSUPPORTED_OPERATION`，已知类型的缺字段/多字段/类型错误统一 `INVALID_OPERATION_SHAPE`） | （待提交） | 9 个新单测（8 个 operations.test.js + 1 个 command-bus.test.js 端到端）；浏览器实测：通过真实 WebMCP 网关验证多字段/缺字段两种畸形操作均被拒、revision 不推进，合法操作正常生效（0→1）。**过程记录**：新文件忘记同步 `sw.js` 的 `APP_SHELL` 清单，导致 PWA 离线用例失败（新文件 import 离线 404）——被全量 e2e 跑一遍当场抓到并修复，未提交带 bug 的版本；已把这个坑写进 ROADMAP.md §3 供下次新增文件时参考 |
 
+| 高层语义工具第一批：`set_column_widths`（支持逗号分隔复合选择器同步多张表）、`set_font_scale`（整体平移 7 级字号刻度，替换旧注入块不重复） | （待提交） | 10 个新单测（6 个 column-widths 含真实 `.prowheader`/`.prowitem` 分离表场景 + 2 个 font-scale + 2 个既有 typography 测试保持通过）；浏览器实测：对 Sales Invoice 真实模板一次调用同步表头+数据行列宽、字号从 9pt 平移到 12pt，截图确认视觉变化，`validate_project` 零错误、0 溢出、0 对比度问题 |
+
 ## 🔄 进行中
 
 （无）
@@ -45,7 +47,6 @@
 | # | 任务 | Epic | 验收标准 |
 |---|---|---|---|
 | 5 | Apply 前并排 diff 面板（替代 confirm 文本） | E5/E8 | 变更 section 并排高亮，取消不落盘 |
-| 6 | 高层语义工具第一批：`set_column_widths`、`set_font_scale` | E8 | 工具契约 + 单测 + agent 实测一步到位 |
 | 8 | P0-A：候选项目隔离 iframe 真实分页 dry-run + preview receipt | E6 | 路线图 P0-A 退出条件 |
 | 9 | P0-B：preview nonce + candidate hash；Studio 签发截图证据 | E7 | 路线图 P0-B 退出条件 |
 
@@ -55,5 +56,5 @@
 
 ## 📌 下一步（建议顺序）
 
-1. 待办 #5（Apply 前 diff 面板）或 #6（高层语义工具）——两者独立，可任选其一。
+1. 待办 #5（Apply 前 diff 面板）——UI/UX 判断较多，建议单独一批，逐屏验证。
 2. #8、#9 体量较大（隔离 iframe 真实分页、截图证据体系），建议单独排期，不与其他任务混批。

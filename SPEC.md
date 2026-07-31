@@ -67,6 +67,9 @@
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
 - `operations[]` 中每个元素按 `type` 做判别联合校验（[studio-v2/core/operation-schemas.js](studio-v2/core/operation-schemas.js)，复用 core/schema.js 的受限 JSON Schema 引擎）：已知类型缺字段/多字段/字段类型错误一律 `INVALID_OPERATION_SHAPE`（附首个错误的 path+message）；未知 `type` 仍是 `UNSUPPORTED_OPERATION`。校验先于任何变更执行，失败时草稿不落盘、revision 不推进。
+- 支持的 `operations[].type`：`set_manifest_value`、`replace_manifest/schema/i18n/sample_data/theme/template`、`set_asset_slot`、`set_text`、`set_attribute`，以及两个高层语义工具：
+  - `set_column_widths({ tableSelector, widths })`：`tableSelector` 可以是逗号分隔的复合选择器（如 `.prowheader, .prowitem`），匹配到的每个 `<table>` 各行各列按位置套用 `widths`；数组长度必须等于该表列数；每个宽度值为 `"N%"`/`"Npx"`/`"Nmm"`/`"Npt"`，或 `""`/`"auto"` 表示该列不设固定宽度（用于 `table-layout:fixed` 下吸收剩余空间的描述类列）。PrintForm 模板常把表头行与重复数据行拆成两个独立 `<table>`（`.prowheader`/`.prowitem`），一次调用即可让两者列宽保持同步。
+  - `set_font_scale({ basePt })`：整体平移 `core/typography.js` 的 7 级字号刻度（`--pf-font-minus-3`…`--pf-font-plus-3`，1pt 步进），`basePt` 范围 6–14pt；替换 themeCss 中已注入的旧刻度块，不会重复注入。
 - 布局审查：`begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 findings/evidence，major/critical open 阻断）；任何 mutation 使审查与渲染报告失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
 

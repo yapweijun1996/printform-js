@@ -89,6 +89,7 @@
 | 乐观锁可靠性 | revision 用 `nextRevision` 单调计数器，undo 后不复用编号 |
 | 信任不可只翻 flag | 「重置信任」物理剥离 script/事件属性/javascript: URL；`validateProject` 从内容重推导可执行标记；themeCss `</style>` 逃逸会降级信任并在序列化时转义 |
 | operations 判别联合校验 | `core/operation-schemas.js` 按 `operation.type` 分派 schema，复用 `core/schema.js` 校验引擎；已知类型的缺字段/多字段/类型错误在任何变更执行前统一拦截（`INVALID_OPERATION_SHAPE`），未知类型仍走既有 `UNSUPPORTED_OPERATION` |
+| 高层语义工具优先复合选择器而非单表 | `set_column_widths` 的 `tableSelector` 接受逗号分隔选择器，因为真实模板把表头（`.prowheader`）与重复数据行（`.prowitem`）拆成两个独立 `<table>`；只支持单一 `<table>` 会让工具在实际模板上不可用 |
 
 ### 4.3 Agent 可观测性（Current）
 

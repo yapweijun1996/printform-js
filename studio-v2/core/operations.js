@@ -2,6 +2,7 @@ import { TRUST } from "./constants.js";
 import { cloneJson, parseJson, stableStringify } from "./json.js";
 import { validateData } from "./schema.js";
 import { OPERATION_SCHEMAS } from "./operation-schemas.js";
+import { setPrintTypographyBase } from "./typography.js";
 
 export function cloneProject(project) {
   return {
@@ -99,6 +100,36 @@ function applyOperation(project, operation) {
     if (operation.value === null) target.removeAttribute(operation.name);
     else target.setAttribute(operation.name, String(operation.value));
     project.templateHtml = template.innerHTML.trim();
+  } else if (operation.type === "set_column_widths") {
+    const template = templateDocument(project.templateHtml);
+    // PrintForm templates commonly split a "table" into sibling elements —
+    // a .prowheader table (the header row) and a separate .prowitem table
+    // (the repeating data row) — rather than one <table> with thead+tbody.
+    // A comma-separated selector (".prowheader, .prowitem") lets one call
+    // keep both in sync; a single-table selector still works the same way.
+    const tables = Array.from(template.content.querySelectorAll(operation.tableSelector)).filter((node) => node.tagName === "TABLE");
+    if (!tables.length) {
+      throw Object.assign(new Error(`No <table> elements matched: ${operation.tableSelector}`), { code: "COLUMN_WIDTHS_TARGET_INVALID" });
+    }
+    tables.forEach((table) => {
+      // HTMLTableElement.rows spans thead/tbody/tfoot in document order —
+      // every row's cells get the matching width, not just the first, so a
+      // stale mismatched width never lingers on other rows after this call.
+      const rows = Array.from(table.rows);
+      const columnCount = rows[0]?.cells.length || 0;
+      if (!rows.length || !columnCount) throw Object.assign(new Error(`A table matched by "${operation.tableSelector}" has no rows`), { code: "COLUMN_WIDTHS_NO_ROWS" });
+      if (operation.widths.length !== columnCount) {
+        throw Object.assign(new Error(`widths has ${operation.widths.length} entries but a table matched by "${operation.tableSelector}" has ${columnCount} columns`), { code: "COLUMN_WIDTHS_COUNT_MISMATCH" });
+      }
+      rows.forEach((row) => {
+        Array.from(row.cells).forEach((cell, index) => {
+          if (index < operation.widths.length) cell.style.width = operation.widths[index];
+        });
+      });
+    });
+    project.templateHtml = template.innerHTML.trim();
+  } else if (operation.type === "set_font_scale") {
+    project.themeCss = setPrintTypographyBase(project.themeCss, operation.basePt);
   } else throw Object.assign(new Error(`Unsupported operation: ${operation.type}`), { code: "UNSUPPORTED_OPERATION" });
   // themeCss is serialized raw into <style>: a "</style><script>…" payload
   // breaks out of the style element, so it must demote trust exactly like a
