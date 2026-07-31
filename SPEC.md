@@ -2,7 +2,7 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-07-31（对齐 commit `53d4a52`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+> 最后核对：2026-07-31（对齐待提交的红框 overlay + 安全回归测试批次）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
 
 ---
 
@@ -89,7 +89,7 @@
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（100 个） | `npm test -- --run` | 必须全绿 |
+| 单元测试（136 个，36 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
 | E2E（Playwright） | `npm run test:e2e` | 本地/CI |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |

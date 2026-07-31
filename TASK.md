@@ -28,7 +28,8 @@
 | v2：质量门错误可点击跳编辑器（含 `/schema`、`/sampleData` 路径前缀统一） | `53d4a52` | 浏览器实测展开+聚焦+闪烁 |
 | v2：本地开发 SW 网络优先（修"改了没生效"坑） | `53d4a52` | build:site 盖章验证 |
 | 文档：新建 DESIGN/SPEC/EPIC/ROADMAP/TASK 五文档并对齐代码 | `3d6cb8a` | 人工核对 |
-| v2：预览问题元素红框 overlay + 开关（bridge 端按 issues 实时重算 rect 绘制，postMessage 指令切换不重渲染） | （待提交） | 浏览器实测：注入低对比度主题后红框覆盖 6 处；关闭开关瞬时消失、quality gate 计数不变；切 locale 触发全量重渲染后状态仍保持；100 测全绿 |
+| v2：预览问题元素红框 overlay + 开关（bridge 端按 issues 实时重算 rect 绘制，postMessage 指令切换不重渲染） | `1dc2856` | 浏览器实测：注入低对比度主题后红框覆盖 6 处；关闭开关瞬时消失、quality gate 计数不变；切 locale 触发全量重渲染后状态仍保持；100 测全绿 |
+| 安全回归测试固化：history 单调 revision、setJsonPath 原型污染、sanitizeExecutableContent、themeCss 逃逸、listenForPreview 来源校验（含伪造/无 source 场景）、mustache-lite 转义与严格 section、gateway 畸形 JSON 契约、draft-cache 超配额安全、sample-scenarios items 优先、set_sample_scenario 幂等 | （待提交） | 新增 8 个测试文件 + 1 处扩展，36 测试文件 136 个测试全绿；顺带修复 vitest 环境下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现的问题（新增共享 setup polyfill，此前仅 `ui-i18n.test.js` 单文件内 workaround） |
 
 ## 🔄 进行中
 
@@ -38,7 +39,6 @@
 
 | # | 任务 | Epic | 验收标准 |
 |---|---|---|---|
-| 2 | 安全回归测试固化：history 单调 revision、setJsonPath 原型污染、sanitizeExecutableContent、listenForPreview 来源校验、mustache-lite 严格模式 | E11 | vitest 用例落地，冒烟脚本淘汰 |
 | 3 | `examples/README.md` 演示页目录（21 个 index0XX 每页一句话） | E11 | 新人能按目录找到对应特性 demo |
 | 4 | CI 扩展：validate:v2 两试点 + Playwright 冒烟 3 条 | E11 | ci.yml 通过且能抓到人为注入的回归 |
 | 5 | Apply 前并排 diff 面板（替代 confirm 文本） | E5/E8 | 变更 section 并排高亮，取消不落盘 |
@@ -50,9 +50,9 @@
 
 ## 🚧 阻塞
 
-（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 PR 检查项。）
+（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 PR 检查项；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 本批新增共享 setup polyfill。）
 
 ## 📌 下一步（建议顺序）
 
-1. 待办 #2 安全回归测试（半天，一次性锁住本次全部安全修复）。
-2. 待办 #3 + #4（各 1–2 小时，维护成本立降）。
+1. 待办 #3 + #4（各 1–2 小时，维护成本立降）。
+2. 待办 #5（Apply 前 diff 面板）或 #6（高层语义工具）——两者独立，可任选其一。

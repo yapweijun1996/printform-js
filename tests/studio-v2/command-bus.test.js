@@ -52,6 +52,20 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.revision).toBe(0);
   });
 
+  it("does not bump the revision (or void a passing layout review) when re-selecting the same scenario", async () => {
+    // Regression: set_sample_scenario used to commit unconditionally, so
+    // re-picking the scenario already active was a no-op edit that still
+    // cleared renderReport/reviewReceipt — silently burning one of the
+    // three-attempt layout review budget for zero content change.
+    const bus = new CommandBus(createSalesInvoiceProject());
+    const first = await bus.execute("set_sample_scenario", { expectedRevision: 0, scenario: "one" });
+    expect(first.result.revision).toBe(1);
+    const again = await bus.execute("set_sample_scenario", { expectedRevision: 1, scenario: "one" });
+    expect(again.ok).toBe(true);
+    expect(again.result.revision).toBe(1);
+    expect(bus.revision).toBe(1);
+  });
+
   it("requires the current browser layout report before production export", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
     let request = await bus.execute("request_export");

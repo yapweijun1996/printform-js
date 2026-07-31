@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐 commit `53d4a52`）。
+> 最后核对：2026-07-31（对齐待提交的红框 overlay + 安全回归测试批次）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -27,11 +27,15 @@
 
 | 缺口 | 现状 | 计划 |
 |---|---|---|
-| v2 `history`/`operations`/`command-bus` 安全回归 | 单调 revision、原型污染、信任剥离目前靠一次性冒烟脚本验证 | 固化为 vitest 用例（每项 ≤15 行，一次写好永久生效） |
-| v1 `mustache-lite` | 无独立测试文件 | 补转义集 + 严格 section 的用例 |
-| 预览消息安全 | 浏览器手测 | jsdom 模拟 `event.source` 不匹配的用例 |
+| v2 `history`/`operations`/`command-bus` 安全回归 | ✅ 已固化（`tests/studio-v2/history.test.js`、`operations.test.js`，命令总线扩展一条幂等用例） | — |
+| v1 `mustache-lite` | ✅ 已固化（`tests/mustache-lite.test.js`：转义集 + 严格 section） | — |
+| 预览消息安全 | ✅ 已固化（`tests/studio-v2/preview.test.js`：jsdom 模拟 `event.source` 匹配/伪造/缺失三种场景） | — |
+| Agent 网关 / 草稿缓存边界 | ✅ 已固化（`gateway.test.js` 畸形 JSON 契约、`draft-cache.test.js` 超配额与过期草稿） | — |
+| `sample-scenarios` 数组选取 | ✅ 已固化（`sample-scenarios.test.js`：`data.items` 优先于其他数组） | — |
 | E2E 冒烟 | Playwright 已配置但用例覆盖少 | 每子系统 1 条冒烟路径：核心分页 1 页/多页、v1 结构模式、v2 预览 ready |
 | 分页黄金样本 | 无 | 对 `demo001` 等 3 个代表页固化「页数 + 每页行数」断言，P2 重构前必备 |
+
+**顺带修复的测试基础设施缺陷**：Node 22+/25 内置的全局 `localStorage`（无 `--localstorage-file` 时是不可用的空对象桩）会遮蔽 vitest jsdom 环境本应提供的可用实现，导致任何触碰 `localStorage` 的测试在此 Node 版本下静默失败（`ui-i18n.test.js` 此前用文件内 `vi.stubGlobal` 单独绕过，其余文件未设防）。已加共享 `tests/setup/local-storage-polyfill.js`（纯内存 Storage 实现，按测试文件隔离）并在 `vite.config.js` 的 `test.setupFiles` 注册，后续任何新测试触碰 `localStorage`/`sessionStorage` 都自动受益，无需各自 workaround。
 
 ### 2.2 Debug 能力（降低排查成本）
 
