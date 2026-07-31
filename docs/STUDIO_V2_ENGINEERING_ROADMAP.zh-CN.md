@@ -54,6 +54,7 @@
 - 默认提供 Branding、Page、Repeated areas、Table columns、Locale 和 Data contract 面板。
 - Raw HTML/CSS/JSON 移入 Advanced 模式，仍可手改并稳定 round-trip。
 - ✅ 已实现（2026-07-31）：`ui/diff-view.js` 并排 diff 面板取代 `window.confirm` 一次性文本对话框（逐行 LCS 高亮）。仍是模态而非常驻侧栏，"persistent drawer" 的呈现形式留待与其余 P1 面板一起重新设计。
+- ✅ 已实现（2026-07-31，`90a6c70`）：Table columns 面板——`core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组并解析真实 i18n 标签；另加一个本列表之外的 Print font scale 面板（`typography.js` 的 `currentFontBasePt()` 读回当前基础字号）。两者都遵循 `set_locale`/`set_asset_source` 的直接应用模式，经通用 `apply_changes` 工具传入单个 `set_column_widths`/`set_font_scale` operation（这两个操作类型本身没有专属 CommandBus 工具）。Locale 面板（打印语言选择器）在本项之前已存在。仍缺 Branding、Page、Repeated areas、Data contract。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
 - 草稿按源文件 fingerprint 保存、限时保留；未知导入默认关闭缓存。
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。

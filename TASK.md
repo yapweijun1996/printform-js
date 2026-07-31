@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `ef2b3d3`，201 个单测 + 三引擎 E2E 全绿；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，建议先在 Linux/Windows 重跑一次矩阵）。
+> 最后核对：2026-07-31（对齐 `90a6c70`，206 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale 面板。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，建议先在 Linux/Windows 重跑一次矩阵）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -58,6 +58,8 @@
 
 | Purchase Order 跨引擎分页收敛：`.pf-page-footer` 的 padding-bottom 12px→28px（非行区 +16px），让 引擎×语言 全部 15 个组合落到每页 14 行 | `4b0cdc1` | **完整机制**：数据行高三引擎完全相同（42.00px，字号不是问题），差异全在非行区块合计高度随 引擎×语言 在 386.58–411.20px 波动（跨度 24.62px ≈ 0.59 行），导致可用空间 612.80–637.42px = 14.59–15.18 行，**恰好跨在 15 这个整数边界上**。修法是把整段移到边界同一侧：解 `637.42−K<630` 且 `612.80−K≥588` 得 K∈(7.42, 24.80]，**取中点 16** 让上下各留约 8.6px，而不是贴着 7.42 那端（那只是换个悬崖站）。对模板改一次、所有浏览器同一份 CSS，**不做浏览器嗅探、不按引擎调字号**。已在 CSS 里写长注释说明约束，防止后人"顺手整理"改回去。**验证**：全量矩阵 88/88 通过且 22 个可比格子零分歧；三引擎全量 e2e 65 通过/10 跳过/0 失败。**代价**：每页少一行，页数多约 7%（500 行 34→36 页）。未采用反方向的"压缩 24px 保住 15 行"，因为省纸 7% 不值得重新设计已交付试点版式。**弯路记录（两处）**：(1) 先试 6px 并用只跑 en-MY 的聚焦探测判定"收敛"，**结论是错的**——全量矩阵里马来语仍分歧、日语方向还反转；窄范围的绿不等于绿。(2) 测量脚本两次有缺陷：一次用 `页高−行高×行数` 反推非行区（循环论证），一次误以为数据行在单个 `pf-grid` 容器内，实际**每行是独立 `<table>` 直接挂在页面下**，按 class 首 token 分组会把行头表和 15 个行表加成一个数——涉及数字的结论要先验证分解本身 |
 
+| P1（部分）：表格列宽 + 打印字号缩放面板——`set_column_widths`/`set_font_scale`（`46254d6`）此前只能通过手改 Raw Template HTML/Theme CSS 触达。新增 `core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组，标签经真实 i18n 目录解析（非硬编码）；`typography.js` 新增 `currentFontBasePt()` 从 themeCss 读回当前基础字号。两个面板都遵循既有 `set_locale`/`set_asset_source` 的直接应用模式（无 diff 弹窗） | `90a6c70` | 8 个新单测（4 个 currentFontBasePt + 4 个 inspectColumnGroups，含"无匹配数据表退化为仅表头选择器"与"模板无表格返回空列表"两个边界）；206 单测 + 65 E2E（10 跳过）全绿。**浏览器实测**：Sales Invoice 面板正确列出 5 列真实标签（No./Description/Qty/Unit/Amount）与当前宽度；字号 9pt→11pt 后预览可见文字变大、Amount 列被推出视口；Description 列宽 空→30% 后预览可见列变宽；切换 Studio 界面语言到中文后动态生成的按钮文案与占位符正确重新翻译；全程控制台零报错。**踩坑**：最初把这两个面板写成直接调用 `bus.execute("set_font_scale", …)`/`bus.execute("set_column_widths", …)` 当作独立 CommandBus 工具——浏览器实测立刻报 `Unknown tool`，因为这两个只是 `operations[]` 里的**操作类型**（不像 `set_locale`/`set_asset_source` 那样有专属包装工具），改为经通用 `apply_changes` 工具传入单个 operation 后行为正确；这类"从摘要读到*已实现*就假设 API 形状"的错误，**必须在真实浏览器里点一下才会暴露**，光跑单测不会发现（两个新单测只验证纯函数，不经过 CommandBus） |
+
 ## 🔄 进行中
 
 （无）
@@ -72,7 +74,7 @@
 
 ### 其他候选方向（均未开始、未确认范围）
 
-- **P1 工程师工作流**（EPIC E8）：Branding/Page/Repeated areas/Table columns/Locale/Data contract 可视化编辑面板，目前 Raw JSON/CSS/HTML 编辑器仍是唯一入口。
+- **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Branding、Page、Repeated areas、Data contract 面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达。
 - **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
 - **P3 发布治理**（EPIC E10）：独立 SemVer + 兼容矩阵、CHANGELOG、GitHub Release 附两个已验证试点导出、版本化模板目录。（LICENSE 与 SW precache manifest 自动生成已完成）
 
