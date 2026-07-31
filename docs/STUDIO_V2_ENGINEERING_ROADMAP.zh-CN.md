@@ -17,14 +17,15 @@
 1. ✅ 已实现（2026-07-31）：`operations[]` 按 `type` 判别联合校验（`core/operation-schemas.js`，复用 `core/schema.js` 引擎），已知类型的缺字段/多字段/类型错误统一 `INVALID_OPERATION_SHAPE`；命令执行层的共享 JSON Schema 校验（`preview_changes`/`apply_changes` 之外的其他工具入参）仍未覆盖。
 2. ✅ 已实现（2026-07-31，commit `1bc63d7`）：永不复用的 revision counter；undo 后提交产生新 revision identity。
 3. ✅ 已实现（2026-07-31）：复用现有可见预览 iframe 渲染 candidate（用户拍板否决"新开隐藏 iframe"方案），不复用当前草稿的 RenderReport。`CommandBus` 通过依赖注入获得可选的 `renderCandidate` 异步渲染器；无 DOM 环境下保持现有静态校验行为，零回归。完整设计与实现细节见 [DESIGN.md §4.4](../DESIGN.md)。
-4. ✅ 已实现（2026-07-31）：`preview_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL，非正确性依赖——revision 单调不复用已经防住"底稿已变还想用旧预览"）；返回真实 issues/metrics 而非仅 schema 校验。`candidateHash` 已在响应中返回；`previewId`（独立于 hash 的显式回执标识）与 `expiresAt` 字段尚未加入契约——当前靠 revision 单调性 + hash 内容寻址已覆盖"防止用旧预览提交"的核心诉求，这两个字段更多是契约可读性/未来 Agent Contract 2.0（#14）的形状问题，不阻塞功能正确性。
+4. ✅ 已实现（2026-07-31）：`preview_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL，非正确性依赖——revision 单调不复用已经防住"底稿已变还想用旧预览"）；返回真实 issues/metrics 而非仅 schema 校验。`candidateHash` 已在响应中返回；`previewId`（独立于 hash 的显式回执标识）与 `expiresAt` 字段**不计划加入 Agent Contract 1.x 线**——当前靠 revision 单调性 + hash 内容寻址已覆盖"防止用旧预览提交"的核心诉求，这两个字段只有在做真正破坏性的 Agent Contract 2.0（两阶段提交强制、见下方说明）时才有必要引入，不阻塞当前功能正确性。
 5. ✅ 已实现（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时直接复用已渲染的 report 提交（跳过重复渲染）；未命中（Agent 跳过 preview 直接 apply）时退化为内联做一次同样的真实渲染 round-trip 再提交，不接受"绕过真实渲染"的直接提交。
 6. 任一验证、分页、完整性或容量错误使整组提交回滚。
+7. ✅ 已实现（2026-07-31，TASK.md #14）：`AGENT_CONTRACT_VERSION` 从 1.1.0 升到 **1.2.0**（不是本节标题曾设想的"2.0"）——就"是否照原计划做破坏性两阶段提交切换"这一具体分歧征询用户后，确认范围改为向后兼容的次版本声明：`get_capabilities` 新增 `capabilities: { candidateHash, candidateRealRender }`，`apply_changes` 仍然接受直接传 `operations[]`（第 5 项的两条路径都保留，不删除）。真正的破坏性 Agent Contract 2.0（`apply_changes` 只认 previewId/hash、拒绝直接 operations）**保持未排期状态**，本节标题的"事务闭环"目标已经用非破坏性手段达成，是否仍要做破坏性切换是独立的未来产品决策。
 
 退出条件：
 
-- stale revision（✅ `REVISION_CONFLICT`）、未知 operation（✅ `UNSUPPORTED_OPERATION`/`INVALID_OPERATION_SHAPE`）都有稳定错误码；「过期 preview」「hash mismatch」目前表现为下一次 `ensureRevision` 检查失败（同一错误码复用），没有独立于 revision 冲突之外的专属错误码——是否需要拆分待 #14（Agent Contract 2.0 契约形状）时再定。
-- default 与 long-text candidate 报告绑定同一 candidate hash：机制已具备（同内容必同 hash），但目前只在人工/e2e 层面验证过 default 场景，long-text 场景的针对性验证留给 #14 一起补齐。
+- stale revision（✅ `REVISION_CONFLICT`）、未知 operation（✅ `UNSUPPORTED_OPERATION`/`INVALID_OPERATION_SHAPE`）都有稳定错误码；「过期 preview」「hash mismatch」目前表现为下一次 `ensureRevision` 检查失败（同一错误码复用），没有独立于 revision 冲突之外的专属错误码——**评估后判定当前不需要拆分**（revision 冲突错误码已覆盖全部实际场景），只有真正做破坏性 Agent Contract 2.0 时才会重新评估是否需要专属错误码。
+- default 与 long-text candidate 报告绑定同一 candidate hash：机制已具备（同内容必同 hash，hash 只由 candidate 内容决定，与场景标签无关），default 场景已有人工/e2e 验证；long-text 场景未做针对性验证，**留作已知空白**（不是任何已排期任务的一部分）。
 - undo 后的旧写命令永远不能命中新状态（✅，revision 单调 + candidateReports 按内容 hash 寻址，undo 不会让旧 hash 复活）。
 - UI、WebMCP、CDP 对相同输入返回一致结果（✅，三者共享同一 `CommandBus.execute`，没有分叉实现）。
 
@@ -83,7 +84,7 @@
 
 | 里程碑 | 内容 | 对外状态 |
 |---|---|---|
-| 2.1 Trust A | P0-A 事务闭环、Agent Contract 2.0 | Production Pilot |
+| 2.1 Trust A | P0-A 事务闭环（✅ 已完成，Agent Contract 1.2.0，非破坏性版本） | Production Pilot |
 | 2.2 Trust B | P0-B 信任闭环、两个模板全矩阵 | Production Ready 候选 |
 | 2.3 Workflow | P1 工程师结构化体验 | Production Ready |
 | 2.4 Engine | P2 分页 session 与性能 | Production Ready |
@@ -93,7 +94,7 @@
 
 ## 兼容策略
 
-- Agent Contract 2.0 不保留 1.x 写路径；旧客户端只能读取升级提示。
+- 若未来确实需要做破坏性的 Agent Contract 2.0（`apply_changes` 只认 previewId/hash，不再接受直接 operations），届时不应保留 1.x 写路径，旧客户端只能读取升级提示——但这仍是未排期的假设性方向，不是当前承诺；当前 Agent Contract 线（1.2.0，见 P0-A 第 7 项）是向后兼容的次版本演进，没有计划走到破坏性切换。
 - Protocol 同一 major 的迁移必须生成 diff 并另存为新 HTML；跨 major 只读。
 - v1 Studio 不消费 v2 项目，也不自动迁移。
 - 移动端只做查看与数据渲染回归；桌面四浏览器承担打印功能保证。

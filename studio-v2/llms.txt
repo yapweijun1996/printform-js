@@ -21,7 +21,7 @@ The manifest contains verified Codex CLI and Claude Code setup commands for Chro
 4. Use the pinned isolated-profile and URL-allowlisted configuration from the manifest.
 5. Ask the user to restart the agent client.
 6. Open Studio with new_page, call list_webmcp_tools, then execute get_capabilities.
-7. Never claim readiness unless protocol 2.0.0, contract 1.1.0, and 15 Studio WebMCP tools are confirmed.
+7. Never claim readiness unless protocol 2.0.0, contract 1.2.0, and 15 Studio WebMCP tools are confirmed.
 8. Dry-run changes before applying them, complete the mandatory layout review, and leave final production export to the human.
 
 Do not use autoConnect with a daily Chrome profile and do not enable real ERP data unless the user explicitly authorizes it for the current session.

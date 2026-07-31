@@ -60,9 +60,10 @@
 - 「重置信任」= 剥离可执行内容 + 重置 flag；validateProject 独立重扫内容（`EXECUTABLE_MARKUP_PRESENT`）。
 - CSP：trusted 导出用双 runtime sha256 hash；untrusted / 预览用 `unsafe-inline` 变体；`manifest.assets.allowExternalHttps` 在所有变体中同步打开 `img-src/font-src https:`。
 
-### 3.3 命令契约（Agent Contract 1.1.0）
+### 3.3 命令契约（Agent Contract 1.2.0）
 
 - 15 个工具见 [studio-v2/core/tool-contracts.js](studio-v2/core/tool-contracts.js)；全部经 `CommandBus.execute` 返回统一 `{ok, result|error{code,…}}`（含网关层 JSON 解析失败 `INVALID_INPUT_JSON`）。
+- `get_capabilities` 返回 `capabilities: { candidateHash: true, candidateRealRender }`：`candidateHash` 字段本身是契约形状（`preview_changes`/`apply_changes` 响应恒定携带该字段，值可能为 `null`）；`candidateRealRender` 反映当前会话是否真的注入了浏览器渲染器（有 DOM 的 Studio UI 为 `true`，CLI 校验器/单测等无 DOM 环境为 `false`）。1.2.0 相对 1.1.0 是纯可加字段，不移除或改变任何既有行为——`apply_changes` 仍然接受直接传 `operations[]`，不强制先调用 `preview_changes`。
 - 写命令必须带 `expectedRevision`；revision 单调递增、undo 不复用；过期写入返回 `REVISION_CONFLICT`。
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
@@ -98,7 +99,7 @@
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（183 个，37 文件） | `npm test -- --run` | 必须全绿 |
+| 单元测试（184 个，37 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
 | E2E（Playwright，24 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 15） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1）；**改动 `studio-v2`/`studio`/`docs`/`img` 后必须先 `npm run build:site` 再跑，Playwright 默认 `webServer` 服务的是 `site-dist/` 构建快照而非实时源码**（见 ROADMAP.md §2.1） |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |

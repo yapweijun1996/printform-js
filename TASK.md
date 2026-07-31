@@ -44,18 +44,18 @@
 | P0-B #16：行顺序 + 稳定 identity 校验——`binding.js` 给每个 `data-pf-each` 展开的行打 `data-pf-row-index`（源数组下标），`inspectRenderedDocument` 新增 `ROW_DUPLICATE_INDEX`/`ROW_MISSING_INDEX`/`ROW_ORDER_MISMATCH` 三个错误码，无标记的旧版导出文档自动跳过不误报 | `a81eb32` | 8 个新单测（binding.test.js 1 个验证打标、acceptance.test.js 6 个覆盖三种错误+通过+跳过、含"交换两行但数量和集合都对，只有顺序检查能抓到"的针对性用例）+ 1 个新 e2e；**验证方式的教训**：想在 Node 里手写脚本重新拼装 window/document/performance 全局对象来验证真实 dist 包渲染，撞上 jsdom 的 `Performance.now()` brand-check 死循环——放弃手工拼装，改用 Playwright 读取沙箱 iframe 内部 DOM（`page.frameLocator` 能穿透 `sandbox="allow-scripts"` 无 `allow-same-origin` 限制，因为走 CDP 而非页面自身 JS），拿到真实 45 行发票渲染后 `data-pf-row-index` 严格等于 `[0..44]` 的确凿证据；170 单测 + 23 E2E 全绿 |
 | P0-B #17：重复区缺失 + 相邻区块重叠检测——`data-repeat-header`/`data-repeat-docinfo` 为"y"时每页必须有对应 `_processed` 区块（`HEADER_MISSING`/`DOCINFO_MISSING`）；`.printform_page` 直接子元素纵向矩形重叠报 `SECTION_OVERLAP` | `535c58c` | 15 个新单测（含正/负两个方向各 2 个：有/无重复标记、有/无重叠）；**双向浏览器实测**：正常渲染 Sales Invoice/Purchase Order 全部行数场景零误报，然后人为剥离模板里的 `pheader` class 确认 `HEADER_MISSING` 正确触发+撤销恢复，再人为给 `.pdocinfo_processed` 主题注入 `margin-top:-60px` 确认 `SECTION_OVERLAP` 触发（截图可见标题与地址块视觉重叠），Quality gate 正确列出该错误码；175 单测 + 23 E2E 全绿。**踩坑**：第一次注入负 margin 的 CSS 选择器写的是原始 `.pdocinfo`（分页引擎已把 class 改名为 `pdocinfo_processed`，选择器落空、规则从未生效）——这是本 session 第三次撞到"处理后 class 被改名"这个模式，改选择器后阳性测试才真正触发 |
 | P0-A #12+#13：候选项目在复用的可见预览 iframe 中真实渲染 + candidateHash 缓存——`CommandBus` 依赖注入可选 `renderCandidate(project, revision)`（无 DOM 时保持静态校验，零回归）；`app.js` 的 `renderCandidateForPreview` 复用 `renderPreview()`/`#preview-frame`；新增跨 iframe reload 的单调请求 token（`previewToken`/`pendingCandidateRenders`），人类编辑防抖与 Agent 候选预览共享同一排序，原 #15（nonce）需求由此满足并入本项；`preview_changes`/`apply_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash` 缓存真实 render report，apply 命中缓存跳过重渲染、未命中退化为内联渲染再提交；候选渲染期间显示 `#candidate-preview-banner` 提示 | `f4ca539` | 8 个新单测（command-bus.test.js 6 个覆盖无渲染器零回归/真实校验合并/缓存复用/直接 apply 无预渲染/RENDER_FAILED/no-op 不触发渲染、preview.test.js 2 个覆盖 token 回显与 JSON 转义）+ 1 个新 e2e；**浏览器实测**：45 行发票 `set_font_scale` 从 9pt→14pt，`preview_changes` 返回真实 `logicalPages` 从 3 变 4（证明真实分页而非静态校验），`candidateHash` 非空；`apply_changes` 用同一 operations 返回**相同** `candidateHash`（证明缓存命中，未重渲染）；人工"Preview and apply"走 UI diff 面板全程正常、修改后 Revision 正确递增、控制台零报错。**踩坑（两处）**：(1) 最初把候选渲染超时定为 6 秒（沿用早前"~1 秒"的乐观估计），实测 500 行+13pt 字号的真实渲染在本地沙箱浏览器里跑到 47+ 秒（`PrintForm.formatAll()` 尚未做 P2/E9 计划中的行高预测量优化），改为 30 秒宽松兜底（只防真卡死，不是性能预算）；(2) 图快直接用 `npx playwright test` 单独跑新用例（跳过了 `test:e2e` 的 `pretest:e2e` 自动重建钩子），其 `webServer` 指向的 `site-dist/` 还是改代码前的 `build:site` 构建快照——e2e 新测试第一次跑时 `candidateHash` 稳定复现 `undefined`，用独立 Playwright 脚本对比同一浏览器直接测源码根目录才定位到是陈旧构建快照，不是代码问题；改用 `npm run test:e2e` 或先手动 `npm run build:site` 后即正常 |
+| P0-A #14：Agent Contract 版本声明——`AGENT_CONTRACT_VERSION` 从 1.1.0 升到 1.2.0，`get_capabilities` 新增 `capabilities: { candidateHash, candidateRealRender }` 字段；`preview_changes`/`apply_changes` 的工具描述文本更新为提及真实渲染 + candidateHash | `（待提交）` | **范围经用户确认后与路线图原计划不同**：路线图原设想是把 `apply_changes` 改成只认 `previewId`/hash、不再接受直接传 `operations[]`（破坏性两阶段提交，理由是"Agent Contract 2.0 不保留 1.x 写路径"）；但 #12/#13 实际实现的 `apply_changes` 仍然接受直接传 `operations[]`（未命中缓存时退化为内联渲染），已经达成"不提交未经真实验证候选"的信任目标，且这条路径已经过实测验证、有真实调用方依赖。就这个具体分歧点征询用户后，选择了"仅升版本号声明新能力，不改行为"（次版本号 1.2.0，非 2.0.0），保留现有回退路径不删除。6 个新单测（1 个 get_capabilities 新增，覆盖有/无 renderCandidate 两种 `candidateRealRender` 取值 + 已有 `agent-bootstrap.test.js` 断言同步更新为 1.2.0）；浏览器实测：`get_capabilities` 返回 `contractVersion: "1.2.0"`、`capabilities: { candidateHash: true, candidateRealRender: true }`；184 单测 + 24 E2E 全绿。**遗留观察（非本次修复范围）**：契约版本号在 `core/constants.js`、`agent-setup.json`、`llms.txt` 三处手工同步维护，是重复事实来源，未来若再次遗漏某一处会造成 agent 引导材料与真实契约不一致；本次已同步全部三处 |
 
 ## 🔄 进行中
 
 （无）
 
-## ⬜ 待办（P0-A / P0-B 剩余拆分，按依赖顺序；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
+## ⬜ 待办（P0-B 剩余拆分；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
 
-> 这两组是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），体量大、涉及信任模型的破坏性契约变更（Agent Contract 2.0 不保留 1.x 写路径）。#12/#13 已完成（见上表）；#14 是对外契约版本号本身的切换，会让旧 1.x 写命令从静默兼容变成返回升级提示——这是另一个需要显式决定"什么时候切"的时间点，不建议在没有用户确认的情况下顺势直接做。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
+> P0-A 已全部完成（#12/#13/#14）。剩下只有 P0-B 的证据体系两项，体量大、需要全新的截图基础设施，且 #19 依赖 #18。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
 
 | # | 任务 | Epic | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| 14 | P0-A：Agent Contract 2.0 切换——`get_capabilities` contract version 升级，旧 1.x 写命令返回升级提示而非静默兼容 | E6 | #12、#13（均已完成） | 路线图"契约升级"条款；WebMCP/CDP/UI 三者对同一输入行为一致 |
 | 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用同一预览 iframe，已完成）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
 | 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前只有 runtime/content hash，无"真实浏览器测过"的证明） | E7 | #18 | 路线图"完整性与证明"条款 |
 
@@ -65,7 +65,4 @@
 
 ## 📌 下一步（建议顺序）
 
-TASK.md 中低风险、独立的项目已全部做完（#1–7、#10、#11、#16、#17、#12、#13 均已提交）。P0-A 主体（真实候选渲染 + candidateHash 缓存）已经落地并经浏览器/e2e 双重验证：
-
-1. **#14（Agent Contract 2.0 契约版本切换）是下一个需要用户先表态的节点**——把 `get_capabilities` 的 contract version 升级、让旧 1.x 写命令从静默兼容变成返回升级提示，这是一次对外可见的破坏性切换（会影响任何已经接入 WebMCP/CDP 的真实 Agent 客户端），"什么时候切"本身是产品决策，不建议顺着 #12/#13 完成的势头直接做。
-2. #18/#19（截图证据体系，全新基础设施）排在 #14 之后，暂不安排。
+P0-A 全部完成（#1–7、#10、#11、#12、#13、#14、#16、#17 均已提交）。剩下的 P0-B 两项（#18/#19，截图 Evidence Receipt + 完整 attestation）需要全新的浏览器截图基础设施，目前代码库里完全没有这块能力，属于比迄今为止任何一项都更大的新增工作，建议作为独立批次开始前先和用户确认范围（截图存哪、多大、保留多久，是否需要跨浏览器截图一致性等具体产品问题），不建议不问就动手写。

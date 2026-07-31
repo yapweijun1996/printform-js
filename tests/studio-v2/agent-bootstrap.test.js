@@ -14,7 +14,7 @@ describe("link-only AI agent bootstrap", () => {
     expect(manifest.schemaVersion).toBe(schema.properties.schemaVersion.const);
     expect(manifest.kind).toBe(schema.properties.kind.const);
     expect(Object.keys(manifest.clients).sort()).toEqual(schema.properties.clients.required.sort());
-    expect(manifest.studio).toMatchObject({ protocolVersion: "2.0.0", commandContractVersion: "1.1.0" });
+    expect(manifest.studio).toMatchObject({ protocolVersion: "2.0.0", commandContractVersion: "1.2.0" });
     expect(manifest.verification.expectedWebMcpToolCount).toBe(15);
   });
 

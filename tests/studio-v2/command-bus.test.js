@@ -77,6 +77,19 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.revision).toBe(1);
   });
 
+  it("declares candidateRealRender in get_capabilities based on whether a renderCandidate was actually injected", async () => {
+    // Additive Agent Contract 1.2.0 (TASK.md #14): the version bump is
+    // backward compatible — apply_changes still accepts operations[]
+    // directly — so this is purely a capability the caller CAN check, not
+    // something the contract now requires.
+    const withoutRenderer = await new CommandBus(createSalesInvoiceProject()).execute("get_capabilities");
+    expect(withoutRenderer.result.contractVersion).toBe("1.2.0");
+    expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false });
+
+    const withRenderer = await new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ({ status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }) }).execute("get_capabilities");
+    expect(withRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: true });
+  });
+
   it("falls back to static-only validation for preview_changes/apply_changes when no renderCandidate is injected", async () => {
     // The default constructor path (every existing unit test, the CLI
     // validator) must behave exactly as before P0-A #12: no DOM, no real

@@ -131,7 +131,16 @@ export class CommandBus extends EventTarget {
 
   async execute(name, input = {}) {
     try {
-      if (name === "get_capabilities") return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
+      if (name === "get_capabilities") {
+        // candidateHash: the field is always present on preview_changes/
+        // apply_changes responses (contract shape). candidateRealRender:
+        // whether THIS session can actually back it with real pagination —
+        // false in a DOM-less context (CLI validator, unit tests), where
+        // both tools fall back to schema-only validation and candidateHash
+        // is always null. Additive to 1.1.0, so no existing caller breaks.
+        const capabilities = { candidateHash: true, candidateRealRender: Boolean(this.renderCandidate) };
+        return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, capabilities, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
+      }
       if (name === "get_project_summary") return this.success({ revision: this.revision, title: this.project.manifest.title, locale: this.project.manifest.locale, trust: this.project.trust, protocolVersion: this.project.manifest.protocolVersion, review: layoutReviewStatus(this.reviewReceipt, this.revision), validation: this.validation() });
       if (name === "inspect_document") return this.success({ revision: this.revision, ...inspectTemplate(this.project.templateHtml) });
       if (name === "validate_project") return this.success({ revision: this.revision, validation: this.validation() });

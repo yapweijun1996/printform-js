@@ -6,7 +6,7 @@
     "name": "PrintForm Studio v2",
     "url": "https://yapweijun1996.github.io/printform-js/studio-v2/",
     "protocolVersion": "2.0.0",
-    "commandContractVersion": "1.1.0",
+    "commandContractVersion": "1.2.0",
     "humanGuide": "https://yapweijun1996.github.io/printform-js/studio-v2/AGENT_SETUP.md",
     "llmsText": "https://yapweijun1996.github.io/printform-js/studio-v2/llms.txt"
   },
