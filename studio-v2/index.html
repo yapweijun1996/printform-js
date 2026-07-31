@@ -77,6 +77,14 @@
         <label for="footer-logo-source" data-ui-i18n="editor.footerLogo">Footer Logo URL</label><input id="footer-logo-source" type="text" placeholder="HTTPS or data:image URL" data-ui-i18n-placeholder="editor.assetPlaceholder">
         <button id="apply-logo-button" class="secondary" type="button" data-ui-i18n="editor.applyLogo">Preview and replace Logo</button>
       </fieldset>
+      <fieldset class="asset-slots"><legend data-ui-i18n="editor.fontScale">Print font scale</legend>
+        <label for="font-scale-input" data-ui-i18n="editor.fontScaleBase">Base size (pt)</label>
+        <input id="font-scale-input" type="number" min="6" max="14" step="1">
+        <button id="apply-font-scale-button" class="secondary" type="button" data-ui-i18n="editor.applyFontScale">Apply font scale</button>
+      </fieldset>
+      <fieldset class="asset-slots"><legend data-ui-i18n="editor.tableColumns">Table columns</legend>
+        <div id="column-widths-groups"></div>
+      </fieldset>
       <details open><summary data-ui-i18n="section.manifest">Manifest</summary><label class="visually-hidden" for="manifest-editor" data-ui-i18n="editor.manifestJson">Manifest JSON</label><textarea id="manifest-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.schema">JSON Schema</summary><label class="visually-hidden" for="schema-editor" data-ui-i18n="editor.schemaJson">JSON Schema</label><textarea id="schema-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.translations">Translations</summary><label class="visually-hidden" for="i18n-editor" data-ui-i18n="editor.translationsJson">Translations JSON</label><textarea id="i18n-editor" spellcheck="false"></textarea></details>

@@ -3,6 +3,8 @@ import { createStandaloneHtml, loadRuntimeSources } from "../core/exporter.js";
 import { parseProjectHtml, verifyImportedProject } from "../core/project-model.js";
 import { stableStringify } from "../core/json.js";
 import { analyzeMigration } from "../core/migrations.js";
+import { currentFontBasePt } from "../core/typography.js";
+import { inspectColumnGroups } from "../core/column-inspection.js";
 import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
 import { installAgentGateway } from "../adapters/gateway.js";
 import { sanitizeExecutableContent } from "../core/operations.js";
@@ -66,6 +68,40 @@ function setEditors(project) {
   editors.sampleData.value = stableStringify(project.sampleData);
   $("#locale-select").value = project.manifest.locale || "en-MY";
   $("#revision-label").textContent = t("editor.revision", { revision: bus.revision });
+  $("#font-scale-input").value = currentFontBasePt(project.themeCss);
+  renderColumnWidthGroups(inspectColumnGroups(project.templateHtml, project));
+}
+
+// Rebuilt from the template on every load/change (same as the raw editors
+// above) rather than diffed in place — column groups can appear, disappear,
+// or change column count across an arbitrary template edit, so there is no
+// stable identity to patch against.
+function renderColumnWidthGroups(groups) {
+  const container = $("#column-widths-groups");
+  container.innerHTML = "";
+  groups.forEach((group) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "column-widths-group";
+    const fields = document.createElement("div");
+    fields.className = "column-widths-fields";
+    group.columns.forEach((column) => {
+      const label = document.createElement("label");
+      label.textContent = column.label;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = column.width;
+      input.placeholder = t("editor.columnWidthPlaceholder");
+      label.appendChild(input);
+      fields.appendChild(label);
+    });
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "secondary";
+    button.textContent = t("editor.applyColumnWidths");
+    button.addEventListener("click", () => applyColumnWidths(group.tableSelector, fields));
+    wrapper.append(fields, button);
+    container.appendChild(wrapper);
+  });
 }
 
 function renderQuality(validation) {
@@ -246,6 +282,31 @@ async function applyLogoSources() {
   } catch (error) { toast(t("toast.logoFailed", { message: error.message })); }
 }
 
+// set_font_scale/set_column_widths are operation TYPES (operation-schemas.js),
+// not their own CommandBus tools — unlike set_locale/set_asset_source, they
+// carry no extra business rule beyond generic operation validation, so they
+// go through the generic apply_changes tool directly (same no-modal,
+// direct-apply pattern; just without a dedicated wrapper tool).
+async function applyFontScale() {
+  try {
+    const basePt = Number($("#font-scale-input").value);
+    const operations = [{ type: "set_font_scale", basePt }];
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: `font scale: ${basePt}pt` });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.fontScaleApplied"));
+  } catch (error) { toast(t("toast.fontScaleFailed", { message: error.message })); }
+}
+
+async function applyColumnWidths(tableSelector, fieldsContainer) {
+  try {
+    const widths = Array.from(fieldsContainer.querySelectorAll("input")).map((input) => input.value.trim());
+    const operations = [{ type: "set_column_widths", tableSelector, widths }];
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: `column widths: ${tableSelector}` });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.columnWidthsApplied"));
+  } catch (error) { toast(t("toast.columnWidthsFailed", { message: error.message })); }
+}
+
 async function importFile(file) {
   try {
     const html = await readHtmlFile(file);
@@ -341,6 +402,10 @@ function refreshLocalizedUi() {
   renderDataPolicy($("#real-data-mode").checked);
   refreshStatusText();
   $("#revision-label").textContent = t("editor.revision", { revision: bus.revision });
+  // The raw editors above are plain textareas (data-ui-i18n handles their
+  // static labels), but this panel's button text/placeholders are generated
+  // in JS at render time and are otherwise invisible to applyMessages().
+  renderColumnWidthGroups(inspectColumnGroups(bus.project.templateHtml, bus.project));
 }
 
 function bindUi() {
@@ -354,6 +419,7 @@ function bindUi() {
   $("#scenario-select").addEventListener("change", async (event) => { const result = await bus.execute("set_sample_scenario", { expectedRevision: bus.revision, scenario: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#locale-select").addEventListener("change", async (event) => { const result = await bus.execute("set_locale", { expectedRevision: bus.revision, locale: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#apply-logo-button").addEventListener("click", applyLogoSources);
+  $("#apply-font-scale-button").addEventListener("click", applyFontScale);
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);

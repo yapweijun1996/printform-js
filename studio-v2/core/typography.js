@@ -48,3 +48,12 @@ export function withPrintTypography(css = "", basePt = DEFAULT_FONT_BASE_PT) {
 export function setPrintTypographyBase(css = "", basePt = DEFAULT_FONT_BASE_PT) {
   return `${buildTypographyBlock(basePt)}\n${stripPrintTypography(css)}`.trim();
 }
+
+// Reads the base size back out of themeCss for the P1 font-scale panel to
+// show the CURRENT value rather than always defaulting the input to 9 —
+// parses the one line buildTypographyBlock() always emits, so it can't drift
+// from what set_font_scale actually writes.
+export function currentFontBasePt(css = "") {
+  const match = String(css || "").match(/--pf-font-default:\s*(\d+(?:\.\d+)?)pt/);
+  return match ? Number(match[1]) : DEFAULT_FONT_BASE_PT;
+}

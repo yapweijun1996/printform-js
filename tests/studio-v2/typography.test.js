@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyProject } from "../../studio-v2/core/project-model.js";
-import { PRINT_TYPOGRAPHY_CSS, withPrintTypography } from "../../studio-v2/core/typography.js";
+import { currentFontBasePt, PRINT_TYPOGRAPHY_CSS, setPrintTypographyBase, withPrintTypography } from "../../studio-v2/core/typography.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 
 describe("PrintForm typography scale", () => {
@@ -21,5 +21,13 @@ describe("PrintForm typography scale", () => {
     const project = createSalesInvoiceProject();
     expect(project.themeCss).toContain("font-size: var(--pf-font-default)");
     expect(project.themeCss).not.toMatch(/font-size:\s*\d+px/);
+  });
+
+  it("reads the current base size back out for the P1 font-scale panel", () => {
+    const project = createEmptyProject();
+    expect(currentFontBasePt(project.themeCss)).toBe(9);
+    expect(currentFontBasePt(setPrintTypographyBase(project.themeCss, 12))).toBe(12);
+    expect(currentFontBasePt("")).toBe(9);
+    expect(currentFontBasePt("body { color: red; }")).toBe(9);
   });
 });
