@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `07b3947`，221 个单测 + 三引擎 E2E 连续 3 次全量全绿（65 通过/10 跳过，零 flake）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板，仅剩 Data contract 待范围讨论；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；`studio-v1.spec.js` 满载并行 flake 已修复（`94f2c7e`）；新增 `npm run doctor` 一键体检；P3 新增 CHANGELOG.md。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
+> 最后核对：2026-07-31（对齐 `5cea34f`，225 个单测 + 三引擎 E2E 连续 3 次全量全绿（65 通过/10 跳过，零 flake）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板，仅剩 Data contract 待范围讨论；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；`studio-v1.spec.js` 满载并行 flake 已修复（`94f2c7e`）；新增 `npm run doctor` 一键体检；P3 新增 CHANGELOG.md。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -68,6 +68,8 @@
 
 | `e2e/studio-v1.spec.js` 在满负载并行套件下偶发超时（本 session 撞到 3 次，均在 Firefox，均为不同用例、均在单独重跑时秒过）——真正根因确认为**两条链式 `expect().toBeVisible({timeout:20_000})` 加起来逼近文件 45s 的整体超时**，不是等待逻辑本身有假死：抓到一次"超过 20s 超时"的失败现场，渲染其实已经完整跑完 8 页，只是在满负载下比 20s 慢。修法：单条等待超时 20s→40s，并显式设 `test.describe.configure({timeout:120_000})` 给两条链式等待留够余量；同时把本机 Playwright 并发 worker 数从 5 降到 3，减少三引擎同时跑的内存/CPU 争抢 | `94f2c7e`（另一个并行 session 完成并经 `1bb53aa` 合并） | 连续 3 次 `npx playwright test` 全量跑（不带 `--project`）**65/65 全过、零 flake**（此前同类满负载跑法平均 3 次里挂 1 次）；`npx vitest run` 221 单测同步复跑确认无回归（该修复只碰 e2e 配置与用例本身）|
 
+| D1：四条独立 SemVer 线落地——引擎 `1.0.0`（[src/version.js](src/version.js) 为 SSOT，`PrintForm.version` 运行时暴露）、Studio v2 `0.9.0`（`STUDIO_VERSION`，刻意低于 1.0.0：版本号不得声称一个维护者尚未宣布的成熟度，升 1.0.0 留给显式宣布 Production Ready 那一刻）、协议与 Agent Contract 保持 `2.0.0` 不动；`package.json` 从占位 `0.0.0` 跟到引擎线。新增 [docs/COMPATIBILITY_MATRIX.zh-CN.md](docs/COMPATIBILITY_MATRIX.zh-CN.md) 说明四条线为何必须拆开（真实例证：Agent Contract 2.0.0 那次破坏性变更**没动导出文件一个字节**，共用版本号会强迫协议跳 major，等于向所有已交付 HTML 的持有者广播一个不存在的破坏性变更）+ 派生副本与防漂移对照表 | `5cea34f` | 4 个新单测（`tests/version.test.js`：四线均为合法 SemVer、package.json 必须等于 `PRINTFORM_VERSION`、`PrintForm.version` 必须等于 SSOT、**ROADMAP 仍写 Production Pilot 时 Studio 主版本号必须为 0**）；225 单测 + 65 E2E 全绿，`npm run doctor` 3/3 PASS。**反向验证守卫非空跑**：临时把 `STUDIO_VERSION` 改成 `1.0.0`，第 4 条测试确实变红，还原后恢复绿。**浏览器实测**：`PrintForm.version` 返回 `1.0.0` 且 demo001 仍正常渲染 8 页（未破坏引擎行为）；拦截诊断包 Blob 确认 payload 为 `studio: 0.9.0` / `agentContract: 2.0.0` / `protocol: 2.0.0`。**顺带修掉一个真实漂移 bug**：`downloadDiagnostics()` 里 `studio` 字段被硬编码成 `"2.0.0"`——那其实是**协议版本被复制到了描述 Studio 的字段上**，以致此前每一份诊断包都在报告一个从不存在的 Studio 版本。**刻意不做的事**：引擎版本号没有放进诊断包，因为 `src/` 不在 `build-site` 的拷贝白名单里，studio-v2 运行时 import 会在部署站点 404；为了填一个诊断字段就把版本号复制进 studio-v2，等于重新制造这次要根治的重复事实源 |
+
 | E11：新增 `npm run doctor`（ROADMAP §2.2 早已列为计划项）——一条命令依次跑单测+生产构建（`build:site`，内含 vitest --run）+ 两个试点样本 `validate:v2`，每步实时输出，结尾一页 PASS/FAIL 汇总 + 汇总耗时，任一步失败则整体退出码非零。刻意不含 `test:e2e`：那是 CI 每次 push 都跑的三引擎慢检查，doctor 定位是本地"工作树健不健康"的快速一问，不是发布门禁的替代品 | `07b3947` | 实跑一次：3 步全 PASS（单测+构建 7.4s、两个 validate:v2 各 0.6s），退出码 0；纯工具脚本，逻辑简单（检查每步 `spawnSync` 的 `status === 0`），未加专属单测，与 `browser-matrix.mjs`/`validate-printform-v2.mjs` 等既有纯脚本一致不强制加测试 |
 
 
@@ -89,7 +91,7 @@
 
 - **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）、Branding 品牌色（`d2fe47a`，范围收敛到 `.pf-brand` 标题色一处）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Data contract（表单编辑器级别的大活，无现成操作可复用）面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达；范围需要单独讨论再动手。
 - **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
-- **P3 发布治理**（EPIC E10）：独立 SemVer + 兼容矩阵、GitHub Release 附两个已验证试点导出、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG 已完成）
+- **P3 发布治理**（EPIC E10）：GitHub Release 附两个已验证试点导出（发布材料备妥后由维护者执行 push/tag/release）、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG、独立 SemVer + 兼容矩阵已完成）
 
 ## 🚧 阻塞
 

@@ -76,7 +76,7 @@
 
 ## P3：发布治理
 
-- Protocol、PrintForm runtime 与 Studio 分别使用独立 SemVer。
+- ✅ 已实现（2026-07-31，`5cea34f`）：Protocol、PrintForm runtime、Studio 与 Agent Contract 四条线各自独立 SemVer（引擎 1.0.0 / Studio 0.9.0 / 协议 2.0.0 / 契约 2.0.0），每条线单一 SSOT、派生副本全部机器校验，理由与对照表见 [兼容矩阵](COMPATIBILITY_MATRIX.zh-CN.md)。
 - 发布兼容矩阵、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT；✅ [CHANGELOG.md](../CHANGELOG.md) 已于同日新增，Keep a Changelog 格式，`[Unreleased]` 一段——独立 SemVer 决策尚未做，暂无版本号可归档）
 - GitHub Release 附两个经过验证的自包含单 HTML 试点文件。
 - ✅ 已实现（2026-07-31）：构建过程生成 Service Worker precache manifest（`scripts/app-shell.mjs` 走产物目录），避免手工列表漂移。此前手写清单已漂移两次（新增模块忘记登记 → 离线时该模块 404），并且对比发现旧清单还漏了 `core/runtime.js`。

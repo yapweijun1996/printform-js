@@ -23,6 +23,7 @@
 | 理解 AI 与安全边界 | [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) | 六项 P0 信任闭环硬门（Current，代码已完成）与已评估未采纳的历史设想（Backlog） |
 | 安排工程实施 | [工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) | P0–P3 依赖、接口和退出条件 |
 | 执行发布验收 | [发布检查表](STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md) | Pilot 检查与 Production Ready 硬门 |
+| 查版本与组合兼容性 | [兼容矩阵](COMPATIBILITY_MATRIX.zh-CN.md) | 四条独立版本线、各自 SSOT 与升 major 判据 |
 | 配置 Codex/Claude | [Agent setup](../studio-v2/AGENT_SETUP.md) | Current MCP/WebMCP 接入步骤 |
 | 维护旧 Studio | [Studio v1 设计](STUDIO_DESIGN.zh-CN.md) | Legacy v1，不是 v2 规范 |
 

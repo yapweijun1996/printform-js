@@ -91,4 +91,4 @@ Quotation、Delivery Order、Credit Note 等进入 Backlog。只有两个试点�
 | Production Ready | 六项 P0 硬门全部由自动测试和真实浏览器证据证明 |
 | Template Scale | P1 工程体验稳定后，才扩展模板目录与迁移治理 |
 
-Protocol、PrintForm runtime 与 Studio 分别采用独立 SemVer，并通过兼容矩阵说明组合关系。
+Protocol、PrintForm runtime、Studio 与 Agent Contract 四条线各自采用独立 SemVer（2026-07-31 落地）；组合关系与升 major 的判据见[兼容矩阵](COMPATIBILITY_MATRIX.zh-CN.md)。

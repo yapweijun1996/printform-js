@@ -2,14 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This
-project does not yet cut public SemVer releases (`package.json`'s `version` is a
-placeholder) — everything below sits under `[Unreleased]` until that's decided.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+Version numbers below track the **pagination engine** (`dist/printform.js`).
+Studio v2, the single-HTML protocol, and the Agent Contract version separately —
+see the [compatibility matrix](docs/COMPATIBILITY_MATRIX.zh-CN.md) for why, and
+for the current number on each line.
+
 See [TASK.md](TASK.md) for the full engineering log with commit hashes, test
 counts, and verification detail; this file only lists what changed, for readers
 who don't need the diary.
 
-## [Unreleased]
+## [1.0.0] — 2026-07-31
+
+First tagged release. The engine itself long predates this tag — it has been in
+production ERP use for years — so 1.0.0 states its actual stability rather than
+implying it is new. Ships alongside Studio v2 0.9.0, protocol 2.0.0 and Agent
+Contract 2.0.0.
 
 ### Added
 
@@ -31,6 +40,10 @@ who don't need the diary.
   and five print locales — plus an on-demand `workflow_dispatch` CI job to
   reproduce it on a Linux runner.
 - MIT license.
+- Independent SemVer for each of the four contracts, with a
+  [compatibility matrix](docs/COMPATIBILITY_MATRIX.zh-CN.md) explaining the
+  split and machine checks preventing the derived copies from drifting.
+  `PrintForm.version` now reports the engine version at runtime.
 - `npm run doctor`: a one-command local health check (unit tests, the
   production build, and protocol validation for both pilot exports) with
   a one-page pass/fail summary.
@@ -52,6 +65,9 @@ who don't need the diary.
   after being cloned.
 - Studio v1: structure-mode block indexing could point at the wrong element
   after edits; preview `postMessage` handling lacked origin/level validation.
+- Studio v2 diagnostics bundles reported a `studio` version that never
+  existed — the protocol version had been hardcoded into a field naming the
+  Studio.
 
 ### Security
 

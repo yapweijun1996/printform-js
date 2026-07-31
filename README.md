@@ -48,6 +48,7 @@ Studio v2 is the intended production path and currently has **Production Pilot**
 | [configuration.html](docs/configuration.html) | Auto-generated config reference (HTML, view in browser) |
 | [config-reference.json](docs/config-reference.json) | Auto-generated config reference (JSON, for tools) |
 | [CHANGELOG.md](CHANGELOG.md) | Notable changes, most recent first |
+| [Compatibility matrix](docs/COMPATIBILITY_MATRIX.zh-CN.md) | The four independent version lines and how they combine (Chinese) |
 | [LICENSE](LICENSE) | MIT |
 
 ---
