@@ -20,7 +20,8 @@
 4. ✅ 已实现（2026-07-31）：`preview_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL，非正确性依赖——revision 单调不复用已经防住"底稿已变还想用旧预览"）；返回真实 issues/metrics 而非仅 schema 校验。`candidateHash` 已在响应中返回；`previewId`（独立于 hash 的显式回执标识）与 `expiresAt` 字段**不计划加入 Agent Contract 1.x 线**——当前靠 revision 单调性 + hash 内容寻址已覆盖"防止用旧预览提交"的核心诉求，这两个字段只有在做真正破坏性的 Agent Contract 2.0（两阶段提交强制、见下方说明）时才有必要引入，不阻塞当前功能正确性。
 5. ✅ 已实现（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时直接复用已渲染的 report 提交（跳过重复渲染）；未命中（Agent 跳过 preview 直接 apply）时退化为内联做一次同样的真实渲染 round-trip 再提交，不接受"绕过真实渲染"的直接提交。
 6. 任一验证、分页、完整性或容量错误使整组提交回滚。
-7. ✅ 已实现（2026-07-31，TASK.md #14）：`AGENT_CONTRACT_VERSION` 从 1.1.0 升到 **1.2.0**（不是本节标题曾设想的"2.0"）——就"是否照原计划做破坏性两阶段提交切换"这一具体分歧征询用户后，确认范围改为向后兼容的次版本声明：`get_capabilities` 新增 `capabilities: { candidateHash, candidateRealRender }`，`apply_changes` 仍然接受直接传 `operations[]`（第 5 项的两条路径都保留，不删除）。真正的破坏性 Agent Contract 2.0（`apply_changes` 只认 previewId/hash、拒绝直接 operations）**保持未排期状态**，本节标题的"事务闭环"目标已经用非破坏性手段达成，是否仍要做破坏性切换是独立的未来产品决策。
+7. ✅ 已实现（2026-07-31，TASK.md #14）：`AGENT_CONTRACT_VERSION` 从 1.1.0 升到 **1.2.0**——就"是否照原计划做破坏性两阶段提交切换"这一分歧征询用户后，确认范围改为向后兼容的次版本声明：`get_capabilities` 新增 `capabilities`，`apply_changes` 仍接受直接传 `operations[]`（第 5 项的两条路径都保留）。**本节设想的那种破坏性 2.0（`apply_changes` 只认 previewId/hash、拒绝直接 operations）至今未做，也未排期**——事务闭环目标已用非破坏性手段达成。
+   > 注意版本号语义：契约后来确实升到了 **2.0.0**，但那是 P0-B 第 3 项（`complete_layout_review` 改用 `evidenceIds`）带来的破坏性变更，与本节设想的两阶段提交无关。`apply_changes` 至今仍接受 `operations[]`。
 
 退出条件：
 
@@ -44,9 +45,9 @@
 退出条件：
 
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
-- ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现一处待决策项**：Purchase Order 的分页位置与页数随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页），根因是该模板装满 15 行后仅剩 1.42px 余量，Firefox 的 docinfo+页脚高出约 2.56px 就掉到 14 行；功能无缺陷（零溢出零丢行），但是否接受属产品决策。
+- ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现的跨引擎分页差异已解决**：Purchase Order 的页数曾随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页）。根因是非行区块合计高度随 引擎×语言 波动 24.62px（约 0.59 行），使可用空间 14.59–15.18 行恰好跨在整数边界上。给非行区加 16px（`.pf-page-footer` padding-bottom 12→28px）把整段移到边界同一侧，全部 15 个 引擎×语言 组合收敛到每页 14 行，复跑矩阵 22 个可比格子零分歧。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收也已执行且全过。文档状态**仍暂记为 Production Pilot**：矩阵带出的 Purchase Order 跨引擎页数差异尚未决策（接受 / 给模板留余量 / 锁定确定性高度），Production Ready 是对外承诺，应由维护者在了解该差异后显式宣布，不由一次跑批的绿灯自动推导。
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导；宣布前建议先在 Linux/Windows 重跑一次矩阵（本次仅 macOS 单机执行，而同引擎跨操作系统已知存在度量差异）。
 
 ## P1：工程师工作流
 
@@ -74,9 +75,9 @@
 ## P3：发布治理
 
 - Protocol、PrintForm runtime 与 Studio 分别使用独立 SemVer。
-- 发布兼容矩阵、CHANGELOG、实际 LICENSE、runtime checksums 与迁移说明。
+- 发布兼容矩阵、CHANGELOG、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT）
 - GitHub Release 附两个经过验证的自包含单 HTML 试点文件。
-- 构建过程生成 Service Worker precache manifest，避免手工列表漂移。
+- ✅ 已实现（2026-07-31）：构建过程生成 Service Worker precache manifest（`scripts/app-shell.mjs` 走产物目录），避免手工列表漂移。此前手写清单已漂移两次（新增模块忘记登记 → 离线时该模块 404），并且对比发现旧清单还漏了 `core/runtime.js`。
 - 每个浏览器维护独立截图/打印基线和容差，不比较跨引擎像素一致性。
 - 建立版本化模板目录；新模板必须继承完整边界数据与浏览器矩阵。
 

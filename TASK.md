@@ -74,7 +74,7 @@
 
 - **P1 工程师工作流**（EPIC E8）：Branding/Page/Repeated areas/Table columns/Locale/Data contract 可视化编辑面板，目前 Raw JSON/CSS/HTML 编辑器仍是唯一入口。
 - **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
-- **P3 发布治理**（EPIC E10）：独立 SemVer、LICENSE、CHANGELOG、SW precache manifest 自动生成。
+- **P3 发布治理**（EPIC E10）：独立 SemVer + 兼容矩阵、CHANGELOG、GitHub Release 附两个已验证试点导出、版本化模板目录。（LICENSE 与 SW precache manifest 自动生成已完成）
 
 ## 🚧 阻塞
 

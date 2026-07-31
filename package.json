@@ -2,6 +2,7 @@
   "name": "printform-js",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
   "scripts": {
     "build": "npm run test -- --run && npm run build:assets && node scripts/postbuild-generate-preview.js",
