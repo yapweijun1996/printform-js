@@ -15,7 +15,7 @@ test("publishes link-only setup for Codex and Claude Code", async ({ page }) => 
   expect(manifest.schemaVersion).toBe("1.0.0");
   expect(manifest.clients).toHaveProperty("codex");
   expect(manifest.clients).toHaveProperty("claudeCode");
-  expect(manifest.verification.expectedWebMcpToolCount).toBe(15);
+  expect(manifest.verification.expectedWebMcpToolCount).toBe(16);
   await expect(page.locator(".agent-bootstrap")).toBeVisible();
   await expect(page.locator('.agent-bootstrap a[href="./agent-setup.json"]')).toHaveText("Machine manifest");
   await expect(page.locator('link[rel="help"]')).toHaveAttribute("href", "./agent-setup.json");
@@ -24,10 +24,19 @@ test("publishes link-only setup for Codex and Claude Code", async ({ page }) => 
 async function passLayoutReview(page) {
   return page.evaluate(async () => {
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");
-    await window.PrintFormStudioAgent.execute("begin_layout_review", { expectedRevision: summary.result.revision });
+    const expectedRevision = summary.result.revision;
+    // Agent Contract 2.0: the review is backed by Studio-issued receipts, so
+    // each required scenario must actually be rendered and signed first.
+    const evidenceIds = [];
+    for (const scenario of ["default", "long-text"]) {
+      const captured = await window.PrintFormStudioAgent.execute("capture_layout_evidence", { expectedRevision, scenario });
+      if (!captured.ok) throw new Error(`capture_layout_evidence(${scenario}) failed: ${captured.error.code}`);
+      if (!captured.result.evidence) throw new Error(`Scenario ${scenario} did not render cleanly: ${JSON.stringify(captured.result.validation.errors)}`);
+      evidenceIds.push(captured.result.evidence.evidenceId);
+    }
+    await window.PrintFormStudioAgent.execute("begin_layout_review", { expectedRevision });
     return window.PrintFormStudioAgent.execute("complete_layout_review", {
-      expectedRevision: summary.result.revision, reviewer: "ai-agent", browser: navigator.userAgent,
-      scenarios: ["default", "long-text"], evidence: ["full-page-screenshot", "layout-metrics"],
+      expectedRevision, reviewer: "ai-agent", evidenceIds,
       findings: [], summary: "Automated browser invariants and full-page fixture reviewed"
     });
   });
@@ -249,6 +258,49 @@ test("renders a preview_changes candidate for real in the shared preview iframe 
   await expect(page.locator("#revision-label")).toHaveText("Revision 1");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   await expect(page.locator("#candidate-preview-banner")).toBeHidden();
+});
+
+test("issues layout evidence receipts from real scenario renders and refuses self-declared evidence", async ({ page }) => {
+  // P0-B #18 end to end against the real preview iframe: receipts must come
+  // from Studio actually rendering each scenario, and the Agent Contract 1.x
+  // "I looked at a screenshot" labels must no longer buy a passing review.
+  const result = await page.evaluate(async () => {
+    const run = (name, input) => window.PrintFormStudioAgent.execute(name, input);
+    const capabilities = await run("get_capabilities", {});
+    const revision = (await run("get_project_summary", {})).result.revision;
+    const captured = {};
+    for (const scenario of ["default", "long-text"]) captured[scenario] = await run("capture_layout_evidence", { expectedRevision: revision, scenario });
+    await run("begin_layout_review", { expectedRevision: revision });
+    const evidenceIds = ["default", "long-text"].map((scenario) => captured[scenario].result.evidence.evidenceId);
+    const base = { expectedRevision: revision, reviewer: "ai-agent", findings: [], summary: "e2e evidence flow" };
+    const legacy = await run("complete_layout_review", { ...base, evidenceIds, browser: navigator.userAgent, scenarios: ["default", "long-text"], evidence: ["full-page-screenshot", "layout-metrics"] });
+    const forged = await run("complete_layout_review", { ...base, evidenceIds: ["forged-id"] });
+    const accepted = await run("complete_layout_review", { ...base, evidenceIds });
+    const exportable = await run("request_export", {});
+    return { capabilities: capabilities.result.capabilities, captured, legacy, forged, accepted, exportable };
+  });
+
+  expect(result.capabilities.layoutEvidenceReceipts).toBe(true);
+  // Receipts carry Studio's own measurements, and differ per scenario because
+  // the geometry they fingerprint genuinely differs.
+  const defaultEvidence = result.captured["default"].result.evidence;
+  const longTextEvidence = result.captured["long-text"].result.evidence;
+  expect(defaultEvidence.layoutFingerprint).toEqual(expect.any(String));
+  expect(defaultEvidence.browser.name).toEqual(expect.any(String));
+  expect(longTextEvidence.layoutFingerprint).not.toBe(defaultEvidence.layoutFingerprint);
+  // Capturing evidence renders candidates; it must never commit one.
+  expect(result.captured["long-text"].result.revision).toBe(0);
+
+  expect(result.legacy.ok).toBe(false);
+  expect(result.legacy.error.code).toBe("EVIDENCE_RECEIPT_REQUIRED");
+  expect(result.forged.ok).toBe(false);
+  expect(result.forged.error.code).toBe("EVIDENCE_UNKNOWN");
+  expect(result.accepted.ok).toBe(true);
+  expect(result.accepted.result.review.scenarios.sort()).toEqual(["default", "long-text"]);
+  expect(result.accepted.result.review.browsers).toHaveLength(1);
+  expect(result.exportable.result.ready).toBe(true);
+
+  await expect(page.locator("#revision-label")).toHaveText("Revision 0");
 });
 
 test("requires a human confirmation and downloads one trusted HTML", async ({ page, context, browserName }) => {

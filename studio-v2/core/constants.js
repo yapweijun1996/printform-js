@@ -1,10 +1,11 @@
 export const PROTOCOL_VERSION = "2.0.0";
-// 1.2.0 (2026-07-31): preview_changes/apply_changes gained real candidate
-// rendering + candidateHash (TASK.md #12-13). Purely additive — apply_changes
-// still accepts operations[] directly, so no existing 1.x caller breaks;
-// declared via get_capabilities().capabilities for callers that want to
-// detect it before relying on it.
-export const AGENT_CONTRACT_VERSION = "1.2.0";
+// 2.0.0 (2026-07-31): BREAKING. complete_layout_review now requires
+// evidenceIds issued by capture_layout_evidence and rejects the old
+// self-declared evidence/browser/scenarios labels (TASK.md #18) — keeping
+// that path would leave agents able to claim a review they never did, which
+// is the whole point of the change. 1.2.0 added real candidate rendering and
+// candidateHash additively (TASK.md #12-14).
+export const AGENT_CONTRACT_VERSION = "2.0.0";
 export const RUNTIME_GLOBAL = "PrintFormDocument";
 
 export const SECTION_IDS = Object.freeze({

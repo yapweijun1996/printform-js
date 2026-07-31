@@ -8,10 +8,20 @@ import { expect, test } from "@playwright/test";
 // match what applyBlockEdit/deleteBlock act on and {{ }} bindings survive
 // editing — the bug this session's fix corrected.
 
+// Wait on the rendered pages themselves, never on #status-a as a proxy: the
+// status still holds the PREVIOUS template's "N 页" for a moment after a new
+// selection, so a /\d/ match can be satisfied before the newly selected
+// template has even started rendering — and the count then runs against a
+// reloading iframe and reads 0. That race made this spec flaky under parallel
+// load while passing in isolation.
+async function waitForRenderedPages(page) {
+  await expect(page.frameLocator("#frame-a").locator(".printform_page").first()).toBeVisible({ timeout: 20_000 });
+}
+
 test("renders a preview and reports a page count for a plain (non-data-bound) template", async ({ page }) => {
   await page.goto("/studio/index.html");
   await page.locator("#template-select").selectOption("demo001");
-  await expect(page.locator("#status-a")).toHaveText(/\d/, { timeout: 20_000 });
+  await waitForRenderedPages(page);
   const pageCount = await page.frameLocator("#frame-a").locator(".printform_page").count();
   expect(pageCount).toBeGreaterThan(0);
 });
@@ -19,7 +29,7 @@ test("renders a preview and reports a page count for a plain (non-data-bound) te
 test("structure mode shows the raw template with {{ }} placeholders intact, not sample-rendered values", async ({ page }) => {
   await page.goto("/studio/index.html");
   await page.locator("#template-select").selectOption("databound");
-  await expect(page.locator("#status-a")).toHaveText(/\d/, { timeout: 20_000 });
+  await waitForRenderedPages(page);
 
   await page.locator("#mode-toggle").click();
   // Raw template has 5 direct children; the pre-fix bug rendered sample data

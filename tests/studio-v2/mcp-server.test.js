@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import readline from "node:readline";
 import { describe, expect, it } from "vitest";
+import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
 
 function startServer() {
   const child = spawn(process.execPath, ["mcp/server.mjs"], { cwd: process.cwd(), stdio: ["pipe", "pipe", "pipe"] });
@@ -31,7 +32,9 @@ describe("printform-studio-mcp stdio contract", () => {
       const tools = await server.receive();
       expect(tools.result.tools.map((tool) => tool.name)).toContain("preview_changes");
       expect(tools.result.tools.map((tool) => tool.name)).toContain("request_export");
-      expect(tools.result.tools).toHaveLength(15);
+      // Derived, not hardcoded: the CDP bridge must expose exactly the shared
+      // contract, so adding a tool there should never need an edit here.
+      expect(tools.result.tools).toHaveLength(TOOL_CONTRACTS.length);
     } finally { server.close(); }
   });
 });

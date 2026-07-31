@@ -34,8 +34,8 @@
 目标：生产导出依赖真实、可追溯、不可自我声明的浏览器证据。
 
 1. ✅ 已实现（2026-07-31）：Preview channel 加入目标 frame（`event.source` 校验）、nonce、revision 与 candidate hash 验证。原「一次性 nonce」需求（TASK.md 原 #15）由 P0-A 候选渲染的请求令牌排序机制满足（跨 iframe reload 的单调 token，只采纳最新一次请求的回执，过期回执直接丢弃，见 `ui/app.js` 的 `previewToken`/`pendingCandidateRenders`）——**#15 已并入 P0-A 第 3 项交付**；candidate hash 见 P0-A 第 4 项。
-2. Studio 捕获场景截图和 RenderReport，并签发 Evidence Receipt。
-3. `complete_layout_review` 改为引用 evidence IDs。
+2. ✅ 已实现（2026-07-31，TASK.md #18）：`capture_layout_evidence` 把场景渲染成未提交候选并签发 Evidence Receipt。**证据形态经用户确认改为几何指纹（`layoutFingerprint`）而非像素截图**——沙箱 iframe 的不透明 origin 让父页读不到 DOM，像素只能走 foreignObject→canvas（canvas 污染风险 + 保真缺陷 + 体积 + 真实数据隐私冲突），而防伪造目标由"给 Studio 自己的测量结果签名"即可完整达成。详见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)《验收证据》。
+3. ✅ 已实现（2026-07-31）：`complete_layout_review` 只接受 `evidenceIds`，旧式自述标签一律拒绝（Agent Contract 2.0.0 唯一的破坏性变更）。
 4. ✅ 已实现（2026-07-31）：`binding.js` 给每个 `data-pf-each` 展开行打 `data-pf-row-index`（源数组下标，穿过整个分页流程不丢失）；`inspectRenderedDocument` 用它做 `ROW_COUNT_MISMATCH`（数量）、`ROW_DUPLICATE_INDEX`（重复）、`ROW_MISSING_INDEX`（遗漏）、`ROW_ORDER_MISMATCH`（顺序）四项检查，无标记的旧版导出文档自动跳过不误报。数量/顺序/重复/遗漏四项均已覆盖。
 5. 🔶 部分实现（2026-07-31）：`data-repeat-header`/`data-repeat-docinfo` 为"y"时每页必须携带对应 `_processed` 区块（`HEADER_MISSING`/`DOCINFO_MISSING`）；页面直接子元素间的纵向矩形重叠检测（`SECTION_OVERLAP`）。越界已由既有 `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW` 覆盖。尚未覆盖：footer（重复语义与 header/docinfo 不同，"仅最后页出现一次"需要另外建模，未做）。
 6. Attestation 覆盖两段 runtime、CSP、内容与实际浏览器 receipt。

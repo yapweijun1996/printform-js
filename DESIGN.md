@@ -126,6 +126,20 @@
 
 **重复区缺失 + 重叠校验（2026-07-31 补齐，TASK.md #17）**：`data-repeat-header`/`data-repeat-docinfo` 是没有逐行例外的全局开关（不同于 rowheader，行级 `without_prowheader` 可以单独豁免）——若模板声明为 `"y"`，每个逻辑页必须真的带着 `.pheader_processed`/`.pdocinfo_processed`，缺失报 `HEADER_MISSING`/`DOCINFO_MISSING`。另外，`.printform_page` 的直接子元素（页头/文档信息/行头/数据行容器/页脚）按设计应自上而下正常块级堆叠，不使用浮动或绝对定位；若相邻两个子元素的矩形发生纵向重叠（后一个的 `top` 小于前一个的 `bottom`），报 `SECTION_OVERLAP`——这正是 KB 记忆里 Crimson 采购单那次"顶部边框与页头网格恰好同坐标、视觉融合"事故的通用化检测版本，不用等人眼发现。两项检查都在真实 Sales Invoice/Purchase Order 样本上验证过零误报，并用人为破坏（剥离 pheader class、注入负 margin）确认了阳性触发（含截图证据）。
 
+### 4.6 布局验收证据（Current，2026-07-31 落地，TASK.md #18）
+
+**问题**：`complete_layout_review` 过去只检查 Agent 传来的字符串集合里有没有 `"full-page-screenshot"`——Agent 完全可以凭空写上这个词，整套"AI 必须先看过再放行导出"的门禁形同虚设。
+
+**决策：证据是 Studio 自己测量的几何指纹，不是像素截图**（2026-07-31 与用户逐项确认）。理由链：预览 iframe 是 `sandbox="allow-scripts"` 无 `allow-same-origin` 的不透明 origin，父页读不到它的 DOM，真像素只能在 iframe 内部走 `foreignObject`→`canvas`→`toDataURL`，那条路有 canvas 污染报错风险、字体/图片保真缺陷、单张几 MB，而且**真实数据模式下像素里就是业务数据**，与 §隐私策略「默认不写入任何缓存」直接冲突。但 #18 要防的从来不是"看不看得到像素",而是"Agent 谎称自己看过"——Studio 自己渲染、自己 `getBoundingClientRect` 测出来的报告本身就是事实真相,给它签名即已完整达成防伪造。Agent 想看像素仍可用自己的 CDP 截图工具,只是那不构成证据。
+
+**机制**：`capture_layout_evidence({ expectedRevision, scenario })` 复用 #12 的 `renderCandidate` 注入,把该场景渲染成**未提交候选**。这一点是必须的——如果改用 `set_sample_scenario` 切场景来捕获,那会 commit 并推进 revision,把上一个场景刚签发的 receipt 立刻变成 stale,两个场景的证据永远凑不齐。
+
+`layoutFingerprint = sha256(stableStringify(pageGeometry))`,`pageGeometry` 是每页直接子元素的 class 加矩形。**矩形必须用页内相对坐标**:`getBoundingClientRect()` 是视口坐标,会随滚动位置变化,同一份布局在不同滚动位置会哈希出不同值,指纹就失去意义了。
+
+**fail-closed 三处**:渲染不干净的场景不签发证据(但返回该场景的 validation——这是 Agent 唯一能看到未提交场景真实错误的途径);无渲染器的会话(CLI 校验器、单测)返回 `EVIDENCE_UNAVAILABLE` 而不是伪造一张;任何 mutation/undo 清空整个 receipt store。
+
+**契约破坏**:这是 Agent Contract 2.0.0 唯一的破坏性变更。旧式 `evidence`/`browser`/`scenarios` 字段**即使同时附了有效 receipt 也拒绝**——留着旧路径等于 Agent 仍可自证,#18 的安全目标会归零,不破就没有意义。这与 #14 当时选择不破并不矛盾:#14 时信任目标已由候选真实渲染以非破坏方式达成,而这里没有非破坏的达成路径。
+
 ---
 
 ## 5. 构建与部署

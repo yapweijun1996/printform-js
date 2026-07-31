@@ -1,11 +1,14 @@
 import fs from "node:fs";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION } from "../../studio-v2/core/constants.js";
+import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
 
 const manifest = JSON.parse(fs.readFileSync("studio-v2/agent-setup.json", "utf8"));
 const schema = JSON.parse(fs.readFileSync("studio-v2/agent-setup.schema.json", "utf8"));
 const html = fs.readFileSync("studio-v2/index.html", "utf8");
 const serviceWorker = fs.readFileSync("studio-v2/sw.js", "utf8");
+const llmsText = fs.readFileSync("studio-v2/llms.txt", "utf8");
 
 describe("link-only AI agent bootstrap", () => {
   it("matches the published versioned schema contract", () => {
@@ -14,8 +17,24 @@ describe("link-only AI agent bootstrap", () => {
     expect(manifest.schemaVersion).toBe(schema.properties.schemaVersion.const);
     expect(manifest.kind).toBe(schema.properties.kind.const);
     expect(Object.keys(manifest.clients).sort()).toEqual(schema.properties.clients.required.sort());
-    expect(manifest.studio).toMatchObject({ protocolVersion: "2.0.0", commandContractVersion: "1.2.0" });
-    expect(manifest.verification.expectedWebMcpToolCount).toBe(15);
+  });
+
+  it("keeps every hand-maintained copy of the contract version and tool count in sync with the code", () => {
+    // These facts are duplicated across constants.js, agent-setup.json (three
+    // places) and llms.txt. The 1.1.0 -> 1.2.0 bump already missed
+    // verification.expectedCommandContractVersion, which would have told an
+    // onboarding agent to reject a perfectly correct Studio. Assert the code
+    // is the source of truth instead of trusting hand-sync next time.
+    expect(manifest.studio.protocolVersion).toBe(PROTOCOL_VERSION);
+    expect(manifest.studio.commandContractVersion).toBe(AGENT_CONTRACT_VERSION);
+    expect(manifest.verification.expectedProtocolVersion).toBe(PROTOCOL_VERSION);
+    expect(manifest.verification.expectedCommandContractVersion).toBe(AGENT_CONTRACT_VERSION);
+    expect(manifest.verification.expectedWebMcpToolCount).toBe(TOOL_CONTRACTS.length);
+    expect(manifest.procedure.find((step) => step.id === "discover-webmcp").expectedToolCount).toBe(TOOL_CONTRACTS.length);
+    expect(llmsText).toContain(`contract ${AGENT_CONTRACT_VERSION}, and ${TOOL_CONTRACTS.length} Studio WebMCP tools`);
+    // Tools the manifest tells agents to require must actually exist.
+    const toolNames = new Set(TOOL_CONTRACTS.map((tool) => tool.name));
+    manifest.verification.requiredStudioTools.forEach((name) => expect(toolNames).toContain(name));
   });
 
   it("pins a restricted isolated Chrome DevTools MCP for both clients", () => {

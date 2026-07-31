@@ -17,14 +17,13 @@ export const TOOL_CONTRACTS = Object.freeze([
   { name: "preview_source_edit", description: "Dry-run a gated raw section replacement without committing it.", inputSchema: objectSchema({ expectedRevision: revision, section: { type: "string", enum: ["manifest", "schema", "i18n", "theme", "template", "sampleData"] }, content: { type: "string" } }, ["expectedRevision", "section", "content"]) },
   { name: "get_layout_review_status", description: "Return the mandatory print-engineer review checklist and current revision-bound status.", inputSchema: objectSchema() },
   { name: "begin_layout_review", description: "Start one of at most three visual review passes for the current rendered revision.", inputSchema: objectSchema({ expectedRevision: revision }, ["expectedRevision"]) },
-  { name: "complete_layout_review", description: "Submit AI full-page review evidence; open major or critical issues block completion.", inputSchema: objectSchema({
+  { name: "capture_layout_evidence", description: "Render one scenario as an uncommitted candidate and, if it renders cleanly, issue a Studio-signed evidence receipt for it. Returns evidence: null plus that scenario's validation when it does not render cleanly. Receipts are required by complete_layout_review and are invalidated by any mutation.", inputSchema: objectSchema({ expectedRevision: revision, scenario: { type: "string", enum: ["default", "empty", "one", "45-rows", "100-rows", "500-rows", "long-text"] } }, ["expectedRevision", "scenario"]) },
+  { name: "complete_layout_review", description: "Submit AI full-page review findings backed by Studio-issued evidenceIds from capture_layout_evidence. Self-declared evidence labels are rejected; open major or critical issues block completion.", inputSchema: objectSchema({
     expectedRevision: revision,
     reviewer: { type: "string", const: "ai-agent" },
-    browser: { type: "string", minLength: 1 },
-    scenarios: stringList,
-    evidence: stringList,
+    evidenceIds: stringList,
     findings: { type: "array", items: objectSchema({ code: { type: "string" }, severity: { type: "string", enum: ["minor", "major", "critical"] }, status: { type: "string", enum: ["fixed", "accepted", "open"] }, message: { type: "string" } }, ["code", "severity", "status", "message"]) },
     summary: { type: "string", minLength: 1 }
-  }, ["expectedRevision", "reviewer", "browser", "scenarios", "evidence", "findings", "summary"]) },
+  }, ["expectedRevision", "reviewer", "evidenceIds", "findings", "summary"]) },
   { name: "request_export", description: "Check export readiness. Final production export always requires a human UI confirmation.", inputSchema: objectSchema() }
 ]);

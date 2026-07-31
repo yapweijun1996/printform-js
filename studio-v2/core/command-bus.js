@@ -5,7 +5,7 @@ import { applyOperations, diffProjects, previewSourceEdit } from "./operations.j
 import { createScenario, SAMPLE_SCENARIOS } from "./sample-scenarios.js";
 import { TOOL_CONTRACTS } from "./tool-contracts.js";
 import { PRINT_LOCALES } from "./i18n.js";
-import { createLayoutReviewReceipt, layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST } from "./layout-review.js";
+import { createEvidenceReceipt, createLayoutReviewReceipt, detectBrowser, layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST, REQUIRED_EVIDENCE_SCENARIOS } from "./layout-review.js";
 import { sha256, stableStringify } from "./json.js";
 
 // In-memory only — a memory-management knob, not a correctness dependency.
@@ -64,6 +64,11 @@ export class CommandBus extends EventTarget {
     // fall back to today's static-only validation, unchanged.
     this.renderCandidate = renderCandidate || null;
     this.candidateReports = new Map();
+    // evidenceId -> Studio-issued layout evidence receipt for the CURRENT
+    // revision. Cleared by every commit and undo alongside renderReport and
+    // reviewReceipt: evidence describes one exact revision's layout, so any
+    // mutation must invalidate it rather than let it vouch for new content.
+    this.evidenceReceipts = new Map();
   }
 
   get project() { return this.history.project; }
@@ -124,6 +129,7 @@ export class CommandBus extends EventTarget {
     this.renderReport = null;
     this.reviewReceipt = null;
     this.reviewAttempts = 0;
+    this.evidenceReceipts.clear();
     const revision = this.history.commit(candidate, reason);
     this.dispatchEvent(new CustomEvent("change", { detail: { revision, project: candidate, reason } }));
     return revision;
@@ -138,7 +144,9 @@ export class CommandBus extends EventTarget {
         // false in a DOM-less context (CLI validator, unit tests), where
         // both tools fall back to schema-only validation and candidateHash
         // is always null. Additive to 1.1.0, so no existing caller breaks.
-        const capabilities = { candidateHash: true, candidateRealRender: Boolean(this.renderCandidate) };
+        // layoutEvidenceReceipts also needs a real renderer: without one,
+        // capture_layout_evidence fails closed and no review can ever pass.
+        const capabilities = { candidateHash: true, candidateRealRender: Boolean(this.renderCandidate), layoutEvidenceReceipts: Boolean(this.renderCandidate) };
         return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, capabilities, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
       }
       if (name === "get_project_summary") return this.success({ revision: this.revision, title: this.project.manifest.title, locale: this.project.manifest.locale, trust: this.project.trust, protocolVersion: this.project.manifest.protocolVersion, review: layoutReviewStatus(this.reviewReceipt, this.revision), validation: this.validation() });
@@ -151,12 +159,38 @@ export class CommandBus extends EventTarget {
         this.reviewReceipt = null;
         this.reviewAttempts += 1;
         if (this.reviewAttempts > 3) throw Object.assign(new Error("The three-pass automatic review limit is exhausted for this revision"), { code: "REVIEW_ATTEMPT_LIMIT" });
-        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, metrics: this.renderReport.metrics, issues: this.renderReport.issues || [] });
+        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, requiredScenarios: REQUIRED_EVIDENCE_SCENARIOS, metrics: this.renderReport.metrics, issues: this.renderReport.issues || [] });
+      }
+      if (name === "capture_layout_evidence") {
+        this.ensureRevision(input.expectedRevision);
+        if (!this.renderCandidate) {
+          throw Object.assign(new Error("This session cannot render scenarios, so it cannot issue layout evidence"), { code: "EVIDENCE_UNAVAILABLE" });
+        }
+        // Rendered as a candidate, never committed: capturing evidence for
+        // long-text must not mutate the draft (that would bump the revision
+        // and invalidate the default-scenario receipt captured moments ago).
+        const candidate = { ...this.project, sampleData: createScenario(this.defaultSample, input.scenario) };
+        const { report } = await this.getCandidateReport(candidate, this.revision);
+        // A scenario that doesn't render cleanly yields no receipt — but its
+        // validation comes back so the agent can fix it. There is no other way
+        // to see a non-committed scenario's real errors.
+        if (report.status !== "ready") {
+          return this.success({ revision: this.revision, scenario: input.scenario, evidence: null, validation: report.validation, metrics: report.metrics });
+        }
+        const receipt = await createEvidenceReceipt({
+          evidenceId: globalThis.crypto.randomUUID(),
+          revision: this.revision,
+          scenario: input.scenario,
+          renderReport: report,
+          browser: detectBrowser()
+        });
+        this.evidenceReceipts.set(receipt.evidenceId, receipt);
+        return this.success({ revision: this.revision, scenario: input.scenario, evidence: receipt, requiredScenarios: REQUIRED_EVIDENCE_SCENARIOS, capturedScenarios: Array.from(new Set(Array.from(this.evidenceReceipts.values(), (item) => item.scenario))) });
       }
       if (name === "complete_layout_review") {
         this.ensureRevision(input.expectedRevision);
         if (!this.reviewAttempts) throw Object.assign(new Error("begin_layout_review must be called first"), { code: "REVIEW_NOT_STARTED" });
-        this.reviewReceipt = createLayoutReviewReceipt(this.revision, this.renderReport, input, this.reviewAttempts);
+        this.reviewReceipt = createLayoutReviewReceipt(this.revision, this.renderReport, input, this.reviewAttempts, this.evidenceReceipts);
         this.dispatchEvent(new CustomEvent("review", { detail: { revision: this.revision, review: this.reviewReceipt } }));
         return this.success({ revision: this.revision, review: this.reviewReceipt });
       }
@@ -204,6 +238,7 @@ export class CommandBus extends EventTarget {
           this.renderReport = null;
           this.reviewReceipt = null;
           this.reviewAttempts = 0;
+          this.evidenceReceipts.clear();
           this.dispatchEvent(new CustomEvent("change", { detail: { revision: result.revision, project: result.project, reason: "undo" } }));
         }
         return this.success(result);

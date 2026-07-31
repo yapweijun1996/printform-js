@@ -46,18 +46,19 @@
 | P0-A #12+#13：候选项目在复用的可见预览 iframe 中真实渲染 + candidateHash 缓存——`CommandBus` 依赖注入可选 `renderCandidate(project, revision)`（无 DOM 时保持静态校验，零回归）；`app.js` 的 `renderCandidateForPreview` 复用 `renderPreview()`/`#preview-frame`；新增跨 iframe reload 的单调请求 token（`previewToken`/`pendingCandidateRenders`），人类编辑防抖与 Agent 候选预览共享同一排序，原 #15（nonce）需求由此满足并入本项；`preview_changes`/`apply_changes` 用 `sha256(stableStringify(candidate))` 算 `candidateHash` 缓存真实 render report，apply 命中缓存跳过重渲染、未命中退化为内联渲染再提交；候选渲染期间显示 `#candidate-preview-banner` 提示 | `f4ca539` | 8 个新单测（command-bus.test.js 6 个覆盖无渲染器零回归/真实校验合并/缓存复用/直接 apply 无预渲染/RENDER_FAILED/no-op 不触发渲染、preview.test.js 2 个覆盖 token 回显与 JSON 转义）+ 1 个新 e2e；**浏览器实测**：45 行发票 `set_font_scale` 从 9pt→14pt，`preview_changes` 返回真实 `logicalPages` 从 3 变 4（证明真实分页而非静态校验），`candidateHash` 非空；`apply_changes` 用同一 operations 返回**相同** `candidateHash`（证明缓存命中，未重渲染）；人工"Preview and apply"走 UI diff 面板全程正常、修改后 Revision 正确递增、控制台零报错。**踩坑（两处）**：(1) 最初把候选渲染超时定为 6 秒（沿用早前"~1 秒"的乐观估计），实测 500 行+13pt 字号的真实渲染在本地沙箱浏览器里跑到 47+ 秒（`PrintForm.formatAll()` 尚未做 P2/E9 计划中的行高预测量优化），改为 30 秒宽松兜底（只防真卡死，不是性能预算）；(2) 图快直接用 `npx playwright test` 单独跑新用例（跳过了 `test:e2e` 的 `pretest:e2e` 自动重建钩子），其 `webServer` 指向的 `site-dist/` 还是改代码前的 `build:site` 构建快照——e2e 新测试第一次跑时 `candidateHash` 稳定复现 `undefined`，用独立 Playwright 脚本对比同一浏览器直接测源码根目录才定位到是陈旧构建快照，不是代码问题；改用 `npm run test:e2e` 或先手动 `npm run build:site` 后即正常 |
 | P0-A #14：Agent Contract 版本声明——`AGENT_CONTRACT_VERSION` 从 1.1.0 升到 1.2.0，`get_capabilities` 新增 `capabilities: { candidateHash, candidateRealRender }` 字段；`preview_changes`/`apply_changes` 的工具描述文本更新为提及真实渲染 + candidateHash | `bda0379` | **范围经用户确认后与路线图原计划不同**：路线图原设想是把 `apply_changes` 改成只认 `previewId`/hash、不再接受直接传 `operations[]`（破坏性两阶段提交，理由是"Agent Contract 2.0 不保留 1.x 写路径"）；但 #12/#13 实际实现的 `apply_changes` 仍然接受直接传 `operations[]`（未命中缓存时退化为内联渲染），已经达成"不提交未经真实验证候选"的信任目标，且这条路径已经过实测验证、有真实调用方依赖。就这个具体分歧点征询用户后，选择了"仅升版本号声明新能力，不改行为"（次版本号 1.2.0，非 2.0.0），保留现有回退路径不删除。1 个新单测（get_capabilities 覆盖有/无 renderCandidate 两种 `candidateRealRender` 取值）+ 已有 `agent-bootstrap.test.js` 断言同步更新为 1.2.0；浏览器实测：`get_capabilities` 返回 `contractVersion: "1.2.0"`、`capabilities: { candidateHash: true, candidateRealRender: true }`；184 单测 + 24 E2E 全绿。**遗留观察（非本次修复范围）**：契约版本号在 `core/constants.js`、`agent-setup.json`、`llms.txt` 三处手工同步维护，是重复事实来源，未来若再次遗漏某一处会造成 agent 引导材料与真实契约不一致；本次已同步全部三处 |
 
+| P0-B #18：Studio 签发布局验收证据 + Agent Contract 2.0.0——新增第 16 个工具 `capture_layout_evidence`（把场景渲染成未提交候选并签发 receipt，不推进 revision）；`inspectRenderedDocument` 输出 `pageGeometry`（每页直接子元素 class + 页内相对整数矩形，无业务文本）；`complete_layout_review` 改为只接受 `evidenceIds`，旧式 `evidence`/`browser`/`scenarios` 自述字段一律拒绝 | （待提交） | **证据形态经 grilling 确认为几何指纹而非像素截图**：沙箱 iframe 不透明 origin 让父页读不到 DOM，像素只能走 foreignObject→canvas（canvas 污染风险 + 保真缺陷 + 单张数 MB + 真实数据模式下像素即业务数据，与隐私策略冲突），而"防 Agent 伪造"的目标由给 Studio 自己的测量结果签名即完整达成。9 个新/改单测（layout-review.test.js 重写为 10 个：正向通过、旧式拒绝、伪造 id 拒绝、场景不全拒绝、mutation 失效、指纹按场景不同、渲染不干净不签发但返回原因、无渲染器 `EVIDENCE_UNAVAILABLE`、捕获不推进 revision）+ 1 个新 e2e；193 单测 + 25 E2E 全绿。**浏览器实测**：真实签发 default/long-text 两张 receipt（指纹确实不同、revision 保持 0、browser 正确识别为 Chromium 148），旧式自述字段被拒 `EVIDENCE_RECEIPT_REQUIRED`、伪造 id 被拒 `EVIDENCE_UNKNOWN`、只给 default 被拒 `REVIEW_SCENARIOS_REQUIRED`、齐全后审查通过且 `request_export` ready；随后 mutation 一次，确认 receipt store 被清空（旧 id 报 `EVIDENCE_UNKNOWN`）、导出重新被 `LAYOUT_REVIEW_REQUIRED` 阻断；全程控制台零报错。**顺带修复**：`agent-setup.json` 的 `verification.expectedCommandContractVersion` 在 #14 那次漏改（仍是 1.1.0），会让照此引导的 Agent 拒绝一个完全正确的 Studio——已新增一个单测把版本号/工具数从代码推导校验，四处手工副本不再靠人记；`mcp-server.test.js` 的工具数硬编码也改为从 `TOOL_CONTRACTS.length` 推导。**另修一个既有 e2e 竞态**（非本次引入，但被新测试加重的并行负载暴露）：`studio-v1.spec.js` 用 `#status-a` 的 `/\d/` 当渲染完成信号，会匹配上一个模板遗留的状态甚至 "0 页"，导致在 iframe 重载间隙数到 0 页；改为直接等待 `.printform_page` 可见，修复前 3 次全量跑挂 1 次，修复后连跑 4 次全绿 |
+
 ## 🔄 进行中
 
 （无）
 
-## ⬜ 待办（P0-B 剩余拆分；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
+## ⬜ 待办（P0-B 剩余一项）
 
-> P0-A 已全部完成（#12/#13/#14）。剩下只有 P0-B 的证据体系两项，体量大、需要全新的截图基础设施，且 #19 依赖 #18。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
+> P0-A 已全部完成（#12/#13/#14）；P0-B 只剩 #19。
 
 | # | 任务 | Epic | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用同一预览 iframe，已完成）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
-| 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前只有 runtime/content hash，无"真实浏览器测过"的证明） | E7 | #18 | 路线图"完整性与证明"条款 |
+| 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前 `createAttestation` 只哈希 document runtime，printform.js 的 hash 缺失；`browsers` 硬编码 `["Chromium","Firefox","WebKit"]`，无论实际在哪导出都这么声称——正是信任文档明令禁止的） | E7 | #18（已完成，提供真实浏览器 receipt 数据源） | 路线图"完整性与证明"条款；`browsers` 改为从 #18 的 receipt 推导；`verifyImportedProject` + `validate:v2` 同步校验双 runtime hash。**注意是 fail-closed 破坏**：旧版导出文件缺新字段，重新导入会降级 Untrusted（站内两个试点样本构建时重签不受影响，只影响用户手里的存量导出） |
 
 ## 🚧 阻塞
 
@@ -65,4 +66,6 @@
 
 ## 📌 下一步（建议顺序）
 
-P0-A 全部完成（#1–7、#10、#11、#12、#13、#14、#16、#17 均已提交）。剩下的 P0-B 两项（#18/#19，截图 Evidence Receipt + 完整 attestation）需要全新的浏览器截图基础设施，目前代码库里完全没有这块能力，属于比迄今为止任何一项都更大的新增工作，建议作为独立批次开始前先和用户确认范围（截图存哪、多大、保留多久，是否需要跨浏览器截图一致性等具体产品问题），不建议不问就动手写。
+只剩 #19（attestation 补全）。范围已在 #18 的 grilling 中一并确认（几何指纹证据、单会话浏览器声明、fail-closed 破坏可接受），可直接实现，无需再次对齐。
+
+**注意**：#19 完成后代码层 P0 六项硬门全齐，但**不要**据此把成熟度改成 Production Ready——路线图 P0-B 退出条件还含"两模板 × 四浏览器 × 全边界场景通过"这类发布流程验收，不是代码改动能单独达成的。

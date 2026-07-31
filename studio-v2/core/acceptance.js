@@ -258,11 +258,40 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
     ...verticalOverflow.slice(0, MAX_ISSUE_DETAILS).map((page) => issueEntry("VERTICAL_OVERFLOW", page, pageIndexOf(page))),
     ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node)))
   ];
+  // Compact structural geometry of what Studio actually rendered: every
+  // page's direct children by class and integer rect. This is the payload a
+  // layout evidence receipt hashes (P0-B #18) — Studio measured it itself,
+  // so signing it proves the layout an agent claims to have reviewed is the
+  // one Studio really produced, with no pixels involved (pixels would carry
+  // real ERP data and fall under the real-data privacy rules).
+  //
+  // Coordinates are page-relative, NOT viewport-relative: getBoundingClientRect
+  // shifts with scroll position, so raw rects would hash differently for the
+  // same layout depending on where the preview happened to be scrolled.
+  const pageGeometry = pageList.map((page, pageIndex) => {
+    const pageRect = page.getBoundingClientRect();
+    return {
+      pageIndex,
+      width: Math.round(pageRect.width),
+      height: Math.round(pageRect.height),
+      children: Array.from(page.children).map((child) => {
+        const rect = child.getBoundingClientRect();
+        return {
+          className: child.getAttribute("class") || "",
+          x: Math.round(rect.left - pageRect.left),
+          y: Math.round(rect.top - pageRect.top),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        };
+      })
+    };
+  });
   return {
     valid: errors.length === 0,
     errors,
     warnings,
     issues,
+    pageGeometry,
     metrics: {
       logicalPages: pages.length,
       overflowElements: overflow.length,

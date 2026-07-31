@@ -27,7 +27,7 @@ async function handle(request) {
       protocolVersion: params.protocolVersion || "2025-06-18",
       capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "printform-studio-mcp", version: "1.1.0" },
-      instructions: "Act as a PrintForm engineer. Before telling the user a design is complete, inspect full-page browser screenshots, begin_layout_review, fix every major or critical UI/UX issue, complete_layout_review for the current revision with default and long-text evidence, and confirm request_export is ready. Never claim completion from metrics alone. Production export still requires a human click."
+      instructions: "Act as a PrintForm engineer. Before telling the user a design is complete, inspect full-page browser screenshots, call capture_layout_evidence for the default and long-text scenarios to obtain Studio-issued evidenceIds, begin_layout_review, fix every major or critical UI/UX issue, complete_layout_review for the current revision with those evidenceIds, and confirm request_export is ready. Self-declared evidence labels are rejected. Never claim completion from metrics alone. Production export still requires a human click."
     });
   }
   if (method === "ping") return success(id, {});

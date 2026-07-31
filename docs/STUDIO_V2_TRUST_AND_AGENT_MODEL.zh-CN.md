@@ -2,7 +2,7 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义 Agent Contract 2.0 与 Production Ready 信任闭环。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。Agent Contract 2.0.0 已实现（见《契约升级》）。
 
 ## 信任边界
 
@@ -25,13 +25,13 @@
 
 ## Current：Pilot 限制
 
-- `preview_changes` 尚未在隔离 iframe 中真实分页候选项目。
-- `apply_changes` 尚未要求 Studio 签发的 preview receipt。
-- 当前 review evidence 是 Agent 提交的标签，不是 Studio 保存并签发的截图证据。
-- Preview 消息已绑定目标 iframe（`event.source`），但尚未绑定一次性 nonce 与 candidate hash。
-- 当前 attestation 与布局指标不足以证明两段 runtime 完整性，以及内容无遗漏、乱序和重叠。
+- ✅ 已解除（2026-07-31）：`preview_changes` 现在真实分页候选项目（复用可见预览 iframe，非隐藏 iframe——见[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) P0-A 第 3 项）。
+- ✅ 已解除（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时复用已渲染报告，未命中则内联真实渲染后再提交，不存在绕过真实渲染的提交路径。仍接受直接传 `operations[]`（经确认的非破坏性设计，信任目标已达成）。
+- ✅ 已解除（2026-07-31）：review evidence 改为 Studio 签发的 receipt，Agent 自述标签被拒（见下方《验收证据》）。
+- ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
+- 当前 attestation 与布局指标不足以证明两段 runtime 完整性（TASK.md #19 未完成）。内容无遗漏、乱序、重叠已由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-因此 Current 状态只能称为 Production Pilot。
+因此 Current 状态仍称 Production Pilot：代码层硬门只差 #19，但路线图 P0-B 退出条件还包含"两模板 × 四浏览器 × 全边界场景"这类发布流程验收，不是代码改动能单独达成的。
 
 ## 数据隐私
 
@@ -69,25 +69,28 @@ apply_changes({ expectedRevision, previewId, candidateHash, reason })
 
 revision 使用永不复用的单调编号。undo 创建新的 revision identity，而不是回到可再次命中的旧编号。
 
-## Target：验收证据
+## Current：验收证据（2026-07-31 实现）
 
-Studio 为每次受支持场景签发 Evidence Receipt：
+`capture_layout_evidence({ expectedRevision, scenario })` 让 Studio 把该场景渲染成**未提交的候选**（复用可见预览 iframe，不推进 revision——否则捕获 long-text 就会作废刚拿到的 default 证据），渲染干净时签发 Evidence Receipt：
 
 ```js
 {
   evidenceId,
   revision,
-  candidateHash,
   scenario,
   browser: { name, version },
-  screenshotHash,
-  renderReportHash,
+  layoutFingerprint,   // sha256(每页直接子元素的 class + 页内相对整数矩形)
+  renderReportHash,    // sha256(完整渲染报告)
   metrics,
   createdAt
 }
 ```
 
-`complete_layout_review` 只接受 Studio 已签发的 `evidenceIds`、findings 和 summary。Agent 不能用字符串声明自己已经看过截图。任何项目、locale、样本、主题、模板或资源变更都会使旧证据失效。
+**证据是 Studio 自己测量的几何指纹，不是像素截图。** 权衡记录（2026-07-31 与用户确认）：预览 iframe 是不透明 origin 沙箱，父页读不到其 DOM，真像素只能在 iframe 内走 foreignObject→canvas，有 canvas 污染风险、字体保真缺陷、单张数 MB，且像素在真实数据模式下**就是业务数据**（与本文《数据隐私》默认策略直接冲突）。而 #18 要防的是"Agent 谎称自己看过"——Studio 自己渲染、自己测量的报告本身就是事实，给它签名即已达成防伪造。Agent 仍可用自己的 CDP 截图工具看像素，只是那不构成证据。`layoutFingerprint` 用**页内相对坐标**，否则同一份布局在不同滚动位置会哈希出不同值。
+
+渲染不干净的场景不签发证据（`evidence: null`），但返回该场景的 validation 供 Agent 修复——这是唯一能看到未提交场景真实错误的途径。无渲染器的会话（CLI 校验器、单测）返回 `EVIDENCE_UNAVAILABLE`，绝不伪造 receipt。
+
+`complete_layout_review` 只接受 Studio 已签发的 `evidenceIds`、findings 和 summary，且必须覆盖 `default` 与 `long-text` 两个场景；旧式 `evidence`/`browser`/`scenarios` 自述字段一律 `EVIDENCE_RECEIPT_REQUIRED`（即便同时附了有效 receipt 也拒绝——留着旧路径等于没做这件事）。伪造 id 报 `EVIDENCE_UNKNOWN`，跨 revision 的 receipt 报 `EVIDENCE_STALE`。任何 mutation/undo 都会清空 receipt store，旧证据不能为新内容背书。
 
 Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否停止发言。技术上强制的是：没有有效证据就不能取得 Production Ready 凭证或请求生产导出。
 
@@ -111,4 +114,8 @@ Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否�
 
 ## 契约升级
 
-Agent Contract 2.0 是破坏性升级。WebMCP、第一方 CDP bridge 与 UI 必须同时切换并通过同一契约测试；旧 1.x 写入命令只返回升级提示，不保留兼容写路径。当前命令仍以 `get_capabilities` 返回的 contract version 为准。
+Agent Contract 2.0.0 已于 2026-07-31 切换（`core/constants.js`）。破坏性变更**只有一处**：`complete_layout_review` 改为要求 `evidenceIds`，拒绝旧式 `evidence`/`browser`/`scenarios` 自述字段——保留它们等于让 Agent 继续自证，#18 的安全目标会归零，所以这里必须破。
+
+其余写路径**保持向后兼容**：`apply_changes` 仍接受直接传 `operations[]`（1.2.0 加入的真实候选渲染是可加能力，非破坏性）。这与本文早期设想的"2.0 不保留任何 1.x 写路径"不同——真实实现中信任目标已由候选真实渲染达成，无必要连带破坏调用方式。
+
+WebMCP、第一方 CDP bridge 与 UI 共享同一 `CommandBus.execute`，天然同步切换。当前能力以 `get_capabilities` 返回的 `contractVersion` 与 `capabilities` 为准（`candidateHash`、`candidateRealRender`、`layoutEvidenceReceipts`）。

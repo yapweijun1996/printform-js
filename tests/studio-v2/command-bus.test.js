@@ -77,17 +77,16 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.revision).toBe(1);
   });
 
-  it("declares candidateRealRender in get_capabilities based on whether a renderCandidate was actually injected", async () => {
-    // Additive Agent Contract 1.2.0 (TASK.md #14): the version bump is
-    // backward compatible — apply_changes still accepts operations[]
-    // directly — so this is purely a capability the caller CAN check, not
-    // something the contract now requires.
+  it("declares render-dependent capabilities in get_capabilities based on whether a renderCandidate was actually injected", async () => {
+    // Agent Contract 2.0.0: apply_changes still accepts operations[] directly
+    // (that stayed additive in 1.2.0), but layout evidence receipts now
+    // require a real renderer — a session without one can never pass review.
     const withoutRenderer = await new CommandBus(createSalesInvoiceProject()).execute("get_capabilities");
-    expect(withoutRenderer.result.contractVersion).toBe("1.2.0");
-    expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false });
+    expect(withoutRenderer.result.contractVersion).toBe("2.0.0");
+    expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false, layoutEvidenceReceipts: false });
 
     const withRenderer = await new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ({ status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }) }).execute("get_capabilities");
-    expect(withRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: true });
+    expect(withRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: true, layoutEvidenceReceipts: true });
   });
 
   it("falls back to static-only validation for preview_changes/apply_changes when no renderCandidate is injected", async () => {
@@ -176,16 +175,20 @@ describe("PrintForm Studio v2 command bus", () => {
   });
 
   it("requires the current browser layout report before production export", async () => {
-    const bus = new CommandBus(createSalesInvoiceProject());
+    const ready = { status: "ready", validation: { errors: [], warnings: [] }, metrics: { logicalPages: 3 }, pageGeometry: [] };
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ready });
     let request = await bus.execute("request_export");
     expect(request.result.ready).toBe(false);
     expect(request.result.validation.errors.some((item) => item.code === "PREVIEW_REQUIRED")).toBe(true);
-    bus.recordRenderReport({ status: "ready", validation: { errors: [], warnings: [] }, metrics: { logicalPages: 3 } });
+    bus.recordRenderReport(ready);
+    const evidenceIds = [];
+    for (const scenario of ["default", "long-text"]) {
+      const captured = await bus.execute("capture_layout_evidence", { expectedRevision: 0, scenario });
+      evidenceIds.push(captured.result.evidence.evidenceId);
+    }
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     const review = await bus.execute("complete_layout_review", {
-      expectedRevision: 0, reviewer: "ai-agent", browser: "Chromium test",
-      scenarios: ["default", "long-text"], evidence: ["full-page-screenshot", "layout-metrics"],
-      findings: [], summary: "No visual issues"
+      expectedRevision: 0, reviewer: "ai-agent", evidenceIds, findings: [], summary: "No visual issues"
     });
     expect(review.ok).toBe(true);
     request = await bus.execute("request_export");
