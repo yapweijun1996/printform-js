@@ -139,6 +139,38 @@ test("covers Crimson purchase order empty, 1, 45 and 500-row boundaries", async 
   }
 });
 
+test("shows a side-by-side diff before applying a manual source edit, and cancel leaves the draft untouched", async ({ page }) => {
+  const editor = page.locator("#manifest-editor");
+  const original = await editor.inputValue();
+  const edited = original.replace('"title": "Sales Invoice — PrintForm Studio v2"', '"title": "Edited via diff panel"');
+  expect(edited).not.toBe(original);
+
+  await editor.fill(edited);
+  await page.locator("#apply-source-button").click();
+  await expect(page.locator("#source-diff-modal")).toBeVisible();
+  await expect(page.locator("#source-diff-body")).toContainText("Edited via diff panel");
+  await expect(page.locator(".diff-line-added")).toContainText("Edited via diff panel");
+
+  // Cancel must not touch the committed draft.
+  await page.locator("#source-diff-cancel").click();
+  await expect(page.locator("#source-diff-modal")).toBeHidden();
+  const revisionAfterCancel = await page.evaluate(async () => (await window.PrintFormStudioAgent.execute("get_project_summary")).result.revision);
+  expect(revisionAfterCancel).toBe(0);
+
+  // Re-open and actually apply.
+  await page.locator("#apply-source-button").click();
+  await page.locator("#source-diff-apply").click();
+  await expect(page.locator("#source-diff-modal")).toBeHidden();
+  const summaryAfterApply = await page.evaluate(async () => (await window.PrintFormStudioAgent.execute("get_project_summary")).result);
+  expect(summaryAfterApply.revision).toBe(1);
+  expect(summaryAfterApply.title).toBe("Edited via diff panel");
+
+  // Re-applying with no further edits shows a "nothing to apply" toast instead of the modal.
+  await page.locator("#apply-source-button").click();
+  await expect(page.locator("#toast")).toContainText("No changes to apply");
+  await expect(page.locator("#source-diff-modal")).toBeHidden();
+});
+
 test("uses the public command gateway for transactional changes", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");

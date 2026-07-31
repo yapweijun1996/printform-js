@@ -96,6 +96,7 @@
 - 渲染报告带元素级 `issues[]`：`{ code, pageIndex, selector(页内 CSS 路径), rect, text }`，每类上限 20 条；经 `validate_project` 与 `begin_layout_review` 暴露。
 - 校验错误路径统一段前缀（`/schema/...`、`/sampleData/...`），UI 据此做可点击跳转，Agent 据此路由修复。
 - 预览面板复用同一份 `issues[]`：bridge 在渲染 iframe 内用 `selector` 实时重新测量并画红框（非 postMessage 传坐标，避免滚动/缩放导致的坐标漂移），父页通过 `postMessage` 指令切换开关，不触发重渲染。
+- 「Preview and apply」不再用 `window.confirm` 单行文本确认，改为 `ui/diff-view.js` 的并排 diff 面板：LCS 逐行对比每个变更 section（JSON 段先经 `stableStringify` 再对比，避免键序不同被误判为变更），新增行绿色高亮、删除行红色高亮；`trust` 这类非文本伪 section 单独渲染一行说明。取消不调用 `apply_changes`，草稿不落盘；未变更时直接跳过面板显示提示。单侧行数超过 1500 行时跳过逐行高亮（避免 O(m·n) 在超大样本数据上卡顿），仅展示全文。
 - 注意：`core/acceptance.js` 会打进 `dist/printform-document.js`，改动后必须 `npm run build:assets` 才对预览生效。
 
 ### 4.4 尚未实现（Target，勿当作已有）

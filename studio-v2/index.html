@@ -106,6 +106,19 @@
     </aside>
   </main>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <div id="source-diff-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="source-diff-title">
+    <div class="modal-panel modal-panel-wide">
+      <h2 id="source-diff-title" data-ui-i18n="diff.title">Review source changes</h2>
+      <p id="source-diff-summary" class="diff-summary"></p>
+      <div id="source-diff-body" class="diff-body"></div>
+      <div class="modal-actions">
+        <button id="source-diff-cancel" class="secondary" type="button" data-ui-i18n="diff.cancel">Cancel</button>
+        <button id="source-diff-apply" type="button" data-ui-i18n="diff.apply">Apply to draft</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./ui/app.js"></script>
 </body>
 </html>

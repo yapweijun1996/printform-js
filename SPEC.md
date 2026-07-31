@@ -80,6 +80,7 @@
 - 错误 `path` 段前缀约定：`/manifest`、`/schema`、`/i18n`、`/theme`、`/template`、`/sampleData`、`/trust`、`/review`；UI 据前缀路由到编辑器（可点击跳转），布局类错误路径为 `/`。
 - 预览消息仅当 `event.source === 预览 iframe.contentWindow` 时受理。
 - 预览面板提供「Highlight issues」开关（默认开）：iframe 内 bridge 收到 `printform:rendered` 后用 `issues[].selector` 在当前文档实时定位并画红框；父页通过 `{ source: "printform-studio-v2-command", type: "toggle-overlay" }` 指令切换，指令同样只信任 `event.source === window.parent`，切换不触发重渲染。
+- 「Preview and apply」的应用前确认是并排 diff 面板（`ui/diff-view.js`），不是 `window.confirm`：按 `preview_changes` 返回的 `changedSections` 逐个渲染，JSON 段两侧都先 `stableStringify` 再逐行 LCS 对比（新增行绿、删除行红），CSS/HTML 段按原始字符串逐行对比；`trust` 变化单独一行说明（如 `trusted → untrusted`）。取消/关闭不调用 `apply_changes`；无实际变更时跳过面板直接提示。单侧 >1500 行的 section 跳过逐行高亮，只显示全文。
 
 ### 3.5 PWA
 
@@ -95,6 +96,6 @@
 |---|---|---|
 | 单元测试（136 个，36 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Playwright，21 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 12） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1） |
+| E2E（Playwright，22 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 13） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1） |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含两个已签名试点导出 |

@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐待提交的高层语义工具批次，工作区基于 `77d9722`，153 个单测 + 21 个 E2E 全绿）。
+> 最后核对：2026-07-31（对齐待提交的 Apply 前 diff 面板批次，工作区基于 `46254d6`，159 个单测 + 22 个 E2E 全绿）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -38,6 +38,8 @@
 
 | 高层语义工具第一批：`set_column_widths`（支持逗号分隔复合选择器同步多张表）、`set_font_scale`（整体平移 7 级字号刻度，替换旧注入块不重复） | （待提交） | 10 个新单测（6 个 column-widths 含真实 `.prowheader`/`.prowitem` 分离表场景 + 2 个 font-scale + 2 个既有 typography 测试保持通过）；浏览器实测：对 Sales Invoice 真实模板一次调用同步表头+数据行列宽、字号从 9pt 平移到 12pt，截图确认视觉变化，`validate_project` 零错误、0 溢出、0 对比度问题 |
 
+| Apply 前并排 diff 面板：新增 `ui/diff-view.js`（LCS 逐行对比，JSON 段先 stableStringify 避免键序误判，>1500 行自动跳过高亮防卡顿），替换 `window.confirm` 单行文本；新增 `#source-diff-modal` + 6 个新 i18n key×5 语言，清理已失效的 `source.none`/`confirm.applySource` | （待提交） | 6 个 diffLines 纯逻辑单测 + 1 个新 e2e（apply/cancel/无变更三路径）；浏览器实测：JSON 段（manifest 标题变更）红绿高亮正确、原始 HTML 段（模板追加行）正确识别为纯新增、trust 降级单独渲染"trusted → untrusted"、Cancel 后 revision 与草稿完全不变、移动端视口正确堆叠为单列、全程控制台零报错；159 单测 + 22 E2E 全绿 |
+
 ## 🔄 进行中
 
 （无）
@@ -46,15 +48,16 @@
 
 | # | 任务 | Epic | 验收标准 |
 |---|---|---|---|
-| 5 | Apply 前并排 diff 面板（替代 confirm 文本） | E5/E8 | 变更 section 并排高亮，取消不落盘 |
 | 8 | P0-A：候选项目隔离 iframe 真实分页 dry-run + preview receipt | E6 | 路线图 P0-A 退出条件 |
 | 9 | P0-B：preview nonce + candidate hash；Studio 签发截图证据 | E7 | 路线图 P0-B 退出条件 |
 
 ## 🚧 阻塞
 
-（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用。）
+（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用；新增 `studio-v2/` 下被 import 的文件必须同步 `sw.js` 的 `APP_SHELL`（已发生两次，PR 模板已加提醒）。）
 
 ## 📌 下一步（建议顺序）
 
-1. 待办 #5（Apply 前 diff 面板）——UI/UX 判断较多，建议单独一批，逐屏验证。
-2. #8、#9 体量较大（隔离 iframe 真实分页、截图证据体系），建议单独排期，不与其他任务混批。
+TASK.md 中优先级明确、体量适中的项目已全部完成（#1–7、#10、#11 均已提交）。剩余 #8、#9 是 P0-A/P0-B 的核心架构工作（隔离 iframe 真实分页 dry-run、截图证据体系），体量大、涉及信任模型变更，建议：
+
+1. 先读 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) 的 Target 章节对齐设计，再拆分为更小的子任务写回本文件。
+2. 两者都是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），建议按顺序单独排期，不与其他任务混批，每步都要浏览器实测。

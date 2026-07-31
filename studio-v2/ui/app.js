@@ -10,6 +10,7 @@ import { installWebMcpAdapter } from "../adapters/webmcp.js";
 import { clearRecoveryDraft, loadRecoveryDraft, saveRecoveryDraft } from "./draft-cache.js";
 import { downloadHtml, readHtmlFile, saveHtmlWithPicker } from "./file-io.js";
 import { listenForPreview, renderPreview, setPreviewOverlayEnabled } from "./preview.js";
+import { renderDiffSections } from "./diff-view.js";
 import { currentUiLocale, initUiI18n, setUiLocale, t } from "./ui-i18n.js";
 import { renderDataPolicy, renderMetrics, renderQualityView, renderStatus, renderWebMcpStatus, refreshStatusText } from "./status-view.js";
 
@@ -108,13 +109,72 @@ function sourceOperations() {
   ];
 }
 
+// Maps diffProjects' changedSections keys to the editor that owns them and
+// the i18n key already used for that editor's <summary> label — reusing the
+// existing labels keeps the diff panel's section names consistent with the
+// editor panel instead of introducing a second, parallel set of names.
+const SOURCE_SECTION_META = {
+  manifest: { editorKey: "manifest", labelKey: "section.manifest", json: true },
+  schema: { editorKey: "schema", labelKey: "section.schema", json: true },
+  i18n: { editorKey: "i18n", labelKey: "section.translations", json: true },
+  themeCss: { editorKey: "theme", labelKey: "section.theme", json: false },
+  templateHtml: { editorKey: "template", labelKey: "section.template", json: false },
+  sampleData: { editorKey: "sampleData", labelKey: "section.sample", json: true }
+};
+
+function buildDiffSections(changedSections) {
+  return changedSections.map((key) => {
+    if (key === "trust") {
+      return { key, label: t("diff.trust"), isTrust: true, before: bus.project.trust, after: bus.project.trust === "trusted" ? "untrusted" : "trusted" };
+    }
+    const meta = SOURCE_SECTION_META[key];
+    if (!meta) return null;
+    const editorValue = editors[meta.editorKey].value;
+    // Both sides go through the SAME stableStringify() the project's own
+    // diffProjects() uses for JSON sections, so key-reordering with no real
+    // value change never shows as a spurious full-section diff here either.
+    const before = meta.json ? stableStringify(bus.project[key]) : String(bus.project[key] ?? "");
+    const after = meta.json ? stableStringify(JSON.parse(editorValue)) : editorValue;
+    return { key, label: t(meta.labelKey), before, after, truncatedLabel: t("diff.truncated") };
+  }).filter(Boolean);
+}
+
+function showSourceDiff(changedSections, errorCount) {
+  return new Promise((resolve) => {
+    const modal = $("#source-diff-modal");
+    const applyBtn = $("#source-diff-apply");
+    const cancelBtn = $("#source-diff-cancel");
+    $("#source-diff-summary").textContent = t("diff.summary", { count: changedSections.length, errors: errorCount });
+    renderDiffSections($("#source-diff-body"), buildDiffSections(changedSections));
+    modal.classList.remove("hidden");
+
+    function cleanup(result) {
+      modal.classList.add("hidden");
+      applyBtn.removeEventListener("click", onApply);
+      cancelBtn.removeEventListener("click", onCancel);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
+      resolve(result);
+    }
+    function onApply() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onBackdrop(event) { if (event.target === modal) cleanup(false); }
+    function onKeydown(event) { if (event.key === "Escape") cleanup(false); }
+
+    applyBtn.addEventListener("click", onApply);
+    cancelBtn.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+  });
+}
+
 async function applySource() {
   try {
     const operations = sourceOperations();
     const preview = await bus.execute("preview_changes", { expectedRevision: bus.revision, operations });
     if (!preview.ok) throw new Error(preview.error.message);
-    const changed = preview.result.diff.changedSections.join(", ") || t("source.none");
-    const approved = window.confirm(t("confirm.applySource", { changed, errors: preview.result.validation.errors.length }));
+    if (!preview.result.diff.changed) { toast(t("toast.noChanges")); return; }
+    const approved = await showSourceDiff(preview.result.diff.changedSections, preview.result.validation.errors.length);
     if (!approved) return;
     const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "human-approved source edit" });
     if (!result.ok) throw new Error(result.error.message);
