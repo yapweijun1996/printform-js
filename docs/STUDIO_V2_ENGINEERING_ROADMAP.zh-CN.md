@@ -47,7 +47,7 @@
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
 - ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现的跨引擎分页差异已解决**：Purchase Order 的页数曾随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页）。根因是非行区块合计高度随 引擎×语言 波动 24.62px（约 0.59 行），使可用空间 14.59–15.18 行恰好跨在整数边界上。给非行区加 16px（`.pf-page-footer` padding-bottom 12→28px）把整段移到边界同一侧，全部 15 个 引擎×语言 组合收敛到每页 14 行，复跑矩阵 22 个可比格子零分歧。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导；宣布前建议先在 Linux/Windows 重跑一次矩阵（本次仅 macOS 单机执行，而同引擎跨操作系统已知存在度量差异）。**推进中**：新增 `.github/workflows/browser-matrix.yml`（`workflow_dispatch`），可在 Ubuntu Actions runner 上按需一键复现，本地 `--quick` 预跑 72/72 全过确认自动化步骤本身无误，但尚未在真实 CI 上执行过（需 push + 手动触发，本次未做）；Windows 仍无对应通道。
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。**仅剩 Windows 未验证**，GitHub Actions 无现成的 Windows+四浏览器方案，非阻塞待办。
 
 ## P1：工程师工作流
 

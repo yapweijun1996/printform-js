@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `5d06702`，213 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板，仅剩 Branding/Data contract 待范围讨论；新增 CI `workflow_dispatch` 可在 Ubuntu runner 上按需跑浏览器矩阵，尚待实际触发出 Linux 数据；P3 新增 CHANGELOG.md。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布）。
+> 最后核对：2026-07-31（对齐 `d2fe47a`，221 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板，仅剩 Data contract 待范围讨论；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；P3 新增 CHANGELOG.md。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -64,7 +64,9 @@
 
 | D2（部分）：新增 `CHANGELOG.md`（Keep a Changelog 格式，`[Unreleased]` 一段——`package.json` 版本号仍是占位 0.0.0，尚无正式 SemVer 发布可归档，D1 独立 SemVer 决策留待用户确认），只收录读者视角的"改了什么"，不复制 TASK.md 的工程日记式踩坑细节；README.md 与 README.zh-CN.md 的文档导航各加一行链接到 CHANGELOG 与 LICENSE | `5d06702` | 纯文档新增，无需测试（213 单测复跑确认无回归）；核对 CHANGELOG.md/LICENSE 两个链接目标文件均存在 |
 
-| A3（部分）：浏览器矩阵验收接入 CI，可在真实 Linux runner 上按需复现——新增 `.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，不进 push/PR 的快速通道，理由同 `scripts/browser-matrix.mjs` 自身注释：15–25 分钟不适合当每次提交的门槛）；跑 `npm ci` → 装 4 个浏览器目标（含 `chrome` channel，装不上时脚本自身已有 SKIP 逻辑不会让 job 炸）→ `npm run build:site` → `node scripts/browser-matrix.mjs` → 结果 JSON 存 90 天 artifact | `af64b25` | 本地 macOS 用 `--quick` 跑了一次 72/72 全过、零分歧（含 Purchase Order 全部 引擎 `[14,14,14,3]` 完全一致），确认 B1–B4 四个新面板没有破坏此前的跨引擎收敛修复（`4b0cdc1`）；YAML 用 `python3 -c "import yaml; yaml.safe_load(...)"` 校验语法通过。**诚实说明（本项未完成的部分）**：这只验证了 workflow 本身的自动化步骤在当前代码状态下是对的，**并未在真实 Linux 上执行过**——workflow 文件要先推到远程才能被 `workflow_dispatch` 触发，而 push 属于需要用户显式许可的操作，本次未做；真正的"Linux 已验证"结论要等这个 workflow 在 GitHub Actions 上实际跑完一次才成立，届时应回填 docs/BROWSER_MATRIX.zh-CN.md 与本行的 Linux 实测结果 |
+| P1（部分）：Branding 品牌色面板——两个标准模板把品牌色硬编码成十几处原始 hex 字面量（表头背景、边框、PO 汇总框等），**不像字号那样早已走 `--pf-font-*` 变量**；把整套用色都改成 token 是量级明显更大、更主观的设计活。范围收敛到唯一一处：`.pf-brand` 标题文字色——两个模板里字面意义上"brand"的那个元素。新增 `core/branding.js`（`currentBrandColor`/`setBrandColor`，镜像 typography.js 的注入模式）+ `set_brand_color` operation，两个模板各自的 `.pf-brand { color: #hex }` 改为引用 `var(--pf-brand-color)`；UI 用原生颜色选择器 + 文本框配对（支持 3/6 位 hex 直接输入），经通用 `apply_changes` 直接应用 | `d2fe47a` | 9 个新单测（5 个 branding.js 纯函数 + 4 个 operations.js 集成，含 3/6 位 hex 接受、非法值拒绝）；221 单测全绿。**浏览器实测**（用独立端口 4180 起服务，因为 4174 当时被用户另开会话的 e2e 排查任务占用，特意避让不干扰）：Sales Invoice 面板正确读回 `#173d9a`，改成 `#e91e63` 测试色后标题文字确实变色，且质量门**正确报出新的 `CONTRAST_FAILURE`**（证明改色后走了真实重渲染+对比度重新校验，不是只改了个不生效的摆设）；改回原色后错误消失；Purchase Order 模板正确读回 `#8f1525`；全程控制台零报错。**范围仍收敛**：Data contract 表单编辑器依旧留待单独范围讨论，未纳入 |
+
+| A3：浏览器矩阵验收在真实 Linux（GitHub Actions Ubuntu runner）上跑通——`.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，不进 push/PR 快速通道，理由同 `scripts/browser-matrix.mjs` 自身注释：15–25 分钟不适合当每次提交的门槛） | `af64b25` | 用户 push 后手动触发 [Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)，全量 88 格（非 `--quick`）用时约 95 秒，**88/88 全过、零分歧**，四目标（含品牌版 Chrome）全部成功启动无 SKIP；Purchase Order/Sales Invoice 45 行场景逐页行数与 macOS 结论完全一致（`[14,14,14,3]`/`[24,21,0]`），证明 K=16px 收敛修法不是 macOS 专属巧合。结论存档 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」一节。**Windows 仍无自动化通道，维持待办**（GitHub Actions 无现成的 Windows+四浏览器方案） |
 
 ## 🔄 进行中
 
@@ -76,11 +78,11 @@
 
 ### 宣布 Production Ready 前建议补的一步（非阻塞）
 
-浏览器矩阵是**在 macOS 单机**跑的，而同一引擎跨操作系统已知存在度量差异（ROADMAP §2.1 第三条陷阱：Firefox 行分布在 macOS 与 CI 的 Linux 上就不同）。本次修复留了约 8.6px 双侧余量，按实测 24.62px 波动足以吸收，但**未在 Linux/Windows 实跑验证**。**推进中**：`.github/workflows/browser-matrix.yml`（`workflow_dispatch`）已就绪，可在 GitHub Actions 的 Ubuntu runner 上按需一键跑一次 Linux 矩阵——但需要先 push 到远程并手动触发（`gh workflow run browser-matrix.yml` 或网页 Actions 页面），本次会话未做（push 需用户显式许可）。Windows 仍无对应通道，仍需另行安排。
+浏览器矩阵已在 **macOS 与 Linux（GitHub Actions Ubuntu runner）** 两个操作系统上跑过，均 88/88 全过、零分歧（Linux 结果见 A3、[docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。**仅剩 Windows 未验证**：GitHub Actions 没有现成的 Windows+四浏览器目标方案（`chrome`/`webkit` channel 在 `windows-latest` runner 上的可用性未知，需要单独调研），仍需另行安排；非阻塞。
 
 ### 其他候选方向（均未开始、未确认范围）
 
-- **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Branding（配色，无现成 CSS 变量约定）、Data contract（表单编辑器级别的大活）面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达；这两项需要单独一轮范围讨论再动手。
+- **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）、Branding 品牌色（`d2fe47a`，范围收敛到 `.pf-brand` 标题色一处）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Data contract（表单编辑器级别的大活，无现成操作可复用）面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达；范围需要单独讨论再动手。
 - **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
 - **P3 发布治理**（EPIC E10）：独立 SemVer + 兼容矩阵、GitHub Release 附两个已验证试点导出、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG 已完成）
 

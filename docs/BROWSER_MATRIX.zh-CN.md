@@ -4,7 +4,7 @@
 >
 > 复现命令：`node scripts/browser-matrix.mjs`（约 15–25 分钟；`--quick` 跳过 100/500 行）。原始数据写入 `browser-matrix-result.json`（已 gitignore，不入库）。
 >
-> 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。
+> 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。**Linux 复现**：2026-07-31，GitHub Actions Ubuntu runner（`.github/workflows/browser-matrix.yml`，`workflow_dispatch`），构建对齐 `af64b25`，见下方「Linux 复现」一节。
 
 ## 结论
 
@@ -66,8 +66,18 @@
 - 先试过只加 6px 余量，用聚焦探测（仅 en-MY）测出"四目标收敛"，**结论是错的**——全量矩阵一跑，马来语仍分歧、日语分歧方向还反了过来。**窄范围的绿不等于绿。**
 - 中途两次测量脚本有缺陷：一次用 `页高 − 行高×行数` 反推非行区（循环论证，结果必然差一行）；一次误以为数据行在单个 `pf-grid` 容器内，实际**每行是独立的 `<table>` 直接挂在页面下**，按 class 首个 token 分组会把行头表和 15 个行表加成一个数。涉及数字的结论，先验证分解本身对不对再推论。
 
+## Linux 复现（2026-07-31，GitHub Actions Ubuntu runner）
+
+之前的结论只在 macOS 单机跑过，而 ROADMAP §2.1 第三条陷阱记录过"同一引擎跨操作系统度量可能不同"（Firefox 行分布 macOS 与 CI Linux 曾经不一样）。为验证 K=16px 的收敛修法在 Linux 上是否同样成立，新增 `.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发）在 Ubuntu runner 上完整跑了一次（非 `--quick`，全部 88 格）：
+
+- **运行记录**：[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)，用时约 95 秒（比本地估计的 15–25 分钟快得多——CI runner 磁盘/CPU 更快，且不含人工交互开销）。
+- **结果：88/88 全过，零分歧**，四个目标（Chromium/Chrome/Firefox/WebKit）在 Ubuntu 上全部成功启动（含品牌版 Chrome，未出现 SKIP）。
+- **逐页行数与 macOS 结论完全一致**：Purchase Order 45 行场景四目标均为 `[14,14,14,3]`；Sales Invoice 45 行场景四目标均为 `[24,21,0]`。K=16px 的收敛修法**不是 macOS 专属的巧合**，同一份 CSS 在 Linux 上同样把所有组合收敛到边界同一侧。
+
+结论：ROADMAP/TASK.md 此前标注的"建议在 Linux/Windows 上重跑一次矩阵"，Linux 部分现已完成且通过；Windows 仍无对应的自动化通道（GitHub Actions 无 Windows + 四浏览器目标的现成方案），维持待办。
+
 ## 对成熟度的影响
 
-退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：88/88 通过，且跨引擎分页已收敛一致。
+退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：88/88 通过，且跨引擎分页已收敛一致，并在 macOS 与 Linux 两个操作系统上分别验证过。
 
 但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前值得再确认的点：本矩阵在 macOS 单机执行，而已知**同一引擎跨操作系统也会有度量差异**（见 [ROADMAP.md](../ROADMAP.md) §2.1 第三条陷阱：Firefox 的行分布在 macOS 与 CI 的 Linux 上就不同）。本次修复留了约 8.6px 双侧余量，按 24.62px 的实测波动足以吸收，但**未在 Linux/Windows 上实跑验证**——若要覆盖，可在目标系统上重跑 `node scripts/browser-matrix.mjs`。
