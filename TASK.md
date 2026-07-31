@@ -30,7 +30,8 @@
 | 文档：新建 DESIGN/SPEC/EPIC/ROADMAP/TASK 五文档并对齐代码 | `3d6cb8a` | 人工核对 |
 | v2：预览问题元素红框 overlay + 开关（bridge 端按 issues 实时重算 rect 绘制，postMessage 指令切换不重渲染） | `1dc2856` | 浏览器实测：注入低对比度主题后红框覆盖 6 处；关闭开关瞬时消失、quality gate 计数不变；切 locale 触发全量重渲染后状态仍保持；100 测全绿 |
 | 安全回归测试固化：history 单调 revision、setJsonPath 原型污染、sanitizeExecutableContent、themeCss 逃逸、listenForPreview 来源校验（含伪造/无 source 场景）、mustache-lite 转义与严格 section、gateway 畸形 JSON 契约、draft-cache 超配额安全、sample-scenarios items 优先、set_sample_scenario 幂等 | `4806408` | 新增 8 个测试文件 + 1 处扩展，36 测试文件 136 个测试全绿；顺带修复 vitest 环境下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现的问题（新增共享 setup polyfill，此前仅 `ui-i18n.test.js` 单文件内 workaround） |
-| `examples/README.md` 演示页目录：21 个 index0XX + demo001/002 + 4 个专项测试页，按「基础重复区块 / 多 docinfo·footer 变体 / PTAC·PADDT / N-Up / 页码与真实文档 / 专项边界测试」分组，逐页一句话说明测什么特性 | （待提交） | 全部链接指向仓库根目录既有路径校验存在（不移动文件）；浏览器实测抽查 index007（3 表单/6 页/5 分隔符）与 index018（说明为源码注释非页面可见文字，已在描述中标注）二处易误判的页面 |
+| `examples/README.md` 演示页目录：21 个 index0XX + demo001/002 + 4 个专项测试页，按「基础重复区块 / 多 docinfo·footer 变体 / PTAC·PADDT / N-Up / 页码与真实文档 / 专项边界测试」分组，逐页一句话说明测什么特性 | `d78bd51` | 全部链接指向仓库根目录既有路径校验存在（不移动文件）；浏览器实测抽查 index007（3 表单/6 页/5 分隔符）与 index018（说明为源码注释非页面可见文字，已在描述中标注）二处易误判的页面 |
+| CI 扩展：`validate:v2` 校验两个试点导出 + 新增 5 条 Playwright 冒烟（核心库直渲染路径 3 条、Studio v1 结构模式原始模板断言 2 条） | （待提交） | 重新核实后发现 `e2e/studio-v2.spec.js` 早已有 12 条深度用例（此前 ROADMAP 误判"覆盖少"，已在文档中更正）；真正空白是核心库与 v1，已补齐；本地 `npx playwright test --project=chromium` 全量 18 条通过；用篡改 `protocolVersion` 的样本实测确认 `validate:v2` 对损坏文件返回非零退出码 |
 
 ## 🔄 进行中
 
@@ -40,19 +41,19 @@
 
 | # | 任务 | Epic | 验收标准 |
 |---|---|---|---|
-| 4 | CI 扩展：validate:v2 两试点 + Playwright 冒烟 3 条 | E11 | ci.yml 通过且能抓到人为注入的回归 |
 | 5 | Apply 前并排 diff 面板（替代 confirm 文本） | E5/E8 | 变更 section 并排高亮，取消不落盘 |
 | 6 | 高层语义工具第一批：`set_column_widths`、`set_font_scale` | E8 | 工具契约 + 单测 + agent 实测一步到位 |
 | 7 | P0-A：operations discriminated union schema 校验 | E6 | 未知 operation/多余字段稳定报错 |
 | 8 | P0-A：候选项目隔离 iframe 真实分页 dry-run + preview receipt | E6 | 路线图 P0-A 退出条件 |
 | 9 | P0-B：preview nonce + candidate hash；Studio 签发截图证据 | E7 | 路线图 P0-B 退出条件 |
 | 10 | 黄金样本分页断言（3 个代表页的页数/行数） | E9 前置 | P2 重构期间每步可跑 |
+| 11 | PR 检查项：涉及 `studio-v2/core/**` 时提醒确认已跑 `npm run build:assets` | E11 | 有据可查的 PR 模板/CI 提示，减少"改了没生效"复发 |
 
 ## 🚧 阻塞
 
-（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 PR 检查项；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 本批新增共享 setup polyfill。）
+（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4、TASK #11；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 本批新增共享 setup polyfill。）
 
 ## 📌 下一步（建议顺序）
 
-1. 待办 #4（CI 扩展，1–2 小时，维护成本立降）。
-2. 待办 #5（Apply 前 diff 面板）或 #6（高层语义工具）——两者独立，可任选其一。
+1. 待办 #5（Apply 前 diff 面板）或 #6（高层语义工具）——两者独立，可任选其一。
+2. 待办 #11（PR 检查项，10 分钟级小任务，可随手做）。

@@ -35,6 +35,14 @@ jobs:
       # Chromium, Firefox and WebKit then use that exact static artifact.
       - run: npm run test:e2e
 
+      # validate:v2 checks protocol/schema conformance and attestation hash
+      # integrity independently of the Playwright render assertions above —
+      # a tampered or stale runtime embed can pass rendering (stale content
+      # still paginates) while failing this. Runs against the exact files
+      # the Pages artifact ships below.
+      - run: npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html
+      - run: npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html
+
       - uses: actions/upload-artifact@v4
         with:
           name: dist
