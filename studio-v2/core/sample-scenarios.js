@@ -13,7 +13,10 @@ function findArray(value) {
 
 export function createScenario(sampleData, scenario) {
   const data = cloneJson(sampleData);
-  const items = findArray(data);
+  // Totals math is keyed to data.items — prefer it explicitly so a project
+  // whose first depth-first array is something else (e.g. address lines)
+  // doesn't get that array replaced by generated rows.
+  const items = Array.isArray(data.items) ? data.items : findArray(data);
   if (!items) return data;
   const previousSubtotal = Number(data.totals?.subtotal) || 0;
   const taxRate = previousSubtotal ? (Number(data.totals?.tax) || 0) / previousSubtotal : 0;

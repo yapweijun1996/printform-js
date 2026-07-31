@@ -5,6 +5,7 @@ import { stableStringify } from "../core/json.js";
 import { analyzeMigration } from "../core/migrations.js";
 import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
 import { installAgentGateway } from "../adapters/gateway.js";
+import { sanitizeExecutableContent } from "../core/operations.js";
 import { installWebMcpAdapter } from "../adapters/webmcp.js";
 import { clearRecoveryDraft, loadRecoveryDraft, saveRecoveryDraft } from "./draft-cache.js";
 import { downloadHtml, readHtmlFile, saveHtmlWithPicker } from "./file-io.js";
@@ -176,8 +177,16 @@ async function exportDocument(trusted) {
 }
 
 async function openPrintPreview() {
+  // A blob: URL inherits the Studio's origin. Never navigate a window that
+  // still holds window.opener to a document that may embed custom scripts —
+  // an imported untrusted file could read opener.localStorage (recovery
+  // drafts with real data) and drive the agent gateway from inside the page.
+  if (bus.project.trust === "untrusted" || (bus.project.customScripts || []).length) {
+    return toast(t("error.printUntrusted", {}, "Print preview is disabled for untrusted documents. Review and reset trust first."));
+  }
   const target = window.open("", "_blank");
   if (!target) return toast(t("toast.popupBlocked"));
+  target.opener = null;
   try {
     const result = await createStandaloneHtml(bus.project, { requireTrusted: false, networkDisabled: true });
     const url = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
@@ -196,7 +205,10 @@ function downloadDiagnostics() {
 
 function resetTrust() {
   if (!window.confirm(t("confirm.resetTrust"))) return;
-  const project = { ...bus.project, customScripts: [], trust: "trusted", trustReasons: [], runtime: null, attestation: null };
+  // Flipping the flag alone would re-trust a template that still contains the
+  // <script> which demoted it — strip executable content at the same time.
+  const sanitized = sanitizeExecutableContent(bus.project);
+  const project = { ...bus.project, ...sanitized, customScripts: [], trust: "trusted", trustReasons: [], runtime: null, attestation: null };
   installBus(project, "trust reset");
   dirty = true;
 }
@@ -250,6 +262,9 @@ function setupRecovery() {
 function setupServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   navigator.serviceWorker.register("./sw.js").then((registration) => {
+    // A worker can already be waiting when the page loads (user ignored the
+    // banner and reloaded) — updatefound never fires for it.
+    if (registration.waiting && navigator.serviceWorker.controller) $("#update-banner").classList.remove("hidden");
     registration.addEventListener("updatefound", () => {
       const worker = registration.installing;
       worker?.addEventListener("statechange", () => { if (worker.state === "installed" && navigator.serviceWorker.controller) $("#update-banner").classList.remove("hidden"); });
@@ -259,7 +274,7 @@ function setupServiceWorker() {
   navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
 }
 
-listenForPreview((message) => {
+listenForPreview($("#preview-frame"), (message) => {
   if (message.revision !== bus.revision) return;
   if (message.type === "rendered") {
     bus.recordRenderReport(message.payload);

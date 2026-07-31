@@ -32,12 +32,19 @@ function requireSelector(template, selector) {
   return matches[0];
 }
 
+const FORBIDDEN_PATH_TOKENS = new Set(["__proto__", "constructor", "prototype"]);
+
 function setJsonPath(target, path, value) {
   const parts = String(path || "").split("/").filter(Boolean).map((token) => token.replace(/~1/g, "/").replace(/~0/g, "~"));
   if (!parts.length) throw Object.assign(new Error("JSON path cannot target the document root"), { code: "INVALID_OPERATION_PATH" });
+  // "__proto__"/"constructor" segments would walk into Object.prototype and
+  // pollute every object in the page (e.g. faking allowExternalHttps=true).
+  if (parts.some((part) => FORBIDDEN_PATH_TOKENS.has(part))) {
+    throw Object.assign(new Error("JSON path may not reference prototype members"), { code: "INVALID_OPERATION_PATH" });
+  }
   let cursor = target;
   parts.slice(0, -1).forEach((part) => {
-    if (!cursor[part] || typeof cursor[part] !== "object") cursor[part] = {};
+    if (!Object.prototype.hasOwnProperty.call(cursor, part) || !cursor[part] || typeof cursor[part] !== "object") cursor[part] = {};
     cursor = cursor[part];
   });
   cursor[parts.at(-1)] = value;
@@ -70,7 +77,10 @@ function applyOperation(project, operation) {
     else target.setAttribute(operation.name, String(operation.value));
     project.templateHtml = template.innerHTML.trim();
   } else throw Object.assign(new Error(`Unsupported operation: ${operation.type}`), { code: "UNSUPPORTED_OPERATION" });
-  if (/<script[\s>]/i.test(project.templateHtml)) project.trust = TRUST.untrusted;
+  // themeCss is serialized raw into <style>: a "</style><script>…" payload
+  // breaks out of the style element, so it must demote trust exactly like a
+  // <script> in the template does.
+  if (/<script[\s>]/i.test(project.templateHtml) || /<\/style|<script[\s>]/i.test(project.themeCss || "")) project.trust = TRUST.untrusted;
   project.attestation = null;
 }
 
@@ -83,21 +93,34 @@ export function applyOperations(project, operations) {
 
 export function previewSourceEdit(project, section, content) {
   const operation = { type: "" };
-  if (section === "manifest") {
-    const value = parseJson(content, "manifest");
-    const candidate = cloneProject(project);
-    candidate.manifest = value;
-    candidate.attestation = null;
-    return candidate;
-  }
-  if (section === "schema") operation.type = "replace_schema";
+  // manifest goes through applyOperations like every other section — the old
+  // hand-rolled clone here skipped the executable-markup trust re-check.
+  if (section === "manifest") operation.type = "replace_manifest";
+  else if (section === "schema") operation.type = "replace_schema";
   else if (section === "i18n") operation.type = "replace_i18n";
   else if (section === "sampleData") operation.type = "replace_sample_data";
   else if (section === "theme") operation.type = "replace_theme";
   else if (section === "template") operation.type = "replace_template";
   else throw Object.assign(new Error(`Unknown section: ${section}`), { code: "UNKNOWN_SECTION" });
-  operation.value = ["schema", "i18n", "sampleData"].includes(section) ? parseJson(content, section) : content;
+  operation.value = ["manifest", "schema", "i18n", "sampleData"].includes(section) ? parseJson(content, section) : content;
   return applyOperations(project, [operation]);
+}
+
+// Removes executable content from template/theme so "reset trust" actually
+// removes what demoted the trust, instead of just flipping the flag back.
+export function sanitizeExecutableContent(project) {
+  const template = templateDocument(project.templateHtml || "");
+  template.content.querySelectorAll("script").forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      if (/^on/i.test(attribute.name)) node.removeAttribute(attribute.name);
+      else if (/^(href|src|xlink:href)$/i.test(attribute.name) && /^\s*javascript:/i.test(attribute.value)) node.removeAttribute(attribute.name);
+    });
+  });
+  return {
+    templateHtml: template.innerHTML.trim(),
+    themeCss: String(project.themeCss || "").replace(/<\/?(?:script|style)[^>]*>?/gi, "")
+  };
 }
 
 export function diffProjects(before, after) {

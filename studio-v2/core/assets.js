@@ -48,8 +48,11 @@ async function toDataUrl(url) {
 }
 
 async function checkExternal(url) {
-  const response = await fetch(url, { method: "HEAD", credentials: "omit" });
-  if (!response.ok) throw new Error(`External asset ${url} returned HTTP ${response.status}`);
+  // Ordinary image CDNs send no CORS headers, so a cors-mode HEAD rejects for
+  // perfectly reachable assets. no-cors yields an opaque response (status 0):
+  // treat "the request completed" as reachable and only fail on network errors.
+  const response = await fetch(url, { method: "HEAD", credentials: "omit", mode: "no-cors" });
+  if (!response.ok && response.type !== "opaque") throw new Error(`External asset ${url} returned HTTP ${response.status}`);
 }
 
 async function rewriteCssUrls(css, baseUrl, allowExternal, warnings) {

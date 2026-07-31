@@ -135,10 +135,13 @@ export async function serializeStandalone(project, sources, validation, options 
   const [documentHash, printformHash] = await Promise.all([
     sha256Base64(inlineDocumentRuntime), sha256Base64(inlinePrintformRuntime)
   ]);
-  const untrustedCsp = options.networkDisabled
-    ? "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
-    : "default-src 'self' data: blob: https:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https:; font-src data: https:";
+  // allowExternalHttps must open img/font in EVERY variant, or a project that
+  // legitimately keeps an https logo can never reach a "ready" preview and is
+  // permanently blocked from export despite the capability being declared.
   const externalSources = project.manifest.assets?.allowExternalHttps ? " https:" : "";
+  const untrustedCsp = options.networkDisabled
+    ? `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:${externalSources}; font-src data:${externalSources}; connect-src 'none'; base-uri 'none'; form-action 'none'`
+    : "default-src 'self' data: blob: https:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https:; font-src data: https:";
   const csp = trusted
     ? `default-src 'none'; script-src 'sha256-${documentHash}' 'sha256-${printformHash}'; style-src 'unsafe-inline'; img-src data:${externalSources}; font-src data:${externalSources}; connect-src 'none'; base-uri 'none'; form-action 'none'`
     : untrustedCsp;
@@ -157,7 +160,7 @@ export async function serializeStandalone(project, sources, validation, options 
   ${jsonBlock(SECTION_IDS.manifest, "application/json", project.manifest)}
   ${jsonBlock(SECTION_IDS.schema, "application/schema+json", project.schema)}
   ${jsonBlock(SECTION_IDS.i18n, "application/json", project.i18n || {})}
-  <style id="${SECTION_IDS.theme}">\n${project.themeCss.trim()}\n</style>
+  <style id="${SECTION_IDS.theme}">\n${project.themeCss.trim().replace(/<\/style/gi, "<\\/style")}\n</style>
 </head>
 <body>
   <main id="pf-mount" aria-live="polite"></main>

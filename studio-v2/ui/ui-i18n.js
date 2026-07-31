@@ -46,7 +46,13 @@ export async function setUiLocale(nextLocale, root = document, persist = true) {
 export async function initUiI18n(root = document) {
   let saved = "en-MY";
   try { saved = localStorage.getItem(STORAGE_KEY) || "en-MY"; } catch { /* use English */ }
-  return setUiLocale(saved, root, false);
+  try {
+    return await setUiLocale(saved, root, false);
+  } catch {
+    // A failed dynamic locale import (404 / flaky network) must not reject the
+    // module's top-level await in app.js — that would brick the whole Studio.
+    return setUiLocale("en-MY", root, false);
+  }
 }
 
 export function translateIssue(item) {

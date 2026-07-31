@@ -93,6 +93,12 @@ export function validateProject(project, options = {}) {
   if (rows > limits.maxRows) errors.push(error("ROW_LIMIT", `${rows} rows exceed the ${limits.maxRows} row limit`, "/sampleData"));
   if (!project.templateHtml || !project.templateHtml.includes("printform")) errors.push(error("PRINTFORM_ROOT_MISSING", "Template must contain a .printform root", "/template"));
   if (project.trust === TRUST.untrusted) errors.push(error("UNTRUSTED_SCRIPT", "Custom executable script prevents production attestation", "/trust"));
+  // Defense in depth: re-derive from content instead of trusting the stored
+  // flag, so a stale/reset trust flag cannot attest a template that still
+  // carries executable markup.
+  if (project.trust !== TRUST.untrusted && (/<script[\s>]/i.test(project.templateHtml || "") || /<\/style|<script[\s>]/i.test(project.themeCss || ""))) {
+    errors.push(error("EXECUTABLE_MARKUP_PRESENT", "Template or theme contains executable markup despite trusted flag", "/template"));
+  }
   if (options.htmlBytes > limits.maxHtmlBytes) errors.push(error("HTML_SIZE_LIMIT", `HTML exceeds ${limits.maxHtmlBytes} bytes`, "/"));
   return {
     valid: errors.length === 0,

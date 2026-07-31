@@ -28,9 +28,17 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+  // Navigations carry query strings ("?sample=purchase-order-red") that are
+  // not cache keys — match ignoring search, and fall back to the cached app
+  // shell when the network is down so offline reloads keep working.
+  const isNavigation = event.request.mode === "navigate";
+  const matchOptions = isNavigation ? { ignoreSearch: true } : undefined;
+  event.respondWith(caches.match(event.request, matchOptions).then((cached) => cached || fetch(event.request).then((response) => {
     if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
     return response;
+  }).catch((error) => {
+    if (isNavigation) return caches.match("./index.html");
+    throw error;
   })));
 });
 

@@ -14,7 +14,16 @@ export function installAgentGateway(bus, globalScope = window) {
   const gateway = Object.freeze({
     contractVersion: AGENT_CONTRACT_VERSION,
     listTools: () => TOOL_CONTRACTS,
-    execute: async (name, input = {}) => executeAgentCommand(bus, name, typeof input === "string" ? JSON.parse(input) : input)
+    execute: async (name, input = {}) => {
+      let parsed = input;
+      if (typeof input === "string") {
+        // Keep the uniform {ok:false, error} contract — a malformed JSON string
+        // must not reject the promise while every other failure resolves.
+        try { parsed = JSON.parse(input); }
+        catch (error) { return { ok: false, error: { code: "INVALID_INPUT_JSON", message: error.message } }; }
+      }
+      return executeAgentCommand(bus, name, parsed);
+    }
   });
   Object.defineProperty(globalScope, "PrintFormStudioAgent", { configurable: true, value: gateway });
   return gateway;

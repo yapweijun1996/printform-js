@@ -120,7 +120,9 @@ export class CommandBus extends EventTarget {
       if (name === "set_sample_scenario") {
         this.ensureRevision(input.expectedRevision);
         const preview = this.preview([{ type: "replace_sample_data", value: createScenario(this.defaultSample, input.scenario) }], input.expectedRevision);
-        const revision = this.commit(preview.candidate, `sample scenario: ${input.scenario}`);
+        // No-op re-selection must not bump the revision — that would clear a
+        // passing layout review (and burn a limited review attempt) for free.
+        const revision = preview.diff.changed ? this.commit(preview.candidate, `sample scenario: ${input.scenario}`) : this.revision;
         return this.success({ revision, validation: preview.validation });
       }
       if (name === "set_locale") {

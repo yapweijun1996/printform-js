@@ -3,13 +3,18 @@ export class RevisionHistory {
     this.limit = limit;
     this.entries = [{ revision: 0, project: initialProject, reason: "initial", timestamp: Date.now() }];
     this.cursor = 0;
+    this.nextRevision = 1;
   }
 
   get revision() { return this.entries[this.cursor].revision; }
   get project() { return this.entries[this.cursor].project; }
 
   commit(project, reason) {
-    const revision = this.revision + 1;
+    // Monotonic, never derived from the cursor: undo-then-commit must NOT
+    // reuse an already-seen revision number, or expectedRevision optimistic
+    // locking (and preview-report correlation) silently accepts stale writes.
+    const revision = this.nextRevision;
+    this.nextRevision += 1;
     this.entries = this.entries.slice(0, this.cursor + 1);
     this.entries.push({ revision, project, reason, timestamp: Date.now() });
     if (this.entries.length > this.limit) this.entries.shift();
