@@ -4,7 +4,7 @@
 >
 > 复现命令：`node scripts/browser-matrix.mjs`（约 15–25 分钟；`--quick` 跳过 100/500 行）。原始数据写入 `browser-matrix-result.json`（已 gitignore，不入库）。
 >
-> 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `b3c5da8`，macOS。
+> 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。
 
 ## 结论
 
