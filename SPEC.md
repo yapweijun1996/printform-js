@@ -71,9 +71,11 @@
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
 - `operations[]` 中每个元素按 `type` 做判别联合校验（[studio-v2/core/operation-schemas.js](studio-v2/core/operation-schemas.js)，复用 core/schema.js 的受限 JSON Schema 引擎）：已知类型缺字段/多字段/字段类型错误一律 `INVALID_OPERATION_SHAPE`（附首个错误的 path+message）；未知 `type` 仍是 `UNSUPPORTED_OPERATION`。校验先于任何变更执行，失败时草稿不落盘、revision 不推进。
-- 支持的 `operations[].type`：`set_manifest_value`、`replace_manifest/schema/i18n/sample_data/theme/template`、`set_asset_slot`、`set_text`、`set_attribute`，以及两个高层语义工具：
+- 支持的 `operations[].type`：`set_manifest_value`、`replace_manifest/schema/i18n/sample_data/theme/template`、`set_asset_slot`、`set_text`、`set_attribute`，以及三个高层语义工具：
   - `set_column_widths({ tableSelector, widths })`：`tableSelector` 可以是逗号分隔的复合选择器（如 `.prowheader, .prowitem`），匹配到的每个 `<table>` 各行各列按位置套用 `widths`；数组长度必须等于该表列数；每个宽度值为 `"N%"`/`"Npx"`/`"Nmm"`/`"Npt"`，或 `""`/`"auto"` 表示该列不设固定宽度（用于 `table-layout:fixed` 下吸收剩余空间的描述类列）。PrintForm 模板常把表头行与重复数据行拆成两个独立 `<table>`（`.prowheader`/`.prowitem`），一次调用即可让两者列宽保持同步。
   - `set_font_scale({ basePt })`：整体平移 `core/typography.js` 的 7 级字号刻度（`--pf-font-minus-3`…`--pf-font-plus-3`，1pt 步进），`basePt` 范围 6–14pt；替换 themeCss 中已注入的旧刻度块，不会重复注入。
+  - `set_brand_color({ hex })`：写入 `core/branding.js` 注入的 `--pf-brand-color` 变量（3 或 6 位 hex，正则 `^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$`），仅驱动两个标准模板里 `.pf-brand` 标题文字色一处——两个模板的品牌色其余十几处用法（表头背景、边框、汇总框等）仍是硬编码字面量，未纳入本工具，是刻意收窄的范围（见 EPIC.md E8）。替换 themeCss 中已注入的旧值，不会重复注入。
+- Page settings（页面尺寸 `data-papersize-width/height`）与 Repeated areas（七个 `data-repeat-*` 标记）**没有专属操作类型**，经由通用 `set_attribute` 逐属性调用、在同一次 `apply_changes` 里打包多条实现（studio-v2/core/page-inspection.js 只读回两个标准模板实际用到的字段）。
 - 布局审查：`capture_layout_evidence`（按场景签发证据，见 §3.5）→ `begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 `evidenceIds`/findings/summary，major/critical open 阻断）；任何 mutation 使审查、渲染报告与已签发证据同时失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
 - `preview_changes`/`apply_changes` 在浏览器环境下对候选项目做**真实分页渲染**（复用 UI 的可见预览 iframe，不止 schema/业务规则校验）：返回的 `validation` 携带真实 `issues[]`/`metrics`（含 `logicalPages` 等只有真实渲染才有的字段），并附带 `candidateHash`（`sha256(stableStringify(candidate))`）。`apply_changes` 若命中与刚才 `preview_changes` 相同的 `candidateHash`（即同一组 operations 作用在同一 revision 上）直接复用已渲染的报告提交，不重新渲染；未命中（跳过 preview 直接 apply）则内联渲染一次再提交——不存在"绕过真实渲染直接提交"的路径。渲染失败/超时归为 `RENDER_FAILED` 校验错误，不会让调用挂起。无浏览器上下文（单测、CLI 校验器）时二者退化为原有的纯 schema/业务规则校验，`candidateHash` 为 `null`。

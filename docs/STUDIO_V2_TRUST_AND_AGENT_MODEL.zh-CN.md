@@ -35,7 +35,7 @@
 
 ## 数据隐私
 
-Target 默认策略：未知 HTML 或 JSON 一律视为可能含真实 ERP 数据。
+Current 默认策略（未知 HTML 或 JSON 一律视为可能含真实 ERP 数据）：
 
 - 默认不写入恢复缓存、日志、诊断包或 Agent 返回值。
 - Agent 默认只读取 schema、模板结构、布局指标和生成的边界数据。
@@ -43,11 +43,15 @@ Target 默认策略：未知 HTML 或 JSON 一律视为可能含真实 ERP 数�
 - 授权真实数据时关闭草稿恢复缓存；导出项目不得偷偷包含额外缓存副本。
 - 不提供默认遥测；诊断资料由用户脱敏后主动导出。
 
-## Target：Agent Contract 2.0
+## Backlog（早期设想，已评估未采纳）：破坏性两阶段提交
 
-所有写命令先根据共享 JSON Schema 验证。`operations` 使用按 `type` 区分的联合契约，不接受未知操作或额外字段。
+本节是 Agent Contract 2.0 最初设想的写路径重设计——`apply_changes` 只认 `previewId`/`candidateHash`，不再接受直接传 `operations[]`。**2026-07-31 已就此评估并与用户确认：不采纳**（见 DESIGN.md §4.7、TASK.md #14）。原因：`operations[]` 判别联合 schema 校验、候选项目真实渲染（复用可见预览 iframe）、`candidateHash` 内容寻址缓存这三项已经达成"绝不提交未经真实验证的候选"这一信任目标，且是**非破坏性**实现——`apply_changes` 至今仍接受直接传 `operations[]`（未命中 `candidateHash` 缓存时退化为内联真实渲染再提交）。真实契约版本历史是 1.1.0→1.2.0（非破坏性声明候选渲染能力）→2.0.0（唯一破坏性变更是 `complete_layout_review` 改用 `evidenceIds`，见下一节）。
 
-真实候选预览：
+以下是当初设想、未采纳的具体形状，保留仅供历史参考：
+
+所有写命令先根据共享 JSON Schema 验证。`operations` 使用按 `type` 区分的联合契约，不接受未知操作或额外字段（**这部分已实现**，见 `core/operation-schemas.js`）。
+
+设想中的真实候选预览（未采纳的调用形状）：
 
 ```js
 preview_changes({ expectedRevision, operations, scenarios })
@@ -57,17 +61,13 @@ preview_changes({ expectedRevision, operations, scenarios })
 // }
 ```
 
-`scenarioReports` 至少包含 `default` 与 `long-text` 的验证、分页和内容完整性结果。preview 只存在于隔离草稿，过期后不可提交。
-
-原子提交：
+设想中的原子提交（未采纳，`apply_changes` 实际仍接受直接传 `operations[]`）：
 
 ```js
 apply_changes({ expectedRevision, previewId, candidateHash, reason })
 ```
 
-`apply_changes` 不再接受新的 operations。preview 过期、revision 冲突、hash 不符或存在生产硬错误时，整组失败且草稿不变。
-
-revision 使用永不复用的单调编号。undo 创建新的 revision identity，而不是回到可再次命中的旧编号。
+revision 使用永不复用的单调编号——**这部分已实现**，undo 创建新的 revision identity，而不是回到可再次命中的旧编号。
 
 ## Current：验收证据（2026-07-31 实现）
 

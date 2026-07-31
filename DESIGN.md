@@ -150,11 +150,22 @@
 
 **这是 fail-closed 破坏**(范围内已确认):2026-07-31 之前导出的文件不含 `printformRuntimeHash`,重新导入会降级 Untrusted。站内两个试点样本每次构建都重签,不受影响。
 
+### 4.8 P1 工程师面板的统一模式（Current，2026-07-31 落地）
+
+五个面板（Table columns、Print font scale、Page settings、Repeated areas、Brand color）都遵循同一套读→写模式，不是各自发明：
+
+- **读**：`core/*-inspection.js`（`column-inspection.js`/`page-inspection.js`）或对应模块的 `current*()` 读回函数（`typography.js` 的 `currentFontBasePt`、`branding.js` 的 `currentBrandColor`）从 `project.templateHtml`/`themeCss` 里描述当前真实值，只读不写；找不到对应字段一律返回 `null`/`[]`，不猜引擎默认值或编造假数据。
+- **写**：优先复用**已有的**语义操作（`set_column_widths`/`set_font_scale`/`set_brand_color`）；没有专属操作类型的字段（Page settings 的 `data-papersize-*`、Repeated areas 的七个 `data-repeat-*`）直接用通用 `set_attribute`，每属性一条、同一次 `apply_changes` 打包提交，不为每个简单 data-* 字段都新开一个操作类型。
+- **应用方式**：结构化单一用途控件（本节五个面板 + 已有的 locale-select/asset-slot）都直接 `bus.execute("apply_changes", {...})`，不经 diff 弹窗确认；只有原始 JSON/CSS/HTML 文本编辑器走 `ui/diff-view.js` 的并排 diff 确认流程（见 §4.4 附近的 Apply 前确认机制）。
+- **范围纪律**：每个面板都刻意只覆盖两个标准模板实际用到的字段，不覆盖 `src/printform/config.js` 里更大的引擎级配置面（如 `docinfo002-005`/`footer002-005`/PADDT 专属配置），也不做超出单一清晰切片的重设计——Brand color 只做 `.pf-brand` 一处标题色，不是把两个模板里另外十几处硬编码用色都 token 化，因为后者是量级明显更大、更主观的独立设计任务。
+
 ---
 
 ## 5. 构建与部署
 
 - `npm run build` = 测试 → Vite 打包 `dist/printform.js` → 构建 `dist/printform-document.js`（v2 文档 runtime）→ 生成预览页。
 - `npm run build:site` = 上述 + 拷贝白名单目录到 `site-dist/` + 生成两个已签名试点导出 + 给 `sw.js` 盖 build id（占位符缺失会**构建失败**，防止缓存永不更新的静默部署）。
+- `npm run doctor`：一条命令跑单测 + `build:site` + 两个试点样本 `validate:v2`，结尾一页 PASS/FAIL 汇总（`scripts/doctor.mjs`，2026-07-31）；刻意不含 e2e，那是 CI 每次 push 都跑的三引擎慢检查。
 - `dist/` 不进 git（`.gitignore`），由 CI（`.github/workflows/ci.yml`）构建。
+- `.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，2026-07-31）：在 GitHub Actions 的 Ubuntu runner 上按需复现 `scripts/browser-matrix.mjs` 的完整 88 格矩阵，用于验证发布前的跨引擎收敛在 Linux 上同样成立（已实测 88/88 通过），不进 push/PR 常规门槛。
 - 本地开发服务器：`node scripts/serve-site.mjs .`（`.claude/launch.json` 已配置，端口 4174）。

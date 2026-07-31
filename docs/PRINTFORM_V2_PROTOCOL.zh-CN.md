@@ -47,9 +47,9 @@ await PrintFormDocument.render(data, options)
 
 - 受信文件只能包含两个固定 executable script：`pf-document-runtime` 和 `pf-printform-runtime`。
 - 任意工程师脚本会把文件降级为 `Untrusted`；Studio 可在无同源、无网络 sandbox 预览，也可人工导出，但不能产生生产有效凭证。
-- `pf-attestation` 是防篡改记录，不是组织数字签名。当前 validator 会验证已支持的内容与 document runtime hash；完整覆盖两段 runtime、CSP 和真实浏览器证据属于 Target。
+- `pf-attestation` 是防篡改记录，不是组织数字签名。validator 覆盖两段 runtime hash（document runtime + PrintForm 分页引擎本身，各自独立错误码）、CSP script hash 允许列表，以及由 Studio 签发的 evidence receipt 推导的真实浏览器证据（2026-07-31 起，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)《完整性与证明》）。
 
-当前 review receipt 依赖 Agent 提交的证据标签，`preview_changes` 也尚未真实分页候选项目。因此当前文件与 Studio 只能按 Production Pilot 验收，不能仅凭 receipt 宣称 Production Ready。
+review receipt 现由 Studio 自己测量渲染结果后签发（几何指纹，非像素截图），拒绝 Agent 自述证据标签；`preview_changes`/`apply_changes` 会真实分页候选项目（复用可见预览 iframe）。即便如此，当前文件与 Studio 仍只按 Production Pilot 验收——Production Ready 是对外承诺，由维护者显式宣布，还需完成浏览器矩阵等发布流程验收（已在 macOS/Linux 跑满，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)），不由代码硬门齐全自动推导。
 
 ## JSON Schema Profile
 
@@ -63,4 +63,4 @@ npm run validate:v2 -- path/to/document.html
 
 命令输出机器可读 JSON，只做协议、数据、信任、容量与哈希验证。分页、越界和字体仍必须使用 Playwright／真实浏览器验证。
 
-Current validator 不等于浏览器布局证明。内容数量、顺序、遗漏、重叠和双 runtime 完整证明的 Target 设计见[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+CLI validator 本身不等于浏览器布局证明（分页、越界、字体仍需真实浏览器）；但内容数量/顺序/遗漏/重叠校验（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP`）与双 runtime hash 完整证明均已实现，见[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) P0-B 与[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)。

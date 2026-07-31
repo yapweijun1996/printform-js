@@ -37,22 +37,18 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 ## Current 用户流程
 
 1. 导入单 HTML 或选择 Sales Invoice／Purchase Order 样本。
-2. 在结构化源码区编辑 manifest、schema、i18n、CSS、HTML 与样本数据。
-3. Studio 在 sandbox iframe 中渲染当前草稿并显示分页指标。
-4. UI 或 Agent 调用共享命令总线修改 revision。
-5. AI 按检查表审阅默认与长文本场景，并提交当前的 review receipt。
-6. 工程师确认系统打印预览后，点击生产导出。
+2. 用 Table columns、Print font scale、Page settings、Repeated areas、Brand color 等结构化面板，或结构化源码区直接编辑 manifest、schema、i18n、CSS、HTML 与样本数据（Data contract 面板尚未建成，仍需走原始 JSON）。
+3. Studio 在复用的可见预览 iframe 中对候选修改做**真实分页渲染**（不止 dry-run 静态校验），显示分页指标，按 `candidateHash` 缓存渲染报告。
+4. UI 或 Agent 调用共享命令总线修改 revision，乐观锁基于永不复用的单调 revision 编号。
+5. AI 对 default 与 long-text 场景调用 `capture_layout_evidence` 取得 Studio 自己签发的几何指纹 receipt（非 Agent 自述），再提交 `complete_layout_review`。
+6. 工程师确认系统打印预览后，点击生产导出；attestation 覆盖两段 runtime hash、CSP 与由 receipt 推导的浏览器凭证。
 
-这是受控试点流程；当前 receipt 和 dry-run 的限制见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)。
+这是受控试点流程；六项 P0 硬门的代码部分已全部完成（见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)），但 Production Ready 状态仍需维护者显式宣布。
 
-## Target 用户流程
+## Backlog 用户流程（尚未建成）
 
-1. 未知导入默认按真实 ERP 数据处理，不缓存且不暴露给 Agent。
-2. 工程师主要使用 Branding、Page、Repeated areas、Table、Locale 和 Data contract 面板。
-3. Raw HTML/CSS/JSON 保留在 Advanced 模式。
-4. Agent 先取得真实候选分页结果和持久化 semantic diff，再请求原子提交。
-5. Studio 对每个场景签发 RenderReport 与截图证据。
-6. 六项 P0 硬门通过后，工程师才能确认 Production Ready 导出。
+1. Data contract 面板：友好的 JSON Schema + 样本数据编辑器，取代当前仍需直接编辑原始 JSON 的方式；范围较大（表单编辑器级别），需要单独的 UX/schema 范围讨论后才能动手。
+2. Raw HTML/CSS/JSON 编辑器移入 Advanced 模式（其余结构化面板已是默认入口，这一步是收尾整理，非阻塞）。
 
 ## 非目标
 

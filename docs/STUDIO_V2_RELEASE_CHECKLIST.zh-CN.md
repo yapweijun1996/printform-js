@@ -1,6 +1,6 @@
 # PrintForm Studio v2 发布检查表
 
-> 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和未来 Production Ready 硬门；不得把 Target 项勾选为当前已实现。
+> 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——六项硬门的代码部分已完成，但 Production Ready 状态本身仍需维护者显式宣布，不由代码完成或测试绿灯自动推导。
 
 ## Production Pilot 自动检查
 
@@ -34,18 +34,18 @@
 - 不要求跨引擎像素一致；共同硬标准是不丢失、不重复、不乱序、不重叠、不越界，页码与重复区正确。
 - 工程师确认打印驱动设置，并保留最后一次人工验收记录。
 
-## Production Ready 硬门（Target）
+## Production Ready 硬门
 
-以下六项必须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免：
+以下六项须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免。**代码部分已于 2026-07-31 全部完成**（不允许人工勾选绕过，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)确认标准）：
 
-1. 候选项目真实分页 dry-run，并返回绑定 candidate hash 的 preview receipt。
-2. revision 永不复用，所有写入按有效 receipt 原子提交。
-3. Studio 签发截图与场景 Evidence Receipt，Agent 不能自我声明证据。
-4. Preview channel 验证目标 frame、nonce、revision 和 candidate hash。
-5. Attestation 覆盖两段 runtime、CSP、权威内容与真实浏览器 receipt。
-6. 自动验证内容数量、顺序、重复、遗漏、重叠、越界与重复区完整性。
+1. ✅ 候选项目在复用的可见预览 iframe 中真实分页渲染，`preview_changes`/`apply_changes` 返回绑定 `candidateHash` 的报告。
+2. ✅ revision 永不复用，写入靠 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性 previewId 两阶段提交，评估后判定当前机制已达成同等安全目标，见信任与代理模型文档《Backlog》一节）。
+3. ✅ Studio 签发几何指纹（非像素截图）场景 Evidence Receipt，Agent 不能自我声明证据。
+4. ✅ Preview channel 验证目标 frame、跨 iframe reload 的单调请求 token（等价一次性 nonce）、revision 和 candidate hash。
+5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、权威内容 hash 与由真实 evidence receipt 推导的浏览器凭证。
+6. ✅ 自动验证内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（浏览器矩阵、系统打印预览人工确认等）。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`node scripts/browser-matrix.mjs` / `.github/workflows/browser-matrix.yml`）两个操作系统上各跑满 88/88 全过、零跨引擎分歧，仅 Windows 尚未验证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 
