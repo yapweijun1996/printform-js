@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `90a6c70`，206 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale 面板。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，建议先在 Linux/Windows 重跑一次矩阵）。
+> 最后核对：2026-07-31（对齐 `8f0718b`，213 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板，仅剩 Branding/Data contract 待范围讨论。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，建议先在 Linux/Windows 重跑一次矩阵）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -60,6 +60,8 @@
 
 | P1（部分）：表格列宽 + 打印字号缩放面板——`set_column_widths`/`set_font_scale`（`46254d6`）此前只能通过手改 Raw Template HTML/Theme CSS 触达。新增 `core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组，标签经真实 i18n 目录解析（非硬编码）；`typography.js` 新增 `currentFontBasePt()` 从 themeCss 读回当前基础字号。两个面板都遵循既有 `set_locale`/`set_asset_source` 的直接应用模式（无 diff 弹窗） | `90a6c70` | 8 个新单测（4 个 currentFontBasePt + 4 个 inspectColumnGroups，含"无匹配数据表退化为仅表头选择器"与"模板无表格返回空列表"两个边界）；206 单测 + 65 E2E（10 跳过）全绿。**浏览器实测**：Sales Invoice 面板正确列出 5 列真实标签（No./Description/Qty/Unit/Amount）与当前宽度；字号 9pt→11pt 后预览可见文字变大、Amount 列被推出视口；Description 列宽 空→30% 后预览可见列变宽；切换 Studio 界面语言到中文后动态生成的按钮文案与占位符正确重新翻译；全程控制台零报错。**踩坑**：最初把这两个面板写成直接调用 `bus.execute("set_font_scale", …)`/`bus.execute("set_column_widths", …)` 当作独立 CommandBus 工具——浏览器实测立刻报 `Unknown tool`，因为这两个只是 `operations[]` 里的**操作类型**（不像 `set_locale`/`set_asset_source` 那样有专属包装工具），改为经通用 `apply_changes` 工具传入单个 operation 后行为正确；这类"从摘要读到*已实现*就假设 API 形状"的错误，**必须在真实浏览器里点一下才会暴露**，光跑单测不会发现（两个新单测只验证纯函数，不经过 CommandBus） |
 
+| P1（部分）：Page settings + Repeated areas 面板——页面尺寸（`data-papersize-width/height`）与七个 repeat-* 标记（header/docinfo/rowheader/ptacRowheader/footer/footerLogo/footerPagenum）都只是 `.printform` 根元素上的 data-* 属性，**没有专属操作类型**，不像 set_column_widths/set_font_scale 那样；改为经通用 `set_attribute` 操作（每属性一条，同一 `apply_changes` 里打包多条，一次点击一次 revision）。新增 `core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 只读回两个标准模板实际用到的字段，不覆盖 `src/printform/config.js` 里更大的引擎级配置面（如 docinfo002-005、footer002-005、PADDT 专属配置等） | `8f0718b` | 7 个新单测（含"模板缺 papersize 属性返回 null 而非 0"——`Number(null)` 恰好是 finite 的 0，必须先 `hasAttribute` 再转数字，否则静默返回假数据；以及"模板没设的 flag 不猜引擎默认值，直接跳过"）；213 单测 + 65 E2E（10 跳过，1 次 Firefox 超时复测后确认是并行负载导致的既有 flake、非本次改动引入，已建 spawn_task 另行根查）全绿。**浏览器实测**：Sales Invoice 页高 1050→1200 后 `logicalPages` 从 3 变 2（45 行默认样本装进更少页，数值证据而非肉眼判断）；Footer 标记 关→开后面板正确读回 `true`；Restore 恢复草稿后两个面板都正确显示恢复后的值（非仅 revision 计数器）；切到 Purchase Order 模板（通过真实 `change` 事件，而非只设 DOM value——因为 `document-select` 的 change handler 有 `window.confirm` dirty-guard，自动化 `form_input` 设值不触发确认对话框会被脏检查静默复位）后两个面板正确显示该模板的真实值（750×1050、7 个 flag、7 列）；全程控制台零报错。**范围收敛**：Branding 配色（无现成 CSS 变量约定）与 Data contract 表单编辑器（无现成操作、量级堪比独立功能）经用户确认后未纳入本批，需要单独一轮范围讨论 |
+
 ## 🔄 进行中
 
 （无）
@@ -74,7 +76,7 @@
 
 ### 其他候选方向（均未开始、未确认范围）
 
-- **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Branding、Page、Repeated areas、Data contract 面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达。
+- **P1 工程师工作流**（EPIC E8）：Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）与 Locale（原已存在的打印语言选择器）面板已就绪，另加一个路线图原列表之外的 Print font scale 面板。**尚缺**：Branding（配色，无现成 CSS 变量约定）、Data contract（表单编辑器级别的大活）面板，目前仍只能靠 Raw JSON/CSS/HTML 编辑器触达；这两项需要单独一轮范围讨论再动手。
 - **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
 - **P3 发布治理**（EPIC E10）：独立 SemVer + 兼容矩阵、CHANGELOG、GitHub Release 附两个已验证试点导出、版本化模板目录。（LICENSE 与 SW precache manifest 自动生成已完成）
 
