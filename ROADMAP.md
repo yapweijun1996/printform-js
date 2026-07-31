@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐待提交的 CI/E2E 扩展批次）。
+> 最后核对：2026-07-31（对齐待提交的 PR 模板 + 黄金分页样本批次；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -33,9 +33,11 @@
 | Agent 网关 / 草稿缓存边界 | ✅ 已固化（`gateway.test.js` 畸形 JSON 契约、`draft-cache.test.js` 超配额与过期草稿） | — |
 | `sample-scenarios` 数组选取 | ✅ 已固化（`sample-scenarios.test.js`：`data.items` 优先于其他数组） | — |
 | E2E 冒烟 | ✅ 已修正认知并补齐：`e2e/studio-v2.spec.js` 其实已有 12 条深度用例（五语言、边界行数、性能预算、PWA 离线等），此前 ROADMAP 误判为"覆盖少"；真正的空白是核心库直渲染路径与 v1 —— 已新增 `e2e/core-pagination.spec.js`（多页 ERP 文档、header 不重复配置、脚本晚注入回归）与 `e2e/studio-v1.spec.js`（预览渲染、结构模式原始模板锁定） | — |
-| 分页黄金样本 | 无 | 对 `demo001` 等 3 个代表页固化「页数 + 每页行数」断言，P2 重构前必备（比 E2E 冒烟更严格，仍是独立待办） |
+| 分页黄金样本 | ✅ 已固化（`e2e/golden-pagination.spec.js`：demo001 页数+每页行分布、delivery_order_test 的 PTAC/PADDT 页面分布、index015 物理/逻辑页拆分），P2 重构时对照这三份跑 | — |
 
 **顺带修复的测试基础设施缺陷**：Node 22+/25 内置的全局 `localStorage`（无 `--localstorage-file` 时是不可用的空对象桩）会遮蔽 vitest jsdom 环境本应提供的可用实现，导致任何触碰 `localStorage` 的测试在此 Node 版本下静默失败（`ui-i18n.test.js` 此前用文件内 `vi.stubGlobal` 单独绕过，其余文件未设防）。已加共享 `tests/setup/local-storage-polyfill.js`（纯内存 Storage 实现，按测试文件隔离）并在 `vite.config.js` 的 `test.setupFiles` 注册，后续任何新测试触碰 `localStorage`/`sessionStorage` 都自动受益，无需各自 workaround。
+
+**顺带发现的本地验证陷阱**：`playwright.config.js` 的 `webServer.reuseExistingServer` 在非 CI 环境下为 `true`——如果本机手动起了另一个服务器占用 4174 端口（例如用浏览器工具单独预览某个页面），Playwright 会静默复用那个服务器而不是自己管理的 `site-dist` 服务器。只依赖仓库根目录也存在的文件（`demo001.html` 等）的用例不受影响，但依赖 `site-dist` 专属产物（如两个试点导出 HTML）的用例会遇到假失败（404 页面被当成真实响应，断言超时）。**验证 e2e 前先确认没有手动服务器占用 4174**，或直接看失败信息里是不是内容像"Not found"页面。CI 环境不受影响（`reuseExistingServer` 在 CI 下强制为 `false`）。
 
 ### 2.2 Debug 能力（降低排查成本）
 
@@ -57,7 +59,7 @@
 
 1. ✅ CI 已增加 `npm run validate:v2` 两个试点导出（防协议回归；用篡改 protocolVersion 的样本实测确认非零退出码）。
 2. ✅ CI 已跑 2.1 新增的 5 条 Playwright 冒烟（随现有 `npm run test:e2e` 一起执行，无需单独触发）。
-3. 待办：PR 模板加一行：「涉及 `studio-v2/core/**` 时是否已跑 `npm run build:assets`？」（acceptance.js 打进 runtime 包，源改了不重建预览不生效——这是实测踩过的坑）。
+3. ✅ 已加 [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)：涉及 `studio-v2/core/**` 时是否已跑 `npm run build:assets`（acceptance.js 打进 runtime 包，源改了不重建预览不生效——这是实测踩过的坑）+ 文档同步 + TASK.md 状态更新三项提醒。
 
 ### 2.5 文档防漂移
 

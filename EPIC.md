@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-07-31（对齐待提交的安全回归测试批次）。
+> 最后核对：2026-07-31（对齐待提交的 PR 模板 + 黄金分页样本批次）。
 
 | # | Epic | 状态 | 说明 / 证据 |
 |---|---|---|---|
@@ -16,4 +16,4 @@
 | E8 | P1 工程师结构化工作流 | ⬜ | 语义面板（Branding/Page/Columns/Locale）、semantic diff drawer、高层语义工具（`set_column_widths` 等） |
 | E9 | P2 分页引擎演进 | ⬜ | PaginationSession、结构化 trace、性能预算（100 行 <2s、500 行 <5s）；硬约束：v1 ERP DOM 行为不变 |
 | E10 | P3 发布治理 | ⬜ | 独立 SemVer、LICENSE、CHANGELOG、SW precache manifest 自动生成、模板目录 |
-| E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（待提交，Playwright 共 18 测试）。待办：PR 检查项模板、分页黄金样本、文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |
+| E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（`4a0c5e0`）、PR 模板（待提交）、3 页分页黄金样本（待提交，Playwright 共 21 测试）。待办：文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |
