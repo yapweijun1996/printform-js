@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `5e563c4`，197 个单测 + 25 个 E2E 全绿；**六项 P0 硬门的代码部分全部完成**（P0-A #12–14 + P0-B #16–19），原 #15 已并入 #12。成熟度仍是 Production Pilot——剩下的是浏览器矩阵发布验收，不是代码工作）。
+> 最后核对：2026-07-31（对齐 `2de7b73`，197 个单测 + 25 个 E2E 全绿；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）均已完成**，原 #15 已并入 #12。成熟度仍是 Production Pilot——矩阵带出的 Purchase Order 跨引擎页数差异待产品决策，见下方待办）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -54,7 +54,7 @@
 
 | **CI 自 `c081a91` 起连红三个提交**：`golden-pagination.spec.js` 的行分布黄金数字从 Chromium 抓取却断言给全部三个引擎，Firefox 不一致（Chromium/WebKit `[17,21,10,0]`，Firefox macOS `[15,20,13,0]`、CI Linux `[16,20,12,0]`——同引擎跨 OS 都不同）。本地始终绿是因为**本机没装 Firefox/WebKit**，我一直只跑 `--project=chromium` | `5e563c4` | 改法：跨引擎只断言不变量（总行数守恒 48、PADDT 页无数据行、ptac/paddt 落位数组——实测三引擎完全一致），精确分布用 `test.skip(browserName !== "chromium")` 只钉 Chromium 基准，与既有性能预算用例和 ROADMAP P3「不比较跨引擎像素一致性」一致。demo001 与 index015 三引擎确实一致，保持无条件断言不放松。装好 Firefox/WebKit 后本地跑全量三引擎：65 通过 / 10 跳过 / 0 失败。**教训已写入 ROADMAP §2.1 第三条陷阱**：涉及渲染结果的断言合并前必须跑不带 `--project` 的全量 e2e，push 后 `gh run list` 确认，别拿本地单引擎的绿当 CI 的绿 |
 
-| 浏览器矩阵验收（P0-B 退出条件的发布流程部分）：新增可复用脚本 `scripts/browser-matrix.mjs`，跑两模板 × 4 目标（Chromium/品牌 Chrome/Firefox/WebKit）× 全边界场景（空/1/45/100/500 行 + 长文本）× 5 打印语言 | （待提交） | **88/88 全过**，零溢出/零丢行/零对比度失败；`empty` 按设计正确阻断（脚本把它列为预期 blocked，不当失败）。结论存档 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)。**诚实说明**：4 个目标实为 3 个引擎（Chromium 与 Chrome 同引擎，WebKit 非真 Safari，Edge 未装），已写进报告不含糊。**带出一个待决策项**（见下方待办）：Purchase Order 分页随引擎变化，实测定位根因——行高两引擎完全相同（42.00px），差异全在 docinfo+页脚合计高出约 2.56px，而该模板装满 15 行后**只剩 1.42px 余量**，所以 Firefox 掉到 14 行、500 行时多出 2 张纸；Sales Invoice 余量充足，四目标逐页行数完全一致。**探测方法教训**：第一版探测用「页高 − 行高×行数」反推"非行区域"，这是循环论证（结果必然等于差一行），证明不了任何东西——必须逐区块实测才定位到真正差异 |
+| 浏览器矩阵验收（P0-B 退出条件的发布流程部分）：新增可复用脚本 `scripts/browser-matrix.mjs`，跑两模板 × 4 目标（Chromium/品牌 Chrome/Firefox/WebKit）× 全边界场景（空/1/45/100/500 行 + 长文本）× 5 打印语言 | `2de7b73` | **88/88 全过**，零溢出/零丢行/零对比度失败；`empty` 按设计正确阻断（脚本把它列为预期 blocked，不当失败）。结论存档 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)。**诚实说明**：4 个目标实为 3 个引擎（Chromium 与 Chrome 同引擎，WebKit 非真 Safari，Edge 未装），已写进报告不含糊。**带出一个待决策项**（见下方待办）：Purchase Order 分页随引擎变化，实测定位根因——行高两引擎完全相同（42.00px），差异全在 docinfo+页脚合计高出约 2.56px，而该模板装满 15 行后**只剩 1.42px 余量**，所以 Firefox 掉到 14 行、500 行时多出 2 张纸；Sales Invoice 余量充足，四目标逐页行数完全一致。**探测方法教训**：第一版探测用「页高 − 行高×行数」反推"非行区域"，这是循环论证（结果必然等于差一行），证明不了任何东西——必须逐区块实测才定位到真正差异 |
 
 ## 🔄 进行中
 
