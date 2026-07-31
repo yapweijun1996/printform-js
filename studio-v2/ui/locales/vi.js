@@ -38,6 +38,7 @@ export default { ...EN,
   "issue.PREVIEW_REQUIRED": "Cần báo cáo bố cục trình duyệt hiện tại", "issue.MIN_ITEMS": "Cần ít nhất một dòng", "issue.ROW_LIMIT": "Đã vượt giới hạn dòng",
   "issue.HORIZONTAL_OVERFLOW": "Nội dung kết xuất tràn ngang", "issue.VERTICAL_OVERFLOW": "Trang logic vượt chiều cao giấy", "issue.CONTRAST_FAILURE": "Độ tương phản chữ không đạt yêu cầu",
   "issue.PAGINATION_FAILED": "PrintForm không tạo được trang logic", "issue.UNTRUSTED_SCRIPT": "Tập lệnh tùy chỉnh ngăn chứng thực sản xuất", "issue.I18N_KEY_MISSING": "Thiếu khóa bản dịch bắt buộc",
+  "issue.ROW_COUNT_MISMATCH": "Số dòng được kết xuất không khớp với dữ liệu đã liên kết — phân trang có thể đã làm mất hoặc nhân đôi một dòng",
   "issue.ASSET_SLOT_REQUIRED": "Thiếu hoặc trùng vị trí tài nguyên bắt buộc", "issue.ASSET_SOURCE_UNSAFE": "Nguồn tài nguyên không an toàn", "issue.TYPE_MISMATCH": "Kiểu dữ liệu mẫu không hợp lệ",
   "issue.REQUIRED": "Thiếu trường dữ liệu mẫu bắt buộc", "issue.SUBTOTAL_MISMATCH": "Tạm tính không khớp tổng dòng", "issue.GRAND_TOTAL_MISMATCH": "Tổng cộng không nhất quán", "issue.LINE_TOTAL_MISMATCH": "Thành tiền dòng không nhất quán"
 };

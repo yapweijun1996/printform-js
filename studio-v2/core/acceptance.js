@@ -146,7 +146,7 @@ function issueEntry(code, node, pageIndex) {
 
 const MAX_ISSUE_DETAILS = 20;
 
-export function inspectRenderedDocument(doc, manifest) {
+export function inspectRenderedDocument(doc, manifest, options = {}) {
   const errors = [];
   const warnings = [];
   const pages = doc.querySelectorAll(".printform_page");
@@ -155,6 +155,18 @@ export function inspectRenderedDocument(doc, manifest) {
   const limit = manifest.acceptance?.maxLogicalPages || LIMITS.logicalPages;
   if (!pages.length) errors.push(error("PAGINATION_FAILED", "PrintForm did not produce logical pages"));
   if (pages.length > limit) errors.push(error("PAGE_LIMIT", `${pages.length} pages exceed the ${limit} page limit`));
+  // P0-B content-integrity check (docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md
+  // "验证数量、顺序、重复与遗漏"): .prowitem rows are cloned-then-placed by
+  // the pagination engine, never split (unlike .ptac/.paddt long-text
+  // segments) — so the count of .prowitem_processed elements in the final
+  // output must exactly equal how many rows data-pf-each bound. A mismatch
+  // means the pagination engine silently dropped or duplicated a data row,
+  // which no other check here would otherwise catch.
+  const expectedRowCount = options.expectedRowCount;
+  const actualRowCount = doc.querySelectorAll(".prowitem_processed").length;
+  if (Number.isFinite(expectedRowCount) && actualRowCount !== expectedRowCount) {
+    errors.push(error("ROW_COUNT_MISMATCH", `Rendered ${actualRowCount} item row(s) but data binding produced ${expectedRowCount}; pagination may have dropped or duplicated a row`));
+  }
   const overflow = pageList.flatMap((page, pageIndex) => {
     const pageRect = page.getBoundingClientRect();
     return Array.from(page.querySelectorAll("table,td,th,img,[data-pf-text],[data-pf-href]")).filter((node) => {
@@ -185,5 +197,18 @@ export function inspectRenderedDocument(doc, manifest) {
     ...verticalOverflow.slice(0, MAX_ISSUE_DETAILS).map((page) => issueEntry("VERTICAL_OVERFLOW", page, pageIndexOf(page))),
     ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node)))
   ];
-  return { valid: errors.length === 0, errors, warnings, issues, metrics: { logicalPages: pages.length, overflowElements: overflow.length, verticalOverflowPages: verticalOverflow.length, contrastFailures: lowContrast.length } };
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    issues,
+    metrics: {
+      logicalPages: pages.length,
+      overflowElements: overflow.length,
+      verticalOverflowPages: verticalOverflow.length,
+      contrastFailures: lowContrast.length,
+      renderedRows: actualRowCount,
+      ...(Number.isFinite(expectedRowCount) ? { expectedRows: expectedRowCount } : {})
+    }
+  };
 }

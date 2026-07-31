@@ -93,7 +93,7 @@ export function installPrintFormDocument(globalScope = globalThis) {
     if (current !== generation) return { status: "superseded", validation };
     if (!globalScope.PrintForm?.formatAll) return finish({ status: "blocked", validation: { valid: false, errors: [{ code: "PRINTFORM_RUNTIME_MISSING", path: "/", message: "PrintForm runtime is unavailable" }], warnings: [] } }, mount, true);
     await globalScope.PrintForm.formatAll({ force: true });
-    const layout = inspectRenderedDocument(doc, manifest);
+    const layout = inspectRenderedDocument(doc, manifest, { expectedRowCount: bound.report.rows });
     const combined = { valid: layout.valid, errors: [...validation.errors, ...layout.errors], warnings: [...validation.warnings, ...layout.warnings] };
     const result = { status: combined.valid ? "ready" : "blocked", validation: combined, binding: bound.report, issues: layout.issues || [], metrics: { ...layout.metrics, rows: bound.report.rows, durationMs: performance.now() - startedAt } };
     return finish(result, mount);

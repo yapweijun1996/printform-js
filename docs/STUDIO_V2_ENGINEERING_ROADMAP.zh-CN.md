@@ -35,7 +35,7 @@
 1. Preview channel 加入目标 frame（✅ 2026-07-31 已实现 `event.source` 校验）、nonce、revision 与 candidate hash 验证（nonce 与 hash 未实现）。
 2. Studio 捕获场景截图和 RenderReport，并签发 Evidence Receipt。
 3. `complete_layout_review` 改为引用 evidence IDs。
-4. 为业务行和关键区块增加稳定 identity，验证数量、顺序、重复与遗漏。
+4. 🔶 部分实现（2026-07-31）：`inspectRenderedDocument` 新增 `expectedRowCount` 参数，对比 `.prowitem_processed` 实际渲染数与 `bindTemplate` 绑定数，不一致报 `ROW_COUNT_MISMATCH`——覆盖"数量"这一项（丢失/重复行会被抓到）。尚未覆盖：稳定 identity、顺序校验（当前只比总数，无法定位具体是哪一行、是否被重新排序）。
 5. 使用矩形碰撞和重复区不变量检测重叠、越界及 header/docinfo/footer 缺失。
 6. Attestation 覆盖两段 runtime、CSP、内容与实际浏览器 receipt。
 7. `request_export` 汇总所有 blocker，最终点击仍只允许工程师执行。
@@ -51,7 +51,7 @@
 
 - 默认提供 Branding、Page、Repeated areas、Table columns、Locale 和 Data contract 面板。
 - Raw HTML/CSS/JSON 移入 Advanced 模式，仍可手改并稳定 round-trip。
-- 用持久化 semantic diff drawer 取代一次性 confirm 对话框。
+- ✅ 已实现（2026-07-31）：`ui/diff-view.js` 并排 diff 面板取代 `window.confirm` 一次性文本对话框（逐行 LCS 高亮）。仍是模态而非常驻侧栏，"persistent drawer" 的呈现形式留待与其余 P1 面板一起重新设计。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
 - 草稿按源文件 fingerprint 保存、限时保留；未知导入默认关闭缓存。
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。

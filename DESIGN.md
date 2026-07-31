@@ -2,7 +2,7 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐待提交的 PR 模板 + 黄金分页样本批次）。
+> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐待提交的渲染行数完整性校验批次）。
 
 ---
 
@@ -101,7 +101,11 @@
 
 ### 4.4 尚未实现（Target，勿当作已有）
 
-候选项目真实分页 dry-run、preview receipt 原子提交、Studio 签发截图证据、preview 消息 nonce + candidate hash、双 runtime 完整 attestation、内容顺序/遗漏/重叠证明。权威定义见[信任与代理模型](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)与[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+候选项目真实分页 dry-run、preview receipt 原子提交、Studio 签发截图证据、preview 消息 nonce + candidate hash、双 runtime 完整 attestation、内容顺序/遗漏/重叠证明。**内容"数量"证明已部分实现**（见 4.5），顺序/identity/重叠仍是 Target。权威定义见[信任与代理模型](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)与[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)；实施顺序拆分见 [TASK.md](TASK.md) #12–19。
+
+### 4.5 渲染内容完整性——数量校验（Current，P0-B 部分实现）
+
+`inspectRenderedDocument(doc, manifest, { expectedRowCount })`：`.prowitem` 行由分页引擎克隆后放置、从不像 PTAC/PADDT 那样被词数切分，因此最终 DOM 里 `.prowitem_processed` 的数量必须精确等于 `bindTemplate` 通过 `data-pf-each` 绑定的行数。不一致（分页引擎丢行或重复行的 bug）报 `ROW_COUNT_MISMATCH`。`runtime.js` 的 `render()` 把 `bound.report.rows` 作为 `expectedRowCount` 传入；CLI 校验器（`validate-printform-v2.mjs`）没有真实浏览器渲染上下文，不传该参数，检查自动跳过（不误报）。这只证明"数量"，不证明顺序或具体是哪一行——顺序/identity 校验仍是 Target（TASK.md #16）。
 
 ---
 

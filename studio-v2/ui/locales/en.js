@@ -40,6 +40,7 @@ export default {
   "issue.PREVIEW_REQUIRED": "A current browser layout report is required", "issue.MIN_ITEMS": "At least one row is required", "issue.ROW_LIMIT": "The row limit was exceeded",
   "issue.HORIZONTAL_OVERFLOW": "Rendered content overflows horizontally", "issue.VERTICAL_OVERFLOW": "A logical page exceeds the paper height", "issue.CONTRAST_FAILURE": "Text contrast does not meet the required threshold",
   "issue.PAGINATION_FAILED": "PrintForm did not produce logical pages", "issue.UNTRUSTED_SCRIPT": "Custom executable script prevents production attestation", "issue.I18N_KEY_MISSING": "A required translation key is missing",
+  "issue.ROW_COUNT_MISMATCH": "Rendered row count does not match the bound data — pagination may have dropped or duplicated a row",
   "issue.ASSET_SLOT_REQUIRED": "A required asset slot is missing or duplicated", "issue.ASSET_SOURCE_UNSAFE": "An asset source is unsafe", "issue.TYPE_MISMATCH": "Sample data has an invalid type",
   "issue.REQUIRED": "A required sample-data field is missing", "issue.SUBTOTAL_MISMATCH": "Subtotal does not match the line totals", "issue.GRAND_TOTAL_MISMATCH": "Grand total is inconsistent", "issue.LINE_TOTAL_MISMATCH": "A line total is inconsistent"
 };

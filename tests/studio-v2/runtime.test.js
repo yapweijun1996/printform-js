@@ -38,6 +38,11 @@ describe("PrintFormDocument runtime", () => {
     installSections(project);
     window.PrintForm = { formatAll: async () => {
       const form = document.querySelector(".printform");
+      // Real PrintForm.formatAll() renames each row's base class to
+      // "<class>_processed" as it paginates (src/printform/dom.js
+      // markAsProcessed) — replicate that here so this mock stays faithful
+      // to what inspectRenderedDocument's row-count check expects to find.
+      form.querySelectorAll(".prowitem").forEach((row) => row.classList.replace("prowitem", "prowitem_processed"));
       form.className = "printform_formatter_processed";
       form.innerHTML = `<div class="printform_page">${form.innerHTML}</div>`;
     } };
@@ -45,6 +50,28 @@ describe("PrintFormDocument runtime", () => {
     const result = await runtime.render(project.sampleData);
     expect(result.status).toBe("ready");
     expect(result.metrics.logicalPages).toBe(1);
-    expect(document.querySelectorAll(".prowitem")).toHaveLength(1);
+    expect(document.querySelectorAll(".prowitem_processed")).toHaveLength(1);
+    expect(result.metrics).toMatchObject({ renderedRows: 1, expectedRows: 1 });
+  });
+
+  it("blocks with ROW_COUNT_MISMATCH when pagination renders a different row count than the binder produced", async () => {
+    const project = createSalesInvoiceProject();
+    project.sampleData.items = project.sampleData.items.slice(0, 2);
+    project.templateHtml = project.templateHtml.replace(/<img\b[^>]*>/gi, "");
+    installSections(project);
+    window.PrintForm = { formatAll: async () => {
+      const form = document.querySelector(".printform");
+      // Simulate a pagination bug: only mark the FIRST bound row as
+      // processed, dropping the second — this is exactly the class of bug
+      // the row-count check exists to catch.
+      const rows = form.querySelectorAll(".prowitem");
+      rows[0]?.classList.replace("prowitem", "prowitem_processed");
+      form.className = "printform_formatter_processed";
+      form.innerHTML = `<div class="printform_page">${form.innerHTML}</div>`;
+    } };
+    const runtime = installPrintFormDocument(window);
+    const result = await runtime.render(project.sampleData);
+    expect(result.status).toBe("blocked");
+    expect(result.validation.errors.some((item) => item.code === "ROW_COUNT_MISMATCH")).toBe(true);
   });
 });

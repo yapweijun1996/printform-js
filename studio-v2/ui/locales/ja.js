@@ -38,6 +38,7 @@ export default { ...EN,
   "issue.PREVIEW_REQUIRED": "現在のブラウザーレイアウトレポートが必要です", "issue.MIN_ITEMS": "1行以上必要です", "issue.ROW_LIMIT": "行数上限を超えました",
   "issue.HORIZONTAL_OVERFLOW": "レンダー内容が水平方向にはみ出しています", "issue.VERTICAL_OVERFLOW": "論理ページが用紙の高さを超えています", "issue.CONTRAST_FAILURE": "文字コントラストが要件を満たしません",
   "issue.PAGINATION_FAILED": "PrintFormが論理ページを生成しませんでした", "issue.UNTRUSTED_SCRIPT": "カスタム実行スクリプトが本番証明を妨げています", "issue.I18N_KEY_MISSING": "必要な翻訳キーがありません",
+  "issue.ROW_COUNT_MISMATCH": "レンダリングされた行数がバインドデータと一致しません — ページ処理で行が欠落または重複した可能性があります",
   "issue.ASSET_SLOT_REQUIRED": "必要な素材スロットが不足または重複しています", "issue.ASSET_SOURCE_UNSAFE": "素材ソースが安全ではありません", "issue.TYPE_MISMATCH": "サンプルデータの型が不正です",
   "issue.REQUIRED": "必須サンプルフィールドがありません", "issue.SUBTOTAL_MISMATCH": "小計が明細合計と一致しません", "issue.GRAND_TOTAL_MISMATCH": "総合計が一致しません", "issue.LINE_TOTAL_MISMATCH": "明細金額が一致しません"
 };

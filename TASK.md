@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐待提交的 Apply 前 diff 面板批次，工作区基于 `46254d6`，159 个单测 + 22 个 E2E 全绿）。
+> 最后核对：2026-07-31（对齐待提交的渲染行数完整性校验批次，工作区基于 `ebf3931`，164 个单测 + 22 个 E2E 全绿；P0-A/P0-B 已拆分为 #12–19，见下方待办表）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -38,18 +38,27 @@
 
 | 高层语义工具第一批：`set_column_widths`（支持逗号分隔复合选择器同步多张表）、`set_font_scale`（整体平移 7 级字号刻度，替换旧注入块不重复） | （待提交） | 10 个新单测（6 个 column-widths 含真实 `.prowheader`/`.prowitem` 分离表场景 + 2 个 font-scale + 2 个既有 typography 测试保持通过）；浏览器实测：对 Sales Invoice 真实模板一次调用同步表头+数据行列宽、字号从 9pt 平移到 12pt，截图确认视觉变化，`validate_project` 零错误、0 溢出、0 对比度问题 |
 
-| Apply 前并排 diff 面板：新增 `ui/diff-view.js`（LCS 逐行对比，JSON 段先 stableStringify 避免键序误判，>1500 行自动跳过高亮防卡顿），替换 `window.confirm` 单行文本；新增 `#source-diff-modal` + 6 个新 i18n key×5 语言，清理已失效的 `source.none`/`confirm.applySource` | （待提交） | 6 个 diffLines 纯逻辑单测 + 1 个新 e2e（apply/cancel/无变更三路径）；浏览器实测：JSON 段（manifest 标题变更）红绿高亮正确、原始 HTML 段（模板追加行）正确识别为纯新增、trust 降级单独渲染"trusted → untrusted"、Cancel 后 revision 与草稿完全不变、移动端视口正确堆叠为单列、全程控制台零报错；159 单测 + 22 E2E 全绿 |
+| Apply 前并排 diff 面板：新增 `ui/diff-view.js`（LCS 逐行对比，JSON 段先 stableStringify 避免键序误判，>1500 行自动跳过高亮防卡顿），替换 `window.confirm` 单行文本；新增 `#source-diff-modal` + 6 个新 i18n key×5 语言，清理已失效的 `source.none`/`confirm.applySource` | `ebf3931` | 6 个 diffLines 纯逻辑单测 + 1 个新 e2e（apply/cancel/无变更三路径）；浏览器实测：JSON 段（manifest 标题变更）红绿高亮正确、原始 HTML 段（模板追加行）正确识别为纯新增、trust 降级单独渲染"trusted → untrusted"、Cancel 后 revision 与草稿完全不变、移动端视口正确堆叠为单列、全程控制台零报错；159 单测 + 22 E2E 全绿 |
+| P0-B #4（部分）：渲染行数完整性校验——`inspectRenderedDocument` 新增 `expectedRowCount` 参数，对比 `.prowitem_processed` 实际渲染数与 `bindTemplate` 绑定数，不一致报 `ROW_COUNT_MISMATCH`（新错误码，5 语言 i18n） | （待提交） | 5 个新单测（含修正 `runtime.test.js` 原有 mock 未模拟真实 class 改名的失真问题，并新增"丢一行"回归用例）；浏览器实测：Sales Invoice 1/45/100/500/长文本 5 个场景 + Purchase Order 空/1/45/500 4 个场景，`renderedRows`/`expectedRows` 全部相等、零误报；164 单测 + 22 E2E 全绿。**仅覆盖"数量"，不含稳定 identity/顺序校验**（见下方待办拆分） |
 
 ## 🔄 进行中
 
 （无）
 
-## ⬜ 待办（按优先级）
+## ⬜ 待办（P0-A / P0-B 拆分，按依赖顺序；见 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) Target 章节）
 
-| # | 任务 | Epic | 验收标准 |
-|---|---|---|---|
-| 8 | P0-A：候选项目隔离 iframe 真实分页 dry-run + preview receipt | E6 | 路线图 P0-A 退出条件 |
-| 9 | P0-B：preview nonce + candidate hash；Studio 签发截图证据 | E7 | 路线图 P0-B 退出条件 |
+> 这两组是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），体量大、涉及信任模型的破坏性契约变更（Agent Contract 2.0 不保留 1.x 写路径）。#12–14 互相耦合，必须作为一组一起交付，不能拆开合并；其余各项相对独立，可单独排期。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
+
+| # | 任务 | Epic | 依赖 | 验收标准 |
+|---|---|---|---|---|
+| 12 | P0-A：候选项目在隐藏 sandbox iframe 中真实渲染（不复用当前草稿的 RenderReport）——`preview_changes` 内部序列化 candidate 为独立 HTML，注入隐藏 iframe，等待其自身 `printform:rendered`，取代当前"仅静态校验、不分页"的 `validation(candidate)` | E6 | 无（可先做，且可以是内部实现改进，不必立刻改变对外契约形状） | 对一个会导致真实溢出/换页数变化的 operations 调用 `preview_changes`，返回的 validation 反映**真实分页结果**而非仅 schema/业务规则；现有 145+ 单测与 22 e2e 不回归 |
+| 13 | P0-A：`preview_changes` 返回 `previewId`/`candidateHash`/`scenarioReports`（含 default 与 long-text）/`expiresAt`；`apply_changes` 改为只消费有效 previewId+hash，不再接受新 operations | E6 | #12 | 路线图 P0-A 退出条件：stale/过期/hash 不符/未知 operation 都有稳定错误码；default 与 long-text 场景报告绑定同一 candidate hash；这是 Agent Contract 2.0 的破坏性核心，UI/WebMCP/CDP 必须同一提交内切换 |
+| 14 | P0-A：Agent Contract 2.0 切换——`get_capabilities` contract version 升级，旧 1.x 写命令返回升级提示而非静默兼容 | E6 | #12、#13 | 路线图"契约升级"条款；WebMCP/CDP/UI 三者对同一输入行为一致 |
+| 15 | P0-B：Preview bridge 加一次性 nonce（配合 #12 的隔离 iframe），阻止非本次预览的消息被接受 | E7 | #12 | 伪造/重放的 nonce 一律拒绝；与 2026-07-31 已有的 `event.source` 校验叠加，不替代 |
+| 16 | P0-B：稳定行 identity + 顺序校验（本批已交付"数量"部分，见上方已完成表；这里是剩余的"顺序/identity"部分）——给每个 `.prowitem` 打稳定 id（如 array index + 内容 hash），RenderReport 比对顺序而非只比对总数 | E7 | 无（可独立于 #12–14） | 人为交换两行数据顺序后重新渲染，报告能明确指出"顺序变化"而不仅是"数量不符" |
+| 17 | P0-B：矩形碰撞 + 重复区不变量检测重叠、越界及 header/docinfo/footer 缺失 | E7 | 无 | 人为让 header 缺失或两区块重叠时，产生专用错误码（现有 HORIZONTAL_OVERFLOW/VERTICAL_OVERFLOW 不覆盖"缺失"和"重叠"两类） |
+| 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用隔离 iframe）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
+| 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前只有 runtime/content hash，无"真实浏览器测过"的证明） | E7 | #18 | 路线图"完整性与证明"条款 |
 
 ## 🚧 阻塞
 
@@ -57,7 +66,8 @@
 
 ## 📌 下一步（建议顺序）
 
-TASK.md 中优先级明确、体量适中的项目已全部完成（#1–7、#10、#11 均已提交）。剩余 #8、#9 是 P0-A/P0-B 的核心架构工作（隔离 iframe 真实分页 dry-run、截图证据体系），体量大、涉及信任模型变更，建议：
+TASK.md 中优先级明确、体量适中的项目已全部完成（#1–7、#10、#11 均已提交，外加本批的 P0-B 行数校验）。剩余是 #12–19（P0-A/P0-B 拆分），体量大、涉及信任模型的破坏性契约变更，建议：
 
-1. 先读 [docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md](docs/STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) 的 Target 章节对齐设计，再拆分为更小的子任务写回本文件。
-2. 两者都是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），建议按顺序单独排期，不与其他任务混批，每步都要浏览器实测。
+1. #16、#17 相对独立、风险低，可参照本批"渲染行数完整性校验"的模式继续做（延伸 `inspectRenderedDocument`，不改外部契约）——适合作为下一批起点。
+2. #12 是 #13/#14 的前提，且可以先作为**内部实现改进**单独交付（不必与 #13 的破坏性契约变更同批）——建议先做 #12，验证"隔离 iframe 真实渲染 candidate"这个核心机制本身可靠，再决定 #13/#14 的契约形状。
+3. #18/#19 需要全新的截图/证据基础设施，且依赖 #12，建议放最后，先在小范围原型验证浏览器截图方案（如 `<canvas>` 光栅化 iframe 内容 vs 浏览器原生 API）再动手。
