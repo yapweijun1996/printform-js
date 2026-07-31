@@ -39,17 +39,16 @@
 
 ### 2.2 Debug 能力（降低排查成本）
 
-- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）。
+- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）。
 - 计划：
-  1. 预览红框 overlay（数据已就绪，bridge 端渲染，约半天）。
-  2. v2 结构化 trace 事件替代 console 依赖（P2 前置项，先定义事件形状）。
-  3. `npm run doctor`：一条命令跑 测试 + build + validate:v2 两个试点，输出一页体检报告。
+  1. v2 结构化 trace 事件替代 console 依赖（P2 前置项，先定义事件形状）。
+  2. `npm run doctor`：一条命令跑 测试 + build + validate:v2 两个试点，输出一页体检报告。
 
 ### 2.3 仓库形态收编（减少认知负担）
 
 | 问题 | 处理 |
 |---|---|
-| 根目录 21 个 `index0XX.html` 演示页无索引 | 建 `examples/README.md` 目录清单（每页一句话说明测什么）；**不移动文件**（ERP 链接可能引用现有路径） |
+| 根目录 21 个 `index0XX.html` 演示页无索引 | ✅ 已建 [examples/README.md](examples/README.md) 目录清单（按特性分组，每页一句话说明测什么）；未移动任何文件 |
 | `studio/studio.js` 约 1.5k 行，违反 AGENTS.md 300 行规则 | v1 已冻结：登记为**豁免**，不做大拆分（拆分风险 > 收益）；新代码严格执行 300 行规则 |
 | 文档双语重复（USAGE_GUIDE 等 en/zh 两份） | 中文为权威（v2 索引已声明），英文版页首加"摘要 + 以中文版为准"声明，不再逐句同步 |
 | `dist/` 曾被误解为进 git | 已确认 `.gitignore` 生效、CI 构建；DESIGN.md 已写明 |
