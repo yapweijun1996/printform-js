@@ -7,7 +7,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // Local default (undefined) resolves to ~half of CPU cores, which on a dev
+  // machine also running other heavy processes means too many concurrent
+  // chromium/firefox/webkit instances competing for RAM — observed causing
+  // swap exhaustion and cascading test timeouts under load. Capped down from
+  // that default (5 on a 10-core box) to leave real headroom for local runs.
+  workers: process.env.CI ? 2 : 3,
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://127.0.0.1:4174",

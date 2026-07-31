@@ -1,5 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+// The two waits below (see waitForRenderedPages and the structure-mode status
+// assertion) wait on real rendering, not a fixed poll count — confirmed by
+// reproducing this file's flake under a fully-loaded local suite (5 workers x
+// 3 browser engines on a 10-core machine): the firefox render that failed
+// past a 20s timeout showed, once captured, a fully-finished 8-page render —
+// it just took longer than 20s to get there under contention, it never hung.
+// Bumped both the per-wait timeouts (20s -> 40s) and the file's overall test
+// timeout (45s -> 120s) so two chained waits have real headroom instead of
+// racing a budget that two 20s waits alone could already exceed. A genuinely
+// broken wait still fails well before reaching either ceiling.
+test.describe.configure({ timeout: 120_000 });
+const RENDER_WAIT_MS = 40_000;
+
 // Studio v1 (studio/) is frozen — bug-fix-only — but had zero real-browser
 // regression coverage before this spec, despite this session's security
 // fixes there (raw-template structure mode, postMessage origin checks,
@@ -15,7 +28,7 @@ import { expect, test } from "@playwright/test";
 // reloading iframe and reads 0. That race made this spec flaky under parallel
 // load while passing in isolation.
 async function waitForRenderedPages(page) {
-  await expect(page.frameLocator("#frame-a").locator(".printform_page").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.frameLocator("#frame-a").locator(".printform_page").first()).toBeVisible({ timeout: RENDER_WAIT_MS });
 }
 
 test("renders a preview and reports a page count for a plain (non-data-bound) template", async ({ page }) => {
@@ -35,7 +48,7 @@ test("structure mode shows the raw template with {{ }} placeholders intact, not 
   // Raw template has 5 direct children; the pre-fix bug rendered sample data
   // first, which expands {{#items}} into one block per generated row and
   // desynchronizes every index used by the block editor.
-  await expect(page.locator("#status-a")).toHaveText("5 个区块", { timeout: 20_000 });
+  await expect(page.locator("#status-a")).toHaveText("5 个区块", { timeout: RENDER_WAIT_MS });
 
   const row = page.frameLocator("#frame-a").locator('.studio-block[data-studio-label="prowitem"]');
   await row.click();
