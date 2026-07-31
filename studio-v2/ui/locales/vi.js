@@ -40,6 +40,7 @@ export default { ...EN,
   "issue.PAGINATION_FAILED": "PrintForm không tạo được trang logic", "issue.UNTRUSTED_SCRIPT": "Tập lệnh tùy chỉnh ngăn chứng thực sản xuất", "issue.I18N_KEY_MISSING": "Thiếu khóa bản dịch bắt buộc",
   "issue.ROW_COUNT_MISMATCH": "Số dòng được kết xuất không khớp với dữ liệu đã liên kết — phân trang có thể đã làm mất hoặc nhân đôi một dòng",
   "issue.ROW_DUPLICATE_INDEX": "Cùng một dòng nguồn được kết xuất nhiều lần", "issue.ROW_MISSING_INDEX": "Một dòng nguồn chưa từng xuất hiện trong kết quả kết xuất", "issue.ROW_ORDER_MISMATCH": "Thứ tự dòng kết xuất không khớp với dữ liệu nguồn",
+  "issue.HEADER_MISSING": "Một trang thiếu phần đầu lặp lại", "issue.DOCINFO_MISSING": "Một trang thiếu khối thông tin tài liệu lặp lại", "issue.SECTION_OVERLAP": "Hai phần liền kề chồng lên nhau về mặt hình ảnh thay vì xếp chồng gọn gàng",
   "issue.ASSET_SLOT_REQUIRED": "Thiếu hoặc trùng vị trí tài nguyên bắt buộc", "issue.ASSET_SOURCE_UNSAFE": "Nguồn tài nguyên không an toàn", "issue.TYPE_MISMATCH": "Kiểu dữ liệu mẫu không hợp lệ",
   "issue.REQUIRED": "Thiếu trường dữ liệu mẫu bắt buộc", "issue.SUBTOTAL_MISMATCH": "Tạm tính không khớp tổng dòng", "issue.GRAND_TOTAL_MISMATCH": "Tổng cộng không nhất quán", "issue.LINE_TOTAL_MISMATCH": "Thành tiền dòng không nhất quán"
 };

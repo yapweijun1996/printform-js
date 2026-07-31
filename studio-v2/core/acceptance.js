@@ -203,6 +203,41 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
   });
   if (overflow.length) errors.push(error("HORIZONTAL_OVERFLOW", `${overflow.length} rendered elements overflow horizontally`));
   const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
+  // Repeated-region completeness: data-repeat-header/-docinfo are simple
+  // page-wide flags with no per-row exception (unlike rowheader, which row
+  // classes like without_prowheader can opt out of) — if the template
+  // declares one "y", every logical page must actually carry it, or the
+  // pagination engine silently dropped a repeating section on some page.
+  const isRepeatFlagOn = (value) => ["y", "yes", "true", "1"].includes(String(value ?? "").trim().toLowerCase());
+  [
+    { flag: "repeatHeader", selector: ".pheader_processed", code: "HEADER_MISSING" },
+    { flag: "repeatDocinfo", selector: ".pdocinfo_processed", code: "DOCINFO_MISSING" }
+  ].forEach(({ flag, selector, code }) => {
+    if (!isRepeatFlagOn(templateRoot?.dataset[flag])) return;
+    const missingOn = pageList.filter((page) => !page.querySelector(selector));
+    if (missingOn.length) errors.push(error(code, `${missingOn.length} of ${pageList.length} page(s) are missing the repeated ${selector} despite data-${flag.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}="y"`));
+  });
+  // Overlap: a page's direct children (header/docinfo/rowheader/footer
+  // chrome, plus the row container) are always meant to stack top-to-bottom
+  // in normal block flow — no floats or absolute positioning in these
+  // templates. Two adjacent sections whose rects overlap vertically is a
+  // real rendering bug (a border and the following section landing on the
+  // same coordinate, visually merging, is exactly the failure mode this
+  // catches automatically instead of relying on someone noticing by eye).
+  const sectionOverlaps = pageList.flatMap((page, pageIndex) => {
+    const children = Array.from(page.children).filter((child) => {
+      const rect = child.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    const pairs = [];
+    for (let i = 1; i < children.length; i += 1) {
+      const prevRect = children[i - 1].getBoundingClientRect();
+      const currRect = children[i].getBoundingClientRect();
+      if (currRect.top < prevRect.bottom - 1) pairs.push({ pageIndex, a: children[i - 1], b: children[i] });
+    }
+    return pairs;
+  });
+  if (sectionOverlaps.length) errors.push(error("SECTION_OVERLAP", `${sectionOverlaps.length} adjacent section pair(s) visually overlap instead of stacking cleanly`));
   const expectedPageHeight = Number(templateRoot?.dataset.papersizeHeight) || 0;
   const verticalOverflow = expectedPageHeight
     ? pageList.filter((page) => Math.max(page.scrollHeight, page.getBoundingClientRect().height) > expectedPageHeight + 1)

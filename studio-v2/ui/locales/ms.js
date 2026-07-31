@@ -40,6 +40,7 @@ export default { ...EN,
   "issue.PAGINATION_FAILED": "PrintForm tidak menghasilkan halaman logik", "issue.UNTRUSTED_SCRIPT": "Skrip boleh laksana tersuai menghalang pengesahan produksi", "issue.I18N_KEY_MISSING": "Kunci terjemahan wajib hilang",
   "issue.ROW_COUNT_MISMATCH": "Bilangan baris yang dirender tidak sepadan dengan data yang diikat — penomboran halaman mungkin menggugurkan atau menggandakan satu baris",
   "issue.ROW_DUPLICATE_INDEX": "Baris sumber yang sama dirender lebih daripada sekali", "issue.ROW_MISSING_INDEX": "Satu baris sumber tidak pernah muncul dalam output yang dirender", "issue.ROW_ORDER_MISMATCH": "Baris yang dirender tidak mengikut susunan data sumber",
+  "issue.HEADER_MISSING": "Satu halaman tiada pengepala berulang", "issue.DOCINFO_MISSING": "Satu halaman tiada blok maklumat dokumen berulang", "issue.SECTION_OVERLAP": "Dua bahagian bersebelahan bertindih secara visual dan tidak bertindan dengan kemas",
   "issue.ASSET_SLOT_REQUIRED": "Slot aset wajib hilang atau berganda", "issue.ASSET_SOURCE_UNSAFE": "Sumber aset tidak selamat", "issue.TYPE_MISMATCH": "Jenis data sampel tidak sah",
   "issue.REQUIRED": "Medan data sampel wajib hilang", "issue.SUBTOTAL_MISMATCH": "Jumlah kecil tidak sepadan dengan baris", "issue.GRAND_TOTAL_MISMATCH": "Jumlah besar tidak konsisten", "issue.LINE_TOTAL_MISMATCH": "Jumlah baris tidak konsisten"
 };

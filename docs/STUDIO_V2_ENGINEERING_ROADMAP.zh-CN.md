@@ -36,7 +36,7 @@
 2. Studio 捕获场景截图和 RenderReport，并签发 Evidence Receipt。
 3. `complete_layout_review` 改为引用 evidence IDs。
 4. ✅ 已实现（2026-07-31）：`binding.js` 给每个 `data-pf-each` 展开行打 `data-pf-row-index`（源数组下标，穿过整个分页流程不丢失）；`inspectRenderedDocument` 用它做 `ROW_COUNT_MISMATCH`（数量）、`ROW_DUPLICATE_INDEX`（重复）、`ROW_MISSING_INDEX`（遗漏）、`ROW_ORDER_MISMATCH`（顺序）四项检查，无标记的旧版导出文档自动跳过不误报。数量/顺序/重复/遗漏四项均已覆盖。
-5. 使用矩形碰撞和重复区不变量检测重叠、越界及 header/docinfo/footer 缺失。
+5. 🔶 部分实现（2026-07-31）：`data-repeat-header`/`data-repeat-docinfo` 为"y"时每页必须携带对应 `_processed` 区块（`HEADER_MISSING`/`DOCINFO_MISSING`）；页面直接子元素间的纵向矩形重叠检测（`SECTION_OVERLAP`）。越界已由既有 `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW` 覆盖。尚未覆盖：footer（重复语义与 header/docinfo 不同，"仅最后页出现一次"需要另外建模，未做）。
 6. Attestation 覆盖两段 runtime、CSP、内容与实际浏览器 receipt。
 7. `request_export` 汇总所有 blocker，最终点击仍只允许工程师执行。
 

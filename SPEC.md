@@ -79,6 +79,7 @@
 - `issues[]` 元素：`{ code: HORIZONTAL_OVERFLOW|VERTICAL_OVERFLOW|CONTRAST_FAILURE, pageIndex, selector, rect{x,y,width,height}, text? }`，每类 ≤20 条。
 - `metrics.renderedRows`/`metrics.expectedRows`：实际渲染的 `.prowitem_processed` 数与 `bindTemplate` 绑定数；不一致时 `errors[]` 含 `ROW_COUNT_MISMATCH`（分页引擎丢行/重行的数量级证明，P0-B 部分实现，见 DESIGN.md §4.5）。`expectedRows` 仅在有真实浏览器渲染上下文时出现（CLI 校验器不产出该字段）。
 - 每个 `.prowitem_processed` 行携带 `data-pf-row-index`（源数组下标，`binding.js` 打标，穿过整个分页流程不丢失）：`ROW_DUPLICATE_INDEX`（下标重复）、`ROW_MISSING_INDEX`（下标缺失，需 `expectedRowCount`）、`ROW_ORDER_MISMATCH`（下标非严格递增，即两行被换序）。无该标记的旧版导出文档自动跳过这三项，不误报。
+- `data-repeat-header`/`data-repeat-docinfo` 为 `"y"` 时，每个逻辑页必须都有 `.pheader_processed`/`.pdocinfo_processed`，否则报 `HEADER_MISSING`/`DOCINFO_MISSING`。每页的直接子元素（页头/文档信息/行头/数据行/页脚区块）应自上而下正常堆叠，相邻元素纵向矩形重叠报 `SECTION_OVERLAP`。
 - 错误 `path` 段前缀约定：`/manifest`、`/schema`、`/i18n`、`/theme`、`/template`、`/sampleData`、`/trust`、`/review`；UI 据前缀路由到编辑器（可点击跳转），布局类错误路径为 `/`。
 - 预览消息仅当 `event.source === 预览 iframe.contentWindow` 时受理。
 - 预览面板提供「Highlight issues」开关（默认开）：iframe 内 bridge 收到 `printform:rendered` 后用 `issues[].selector` 在当前文档实时定位并画红框；父页通过 `{ source: "printform-studio-v2-command", type: "toggle-overlay" }` 指令切换，指令同样只信任 `event.source === window.parent`，切换不触发重渲染。

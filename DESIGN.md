@@ -109,6 +109,8 @@
 
 **顺序/identity 校验（2026-07-31 补齐，TASK.md #16）**：`binding.js` 的 `expandRepeat` 给每个展开行打 `data-pf-row-index`（源数组下标），克隆穿过整个分页流程（clone/measure/place）后依然保留。`inspectRenderedDocument` 用这个标记做三项检查：`ROW_DUPLICATE_INDEX`（同一下标出现多次）、`ROW_MISSING_INDEX`（某下标从未出现，需要 `expectedRowCount`）、`ROW_ORDER_MISMATCH`（下标序列非严格递增——即使数量和集合都对，两行被交换顺序也能抓到，这是纯数量校验做不到的）。没有 `data-pf-row-index` 标记的旧版导出文档（该属性上线前生成的）自动跳过这三项检查，只保留数量校验，不误报。真实端到端证据来自 `e2e/studio-v2.spec.js`（Playwright 能读取沙箱 iframe 内部 DOM，jsdom 单测做不到这一步——手写脚本重新拼装 Node 全局对象验证过会撞上 jsdom 的 `performance.now()` brand-check 无限递归，遂放弃转而用 Playwright）：真实 45 行发票渲染后 `data-pf-row-index` 恰好是 `[0,1,...,44]`，与源数组顺序完全一致。
 
+**重复区缺失 + 重叠校验（2026-07-31 补齐，TASK.md #17）**：`data-repeat-header`/`data-repeat-docinfo` 是没有逐行例外的全局开关（不同于 rowheader，行级 `without_prowheader` 可以单独豁免）——若模板声明为 `"y"`，每个逻辑页必须真的带着 `.pheader_processed`/`.pdocinfo_processed`，缺失报 `HEADER_MISSING`/`DOCINFO_MISSING`。另外，`.printform_page` 的直接子元素（页头/文档信息/行头/数据行容器/页脚）按设计应自上而下正常块级堆叠，不使用浮动或绝对定位；若相邻两个子元素的矩形发生纵向重叠（后一个的 `top` 小于前一个的 `bottom`），报 `SECTION_OVERLAP`——这正是 KB 记忆里 Crimson 采购单那次"顶部边框与页头网格恰好同坐标、视觉融合"事故的通用化检测版本，不用等人眼发现。两项检查都在真实 Sales Invoice/Purchase Order 样本上验证过零误报，并用人为破坏（剥离 pheader class、注入负 margin）确认了阳性触发（含截图证据）。
+
 ---
 
 ## 5. 构建与部署

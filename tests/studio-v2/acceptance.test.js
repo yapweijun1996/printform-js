@@ -111,4 +111,91 @@ describe("rendered document acceptance", () => {
     const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } }, { expectedRowCount: 45 });
     expect(report.errors.filter((item) => item.code.startsWith("ROW_") && item.code !== "ROW_COUNT_MISMATCH")).toHaveLength(0);
   });
+
+  function stubRect(node, rect) {
+    const top = rect.top ?? 0;
+    const bottom = rect.bottom ?? top;
+    node.getBoundingClientRect = () => ({ left: 0, right: 750, width: 750, top, bottom, height: bottom - top, ...rect });
+  }
+
+  function setupRepeatFixture({ repeatHeader = "y", repeatDocinfo = "y", pages }) {
+    document.documentElement.lang = "en-MY";
+    document.title = "Repeat region test";
+    document.head.innerHTML = "<title>Repeat region test</title>";
+    const pagesHtml = pages.map((sections) => `<section class="printform_page">${sections}</section>`).join("");
+    document.body.innerHTML = `
+      <template id="pf-template"><section class="printform" data-papersize-height="1050" data-repeat-header="${repeatHeader}" data-repeat-docinfo="${repeatDocinfo}"></section></template>
+      ${pagesHtml}`;
+    document.querySelectorAll(".printform_page").forEach((page, i) => stubRect(page, { top: 0, bottom: 100 }));
+  }
+
+  it("flags HEADER_MISSING when a page lacks the header despite data-repeat-header=\"y\"", () => {
+    setupRepeatFixture({
+      pages: [
+        '<div class="pheader_processed">H</div><div class="pdocinfo_processed">D</div>',
+        '<div class="pdocinfo_processed">D</div>' // page 2 is missing the header
+      ]
+    });
+    const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } });
+    expect(report.errors.some((item) => item.code === "HEADER_MISSING")).toBe(true);
+    expect(report.errors.some((item) => item.code === "DOCINFO_MISSING")).toBe(false);
+  });
+
+  it("does not flag HEADER_MISSING/DOCINFO_MISSING when repeat flags are off", () => {
+    setupRepeatFixture({
+      repeatHeader: "n", repeatDocinfo: "n",
+      pages: ['<div class="pheader_processed">H</div>', '<div class="pdocinfo_processed">D</div>']
+    });
+    const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } });
+    expect(report.errors.some((item) => item.code === "HEADER_MISSING" || item.code === "DOCINFO_MISSING")).toBe(false);
+  });
+
+  it("passes when every page carries the repeated header and docinfo", () => {
+    setupRepeatFixture({
+      pages: [
+        '<div class="pheader_processed">H</div><div class="pdocinfo_processed">D</div>',
+        '<div class="pheader_processed">H</div><div class="pdocinfo_processed">D</div>'
+      ]
+    });
+    const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } });
+    expect(report.errors.some((item) => item.code === "HEADER_MISSING" || item.code === "DOCINFO_MISSING")).toBe(false);
+  });
+
+  it("flags SECTION_OVERLAP when two adjacent sections occupy the same vertical space", () => {
+    document.documentElement.lang = "en-MY";
+    document.title = "Overlap test";
+    document.head.innerHTML = "<title>Overlap test</title>";
+    document.body.innerHTML = `
+      <template id="pf-template"><section class="printform" data-papersize-height="1050"></section></template>
+      <section class="printform_page">
+        <div class="pheader_processed">Header</div>
+        <div class="pdocinfo_processed">Docinfo</div>
+      </section>`;
+    const page = document.querySelector(".printform_page");
+    stubRect(page, { top: 0, bottom: 200 });
+    const [header, docinfo] = page.children;
+    stubRect(header, { top: 0, bottom: 40 });
+    stubRect(docinfo, { top: 20, bottom: 60 }); // starts BEFORE header ends — overlaps by 20px
+    const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } });
+    expect(report.errors.some((item) => item.code === "SECTION_OVERLAP")).toBe(true);
+  });
+
+  it("does not flag SECTION_OVERLAP for normal top-to-bottom stacking", () => {
+    document.documentElement.lang = "en-MY";
+    document.title = "No overlap test";
+    document.head.innerHTML = "<title>No overlap test</title>";
+    document.body.innerHTML = `
+      <template id="pf-template"><section class="printform" data-papersize-height="1050"></section></template>
+      <section class="printform_page">
+        <div class="pheader_processed">Header</div>
+        <div class="pdocinfo_processed">Docinfo</div>
+      </section>`;
+    const page = document.querySelector(".printform_page");
+    stubRect(page, { top: 0, bottom: 200 });
+    const [header, docinfo] = page.children;
+    stubRect(header, { top: 0, bottom: 40 });
+    stubRect(docinfo, { top: 40, bottom: 80 }); // starts exactly where header ends
+    const report = inspectRenderedDocument(document, { acceptance: { maxLogicalPages: 100 } });
+    expect(report.errors.some((item) => item.code === "SECTION_OVERLAP")).toBe(false);
+  });
 });

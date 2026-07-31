@@ -15,6 +15,20 @@ function installSections(project) {
     <script id="pf-sample-data" type="application/json">${JSON.stringify(project.sampleData)}</script>`;
 }
 
+// Real PrintForm.formatAll() renames every repeated section's base class to
+// "<class>_processed" as it paginates (src/printform/dom.js markAsProcessed,
+// called from sections.js/pagination-render.js for header/docinfo/rowheader/
+// footer/rows alike) — replicate that fully here so this mock stays faithful
+// to what inspectRenderedDocument's content-integrity checks expect to find.
+// An earlier version of this mock only renamed .prowitem and got caught out
+// by both the row-count check and the header/docinfo-missing check in turn.
+const PROCESSABLE_CLASSES = ["pheader", "pdocinfo", "prowheader", "prowitem", "pfooter", "pfooter_logo", "pfooter_pagenum"];
+function markAllProcessed(form) {
+  PROCESSABLE_CLASSES.forEach((cls) => {
+    form.querySelectorAll(`.${cls}`).forEach((node) => node.classList.replace(cls, `${cls}_processed`));
+  });
+}
+
 describe("PrintFormDocument runtime", () => {
   it("blocks invalid data before invoking pagination", async () => {
     const project = createSalesInvoiceProject();
@@ -38,11 +52,7 @@ describe("PrintFormDocument runtime", () => {
     installSections(project);
     window.PrintForm = { formatAll: async () => {
       const form = document.querySelector(".printform");
-      // Real PrintForm.formatAll() renames each row's base class to
-      // "<class>_processed" as it paginates (src/printform/dom.js
-      // markAsProcessed) — replicate that here so this mock stays faithful
-      // to what inspectRenderedDocument's row-count check expects to find.
-      form.querySelectorAll(".prowitem").forEach((row) => row.classList.replace("prowitem", "prowitem_processed"));
+      markAllProcessed(form);
       form.className = "printform_formatter_processed";
       form.innerHTML = `<div class="printform_page">${form.innerHTML}</div>`;
     } };
