@@ -5,6 +5,7 @@ import { createSalesInvoiceProject } from "../studio-v2/samples/sales-invoice.js
 import { createPurchaseOrderProject } from "../studio-v2/samples/purchase-order.js";
 import { validateProject } from "../studio-v2/core/acceptance.js";
 import { serializeStandalone } from "../studio-v2/core/project-model.js";
+import { collectAppShell } from "./app-shell.mjs";
 
 const root = process.cwd();
 const output = path.resolve(root, "site-dist");
@@ -60,7 +61,17 @@ function finalizePwa() {
     // loudly instead of deploying that silently.
     throw new Error("studio-v2/sw.js is missing the __PRINTFORM_BUILD__ placeholder");
   }
-  fs.writeFileSync(serviceWorker, source.replaceAll("__PRINTFORM_BUILD__", buildId), "utf8");
+  if (!source.includes('"__PRINTFORM_APP_SHELL__"')) {
+    // Same reasoning: a missing placeholder here ships a service worker that
+    // precaches nothing, and offline simply stops working with no error.
+    throw new Error("studio-v2/sw.js is missing the __PRINTFORM_APP_SHELL__ placeholder");
+  }
+  const appShell = collectAppShell(output);
+  const stamped = source
+    .replaceAll("__PRINTFORM_BUILD__", buildId)
+    .replace('"__PRINTFORM_APP_SHELL__"', JSON.stringify(appShell));
+  fs.writeFileSync(serviceWorker, stamped, "utf8");
+  console.log(`Service worker precache manifest: ${appShell.length} entries`);
 }
 
 prepareOutput();

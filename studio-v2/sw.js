@@ -6,24 +6,19 @@ const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 // with a never-changing cache name would serve stale app files forever in
 // local dev, so fall back to network-first there.
 const DEV_MODE = BUILD_ID.startsWith("__");
-const APP_SHELL = [
-  "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
-  "./agent-setup.json", "./agent-setup.schema.json", "./AGENT_SETUP.md", "./llms.txt",
-  "./styles/base.css", "./styles/layout.css", "./styles/components.css",
-  "./ui/app.js", "./ui/file-io.js", "./ui/draft-cache.js", "./ui/preview.js", "./ui/status-view.js", "./ui/ui-i18n.js", "./ui/diff-view.js",
-  "./ui/locales/en.js", "./ui/locales/zh.js", "./ui/locales/ms.js", "./ui/locales/ja.js", "./ui/locales/vi.js",
-  "./adapters/gateway.js", "./adapters/webmcp.js",
-  "./core/constants.js", "./core/json.js", "./core/schema.js", "./core/binding.js", "./core/typography.js", "./core/i18n.js", "./core/business-rules.js",
-  "./core/acceptance.js", "./core/project-model.js", "./core/operations.js", "./core/operation-schemas.js",
-  "./core/history.js", "./core/command-bus.js", "./core/tool-contracts.js",
-  "./core/sample-scenarios.js", "./core/migrations.js", "./core/assets.js", "./core/exporter.js",
-  "./core/layout-review.js", "./core/logo-placeholder.js",
-  "./samples/catalog.js", "./samples/sales-invoice.js", "./samples/sales-invoice-i18n.js",
-  "./samples/purchase-order.js", "./samples/purchase-order-schema.js", "./samples/purchase-order-layout.js", "./samples/purchase-order-i18n.js",
-  "../dist/printform.js", "../dist/printform-document.js"
-];
+// Replaced with a real array literal by scripts/build-site.mjs, which walks the
+// built output. It used to be maintained by hand, and adding a module without
+// remembering to list it here broke offline loading twice in one day — the
+// module 404s once the network is gone, and nothing in the app says why.
+// Generating it removes the chance to forget.
+const APP_SHELL = "__PRINTFORM_APP_SHELL__";
 
 self.addEventListener("install", (event) => {
+  // A string means the placeholder was never substituted, i.e. this is the
+  // repo copy being served in local dev rather than a built artifact. Dev is
+  // network-first anyway (see DEV_MODE), so precaching there buys nothing —
+  // skip it instead of failing install on a bogus URL.
+  if (!Array.isArray(APP_SHELL)) return;
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
 });
 

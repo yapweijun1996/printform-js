@@ -64,8 +64,14 @@ describe("link-only AI agent bootstrap", () => {
     expect(document.querySelector('link[rel="alternate"][href="./llms.txt"]')).not.toBeNull();
     expect(document.querySelector('.agent-bootstrap a[href="./AGENT_SETUP.md"]')).not.toBeNull();
     expect(document.querySelector('.agent-bootstrap a[href="./agent-setup.json"]')).not.toBeNull();
+    // These four files sit next to index.html, so the build-time walker picks
+    // them up automatically — sw.js no longer names them. What still has to
+    // hold in the source is the placeholder the build substitutes; without it
+    // the shipped worker precaches nothing and offline dies silently.
+    // Coverage for the generator itself lives in tests/app-shell.test.js.
+    expect(serviceWorker).toContain('const APP_SHELL = "__PRINTFORM_APP_SHELL__"');
     for (const asset of ["agent-setup.json", "agent-setup.schema.json", "AGENT_SETUP.md", "llms.txt"]) {
-      expect(serviceWorker).toContain(`./${asset}`);
+      expect(fs.existsSync(`studio-v2/${asset}`)).toBe(true);
     }
   });
 });
