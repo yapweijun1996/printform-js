@@ -1,5 +1,6 @@
 import { LIMITS, PROTOCOL_VERSION, TRUST } from "../core/constants.js";
 import { PRINT_TYPOGRAPHY_CSS } from "../core/typography.js";
+import { buildBrandColorBlock } from "../core/branding.js";
 import { LOGO_PLACEHOLDER_DATA_URL } from "../core/logo-placeholder.js";
 import { SALES_INVOICE_I18N } from "./sales-invoice-i18n.js";
 
@@ -21,6 +22,7 @@ const themeCss = `
 * { box-sizing: border-box; }
 body { margin: 0; background: #eef2f7; }
 ${PRINT_TYPOGRAPHY_CSS}
+${buildBrandColorBlock("#173d9a")}
 #pf-mount { color: #172033; font-family: Inter, Arial, sans-serif; line-height: 1.35; }
 #pf-mount .printform,
 #pf-mount .printform_formatter_processed,
@@ -30,7 +32,7 @@ ${PRINT_TYPOGRAPHY_CSS}
 #pf-mount .pf-header { padding-top: 22px; border-bottom: 3px solid #2457d6; }
 #pf-mount .pf-letterhead { display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: center; }
 #pf-mount .pf-letterhead-logo { display: block; width: 92px; height: 42px; object-fit: contain; }
-#pf-mount .pf-brand { margin: 0; color: #173d9a; font-size: var(--pf-font-plus-3); }
+#pf-mount .pf-brand { margin: 0; color: var(--pf-brand-color); font-size: var(--pf-font-plus-3); }
 #pf-mount .pf-muted { color: #5d677a; font-size: var(--pf-font-default); }
 #pf-mount .pdocinfo,
 #pf-mount .pdocinfo_processed { padding: 18px 24px 0; }

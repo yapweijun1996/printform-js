@@ -4,6 +4,7 @@ import { parseProjectHtml, verifyImportedProject } from "../core/project-model.j
 import { stableStringify } from "../core/json.js";
 import { analyzeMigration } from "../core/migrations.js";
 import { currentFontBasePt } from "../core/typography.js";
+import { currentBrandColor } from "../core/branding.js";
 import { inspectColumnGroups } from "../core/column-inspection.js";
 import { inspectPageSettings, inspectRepeatFlags } from "../core/page-inspection.js";
 import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
@@ -73,6 +74,17 @@ function setEditors(project) {
   renderColumnWidthGroups(inspectColumnGroups(project.templateHtml, project));
   renderPageSettings(inspectPageSettings(project.templateHtml));
   renderRepeatFlags(inspectRepeatFlags(project.templateHtml));
+  renderBrandColor(currentBrandColor(project.themeCss));
+}
+
+// null when the theme has never had a brand color injected (no sensible
+// universal default color exists, unlike the font scale) — leave both
+// inputs blank rather than showing a made-up color. Unlike page settings,
+// there is no selector that must exist first: set_brand_color just writes a
+// CSS variable, so Apply stays enabled even before any color has been set.
+function renderBrandColor(hex) {
+  $("#brand-color-text").value = hex || "";
+  $("#brand-color-input").value = /^#[0-9a-fA-F]{6}$/.test(hex || "") ? hex : "#000000";
 }
 
 // null when the template has no .printform root with papersize attributes
@@ -340,6 +352,16 @@ async function applyColumnWidths(tableSelector, fieldsContainer) {
 // unlike set_column_widths/set_font_scale, they go through the fully generic
 // set_attribute operation (one call per attribute, bundled into a single
 // apply_changes so both fields/all flags commit as one revision).
+async function applyBrandColor() {
+  try {
+    const hex = $("#brand-color-text").value.trim();
+    const operations = [{ type: "set_brand_color", hex }];
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: `brand color: ${hex}` });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.brandColorApplied"));
+  } catch (error) { toast(t("toast.brandColorFailed", { message: error.message })); }
+}
+
 async function applyPageSettings() {
   try {
     const selector = ".printform";
@@ -480,6 +502,8 @@ function bindUi() {
   $("#locale-select").addEventListener("change", async (event) => { const result = await bus.execute("set_locale", { expectedRevision: bus.revision, locale: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#apply-logo-button").addEventListener("click", applyLogoSources);
   $("#apply-font-scale-button").addEventListener("click", applyFontScale);
+  $("#apply-brand-color-button").addEventListener("click", applyBrandColor);
+  $("#brand-color-input").addEventListener("input", (event) => { $("#brand-color-text").value = event.target.value; });
   $("#apply-page-settings-button").addEventListener("click", applyPageSettings);
   $("#apply-repeat-flags-button").addEventListener("click", applyRepeatFlags);
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));

@@ -15,6 +15,7 @@ const slotName = { type: "string", pattern: "^[a-z][a-z0-9-]*$" };
 // explicit width so it absorbs whatever space the fixed-width columns don't
 // use; the tool must be able to express that, not force every column rigid.
 const widthValue = { type: "string", pattern: "^$|^auto$|^\\d+(\\.\\d+)?(%|px|mm|pt)$" };
+const hexColor = { type: "string", pattern: "^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$" };
 
 export const OPERATION_SCHEMAS = Object.freeze({
   set_manifest_value: objectSchema({ type: nonEmptyString, path: nonEmptyString, value: anyValue }, ["type", "path", "value"]),
@@ -40,5 +41,6 @@ export const OPERATION_SCHEMAS = Object.freeze({
   set_font_scale: objectSchema({
     type: nonEmptyString,
     basePt: { type: "number", minimum: FONT_BASE_MIN_PT, maximum: FONT_BASE_MAX_PT }
-  }, ["type", "basePt"])
+  }, ["type", "basePt"]),
+  set_brand_color: objectSchema({ type: nonEmptyString, hex: hexColor }, ["type", "hex"])
 });

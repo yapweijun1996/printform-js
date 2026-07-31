@@ -14,6 +14,8 @@ export default {
   "editor.tableColumns": "Table columns", "editor.columnWidthPlaceholder": "e.g. 12% or auto", "editor.applyColumnWidths": "Apply column widths",
   "toast.fontScaleApplied": "Font scale applied to the isolated draft.", "toast.fontScaleFailed": "Font scale change failed: {message}",
   "toast.columnWidthsApplied": "Column widths applied to the isolated draft.", "toast.columnWidthsFailed": "Column widths change failed: {message}",
+  "editor.brandColor": "Brand color", "editor.brandColorLabel": "Heading color", "editor.applyBrandColor": "Apply brand color",
+  "toast.brandColorApplied": "Brand color applied to the isolated draft.", "toast.brandColorFailed": "Brand color change failed: {message}",
   "editor.pageSettings": "Page settings", "editor.pageWidth": "Page width (px)", "editor.pageHeight": "Page height (px)", "editor.applyPageSettings": "Apply page settings",
   "editor.repeatedAreas": "Repeated areas", "editor.applyRepeatedAreas": "Apply repeated areas",
   "toast.pageSettingsApplied": "Page settings applied to the isolated draft.", "toast.pageSettingsFailed": "Page settings change failed: {message}",

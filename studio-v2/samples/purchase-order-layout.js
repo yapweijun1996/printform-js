@@ -1,4 +1,5 @@
 import { PRINT_TYPOGRAPHY_CSS } from "../core/typography.js";
+import { buildBrandColorBlock } from "../core/branding.js";
 import { LOGO_PLACEHOLDER_DATA_URL } from "../core/logo-placeholder.js";
 
 export const PURCHASE_ORDER_THEME = `
@@ -6,6 +7,7 @@ export const PURCHASE_ORDER_THEME = `
 * { box-sizing: border-box; }
 body { margin: 0; background: #f4f1f2; }
 ${PRINT_TYPOGRAPHY_CSS}
+${buildBrandColorBlock("#8f1525")}
 #pf-mount { color: #29171b; font-family: Inter, Arial, sans-serif; }
 #pf-mount .printform,
 #pf-mount .printform_formatter_processed,
@@ -17,7 +19,7 @@ ${PRINT_TYPOGRAPHY_CSS}
 #pf-mount .pf-header-grid { display: grid; grid-template-columns: 1fr 230px; gap: 22px; align-items: start; }
 #pf-mount .pf-brand-lockup { display: grid; grid-template-columns: 82px 1fr; gap: 12px; align-items: center; }
 #pf-mount .pf-letterhead-logo { display: block; width: 82px; height: 42px; object-fit: contain; }
-#pf-mount .pf-brand { margin: 0; color: #8f1525; font-size: var(--pf-font-plus-3); line-height: 1.15; }
+#pf-mount .pf-brand { margin: 0; color: var(--pf-brand-color); font-size: var(--pf-font-plus-3); line-height: 1.15; }
 #pf-mount .pf-company-meta { margin: 6px 0 14px; color: #5d4a4e; font-size: var(--pf-font-default); line-height: 1.5; }
 #pf-mount .pf-po-box { background: #8f1525; color: #fff; padding: 13px 16px; border-radius: 4px; }
 #pf-mount .pf-po-box h2 { margin: 0 0 7px; color: #fff; font-size: var(--pf-font-plus-3); letter-spacing: .08em; }

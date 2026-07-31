@@ -3,6 +3,7 @@ import { cloneJson, parseJson, stableStringify } from "./json.js";
 import { validateData } from "./schema.js";
 import { OPERATION_SCHEMAS } from "./operation-schemas.js";
 import { setPrintTypographyBase } from "./typography.js";
+import { setBrandColor } from "./branding.js";
 
 export function cloneProject(project) {
   return {
@@ -130,6 +131,8 @@ function applyOperation(project, operation) {
     project.templateHtml = template.innerHTML.trim();
   } else if (operation.type === "set_font_scale") {
     project.themeCss = setPrintTypographyBase(project.themeCss, operation.basePt);
+  } else if (operation.type === "set_brand_color") {
+    project.themeCss = setBrandColor(project.themeCss, operation.hex);
   } else throw Object.assign(new Error(`Unsupported operation: ${operation.type}`), { code: "UNSUPPORTED_OPERATION" });
   // themeCss is serialized raw into <style>: a "</style><script>…" payload
   // breaks out of the style element, so it must demote trust exactly like a

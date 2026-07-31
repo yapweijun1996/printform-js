@@ -13,6 +13,9 @@
 .repeat-flags { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .repeat-flags label { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .repeat-flags input { margin: 0; }
+.brand-color-row { display: flex; gap: 6px; }
+.brand-color-row input[type="color"] { flex: 0 0 44px; min-height: 36px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; }
+.brand-color-row input[type="text"] { flex: 1; min-height: 36px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
 details { margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 summary { padding: 9px 10px; color: #263451; background: #f4f7fb; font-size: 12px; font-weight: 800; cursor: pointer; }
 textarea { display: block; width: 100%; min-height: 210px; padding: 10px; resize: vertical; border: 0; border-top: 1px solid var(--border); color: #172033; background: #fbfcfe; font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 2; }

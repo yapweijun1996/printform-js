@@ -205,6 +205,32 @@ describe("set_font_scale (high-level semantic tool)", () => {
   });
 });
 
+describe("set_brand_color (high-level semantic tool)", () => {
+  it("injects the brand color variable, replacing a prior injection in place", () => {
+    const project = createEmptyProject();
+    const candidate = applyOperations(project, [{ type: "set_brand_color", hex: "#173d9a" }]);
+    expect(candidate.themeCss).toContain("--pf-brand-color: #173d9a");
+    const reapplied = applyOperations(candidate, [{ type: "set_brand_color", hex: "#8f1525" }]);
+    expect(reapplied.themeCss.match(/--pf-brand-color/g)).toHaveLength(1);
+    expect(reapplied.themeCss).toContain("--pf-brand-color: #8f1525");
+    // The rest of the theme survives untouched.
+    expect(reapplied.themeCss).toContain("color: #111");
+  });
+
+  it("accepts both 3-digit and 6-digit hex", () => {
+    const project = createEmptyProject();
+    expect(applyOperations(project, [{ type: "set_brand_color", hex: "#abc" }]).themeCss).toContain("--pf-brand-color: #abc");
+  });
+
+  it("rejects a non-hex value", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_brand_color", hex: "red" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+    expect(() => applyOperations(project, [{ type: "set_brand_color", hex: "#12345" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+});
+
 describe("sanitizeExecutableContent", () => {
   it("strips <script>, on* handlers and javascript: URLs from the template", () => {
     const dirty = {
