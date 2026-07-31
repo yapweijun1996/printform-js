@@ -478,7 +478,7 @@
     return target;
   }
 
-  function synthesizeHtml(side, forExport) {
+  function synthesizeHtml(side, forExport, skipBridge) {
     var html = renderWithData(state.workingHtml);
     if (!html) return null;
     var overrides = state.overrides[side];
@@ -502,13 +502,19 @@
     if (head) head.insertBefore(base, head.firstChild);
 
     // 3. Preview-only additions (never in export): side marker + bridge script.
+    //    skipBridge (print preview window): keep the <base> tag so assets
+    //    resolve, but omit the bridge — in a window.open()ed page
+    //    parent === self, so the bridge would monkey-patch console and post
+    //    messages to itself for no benefit inside a faithful print target.
     if (!forExport) {
       doc.documentElement.setAttribute("data-studio-side", side);
       doc.documentElement.setAttribute("data-studio-mode", "preview");
-      var bridge = doc.createElement("script");
-      bridge.setAttribute("src", new URL("./bridge.js", location.href).href);
-      var body = doc.querySelector("body");
-      if (body) body.insertBefore(bridge, body.firstChild);
+      if (!skipBridge) {
+        var bridge = doc.createElement("script");
+        bridge.setAttribute("src", new URL("./bridge.js", location.href).href);
+        var body = doc.querySelector("body");
+        if (body) body.insertBefore(bridge, body.firstChild);
+      }
     } else {
       // Export must be a self-contained file: inline printform.js (no on-disk
       // "dist/" folder travels with a download) and drop the <base> tag,
@@ -533,8 +539,16 @@
   // printform.js script tag is stripped so pagination never runs — the raw
   // .pheader/.prowitem/... blocks stay on screen for the block editor to
   // click and edit.
+  //
+  // IMPORTANT: structure mode must load the RAW template (no renderWithData).
+  // The bridge assigns block indices from the iframe's .printform children,
+  // and applyBlockEdit/deleteBlock index into the un-rendered workingHtml's
+  // children — if the iframe showed the data-rendered document, a {{#items}}
+  // section expanded to N rows would shift every index after it, so edits
+  // and deletes would hit the wrong block (or write rendered sample values
+  // back into the template, destroying the {{ }} bindings).
   function synthesizeStructureHtml(side) {
-    var html = renderWithData(state.workingHtml);
+    var html = state.workingHtml;
     if (!html) return null;
     var overrides = state.overrides[side];
 
@@ -627,7 +641,15 @@
   // ---------- data binding (Phase 3) ----------
   function buildSampleSkeleton(html) {
     if (!window.MustacheLite) return {};
-    var scan = window.MustacheLite.scan(html);
+    var scan;
+    try {
+      scan = window.MustacheLite.scan(html);
+    } catch (e) {
+      // Malformed section tags ({{#a}} without {{/a}}, mismatched close) now
+      // throw in mustache-lite; a broken template should not break Studio boot.
+      showDataJsonError((state.lang === "zh" ? "模板解析错误: " : "Template parse error: ") + (e && e.message ? e.message : e));
+      return {};
+    }
     var data = {};
     scan.fields.forEach(function (name) {
       data[name] = (state.lang === "zh" ? "示例 " : "Sample ") + name;
@@ -866,7 +888,10 @@
     sides.forEach(function (s) {
       logBuffers[s].forEach(function (entry) {
         var prefix = state.compare ? "[" + s + "] " : "";
-        lines.push('<div class="' + entry.level + '">' + prefix + escapeAttr(entry.text) + "</div>");
+        // entry.level arrives via postMessage — whitelist it, never trust it
+        // as raw markup (a crafted level string would be an XSS sink here).
+        var level = ["log", "info", "warn", "error"].indexOf(entry.level) !== -1 ? entry.level : "log";
+        lines.push('<div class="' + level + '">' + prefix + escapeAttr(entry.text) + "</div>");
       });
     });
     view.innerHTML = lines.join("");
@@ -880,6 +905,11 @@
   }
 
   window.addEventListener("message", function (event) {
+    // Preview iframes are blob: URLs created by this document, so their
+    // messages carry this window's origin. Reject anything else — a foreign
+    // page that window.open()s or embeds Studio could otherwise spoof
+    // bridge messages.
+    if (event.origin !== location.origin) return;
     var data = event.data;
     if (!data || data.source !== "printform-studio-bridge") return;
     var side = data.side === "B" ? "B" : "A";
@@ -897,6 +927,7 @@
       state.blockCount = data.payload.count;
       state.rowCount = data.payload.rowCount;
       var range = $("#row-count-range");
+      range.disabled = false;
       range.max = Math.max(10, state.rowCount + 20);
       range.value = state.rowCount;
       $("#row-count-value").textContent = state.rowCount;
@@ -952,6 +983,10 @@
     $("#block-editor").style.display = mode === "structure" ? "" : "none";
     state.selectedBlockIndex = null;
     $("#be-selected").style.display = "none";
+    // The slider's value/max reflect a specific loaded document; disable it
+    // until the next "blocks-ready" so a stale count from the previous
+    // template/mode can't clone or delete rows on the new one.
+    $("#row-count-range").disabled = true;
     reloadAll();
   }
 
@@ -974,7 +1009,7 @@
   }
 
   function openPrintPreview() {
-    var html = synthesizeHtml(state.activeSide, false);
+    var html = synthesizeHtml(state.activeSide, false, true);
     if (html === null) return;
     var w = window.open("about:blank");
     if (!w) {
@@ -1138,6 +1173,9 @@
       parseBaseline(html);
       initSampleDataForTemplate(html);
       buildConfigPanel();
+      // Same rationale as setViewMode: stale slider state from the previous
+      // template must not act on the new one before "blocks-ready" arrives.
+      $("#row-count-range").disabled = true;
       reloadAll();
       loadPrintformSource(html);
     });

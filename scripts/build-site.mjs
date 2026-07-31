@@ -53,8 +53,14 @@ async function writePilotExports() {
 function finalizePwa() {
   const serviceWorker = path.resolve(output, "studio-v2/sw.js");
   const buildId = (process.env.GITHUB_SHA || "local").slice(0, 12);
-  const source = fs.readFileSync(serviceWorker, "utf8").replace("__PRINTFORM_BUILD__", buildId);
-  fs.writeFileSync(serviceWorker, source, "utf8");
+  const source = fs.readFileSync(serviceWorker, "utf8");
+  if (!source.includes("__PRINTFORM_BUILD__")) {
+    // Without the placeholder the SW cache version never changes and every
+    // returning visitor keeps the previous release forever — fail the build
+    // loudly instead of deploying that silently.
+    throw new Error("studio-v2/sw.js is missing the __PRINTFORM_BUILD__ placeholder");
+  }
+  fs.writeFileSync(serviceWorker, source.replaceAll("__PRINTFORM_BUILD__", buildId), "utf8");
 }
 
 prepareOutput();

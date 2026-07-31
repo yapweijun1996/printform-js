@@ -31,8 +31,15 @@ try {
     runtimeHashValid: Boolean(project.attestation) && project.attestation.runtimeHash === actualRuntimeHash && project.runtime?.hash === actualRuntimeHash,
     contentHashValid: Boolean(project.attestation) && project.attestation.contentHash === actualContentHash
   };
-  if (!attestation.runtimeHashValid) validation.errors.push({ code: "RUNTIME_HASH_MISMATCH", path: "/runtime", message: "Embedded runtime does not match its attestation", severity: "error" });
-  if (!attestation.contentHashValid) validation.errors.push({ code: "CONTENT_HASH_MISMATCH", path: "/attestation", message: "Document content changed after validation", severity: "error" });
+  if (!attestation.present) {
+    // Unsigned is a distinct state from tampered — reporting two hash
+    // mismatches for a document that simply has no attestation makes real
+    // corruption indistinguishable from a legacy/hand-authored export.
+    validation.errors.push({ code: "ATTESTATION_MISSING", path: "/attestation", message: "Document carries no attestation (unsigned export)", severity: "error" });
+  } else {
+    if (!attestation.runtimeHashValid) validation.errors.push({ code: "RUNTIME_HASH_MISMATCH", path: "/runtime", message: "Embedded runtime does not match its attestation", severity: "error" });
+    if (!attestation.contentHashValid) validation.errors.push({ code: "CONTENT_HASH_MISMATCH", path: "/attestation", message: "Document content changed after validation", severity: "error" });
+  }
   validation.valid = validation.errors.length === 0;
   validation.productionValid = validation.valid;
   output = { file: absolute, valid: validation.valid, validation, attestation, layout: { verified: false, note: "Run browser validation for pagination and overflow metrics" } };

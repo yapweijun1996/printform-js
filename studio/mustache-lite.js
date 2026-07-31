@@ -21,25 +21,33 @@
   var TAG_RE = /\{\{(\{|&)?\s*([\w.]+)\s*(\})?\}\}|\{\{(#|\^|\/)\s*([\w.]+)\s*\}\}/g;
 
   function escapeHtml(value) {
+    // Single quotes and backticks must be escaped too: an escaped {{field}}
+    // rendered inside a single-quoted HTML attribute (alt='{{name}}') could
+    // otherwise break out of the attribute with a value like "x' onerror='…".
     return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/`/g, "&#96;");
   }
 
   // Parses the template string into a tree of
   // {type:'text',value} | {type:'var',name,unescaped} | {type:'section',name,inverted,children}
   function parse(template) {
     var root = [];
-    var stack = [root];
+    // Each frame remembers the section name it opened with, so a close tag
+    // can be verified against it — silently accepting {{#items}}…{{/item}}
+    // (typo) or a stray {{/x}} used to reshuffle blocks with no diagnostic.
+    var stack = [{ name: null, children: root }];
     var lastIndex = 0;
     var match;
 
     TAG_RE.lastIndex = 0;
     while ((match = TAG_RE.exec(template))) {
       var textBefore = template.slice(lastIndex, match.index);
-      if (textBefore) stack[stack.length - 1].push({ type: "text", value: textBefore });
+      if (textBefore) stack[stack.length - 1].children.push({ type: "text", value: textBefore });
       lastIndex = match.index + match[0].length;
 
       var unescapedMark = match[1];
@@ -49,17 +57,27 @@
 
       if (sectionMark === "#" || sectionMark === "^") {
         var node = { type: "section", name: sectionName, inverted: sectionMark === "^", children: [] };
-        stack[stack.length - 1].push(node);
-        stack.push(node.children);
+        stack[stack.length - 1].children.push(node);
+        stack.push({ name: sectionName, children: node.children });
       } else if (sectionMark === "/") {
-        if (stack.length > 1) stack.pop();
+        if (stack.length === 1) {
+          throw new Error("Unexpected closing tag {{/" + sectionName + "}} with no open section");
+        }
+        var open = stack[stack.length - 1];
+        if (open.name !== sectionName) {
+          throw new Error("Mismatched closing tag: expected {{/" + open.name + "}} but found {{/" + sectionName + "}}");
+        }
+        stack.pop();
       } else if (varName) {
-        stack[stack.length - 1].push({ type: "var", name: varName, unescaped: Boolean(unescapedMark) });
+        stack[stack.length - 1].children.push({ type: "var", name: varName, unescaped: Boolean(unescapedMark) });
       }
     }
 
     var trailing = template.slice(lastIndex);
-    if (trailing) stack[stack.length - 1].push({ type: "text", value: trailing });
+    if (trailing) stack[stack.length - 1].children.push({ type: "text", value: trailing });
+    if (stack.length > 1) {
+      throw new Error("Unclosed section {{#" + stack[stack.length - 1].name + "}}");
+    }
     return root;
   }
 

@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "printform-js",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8000"],
-      "port": 8000
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/serve-site.mjs", "."],
+      "port": 4174
     }
   ]
 }

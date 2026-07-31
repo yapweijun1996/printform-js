@@ -11,10 +11,12 @@ const types = {
 };
 
 function resolveRequest(url) {
-  const pathname = decodeURIComponent(new URL(url, "http://localhost").pathname);
-  const candidate = path.resolve(root, `.${pathname}`);
-  if (candidate !== root && !candidate.startsWith(`${root}${path.sep}`)) return null;
+  // decodeURIComponent throws URIError on malformed escapes (e.g. "/%zz");
+  // an uncaught throw here would crash the whole server on one bad request.
   try {
+    const pathname = decodeURIComponent(new URL(url, "http://localhost").pathname);
+    const candidate = path.resolve(root, `.${pathname}`);
+    if (candidate !== root && !candidate.startsWith(`${root}${path.sep}`)) return null;
     const stat = fs.statSync(candidate);
     return stat.isDirectory() ? path.resolve(candidate, "index.html") : candidate;
   } catch { return null; }
@@ -32,5 +34,7 @@ http.createServer((request, response) => {
     "Cache-Control": "no-cache",
     "X-Content-Type-Options": "nosniff"
   });
-  fs.createReadStream(filename).pipe(response);
+  const stream = fs.createReadStream(filename);
+  stream.on("error", () => response.destroy());
+  stream.pipe(response);
 }).listen(port, "127.0.0.1", () => console.log(`Serving ${root} at http://127.0.0.1:${port}`));
