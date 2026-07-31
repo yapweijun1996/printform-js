@@ -143,8 +143,12 @@ if (globalScope) {
         }
       }
 
-      // 同时监听 DOMContentLoaded 作为后备
-      doc.addEventListener("DOMContentLoaded", ensureReadyAndFormat);
+      // 若脚本在 DOMContentLoaded 之后才注入（动态加载场景），事件不会再触发，需立即执行
+      if (doc.readyState === "loading") {
+        doc.addEventListener("DOMContentLoaded", ensureReadyAndFormat);
+      } else {
+        ensureReadyAndFormat();
+      }
     }
   }
 }

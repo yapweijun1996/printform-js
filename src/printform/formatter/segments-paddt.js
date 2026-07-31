@@ -59,6 +59,7 @@ export function attachPaddtSegmentMethods(FormatterClass) {
       var lastNode = paddtRoot;
       for (var index = 1; index < segments.length; index += 1) {
         const clone = paddtRoot.cloneNode(true);
+        clone.classList.remove("tb_page_break_before");
         clone.dataset.paddtSegment = "true";
         const cloneWrapper = clone.querySelector("td > div") || clone.querySelector("td");
         if (cloneWrapper) {

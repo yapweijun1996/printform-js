@@ -128,7 +128,25 @@ describe('Segmentation Logic', () => {
       // We can check if it actually split (6 words > 5 limit)
       // The logic creates clones for overflow.
       const tables = formEl.querySelectorAll('.paddt');
-      expect(tables.length).toBeGreaterThan(1); 
+      expect(tables.length).toBeGreaterThan(1);
+    });
+
+    it('should strip tb_page_break_before from cloned segments (only first segment keeps it)', () => {
+      formatter = new MockFormatter(formEl, { paddtMaxWordsPerSegment: 5 });
+      formEl.innerHTML = `
+        <table class="paddt tb_page_break_before">
+          <tr><td><p>One two three four five six seven eight nine ten eleven twelve</p></td></tr>
+        </table>
+      `;
+
+      formatter.expandPaddtSegments();
+
+      const tables = Array.from(formEl.querySelectorAll('.paddt'));
+      expect(tables.length).toBeGreaterThan(1);
+      expect(tables[0].classList.contains('tb_page_break_before')).toBe(true);
+      tables.slice(1).forEach((clone) => {
+        expect(clone.classList.contains('tb_page_break_before')).toBe(false);
+      });
     });
   });
 });
