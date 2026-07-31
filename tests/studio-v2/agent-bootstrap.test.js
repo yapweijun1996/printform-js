@@ -37,6 +37,16 @@ describe("link-only AI agent bootstrap", () => {
     manifest.verification.requiredStudioTools.forEach((name) => expect(toolNames).toContain(name));
   });
 
+  it("leaves the inspector's contract version empty in the shipped HTML so it can only come from code", () => {
+    // A literal here read 1.1.0 through both the 1.2.0 and 2.0.0 releases —
+    // the panel told engineers one contract while get_capabilities reported
+    // another. Shipping it empty makes a stale hardcoded value impossible:
+    // worst case the field is blank, never wrong.
+    const version = new JSDOM(html).window.document.querySelector("#contract-version");
+    expect(version).not.toBeNull();
+    expect(version.textContent.trim()).toBe("");
+  });
+
   it("pins a restricted isolated Chrome DevTools MCP for both clients", () => {
     expect(manifest.mcpServer.args).toContain("chrome-devtools-mcp@1.6.0");
     expect(manifest.mcpServer.args).toContain("--isolated=true");

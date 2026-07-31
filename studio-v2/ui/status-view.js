@@ -1,3 +1,4 @@
+import { AGENT_CONTRACT_VERSION } from "../core/constants.js";
 import { t, translateIssue } from "./ui-i18n.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -58,6 +59,14 @@ export function renderQualityView(validation, trust) {
   const review = validation.reviewReceipt;
   $("#review-status").textContent = review ? t("review.pass", { revision: review.reviewedRevision }) : t("review.pending");
   $("#reset-trust-button").classList.toggle("hidden", trust !== "untrusted");
+}
+
+// Read from the constant, never written into index.html: a hardcoded version
+// there silently drifts on every contract bump (it sat at 1.1.0 through both
+// the 1.2.0 and 2.0.0 releases, telling engineers the wrong contract while
+// get_capabilities reported the real one).
+export function renderContractVersion() {
+  $("#contract-version").textContent = AGENT_CONTRACT_VERSION;
 }
 
 export function renderWebMcpStatus(adapter) {

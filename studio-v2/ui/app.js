@@ -12,7 +12,7 @@ import { downloadHtml, readHtmlFile, saveHtmlWithPicker } from "./file-io.js";
 import { listenForPreview, renderPreview, setPreviewOverlayEnabled } from "./preview.js";
 import { renderDiffSections } from "./diff-view.js";
 import { currentUiLocale, initUiI18n, setUiLocale, t } from "./ui-i18n.js";
-import { renderDataPolicy, renderMetrics, renderQualityView, renderStatus, renderWebMcpStatus, refreshStatusText } from "./status-view.js";
+import { renderContractVersion, renderDataPolicy, renderMetrics, renderQualityView, renderStatus, renderWebMcpStatus, refreshStatusText } from "./status-view.js";
 
 const $ = (selector) => document.querySelector(selector);
 const editors = {
@@ -411,6 +411,7 @@ listenForPreview($("#preview-frame"), (message) => {
 });
 
 await initUiI18n();
+renderContractVersion();
 bindUi();
 $("#document-select").value = activeSampleKey;
 installBus(createSampleDocument(activeSampleKey), "initial");
