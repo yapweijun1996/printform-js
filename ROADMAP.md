@@ -14,10 +14,10 @@
 | 已完成（2026-07-31） | E5 收尾（预览红框 overlay `1dc2856`、diff 面板 `ebf3931`）+ E11 维护成本优化第一批 | ✅ |
 | 已完成（2026-07-31） | E6/E7：P0-A 事务闭环 + P0-B 信任闭环的**代码硬门**（`f4ca539`、`bda0379`、`1e6cb3e`、`2de7b73` 等） | ✅ |
 | 已完成（2026-07-31） | 浏览器矩阵验收：两模板 × 4 目标 × 全边界场景 + 五语言，88/88 全过，结论存档于 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)，可用 `node scripts/browser-matrix.mjs` 复现 | ✅ |
-| 待决策（产品） | Purchase Order 分页页数随引擎变化（500 行：Chromium 34 页 / Firefox 36 页）——接受并记录 / 给模板留余量 / 锁定确定性高度，三选一后才宜宣布 Production Ready | ⬜ |
+| 已完成（2026-07-31） | Purchase Order 跨引擎分页收敛：非行区 +16px 让 15 组合全部落到每页 14 行，复跑矩阵 22 个可比格子零分歧 | ✅ |
 | 长期 | E8 工程师工作流 → E9 分页引擎演进 → E10 发布治理 | ⬜ |
 
-里程碑对外状态（Pilot → Production Ready → Template Scale）沿用工程路线图的发布顺序表。**当前仍是 Production Pilot**：六项 P0 的代码硬门已齐、浏览器矩阵也已跑满并全过，但上表「待决策（产品）」那条未定；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
+里程碑对外状态（Pilot → Production Ready → Template Scale）沿用工程路线图的发布顺序表。**当前仍是 Production Pilot**：六项 P0 的代码硬门已齐、浏览器矩阵已跑满全过、跨引擎分页差异也已收敛。Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导——宣布前建议先在 Linux/Windows 上重跑一次矩阵（本次仅 macOS 单机执行，而同引擎跨操作系统已知存在度量差异，见 §2.1 第三条陷阱）。
 
 ---
 

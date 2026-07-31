@@ -50,7 +50,21 @@ ${PRINT_TYPOGRAPHY_CSS}
 #pf-mount .pfooter_logo,
 #pf-mount .pfooter_logo_processed { padding: 4px 0; }
 #pf-mount .pf-footer-logo { display: block; width: 72px; height: 24px; margin: 0 auto; object-fit: contain; }
-#pf-mount .pf-page-footer { padding: 6px 15px 12px; color: #69464d; font-size: var(--pf-font-minus-1); text-align: center; }
+/* padding-bottom is 28px, not 12px, ON PURPOSE — do not "tidy" it back.
+   Row height is exactly 42px in every engine, but the non-row blocks
+   (header + docinfo + row header + footers) measure 386.58-411.20px
+   depending on engine AND print locale — a 24.62px spread, 0.59 of a row.
+   That left 612.80-637.42px for rows, i.e. 14.59-15.18 rows, straddling the
+   15-row boundary: Chromium/WebKit fitted 15 in en-MY while Firefox fitted
+   14, and ja-JP flipped it the other way. A 500-row order came out 34 pages
+   on Chrome and 36 on Firefox.
+   Adding 16px to the non-row area moves the whole range below the boundary
+   so every engine x locale lands on 14 rows. 16 is the midpoint of the
+   valid window (7.42 < K <= 24.80), leaving ~8.6px of margin on both sides
+   rather than sitting on either cliff. Verified by scripts/browser-matrix.mjs;
+   see docs/BROWSER_MATRIX.zh-CN.md. Changing this value, the page height,
+   or any repeated block's height re-opens the question — re-run the matrix. */
+#pf-mount .pf-page-footer { padding: 6px 15px 28px; color: #69464d; font-size: var(--pf-font-minus-1); text-align: center; }
 @media print { body { background: #fff; } }
 `;
 
