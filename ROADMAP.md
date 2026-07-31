@@ -75,5 +75,6 @@
 |---|---|
 | P2 分页重构回归 ERP 旧行为 | 先落 2.1 的黄金样本断言，重构每步跑旧样本 |
 | SW 缓存导致"改了没生效"误判 | 已实现开发模式网络优先；部署版本号盖章缺失会构建失败 |
+| `sw.js` 手写 `APP_SHELL` 清单随新增文件漂移 | **2026-07-31 实例**：新增 `core/operation-schemas.js` 忘记同步清单，PWA 离线加载失败（新文件 import 离线 404），被 `e2e/studio-v2.spec.js` 的 PWA 离线用例当场抓到并修复。根治方案是[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) P3 的自动生成 precache manifest；在此之前，**新增 `studio-v2/` 下任何被 import 的模块必须同步加入 `APP_SHELL` 并跑一次 PWA 离线用例** |
 | v1/v2 双 Studio 长期并存的双倍维护 | v1 冻结纪律 + 文档明示"新需求一律进 v2" |
 | 无 LICENSE（P3 前对外分发受限） | 保持现状声明（PROJECT_OVERVIEW 已写明），P3 处理 |

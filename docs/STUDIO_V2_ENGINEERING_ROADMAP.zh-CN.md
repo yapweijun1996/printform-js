@@ -14,7 +14,7 @@
 
 目标：Agent 看到、批准和提交的是同一份真实分页候选项目。
 
-1. 为所有命令执行共享 JSON Schema 校验，operations 改为 discriminated union。
+1. ✅ 已实现（2026-07-31）：`operations[]` 按 `type` 判别联合校验（`core/operation-schemas.js`，复用 `core/schema.js` 引擎），已知类型的缺字段/多字段/类型错误统一 `INVALID_OPERATION_SHAPE`；命令执行层的共享 JSON Schema 校验（`preview_changes`/`apply_changes` 之外的其他工具入参）仍未覆盖。
 2. ✅ 已实现（2026-07-31，commit `1bc63d7`）：永不复用的 revision counter；undo 后提交产生新 revision identity。
 3. 在隐藏 sandbox iframe 中渲染 candidate，不复用当前草稿的 RenderReport。
 4. `preview_changes` 返回 `previewId`、candidate hash、语义 diff、场景报告和过期时间。

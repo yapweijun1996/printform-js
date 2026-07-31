@@ -88,6 +88,7 @@
 | 原型污染防护 | `setJsonPath` 拒绝 `__proto__`/`constructor`/`prototype` 路径段 |
 | 乐观锁可靠性 | revision 用 `nextRevision` 单调计数器，undo 后不复用编号 |
 | 信任不可只翻 flag | 「重置信任」物理剥离 script/事件属性/javascript: URL；`validateProject` 从内容重推导可执行标记；themeCss `</style>` 逃逸会降级信任并在序列化时转义 |
+| operations 判别联合校验 | `core/operation-schemas.js` 按 `operation.type` 分派 schema，复用 `core/schema.js` 校验引擎；已知类型的缺字段/多字段/类型错误在任何变更执行前统一拦截（`INVALID_OPERATION_SHAPE`），未知类型仍走既有 `UNSUPPORTED_OPERATION` |
 
 ### 4.3 Agent 可观测性（Current）
 

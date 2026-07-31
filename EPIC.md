@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-07-31（对齐待提交的 PR 模板 + 黄金分页样本批次）。
+> 最后核对：2026-07-31（对齐待提交的 operations schema 校验批次）。
 
 | # | Epic | 状态 | 说明 / 证据 |
 |---|---|---|---|
@@ -11,7 +11,7 @@
 | E3 | 构建/脚本健壮化 | ✅ | serve-site 防崩、SW 占位符断言、v2 校验器区分未签名与被篡改（`ebd5d20`） |
 | E4 | Studio v2 安全闭环（第一批） | ✅ | 预览消息防伪造、opener 切断、原型污染防护、单调 revision、信任物理剥离（`1bc63d7`）；对应路线图 P0-A #2 与 P0-B #1 的 iframe 身份部分 |
 | E5 | Agent / 开发者可观测性 | 🔶 | 已完成：WebMCP 标准注册、元素级 issues、质量门可点击、开发模式 SW 网络优先（`53d4a52`）、预览问题元素红框 overlay（`1dc2856`）。待办：Apply 前 diff 面板 |
-| E6 | P0-A 事务闭环（Agent Contract 2.0） | 🔶 | 已完成：单调 revision。待办：operations discriminated union schema 校验、候选项目隔离 iframe 真实分页 dry-run、preview receipt 原子提交 |
+| E6 | P0-A 事务闭环（Agent Contract 2.0） | 🔶 | 已完成：单调 revision（`1bc63d7`）、operations 判别联合 schema 校验（待提交）。待办：候选项目隔离 iframe 真实分页 dry-run、preview receipt 原子提交 |
 | E7 | P0-B 信任闭环（证据体系） | 🔶 | 已完成：`event.source` 目标 iframe 校验、元素级越界/对比度定位。待办：nonce + candidate hash、Studio 签发截图证据、行级 identity 与内容完整性证明、双 runtime 完整 attestation |
 | E8 | P1 工程师结构化工作流 | ⬜ | 语义面板（Branding/Page/Columns/Locale）、semantic diff drawer、高层语义工具（`set_column_widths` 等） |
 | E9 | P2 分页引擎演进 | ⬜ | PaginationSession、结构化 trace、性能预算（100 行 <2s、500 行 <5s）；硬约束：v1 ERP DOM 行为不变 |

@@ -17,6 +17,17 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(stale.error.code).toBe("REVISION_CONFLICT");
   });
 
+  it("surfaces a stable INVALID_OPERATION_SHAPE error through apply_changes for a malformed operation, leaving the draft untouched", async () => {
+    const bus = new CommandBus(createSalesInvoiceProject());
+    const result = await bus.execute("apply_changes", {
+      expectedRevision: 0,
+      operations: [{ type: "set_manifest_value", path: "/title", value: "x", notAField: true }]
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe("INVALID_OPERATION_SHAPE");
+    expect(bus.revision).toBe(0);
+  });
+
   it("never exposes sample row values in summary or inspection", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
     const summary = await bus.execute("get_project_summary");

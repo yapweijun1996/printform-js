@@ -14,7 +14,7 @@ const APP_SHELL = [
   "./ui/locales/en.js", "./ui/locales/zh.js", "./ui/locales/ms.js", "./ui/locales/ja.js", "./ui/locales/vi.js",
   "./adapters/gateway.js", "./adapters/webmcp.js",
   "./core/constants.js", "./core/json.js", "./core/schema.js", "./core/binding.js", "./core/typography.js", "./core/i18n.js", "./core/business-rules.js",
-  "./core/acceptance.js", "./core/project-model.js", "./core/operations.js",
+  "./core/acceptance.js", "./core/project-model.js", "./core/operations.js", "./core/operation-schemas.js",
   "./core/history.js", "./core/command-bus.js", "./core/tool-contracts.js",
   "./core/sample-scenarios.js", "./core/migrations.js", "./core/assets.js", "./core/exporter.js",
   "./core/layout-review.js", "./core/logo-placeholder.js",

@@ -66,6 +66,7 @@
 - 写命令必须带 `expectedRevision`；revision 单调递增、undo 不复用；过期写入返回 `REVISION_CONFLICT`。
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
+- `operations[]` 中每个元素按 `type` 做判别联合校验（[studio-v2/core/operation-schemas.js](studio-v2/core/operation-schemas.js)，复用 core/schema.js 的受限 JSON Schema 引擎）：已知类型缺字段/多字段/字段类型错误一律 `INVALID_OPERATION_SHAPE`（附首个错误的 path+message）；未知 `type` 仍是 `UNSUPPORTED_OPERATION`。校验先于任何变更执行，失败时草稿不落盘、revision 不推进。
 - 布局审查：`begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 findings/evidence，major/critical open 阻断）；任何 mutation 使审查与渲染报告失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
 

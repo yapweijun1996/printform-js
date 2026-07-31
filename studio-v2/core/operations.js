@@ -1,5 +1,7 @@
 import { TRUST } from "./constants.js";
 import { cloneJson, parseJson, stableStringify } from "./json.js";
+import { validateData } from "./schema.js";
+import { OPERATION_SCHEMAS } from "./operation-schemas.js";
 
 export function cloneProject(project) {
   return {
@@ -50,8 +52,29 @@ function setJsonPath(target, path, value) {
   cursor[parts.at(-1)] = value;
 }
 
+// Validates one operation against its discriminated-union shape before any
+// mutation runs, so a malformed operation (missing field, wrong type, or an
+// extra field a client made up) fails with one stable code/path instead of
+// an ad-hoc DOM exception or a silently wrong write partway through
+// applyOperation's dispatch chain. Unknown `type` values are intentionally
+// left to the existing UNSUPPORTED_OPERATION branch below — this only
+// covers types that already have a documented, known shape.
+function validateOperationShape(operation) {
+  const schema = OPERATION_SCHEMAS[operation.type];
+  if (!schema) return;
+  const report = validateData(schema, operation);
+  if (!report.valid) {
+    const first = report.errors[0];
+    const error = new Error(`Invalid ${operation.type} operation${first ? ` at ${first.path}: ${first.message}` : ""}`);
+    error.code = "INVALID_OPERATION_SHAPE";
+    error.details = report.errors;
+    throw error;
+  }
+}
+
 function applyOperation(project, operation) {
   if (!operation || typeof operation !== "object") throw Object.assign(new Error("Operation must be an object"), { code: "INVALID_OPERATION" });
+  validateOperationShape(operation);
   if (operation.type === "set_manifest_value") setJsonPath(project.manifest, operation.path, cloneJson(operation.value));
   else if (operation.type === "replace_manifest") project.manifest = cloneJson(operation.value);
   else if (operation.type === "replace_schema") project.schema = cloneJson(operation.value);

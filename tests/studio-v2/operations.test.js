@@ -50,6 +50,62 @@ describe("themeCss </style> breakout demotes trust", () => {
   });
 });
 
+describe("operation shape validation (discriminated union by type)", () => {
+  it("rejects an extra field a client made up, for a known operation type", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [
+      { type: "set_manifest_value", path: "/title", value: "x", bogusExtraField: 1 }
+    ])).toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+
+  it("rejects a known operation type missing a required field", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_manifest_value", path: "/title" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+    expect(() => applyOperations(project, [{ type: "set_asset_slot", slot: "logo" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+
+  it("rejects a field with the wrong JSON type instead of coercing it", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_manifest_value", path: 123, value: "x" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+    expect(() => applyOperations(project, [{ type: "replace_theme", value: { not: "a string" } }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+
+  it("rejects an asset slot name that does not match the documented pattern", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_asset_slot", slot: "Not-Valid!", source: "/x.png" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+
+  it("still reports an entirely unknown operation type as UNSUPPORTED_OPERATION, not a shape error", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "delete_everything", value: 1 }]))
+      .toThrowError(expect.objectContaining({ code: "UNSUPPORTED_OPERATION" }));
+  });
+
+  it("accepts a well-formed set_text operation and applies it", () => {
+    const project = createEmptyProject();
+    const candidate = applyOperations(project, [{ type: "set_text", selector: "h1", value: "New Title" }]);
+    expect(candidate.templateHtml).toContain("New Title");
+  });
+
+  it("rejects set_attribute missing its required name field", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{ type: "set_attribute", selector: "h1", value: "x" }]))
+      .toThrowError(expect.objectContaining({ code: "INVALID_OPERATION_SHAPE" }));
+  });
+
+  it("accepts set_attribute with a null value (existing remove-attribute behavior)", () => {
+    const project = createEmptyProject();
+    project.templateHtml = '<div class="printform"><h1 data-pf-text="/title" title="x"></h1></div>';
+    const candidate = applyOperations(project, [{ type: "set_attribute", selector: "h1", name: "title", value: null }]);
+    expect(candidate.templateHtml).not.toContain("title=");
+  });
+});
+
 describe("sanitizeExecutableContent", () => {
   it("strips <script>, on* handlers and javascript: URLs from the template", () => {
     const dirty = {
