@@ -114,6 +114,10 @@ PrintForm.js 识别以下区块类型:
 
 | 我想... | 查看文档 |
 |---------|---------|
+| **了解架构设计与决策** | [DESIGN.md](DESIGN.md) |
+| **查行为规格 / 契约** | [SPEC.md](SPEC.md) |
+| **看史诗与任务状态** | [EPIC.md](EPIC.md) · [TASK.md](TASK.md) |
+| **看路线图与维护策略** | [ROADMAP.md](ROADMAP.md) |
 | **快速开始使用** | [QUICK_START.md](QUICK_START.md) |
 | **完整使用指南** | [docs/USAGE_GUIDE.zh-CN.md](docs/USAGE_GUIDE.zh-CN.md) |
 | **了解代码结构** | [CODE_STRUCTURE.md](CODE_STRUCTURE.md) |
@@ -189,5 +193,5 @@ data-n-up="2"
 
 ---
 
-**最后更新:** 2026-07-30
+**最后更新:** 2026-07-31
 **版本:** 0.0.0

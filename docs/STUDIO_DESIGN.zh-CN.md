@@ -5,6 +5,11 @@
 > Studio v2 请从 [v2 文档索引](STUDIO_V2_INDEX.zh-CN.md) 开始阅读。
 > 状态: v1.3 (Phase 1、Phase 2、Phase 3 均已实现并验证;验收标准见对应章节;ERP 对接见 [ERP_INTEGRATION.zh-CN.md](ERP_INTEGRATION.zh-CN.md))
 > 日期: 2026-07-19
+>
+> **2026-07-31 冻结后加固（commit `ebd5d20`，行为与本文差异处以代码为准）：**
+> ① 结构模式改为加载**原始模板**（占位符可见、不做示例数据渲染），保证区块索引与编辑目标一致、`{{ }}` 绑定不被编辑破坏；
+> ② bridge 消息校验 `event.origin`，日志级别白名单化；③ mustache-lite 转义补 `'`/`` ` ``，不配对 section 显式报错；
+> ④ 行数滑块在 `blocks-ready` 前禁用；⑤ 打印预览不再注入 bridge 脚本。
 > 前置阅读: [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md), [docs/CONFIGURATION.md](CONFIGURATION.md)
 
 ---

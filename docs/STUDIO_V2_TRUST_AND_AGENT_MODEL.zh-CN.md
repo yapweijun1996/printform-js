@@ -13,19 +13,22 @@
 ## Current：已实现
 
 - Trusted 文件限制 executable script，并通过内容/runtime hash 检查受支持结构。
-- 任意自定义 script 会将项目降级为 `Untrusted`。
-- Preview 使用无同源、无网络权限的 sandbox iframe。
-- UI、WebMCP 与 CDP 适配器共用命令总线与 revision 检查。
-- 当前 revision 的浏览器 RenderReport 和 AI review receipt 会影响导出 readiness。
+- 任意自定义 script（含模板 `<script`、主题 `</style` 逃逸）会将项目降级为 `Untrusted`；`validateProject` 会从内容独立重推导可执行标记，不只信存储的 flag。
+- 「重置信任」会物理剥离 script 元素、`on*` 事件属性与 `javascript:` URL，而不是只翻回 flag（2026-07-31）。
+- Preview 使用无同源、无网络权限的 sandbox iframe；预览消息仅在 `event.source` 等于该 iframe 的 `contentWindow` 时受理，伪造的渲染报告无法清除导出门禁（2026-07-31）。
+- 打印预览拒绝 `Untrusted` 项目，并在导航 blob URL 前切断 `window.opener`（2026-07-31）。
+- revision 使用永不复用的单调编号；undo 后提交产生新编号，过期 `expectedRevision` 稳定返回 `REVISION_CONFLICT`（2026-07-31）。
+- `set_manifest_value` 拒绝 `__proto__`/`constructor`/`prototype` 路径段，防止原型污染放宽资产策略（2026-07-31）。
+- UI、WebMCP 与 CDP 适配器共用命令总线与 revision 检查；WebMCP 注册在标准位置 `navigator.modelContext`（兼容 `registerTool` 与 `provideContext`）。
+- 当前 revision 的浏览器 RenderReport（含元素级 issues：selector、页码、坐标）和 AI review receipt 会影响导出 readiness。
 - 最终生产导出需要工程师在 UI 中确认。
 
 ## Current：Pilot 限制
 
 - `preview_changes` 尚未在隔离 iframe 中真实分页候选项目。
 - `apply_changes` 尚未要求 Studio 签发的 preview receipt。
-- undo 后可能重新使用旧 revision 数字。
 - 当前 review evidence 是 Agent 提交的标签，不是 Studio 保存并签发的截图证据。
-- Preview 消息尚未同时绑定目标 iframe、一次性 nonce、revision 与 candidate hash。
+- Preview 消息已绑定目标 iframe（`event.source`），但尚未绑定一次性 nonce 与 candidate hash。
 - 当前 attestation 与布局指标不足以证明两段 runtime 完整性，以及内容无遗漏、乱序和重叠。
 
 因此 Current 状态只能称为 Production Pilot。

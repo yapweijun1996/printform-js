@@ -36,6 +36,9 @@
 | UI/WebMCP/CDP 命令面 | Current | 共用命令总线，但当前仍是 Agent Contract 1.x |
 | 五语言打印内容与 Studio UI | Current | `en-MY`、`zh-CN`、`ms-MY`、`ja-JP`、`vi-VN` |
 | 人工生产导出确认 | Current | AI/MCP 不能代替最终点击 |
+| 单调 revision（undo 不复用） | Current | 2026-07-31 落地；过期写入稳定返回 `REVISION_CONFLICT` |
+| 预览消息目标 iframe 校验 | Current | `event.source === contentWindow`；nonce 与 candidate hash 仍为 Target |
+| 元素级布局诊断 | Current | 渲染报告 issues 带页内 selector、页码与坐标，经 `validate_project` 暴露 |
 | 候选项目真实分页 dry-run | Target | 当前 dry-run 只做内存变更、静态验证与摘要 diff |
 | Studio 签发的截图证据 | Target | 当前 review receipt 依赖 Agent 提交的文字声明 |
 | 双 runtime 完整证明 | Target | 当前证明范围尚未覆盖完整 Production Ready 要求 |
@@ -46,11 +49,11 @@
 Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。只有以下六项全部完成，才可将状态改为 Production Ready：
 
 1. 候选项目在隔离浏览器中执行真实分页 dry-run。
-2. revision 永不复用，写操作使用有效 preview receipt 原子提交。
+2. revision 永不复用（✅ 2026-07-31 已实现），写操作使用有效 preview receipt 原子提交（未实现）。
 3. Studio 签发场景报告与截图证据，Agent 不能自我声明证据。
-4. Preview 消息验证目标 iframe、一次性 nonce、revision 与 candidate hash。
+4. Preview 消息验证目标 iframe（✅ 2026-07-31 已实现）、一次性 nonce、revision 与 candidate hash（后两者未实现）。
 5. Attestation 覆盖两段 runtime、CSP、内容与真实浏览器凭证。
-6. 自动检查内容数量、顺序、重复、遗漏、重叠、越界与重复区完整性。
+6. 自动检查内容数量、顺序、重复、遗漏、重叠、越界与重复区完整性（越界/对比度已有元素级定位，其余未实现）。
 
 这些硬门不得通过人工勾选绕过。自定义脚本仍可作为 `Untrusted` 草稿人工导出，但不能获得生产有效凭证。
 

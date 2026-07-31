@@ -15,7 +15,7 @@
 目标：Agent 看到、批准和提交的是同一份真实分页候选项目。
 
 1. 为所有命令执行共享 JSON Schema 校验，operations 改为 discriminated union。
-2. 引入永不复用的 revision counter；undo 生成新的 revision identity。
+2. ✅ 已实现（2026-07-31，commit `1bc63d7`）：永不复用的 revision counter；undo 后提交产生新 revision identity。
 3. 在隐藏 sandbox iframe 中渲染 candidate，不复用当前草稿的 RenderReport。
 4. `preview_changes` 返回 `previewId`、candidate hash、语义 diff、场景报告和过期时间。
 5. `apply_changes` 只消费有效 preview receipt，不接受新 operations。
@@ -32,7 +32,7 @@
 
 目标：生产导出依赖真实、可追溯、不可自我声明的浏览器证据。
 
-1. Preview channel 加入目标 frame、nonce、revision 与 candidate hash 验证。
+1. Preview channel 加入目标 frame（✅ 2026-07-31 已实现 `event.source` 校验）、nonce、revision 与 candidate hash 验证（nonce 与 hash 未实现）。
 2. Studio 捕获场景截图和 RenderReport，并签发 Evidence Receipt。
 3. `complete_layout_review` 改为引用 evidence IDs。
 4. 为业务行和关键区块增加稳定 identity，验证数量、顺序、重复与遗漏。

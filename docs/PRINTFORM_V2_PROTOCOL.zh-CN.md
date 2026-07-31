@@ -41,6 +41,8 @@ await PrintFormDocument.render(data, options)
 
 失败返回 `status: "blocked"`，不会保留部分成功状态。生产上限默认是 10 MB、500 行和100个逻辑页。
 
+渲染结果（`printform:rendered` 事件 detail）除 `status`、`validation`、`metrics` 外还包含 `issues[]`（2026-07-31 起）：每个越界/对比度问题元素的 `{ code, pageIndex, selector, rect, text? }`，每类上限 20 条，供 Agent 与 Studio 无截图定位问题。
+
 ## Trust
 
 - 受信文件只能包含两个固定 executable script：`pf-document-runtime` 和 `pf-printform-runtime`。

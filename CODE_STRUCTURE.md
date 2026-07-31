@@ -6,7 +6,7 @@
 
 ## 🗂️ 顶层结构一览
 
-`src/` 源代码、`docs/` 文档、`scripts/` 构建脚本、`tests/` 单元测试、`dist/` 构建输出(不进 git)、`index*.html` 演示页面、`studio/` 可视化调参工具(独立静态工具,不依赖构建,详见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md))。完整文件树见 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)。
+`src/` 源代码、`docs/` 文档、`scripts/` 构建脚本、`tests/` 单元测试(含 `tests/studio-v2/`)、`dist/` 构建输出(不进 git)、`index*.html` 演示页面、`studio/` 可视化调参工具(**已冻结**,独立静态工具,详见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md))、`studio-v2/` Production Pilot 单 HTML 工作室(core/ui/adapters/samples 分层,详见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 与 [DESIGN.md](DESIGN.md))。完整文件树见 [docs/code-structure/FILE_MAP.md](docs/code-structure/FILE_MAP.md)。
 
 ---
 
