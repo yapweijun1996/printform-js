@@ -12,6 +12,14 @@ import { expect, test } from "@playwright/test";
 // numbers, update the expected arrays in the same commit as the change and
 // say why in the commit message — don't loosen the assertions to "greater
 // than 0".
+//
+// Cross-engine caveat (learned the hard way — this file turned CI red for
+// three commits): an exact row-per-page split is a font-metric-dependent
+// quantity. It was captured on Chromium and asserted for all three engines,
+// which Chromium and WebKit happened to satisfy but Firefox did not. Where a
+// document sits near a page-boundary threshold, pin the exact split to the
+// Chromium reference and assert engine-independent invariants (totals,
+// placement) everywhere — see delivery_order_test below.
 
 test("demo001 (45-row ERP sales invoice + PTAC): fixed page count, item rows on pages 1-2, PTAC terms on pages 3-7", async ({ page }) => {
   await page.goto("/demo001.html");
@@ -27,19 +35,37 @@ test("demo001 (45-row ERP sales invoice + PTAC): fixed page count, item rows on 
   expect(perPage.reduce((sum, entry) => sum + entry.ptac, 0)).toBe(17);
 });
 
-test("delivery_order_test (PTAC+PADDT combination): PADDT segments render after every regular footer, on their own trailing pages", async ({ page }) => {
+test("delivery_order_test (PTAC+PADDT combination): PADDT segments render after every regular footer, on their own trailing pages", async ({ page, browserName }) => {
   await page.goto("/delivery_order_test.html");
   const pages = page.locator(".printform_page");
   await expect(pages).toHaveCount(4, { timeout: 15_000 });
   const rowsPerPage = await pages.evaluateAll((nodes) => nodes.map((node) => node.querySelectorAll(".prowitem_processed").length));
-  expect(rowsPerPage).toEqual([17, 21, 10, 0]);
   const ptacPerPage = await pages.evaluateAll((nodes) => nodes.map((node) => node.querySelectorAll(".ptac-rowitem_processed").length));
   const paddtPerPage = await pages.evaluateAll((nodes) => nodes.map((node) => node.querySelectorAll(".paddt-rowitem_processed").length));
+
+  // Engine-independent invariants — these held identically on Chromium,
+  // Firefox and WebKit when measured, and are what actually matters:
+  // nothing is dropped, and each content type lands where the architecture
+  // requires.
+  expect(rowsPerPage.reduce((sum, count) => sum + count, 0)).toBe(48);
+  expect(rowsPerPage[3]).toBe(0);
   expect(ptacPerPage).toEqual([3, 0, 0, 0]);
   // PADDT is architecturally required to start a fresh physical page after
   // ALL regular footers on every prior page — it must never share a page
   // with prowitem/ptac content or appear before the final footer.
   expect(paddtPerPage).toEqual([0, 0, 0, 4]);
+
+  // The exact split is pinned to the Chromium reference only. This document
+  // sits right on a page-boundary threshold, so where the break falls is a
+  // function of font metrics: measured Chromium [17,21,10,0], WebKit
+  // [17,21,10,0], but Firefox [15,20,13,0] on macOS and [16,20,12,0] on CI's
+  // Linux. Per-engine golden numbers would therefore be flaky too — it varies
+  // by HOST, not just by engine. ROADMAP P3 says the same thing as policy:
+  // keep per-browser baselines, never assert cross-engine pixel identity.
+  // (demo001 and index015 below do agree on all three engines, so they keep
+  // their unconditional assertions — this is the one document that doesn't.)
+  test.skip(browserName !== "chromium", "Exact page split is font-metric dependent; invariants above cover every engine");
+  expect(rowsPerPage).toEqual([17, 21, 10, 0]);
 });
 
 test("index015 (2-up A5-on-A4): logical/physical page split stays 2-per-sheet with a partial final sheet", async ({ page }) => {
