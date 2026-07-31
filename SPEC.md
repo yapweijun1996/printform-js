@@ -2,7 +2,7 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-07-31（对齐 `f4ca539`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+> 最后核对：2026-07-31（对齐 `bda0379`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
 
 ---
 
