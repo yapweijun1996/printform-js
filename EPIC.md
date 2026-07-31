@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-07-31（对齐 `d2fe47a`；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板；成熟度仍是 Production Pilot——见 E7 说明）。
+> 最后核对：2026-07-31（对齐 `1bb53aa`（含 `94f2c7e` 修复 e2e flake）；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板；成熟度仍是 Production Pilot——见 E7 说明）。
 
 | # | Epic | 状态 | 说明 / 证据 |
 |---|---|---|---|
