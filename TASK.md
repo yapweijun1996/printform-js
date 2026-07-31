@@ -52,13 +52,14 @@
 
 > 这两组是 Production Ready 的硬门（见 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md) 成熟度规则），体量大、涉及信任模型的破坏性契约变更（Agent Contract 2.0 不保留 1.x 写路径）。#12–14 互相耦合，必须作为一组一起交付，不能拆开合并。每项落地都要浏览器实测 + 全量测试，不与其他任务混批。
 
+> **#12 设计已于 2026-07-31 定稿**（用户拍板：复用现有可见预览 iframe，否决"新开隐藏 iframe"方案），完整设计见 [DESIGN.md §4.4](DESIGN.md)。原 #15（nonce）已并入 #12 一起交付，不再单独排期——跨 iframe reload 的请求令牌排序机制天然满足"拒绝非本次预览消息"的需求。
+
 | # | 任务 | Epic | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| 12 | P0-A：候选项目在隐藏 sandbox iframe 中真实渲染（不复用当前草稿的 RenderReport）——`preview_changes` 内部序列化 candidate 为独立 HTML，注入隐藏 iframe，等待其自身 `printform:rendered`，取代当前"仅静态校验、不分页"的 `validation(candidate)` | E6 | 无（可先做，且可以是内部实现改进，不必立刻改变对外契约形状）**——但会把 `CommandBus.preview()` 从环境无关同步纯函数变成依赖真实 DOM/iframe/postMessage 的重量级异步操作，500 行样本渲染约 1 秒，可能拖慢每次编辑防抖触发的 preview_changes；是否复用现有可见预览 iframe 而非新开隐藏一个，是需要用户拍板的性能/架构权衡，不建议在没有对齐的情况下直接动手** | 对一个会导致真实溢出/换页数变化的 operations 调用 `preview_changes`，返回的 validation 反映**真实分页结果**而非仅 schema/业务规则；现有 175 单测与 23 e2e 不回归 |
-| 13 | P0-A：`preview_changes` 返回 `previewId`/`candidateHash`/`scenarioReports`（含 default 与 long-text）/`expiresAt`；`apply_changes` 改为只消费有效 previewId+hash，不再接受新 operations | E6 | #12 | 路线图 P0-A 退出条件：stale/过期/hash 不符/未知 operation 都有稳定错误码；default 与 long-text 场景报告绑定同一 candidate hash；这是 Agent Contract 2.0 的破坏性核心，UI/WebMCP/CDP 必须同一提交内切换 |
+| 12 | P0-A：候选项目在**复用的可见预览 iframe**中真实渲染（不新开隐藏 iframe，不复用当前草稿的 RenderReport）——`CommandBus` 依赖注入可选的 `renderCandidate(project, revision)` 异步渲染器（无 DOM 环境下保持现状静态校验，零回归）；`app.js` 用 `renderPreview()`/`listenForPreview()` 实现；新增跨 iframe reload 的单调请求 token，只采纳最新一次请求的 `printform:rendered` 回执（原 #15 nonce 需求由此满足，并入本项）；候选渲染期间人类会在预览面板看到"正在预览未提交的候选内容"提示 | E6 | 无（设计已定稿，可直接开始实现） | 对一个会导致真实溢出/换页数变化的 operations 调用 `preview_changes`，返回的 validation 反映**真实分页结果**而非仅 schema/业务规则；渲染超时/失败返回 `RENDER_FAILED` 而不挂起；人类编辑触发的既有 `schedulePreview()` 防抖流程与 Agent 触发的候选渲染共享同一 token 排序，互不产生脏读；现有 175 单测与 23 e2e 不回归 |
+| 13 | P0-A：`preview_changes` 用 `sha256(stableStringify(candidate))`（复用 `core/json.js`）算 `candidateHash`，按 hash 缓存真实 render report（内存级短 TTL）；`apply_changes` 命中缓存直接复用报告提交（跳过重复渲染），未命中则退化为内联渲染后再提交；`previewId`/`scenarioReports`（含 default 与 long-text）/`expiresAt` 等契约字段细节在实现时确定 | E6 | #12 | 路线图 P0-A 退出条件：stale/过期/hash 不符/未知 operation 都有稳定错误码；default 与 long-text 场景报告绑定同一 candidate hash；这是 Agent Contract 2.0 的破坏性核心，UI/WebMCP/CDP 必须同一提交内切换 |
 | 14 | P0-A：Agent Contract 2.0 切换——`get_capabilities` contract version 升级，旧 1.x 写命令返回升级提示而非静默兼容 | E6 | #12、#13 | 路线图"契约升级"条款；WebMCP/CDP/UI 三者对同一输入行为一致 |
-| 15 | P0-B：Preview bridge 加一次性 nonce（配合 #12 的隔离 iframe），阻止非本次预览的消息被接受 | E7 | #12 | 伪造/重放的 nonce 一律拒绝；与 2026-07-31 已有的 `event.source` 校验叠加，不替代 |
-| 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用隔离 iframe）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
+| 18 | P0-B：Studio 签发截图 Evidence Receipt（`evidenceId`/`screenshotHash`/`renderReportHash` 等），`complete_layout_review` 改为只接受 evidenceIds，不再接受 Agent 自述标签 | E7 | #12（复用同一预览 iframe）、需要截图能力（当前代码库无任何屏幕捕获基础设施，是全新能力） | 路线图 P0-B 退出条件：Agent 伪造 evidence 标签必须被拒绝 |
 | 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前只有 runtime/content hash，无"真实浏览器测过"的证明） | E7 | #18 | 路线图"完整性与证明"条款 |
 
 ## 🚧 阻塞
@@ -67,7 +68,9 @@
 
 ## 📌 下一步（建议顺序）
 
-TASK.md 中低风险、独立的项目已全部做完（#1–7、#10、#11、#16、#17 均已提交）。剩余 #12–15、#18–19 全部与 P0-A 的隔离 iframe 真实渲染直接或间接相关：
+TASK.md 中低风险、独立的项目已全部做完（#1–7、#10、#11、#16、#17 均已提交）。#12 的架构方向已由用户拍板（复用可见 iframe）并完成设计（[DESIGN.md §4.4](DESIGN.md)），原 #15 已并入 #12：
 
-1. **#12 需要用户先对齐性能/架构取舍**再动手——不建议在没有明确"接受这个性能代价"或"先设计好复用现有预览 iframe 的方案"之前就写代码，因为这会实质性改变 Studio 编辑循环的响应速度，是产品体验决策而非纯技术细节。
-2. #13/#14（契约破坏性切换）、#15（nonce）、#18/#19（截图证据体系，全新基础设施）都依赖或跟随 #12，暂不安排，等 #12 的方向定了再排期。
+1. **#12 可以直接开始实现**：`CommandBus` 加 `renderCandidate` 依赖注入 + 跨 iframe reload 的请求 token 排序 + `app.js` 接入真实渲染器。这是一次会改变 `preview_changes`/`apply_changes` 对外行为（从同步静态校验变成可等待真实渲染）的改动，落地后需要用真实浏览器场景验证"人类编辑防抖"与"Agent 候选预览"共享同一 iframe 不产生脏读或闪烁。
+2. #13（candidateHash 缓存 + apply 快/慢路径）紧跟 #12，两者建议在同一批次交付（设计上高度耦合，拆开合并意义不大）。
+3. #14（契约版本切换）在 #12/#13 落地且经浏览器验证后再做。
+4. #18/#19（截图证据体系，全新基础设施）仍排在最后，暂不安排。
