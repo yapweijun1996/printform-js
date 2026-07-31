@@ -93,6 +93,7 @@
 
 - 渲染报告带元素级 `issues[]`：`{ code, pageIndex, selector(页内 CSS 路径), rect, text }`，每类上限 20 条；经 `validate_project` 与 `begin_layout_review` 暴露。
 - 校验错误路径统一段前缀（`/schema/...`、`/sampleData/...`），UI 据此做可点击跳转，Agent 据此路由修复。
+- 预览面板复用同一份 `issues[]`：bridge 在渲染 iframe 内用 `selector` 实时重新测量并画红框（非 postMessage 传坐标，避免滚动/缩放导致的坐标漂移），父页通过 `postMessage` 指令切换开关，不触发重渲染。
 - 注意：`core/acceptance.js` 会打进 `dist/printform-document.js`，改动后必须 `npm run build:assets` 才对预览生效。
 
 ### 4.4 尚未实现（Target，勿当作已有）

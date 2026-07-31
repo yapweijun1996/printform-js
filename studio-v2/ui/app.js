@@ -9,7 +9,7 @@ import { sanitizeExecutableContent } from "../core/operations.js";
 import { installWebMcpAdapter } from "../adapters/webmcp.js";
 import { clearRecoveryDraft, loadRecoveryDraft, saveRecoveryDraft } from "./draft-cache.js";
 import { downloadHtml, readHtmlFile, saveHtmlWithPicker } from "./file-io.js";
-import { listenForPreview, renderPreview } from "./preview.js";
+import { listenForPreview, renderPreview, setPreviewOverlayEnabled } from "./preview.js";
 import { currentUiLocale, initUiI18n, setUiLocale, t } from "./ui-i18n.js";
 import { renderDataPolicy, renderMetrics, renderQualityView, renderStatus, renderWebMcpStatus, refreshStatusText } from "./status-view.js";
 
@@ -21,6 +21,7 @@ const editors = {
 let bus;
 let webMcp;
 let previewTimer;
+let overlayEnabled = true;
 let dirty = false;
 let activeSampleKey = sampleDocumentKey();
 let fingerprint = createSampleDocument(activeSampleKey).manifest.documentId;
@@ -55,7 +56,7 @@ function schedulePreview() {
   renderQuality(bus.readiness());
   renderStatus("status.rendering", "pending");
   previewTimer = setTimeout(async () => {
-    try { await renderPreview($("#preview-frame"), bus.project, bus.revision); }
+    try { await renderPreview($("#preview-frame"), bus.project, bus.revision, overlayEnabled); }
     catch (error) {
       renderStatus("status.failed", "blocked");
       toast(error.message);
@@ -249,6 +250,10 @@ function bindUi() {
   $("#real-data-mode").addEventListener("change", (event) => { renderDataPolicy(event.target.checked); if (event.target.checked) clearRecoveryDraft(); });
   window.addEventListener("printform:ui-locale", refreshLocalizedUi);
   window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
+  $("#overlay-toggle").addEventListener("change", (event) => {
+    overlayEnabled = event.target.checked;
+    setPreviewOverlayEnabled($("#preview-frame"), overlayEnabled);
+  });
 }
 
 function setupRecovery() {

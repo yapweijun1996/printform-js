@@ -13,6 +13,7 @@ export default {
   "section.template": "Template HTML", "section.sample": "Synthetic sample data", "editor.manifestJson": "Manifest JSON", "editor.schemaJson": "JSON Schema",
   "editor.translationsJson": "Translations JSON", "editor.themeCss": "Theme CSS", "editor.templateHtml": "Template HTML", "editor.sampleJson": "Sample data JSON", "preview.title": "Isolated preview",
   "preview.subtitle": "No same-origin permission · network blocked · shared export runtime", "preview.iframeTitle": "PrintForm isolated print preview",
+  "preview.overlayToggle": "Highlight issues",
   "status.waiting": "Waiting to render", "status.rendering": "Rendering", "status.failed": "Preview failed", "status.ready": "Printable", "status.blocked": "Blocked",
   "inspector.aria": "Validation and agent status", "inspector.quality": "Quality gate", "inspector.agent": "Agent connection", "inspector.contract": "Command contract",
   "inspector.webmcp": "WebMCP", "inspector.cdp": "CDP Gateway", "inspector.exposed": "Exposed", "inspector.review": "AI layout review",
