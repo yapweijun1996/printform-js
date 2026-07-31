@@ -318,6 +318,19 @@ test("requires a human confirmation and downloads one trusted HTML", async ({ pa
   expect(html).toContain('id="pf-document-runtime"');
   expect(html).toContain('Content-Security-Policy');
   expect(new TextEncoder().encode(html).byteLength).toBeLessThan(10 * 1024 * 1024);
+
+  // P0-B #19: the shipped attestation must cover BOTH runtimes and the CSP
+  // allowlist, and must name only the browser that really issued this
+  // session's layout evidence — not a hardcoded three-engine claim.
+  const attestation = JSON.parse(html.match(/<script id="pf-attestation" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  expect(attestation.runtimeHash).toEqual(expect.any(String));
+  expect(attestation.printformRuntimeHash).toEqual(expect.any(String));
+  expect(attestation.printformRuntimeHash).not.toBe(attestation.runtimeHash);
+  expect(attestation.cspScriptHashes).toHaveLength(2);
+  attestation.cspScriptHashes.forEach((hash) => expect(html).toContain(`'${hash}'`));
+  expect(attestation.browsers).toHaveLength(1);
+  expect(attestation.browsers[0].name).toEqual(expect.any(String));
+  expect(attestation.layoutReview.evidence).toHaveLength(2);
   const standalone = await context.newPage();
   await standalone.goto(`data:text/html;base64,${Buffer.from(html).toString("base64")}`);
   await expect(standalone.locator("html")).toHaveAttribute("data-printform-status", "ready", { timeout: 20_000 });

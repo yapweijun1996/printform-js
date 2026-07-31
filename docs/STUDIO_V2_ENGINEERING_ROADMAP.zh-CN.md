@@ -38,15 +38,15 @@
 3. ✅ 已实现（2026-07-31）：`complete_layout_review` 只接受 `evidenceIds`，旧式自述标签一律拒绝（Agent Contract 2.0.0 唯一的破坏性变更）。
 4. ✅ 已实现（2026-07-31）：`binding.js` 给每个 `data-pf-each` 展开行打 `data-pf-row-index`（源数组下标，穿过整个分页流程不丢失）；`inspectRenderedDocument` 用它做 `ROW_COUNT_MISMATCH`（数量）、`ROW_DUPLICATE_INDEX`（重复）、`ROW_MISSING_INDEX`（遗漏）、`ROW_ORDER_MISMATCH`（顺序）四项检查，无标记的旧版导出文档自动跳过不误报。数量/顺序/重复/遗漏四项均已覆盖。
 5. 🔶 部分实现（2026-07-31）：`data-repeat-header`/`data-repeat-docinfo` 为"y"时每页必须携带对应 `_processed` 区块（`HEADER_MISSING`/`DOCINFO_MISSING`）；页面直接子元素间的纵向矩形重叠检测（`SECTION_OVERLAP`）。越界已由既有 `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW` 覆盖。尚未覆盖：footer（重复语义与 header/docinfo 不同，"仅最后页出现一次"需要另外建模，未做）。
-6. Attestation 覆盖两段 runtime、CSP、内容与实际浏览器 receipt。
+6. ✅ 已实现（2026-07-31，TASK.md #19）：attestation 新增 `printformRuntimeHash`（此前只覆盖 document runtime，换掉分页引擎不会被发现）与 `cspScriptHashes`；`browsers` 改为从 #18 的 evidence receipt 推导（此前硬编码 `["Chromium","Firefox","WebKit"]` 写进每一份导出，无论实际在哪运行）。`verifyImportedProject` 与 `validate:v2` 同步校验第二段 runtime，用独立错误码 `PRINTFORM_RUNTIME_HASH_MISMATCH` 与 document runtime 区分。**fail-closed 后果**：本次之前导出的文件不含新字段，重新导入会降级 Untrusted。
 7. `request_export` 汇总所有 blocker，最终点击仍只允许工程师执行。
 
 退出条件：
 
-- Agent 伪造 evidence 标签、其他 frame 伪造消息或修改任一 runtime 都会阻断。
-- Sales Invoice 与 Purchase Order 在四浏览器通过空值、1、45、100、500 行、长文本和多语言场景。
-- 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确。
-- 六项 P0 全部完成后，才将文档状态改为 Production Ready。
+- ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
+- ⬜ Sales Invoice 与 Purchase Order 在四浏览器通过空值、1、45、100、500 行、长文本和多语言场景——**这是发布流程验收，不是代码改动能单独达成的**：现有 e2e 覆盖三引擎（Chromium/Firefox/WebKit）与两模板的边界行数，尚未系统性跑满"四浏览器 × 全场景"矩阵并留存结论。
+- ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，但上面的浏览器矩阵验收条款未达成，因此文档状态**仍为 Production Pilot**，不改 Production Ready。
 
 ## P1：工程师工作流
 

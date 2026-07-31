@@ -140,6 +140,16 @@
 
 **契约破坏**:这是 Agent Contract 2.0.0 唯一的破坏性变更。旧式 `evidence`/`browser`/`scenarios` 字段**即使同时附了有效 receipt 也拒绝**——留着旧路径等于 Agent 仍可自证,#18 的安全目标会归零,不破就没有意义。这与 #14 当时选择不破并不矛盾:#14 时信任目标已由候选真实渲染以非破坏方式达成,而这里没有非破坏的达成路径。
 
+### 4.7 双 runtime attestation（Current，2026-07-31 落地，TASK.md #19）
+
+导出的 trusted 文件内嵌两段可执行 script:document runtime(`pf-document-runtime`)与分页引擎(`pf-printform-runtime`)。此前 `createAttestation` **只哈希前者**——把 `printform.js` 换成一个改过的构建,attestation 依然显示"pass",导入依然 Trusted,没有任何检查会发现。#19 补上 `printformRuntimeHash`,并另存 `cspScriptHashes`(导出 CSP 里 `script-src` 允许的两个 sha256,让校验方能确认策略没被放宽成 `unsafe-inline`)。
+
+两段 runtime 用**不同错误码**(`RUNTIME_HASH_MISMATCH` / `PRINTFORM_RUNTIME_HASH_MISMATCH`)——"换掉分页引擎"和"换掉文档运行时"是两种不同的篡改故事,合并成一个码会让排查时分不清;而且本次之前的存量导出恰好会触发后者,独立错误码让"旧文件"和"被动手脚"至少在信息上可区分。
+
+`browsers` 字段从硬编码 `["Chromium","Firefox","WebKit"]` 改为**由 #18 的 evidence receipt 推导**。旧行为是每一份导出都声称在三个引擎里验证过,不管它实际在哪导出——正是信任模型明令禁止的自我声明。未经审查的导出现在诚实地留空数组;跨引擎覆盖由 CI 的 Playwright 三引擎矩阵背书,不写进每份文件。
+
+**这是 fail-closed 破坏**(范围内已确认):2026-07-31 之前导出的文件不含 `printformRuntimeHash`,重新导入会降级 Untrusted。站内两个试点样本每次构建都重签,不受影响。
+
 ---
 
 ## 5. 构建与部署

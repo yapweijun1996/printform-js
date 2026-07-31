@@ -23,12 +23,16 @@ try {
   if (!globalThis.crypto) Object.defineProperty(globalThis, "crypto", { value: dom.window.crypto });
   const project = parseProjectHtml(html);
   const validation = validateProject(project, { htmlBytes: Buffer.byteLength(html) });
-  const documentRuntime = new JSDOM(html).window.document.getElementById("pf-document-runtime");
+  const exportedDoc = new JSDOM(html).window.document;
+  const documentRuntime = exportedDoc.getElementById("pf-document-runtime");
+  const printformRuntime = exportedDoc.getElementById("pf-printform-runtime");
   const actualRuntimeHash = documentRuntime ? await sha256(documentRuntime.textContent) : "";
+  const actualPrintformRuntimeHash = printformRuntime ? await sha256(printformRuntime.textContent) : "";
   const actualContentHash = await sha256(canonicalProjectContent(project));
   const attestation = {
     present: Boolean(project.attestation),
     runtimeHashValid: Boolean(project.attestation) && project.attestation.runtimeHash === actualRuntimeHash && project.runtime?.hash === actualRuntimeHash,
+    printformRuntimeHashValid: Boolean(project.attestation) && project.attestation.printformRuntimeHash === actualPrintformRuntimeHash,
     contentHashValid: Boolean(project.attestation) && project.attestation.contentHash === actualContentHash
   };
   if (!attestation.present) {
@@ -37,7 +41,11 @@ try {
     // corruption indistinguishable from a legacy/hand-authored export.
     validation.errors.push({ code: "ATTESTATION_MISSING", path: "/attestation", message: "Document carries no attestation (unsigned export)", severity: "error" });
   } else {
-    if (!attestation.runtimeHashValid) validation.errors.push({ code: "RUNTIME_HASH_MISMATCH", path: "/runtime", message: "Embedded runtime does not match its attestation", severity: "error" });
+    if (!attestation.runtimeHashValid) validation.errors.push({ code: "RUNTIME_HASH_MISMATCH", path: "/runtime", message: "Embedded document runtime does not match its attestation", severity: "error" });
+    // Separate code from the document runtime: a swapped pagination engine and
+    // a swapped document runtime are different tampering stories, and exports
+    // predating printformRuntimeHash trip this one specifically.
+    if (!attestation.printformRuntimeHashValid) validation.errors.push({ code: "PRINTFORM_RUNTIME_HASH_MISMATCH", path: "/runtime", message: "Embedded PrintForm pagination runtime does not match its attestation (or the export predates dual-runtime attestation)", severity: "error" });
     if (!attestation.contentHashValid) validation.errors.push({ code: "CONTENT_HASH_MISMATCH", path: "/attestation", message: "Document content changed after validation", severity: "error" });
   }
   validation.valid = validation.errors.length === 0;

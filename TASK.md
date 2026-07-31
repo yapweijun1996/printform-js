@@ -48,24 +48,29 @@
 
 | P0-B #18：Studio 签发布局验收证据 + Agent Contract 2.0.0——新增第 16 个工具 `capture_layout_evidence`（把场景渲染成未提交候选并签发 receipt，不推进 revision）；`inspectRenderedDocument` 输出 `pageGeometry`（每页直接子元素 class + 页内相对整数矩形，无业务文本）；`complete_layout_review` 改为只接受 `evidenceIds`，旧式 `evidence`/`browser`/`scenarios` 自述字段一律拒绝 | （待提交） | **证据形态经 grilling 确认为几何指纹而非像素截图**：沙箱 iframe 不透明 origin 让父页读不到 DOM，像素只能走 foreignObject→canvas（canvas 污染风险 + 保真缺陷 + 单张数 MB + 真实数据模式下像素即业务数据，与隐私策略冲突），而"防 Agent 伪造"的目标由给 Studio 自己的测量结果签名即完整达成。9 个新/改单测（layout-review.test.js 重写为 10 个：正向通过、旧式拒绝、伪造 id 拒绝、场景不全拒绝、mutation 失效、指纹按场景不同、渲染不干净不签发但返回原因、无渲染器 `EVIDENCE_UNAVAILABLE`、捕获不推进 revision）+ 1 个新 e2e；193 单测 + 25 E2E 全绿。**浏览器实测**：真实签发 default/long-text 两张 receipt（指纹确实不同、revision 保持 0、browser 正确识别为 Chromium 148），旧式自述字段被拒 `EVIDENCE_RECEIPT_REQUIRED`、伪造 id 被拒 `EVIDENCE_UNKNOWN`、只给 default 被拒 `REVIEW_SCENARIOS_REQUIRED`、齐全后审查通过且 `request_export` ready；随后 mutation 一次，确认 receipt store 被清空（旧 id 报 `EVIDENCE_UNKNOWN`）、导出重新被 `LAYOUT_REVIEW_REQUIRED` 阻断；全程控制台零报错。**顺带修复**：`agent-setup.json` 的 `verification.expectedCommandContractVersion` 在 #14 那次漏改（仍是 1.1.0），会让照此引导的 Agent 拒绝一个完全正确的 Studio——已新增一个单测把版本号/工具数从代码推导校验，四处手工副本不再靠人记；`mcp-server.test.js` 的工具数硬编码也改为从 `TOOL_CONTRACTS.length` 推导。**另修一个既有 e2e 竞态**（非本次引入，但被新测试加重的并行负载暴露）：`studio-v1.spec.js` 用 `#status-a` 的 `/\d/` 当渲染完成信号，会匹配上一个模板遗留的状态甚至 "0 页"，导致在 iframe 重载间隙数到 0 页；改为直接等待 `.printform_page` 可见，修复前 3 次全量跑挂 1 次，修复后连跑 4 次全绿 |
 
+| P0-B #19：Attestation 补全——新增 `printformRuntimeHash`（此前只哈希 document runtime，换掉分页引擎不会被任何检查发现）与 `cspScriptHashes`；`browsers` 从硬编码 `["Chromium","Firefox","WebKit"]` 改为由 #18 的 evidence receipt 推导（无审查的导出为空数组，诚实留空）；`verifyImportedProject` 与 `validate:v2` 同步校验第二段 runtime，用独立错误码 `PRINTFORM_RUNTIME_HASH_MISMATCH` 与 document runtime 区分 | （待提交） | 3 个新单测（双 runtime + CSP hash 写入且与实际 CSP 一致、篡改分页引擎只触发 `PRINTFORM_RUNTIME_HASH_MISMATCH` 而非 document runtime 的、browsers 有/无审查两种取值）+ e2e 下载用例新增 attestation 断言（双 hash 不同、cspScriptHashes 与文档 CSP 匹配、browsers 恰好一个、layoutReview 含 2 张 evidence）。**CLI 实测**：重新构建后两个试点样本 `validate:v2` 全过（`printformRuntimeHashValid: true`）；往 `pf-printform-runtime` 注入一行代码后，只报 `PRINTFORM_RUNTIME_HASH_MISMATCH`（document runtime 与 content hash 仍 valid，证明错误码分离有效），退出码 1，干净文件退出码 0。196 单测 + 25 E2E 全绿。**已知 fail-closed 破坏**（范围内已确认）：本次之前导出的文件不含 `printformRuntimeHash`，重新导入降级 Untrusted |
+
 ## 🔄 进行中
 
 （无）
 
-## ⬜ 待办（P0-B 剩余一项）
+## ⬜ 待办
 
-> P0-A 已全部完成（#12/#13/#14）；P0-B 只剩 #19。
+**六项 P0 硬门的代码部分已全部完成**（#12–14、#16–19）。TASK.md 当前没有已排期的待办项。
 
-| # | 任务 | Epic | 依赖 | 验收标准 |
-|---|---|---|---|---|
-| 19 | P0-B：Attestation 覆盖两段 runtime + CSP + 内容 + 真实浏览器 receipt（当前 `createAttestation` 只哈希 document runtime，printform.js 的 hash 缺失；`browsers` 硬编码 `["Chromium","Firefox","WebKit"]`，无论实际在哪导出都这么声称——正是信任文档明令禁止的） | E7 | #18（已完成，提供真实浏览器 receipt 数据源） | 路线图"完整性与证明"条款；`browsers` 改为从 #18 的 receipt 推导；`verifyImportedProject` + `validate:v2` 同步校验双 runtime hash。**注意是 fail-closed 破坏**：旧版导出文件缺新字段，重新导入会降级 Untrusted（站内两个试点样本构建时重签不受影响，只影响用户手里的存量导出） |
+下一步的候选方向（均未开始、未确认范围，需要时再单独对齐）：
+
+- **路线图 P0-B 的发布流程退出条件**：Sales Invoice 与 Purchase Order 在四浏览器跑满空值/1/45/100/500 行/长文本/多语言矩阵并留存结论。这是唯一挡在 Production Ready 前面的事项，且**不是代码改动**——现有 e2e 覆盖三引擎与两模板边界行数，但没有系统性跑满该矩阵。
+- **P1 工程师工作流**（EPIC E8）：Branding/Page/Repeated areas/Table columns/Locale/Data contract 可视化编辑面板，目前 Raw JSON/CSS/HTML 编辑器仍是唯一入口。
+- **P2 分页引擎演进**（EPIC E9）：`PaginationSession`、结构化 trace、行高预测量缓存（大候选文档真实渲染耗时数十秒的根因）。
+- **P3 发布治理**（EPIC E10）：独立 SemVer、LICENSE、CHANGELOG、SW precache manifest 自动生成。
 
 ## 🚧 阻塞
 
 （当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用；新增 `studio-v2/` 下被 import 的文件必须同步 `sw.js` 的 `APP_SHELL`（已发生两次，PR 模板已加提醒）；jsdom 环境下手写脚本重建 window/performance 等全局对象会撞 `Performance.now()` brand-check 死循环，需要真实浏览器上下文验证时改用 Playwright 读取沙箱 iframe（CDP 能穿透 sandbox，页面自身 JS 不能）；**手动测试注入 CSS/属性时要用分页引擎处理后的 `_processed` class 名，不是模板原始 class**（本 session 在测试代码和手动验证脚本里各撞到一次）；**大候选文档（大行数+大字号）的真实渲染可能耗时数十秒**，候选渲染超时不能照搬"~1 秒"的乐观估计，30 秒宽松兜底只防真卡死，不是性能预算（P2/E9 的分页性能优化仍未开始）；**`npx playwright test` 直接跑时默认 `webServer` 服务的是 `site-dist/`（`build:site` 构建快照）而非 `studio-v2/`/`studio/`/`docs/`/`img/` 实时源码**——`npm run test:e2e`（CI 用的也是这条）有 `pretest:e2e` 钩子自动重建，不受影响；只有为了单独跑某条用例而直接执行 `npx playwright test` 才会踩这个坑，此时只跑 `build:assets` 不够，必须整跑一次 `npm run build:site`，否则 Playwright 测的是旧代码且不会有任何报错提示，只是行为对不上（已加入 PR 模板提醒范围内的"重新构建"提醒项）。）
 
-## 📌 下一步（建议顺序）
+## 📌 下一步
 
-只剩 #19（attestation 补全）。范围已在 #18 的 grilling 中一并确认（几何指纹证据、单会话浏览器声明、fail-closed 破坏可接受），可直接实现，无需再次对齐。
+P0-A 与 P0-B 的**代码硬门已全部完成**。**注意不要把这读成 Production Ready**：路线图 P0-B 退出条件还含"两模板 × 四浏览器 × 全边界场景通过"这一发布流程验收，不是代码改动能单独达成的，因此各文档的成熟度仍标 Production Pilot。
 
-**注意**：#19 完成后代码层 P0 六项硬门全齐，但**不要**据此把成熟度改成 Production Ready——路线图 P0-B 退出条件还含"两模板 × 四浏览器 × 全边界场景通过"这类发布流程验收，不是代码改动能单独达成的。
+见上方「待办」列出的四个候选方向（浏览器矩阵验收 / P1 面板 / P2 引擎 / P3 治理），都需要先对齐范围再动手。

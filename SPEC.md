@@ -55,7 +55,9 @@
 
 ### 3.2 信任规则
 
-- Trusted 条件：可执行 script 仅限两段白名单 runtime，且 attestation 的 runtime/content hash 全部匹配。
+- Trusted 条件：可执行 script 仅限两段白名单 runtime，且 attestation 的 hash 全部匹配——`runtimeHash`（document runtime）、`printformRuntimeHash`（分页引擎）、`contentHash`。两段 runtime 用不同错误码区分（`RUNTIME_HASH_MISMATCH` / `PRINTFORM_RUNTIME_HASH_MISMATCH`），因为"换掉分页引擎"和"换掉文档运行时"是两种不同的篡改。
+- attestation 另存 `cspScriptHashes`（导出 CSP 中 `script-src` 允许的两个 sha256）与 `browsers`——后者只列出本会话真正签发过布局证据的浏览器，未经审查的导出为空数组。**不是**固定写入三个引擎名（那是信任模型明令禁止的自我声明）。
+- **向后不兼容**：2026-07-31 之前导出的文件不含 `printformRuntimeHash`，重新导入会降级 `Untrusted`（fail-closed，非缺陷）。
 - 任何自定义 script、模板 `<script`、主题 `</style`/`<script` → 降级 `Untrusted`；untrusted 时 Agent 写命令被网关拒绝（`UNTRUSTED_READ_ONLY`）、打印预览拒绝、生产导出被 `UNTRUSTED_SCRIPT` 阻断。
 - 「重置信任」= 剥离可执行内容 + 重置 flag；validateProject 独立重扫内容（`EXECUTABLE_MARKUP_PRESENT`）。
 - CSP：trusted 导出用双 runtime sha256 hash；untrusted / 预览用 `unsafe-inline` 变体；`manifest.assets.allowExternalHttps` 在所有变体中同步打开 `img-src/font-src https:`。
@@ -108,7 +110,7 @@
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（193 个，37 文件） | `npm test -- --run` | 必须全绿 |
+| 单元测试（196 个，37 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
 | E2E（Playwright，25 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 16） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1）；**改动 `studio-v2`/`studio`/`docs`/`img` 后必须先 `npm run build:site` 再跑，Playwright 默认 `webServer` 服务的是 `site-dist/` 构建快照而非实时源码**（见 ROADMAP.md §2.1） |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |

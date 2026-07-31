@@ -77,38 +77,59 @@ export function canonicalProjectContent(project) {
   ].join("\n---printform-section---\n");
 }
 
-export async function createAttestation(project, validation, runtimeSource, runtimeVersion) {
+export async function createAttestation(project, validation, runtimeSource, runtimeVersion, options = {}) {
   const runtimeHash = await sha256(runtimeSource);
   const candidate = { ...project, runtime: { version: runtimeVersion, hash: runtimeHash } };
   return {
     protocolVersion: PROTOCOL_VERSION,
     runtimeVersion,
     runtimeHash,
+    // Second runtime: without this, swapping the pagination engine for a
+    // modified build left the attestation still "valid" — only the document
+    // runtime was ever covered.
+    printformRuntimeHash: options.printformRuntimeSource ? await sha256(options.printformRuntimeSource) : "",
+    // The CSP's script-src allowlist, so a verifier can tell that the policy
+    // shipped in the document still pins exactly these two runtimes and was
+    // not relaxed to unsafe-inline after signing.
+    cspScriptHashes: options.cspScriptHashes || [],
     contentHash: await sha256(canonicalProjectContent(candidate)),
     validatedAt: new Date().toISOString(),
     validator: "PrintForm Studio v2",
     result: validation.valid ? "pass" : "fail",
     summary: { errors: validation.errors.length, warnings: validation.warnings.length },
     layoutReview: validation.reviewReceipt || null,
-    browsers: ["Chromium", "Firefox", "WebKit"]
+    // Only browsers that actually issued a layout evidence receipt in this
+    // session. Previously hardcoded to all three engines regardless of where
+    // the export ran, which is exactly the self-declaration the trust model
+    // forbids; cross-engine coverage is asserted by CI's Playwright matrix,
+    // not by a claim baked into every file.
+    browsers: validation.reviewReceipt?.browsers || []
   };
 }
 
 export async function verifyImportedProject(project, html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const runtimeElement = doc.getElementById("pf-document-runtime");
+  const printformElement = doc.getElementById("pf-printform-runtime");
   const reasons = [];
   if (!runtimeElement) reasons.push("RUNTIME_MISSING");
+  if (!printformElement) reasons.push("PRINTFORM_RUNTIME_MISSING");
   const runtimeHash = runtimeElement ? await sha256(runtimeElement.textContent) : "";
+  const printformRuntimeHash = printformElement ? await sha256(printformElement.textContent) : "";
   const contentHash = await sha256(canonicalProjectContent(project));
   if (!project.attestation) reasons.push("ATTESTATION_MISSING");
   if (project.runtime?.hash !== runtimeHash || project.attestation?.runtimeHash !== runtimeHash) reasons.push("RUNTIME_HASH_MISMATCH");
+  // Distinct reason from RUNTIME_HASH_MISMATCH so "pagination engine was
+  // swapped" and "document runtime was swapped" stay diagnosable apart — and
+  // so exports predating this field (which carry no printformRuntimeHash at
+  // all) report something more useful than a generic runtime mismatch.
+  if (project.attestation && project.attestation.printformRuntimeHash !== printformRuntimeHash) reasons.push("PRINTFORM_RUNTIME_HASH_MISMATCH");
   if (project.attestation?.contentHash !== contentHash) reasons.push("CONTENT_HASH_MISMATCH");
   if ((project.customScripts || []).length) reasons.push("CUSTOM_SCRIPT_PRESENT");
   const trusted = reasons.length === 0;
   return {
     project: { ...project, trust: trusted ? TRUST.trusted : TRUST.untrusted, trustReasons: reasons },
-    verification: { trusted, reasons, runtimeHash, contentHash }
+    verification: { trusted, reasons, runtimeHash, printformRuntimeHash, contentHash }
   };
 }
 
@@ -130,11 +151,14 @@ export async function serializeStandalone(project, sources, validation, options 
   const inlinePrintformRuntime = `\n${escapeScript(sources.printform)}\n`;
   const runtimeHash = await sha256(inlineDocumentRuntime);
   const next = { ...project, runtime: { version: runtimeVersion, hash: runtimeHash } };
-  const attestation = await createAttestation(next, validation, inlineDocumentRuntime, runtimeVersion);
   const trusted = options.trusted !== false && project.trust !== TRUST.untrusted && validation.valid;
   const [documentHash, printformHash] = await Promise.all([
     sha256Base64(inlineDocumentRuntime), sha256Base64(inlinePrintformRuntime)
   ]);
+  const attestation = await createAttestation(next, validation, inlineDocumentRuntime, runtimeVersion, {
+    printformRuntimeSource: inlinePrintformRuntime,
+    cspScriptHashes: [`sha256-${documentHash}`, `sha256-${printformHash}`]
+  });
   // allowExternalHttps must open img/font in EVERY variant, or a project that
   // legitimately keeps an https logo can never reach a "ready" preview and is
   // permanently blocked from export despite the capability being declared.

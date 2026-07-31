@@ -29,9 +29,9 @@
 - ✅ 已解除（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时复用已渲染报告，未命中则内联真实渲染后再提交，不存在绕过真实渲染的提交路径。仍接受直接传 `operations[]`（经确认的非破坏性设计，信任目标已达成）。
 - ✅ 已解除（2026-07-31）：review evidence 改为 Studio 签发的 receipt，Agent 自述标签被拒（见下方《验收证据》）。
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
-- 当前 attestation 与布局指标不足以证明两段 runtime 完整性（TASK.md #19 未完成）。内容无遗漏、乱序、重叠已由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
+- ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-因此 Current 状态仍称 Production Pilot：代码层硬门只差 #19，但路线图 P0-B 退出条件还包含"两模板 × 四浏览器 × 全边界场景"这类发布流程验收，不是代码改动能单独达成的。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，但状态**仍为 Production Pilot**：路线图 P0-B 退出条件还包含"Sales Invoice 与 Purchase Order 在四浏览器通过全部边界场景"这一发布流程验收——现有 e2e 覆盖三引擎与两模板的边界行数，但没有系统跑满该矩阵并留存结论。这不是代码改动能单独达成的，因此不据此改成熟度。
 
 ## 数据隐私
 
@@ -94,13 +94,13 @@ revision 使用永不复用的单调编号。undo 创建新的 revision identity
 
 Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否停止发言。技术上强制的是：没有有效证据就不能取得 Production Ready 凭证或请求生产导出。
 
-## Target：完整性与证明
+## Current：完整性与证明（2026-07-31 实现）
 
-- Preview bridge 校验 `event.source`、目标 iframe、一次性 nonce、revision 和 candidate hash。
-- 每个业务行和关键区块具有稳定 identity。
-- RenderReport 比较输入与输出数量、顺序和 checksum，并检测重复、遗漏、重叠、越界和重复区缺失。
-- Attestation 覆盖 document runtime、PrintForm runtime、CSP script hash、权威内容 hash 与真实浏览器凭证。
-- 浏览器声明只能来自实际测试 receipt，不能由 Studio 固定写入全部浏览器名称。
+- ✅ Preview bridge 校验 `event.source`、目标 iframe、跨 iframe reload 存活的单调请求 token（等价于一次性 nonce）、revision；candidate hash 由 `preview_changes` 返回。
+- ✅ 每个业务行具有稳定 identity（`data-pf-row-index`，源数组下标，穿过整个分页流程不丢失）。
+- ✅ RenderReport 比较输入与输出数量、顺序，检测重复、遗漏、重叠、越界与重复区缺失。
+- ✅ Attestation 覆盖 document runtime hash、PrintForm runtime hash、CSP script hash 允许列表、权威内容 hash 与真实浏览器凭证（`layoutReview` 内嵌 evidence receipt 摘要）。修改任一 runtime 都会在导入与 `validate:v2` 时被拒，且两段 runtime 用不同错误码区分（`RUNTIME_HASH_MISMATCH` / `PRINTFORM_RUNTIME_HASH_MISMATCH`）。
+- ✅ 浏览器声明只来自实际签发过 evidence receipt 的会话；无审查的导出 `browsers` 为空数组（诚实留空，不虚报）。跨引擎覆盖由 CI 的 Playwright 三引擎矩阵背书，不写进每份文件。
 
 ## Trusted 与 Untrusted
 
