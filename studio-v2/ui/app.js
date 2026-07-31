@@ -1,3 +1,4 @@
+import { AGENT_CONTRACT_VERSION, STUDIO_VERSION } from "../core/constants.js";
 import { CommandBus } from "../core/command-bus.js";
 import { createStandaloneHtml, loadRuntimeSources } from "../core/exporter.js";
 import { parseProjectHtml, verifyImportedProject } from "../core/project-model.js";
@@ -450,7 +451,15 @@ async function openPrintPreview() {
 }
 
 function downloadDiagnostics() {
-  const payload = { generatedAt: new Date().toISOString(), studio: "2.0.0", protocol: bus.project.manifest.protocolVersion, revision: bus.revision, trust: bus.project.trust, validation: lastValidation, userAgent: navigator.userAgent };
+  // Each version is read from its own source of truth. `studio` used to be the
+  // literal "2.0.0" — the PROTOCOL version copied into a field describing the
+  // Studio, so every diagnostics bundle reported a Studio version that never
+  // existed. The pagination engine's version is deliberately NOT included: it
+  // lives in src/version.js, which build-site does not ship to site-dist, so
+  // importing it here would 404 in the deployed Studio — and copying the number
+  // into studio-v2 just to fill a diagnostics field would recreate exactly the
+  // duplicated-fact drift this change removes.
+  const payload = { generatedAt: new Date().toISOString(), studio: STUDIO_VERSION, agentContract: AGENT_CONTRACT_VERSION, protocol: bus.project.manifest.protocolVersion, revision: bus.revision, trust: bus.project.trust, validation: lastValidation, userAgent: navigator.userAgent };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a"); link.href = url; link.download = "printform-diagnostics.json"; link.click();

@@ -3,6 +3,7 @@
 import { DEFAULT_CONFIG, DEFAULT_PADDT_CONFIG, getPrintformConfig } from "./printform/config.js";
 import { DomHelpers } from "./printform/dom.js";
 import { PrintFormFormatter } from "./printform/formatter.js";
+import { PRINTFORM_VERSION } from "./version.js";
 
 // 检测是否为移动设备
 function isMobileDevice() {
@@ -107,6 +108,7 @@ function formatSinglePrintForm(formEl, overrides = {}) {
 }
 
 const api = {
+  version: PRINTFORM_VERSION,
   formatAll: formatAllPrintForms,
   format: formatSinglePrintForm,
   DEFAULT_CONFIG,
