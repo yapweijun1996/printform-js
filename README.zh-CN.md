@@ -13,6 +13,8 @@
 - 完整使用指南: [docs/USAGE_GUIDE.zh-CN.md](docs/USAGE_GUIDE.zh-CN.md)
 - 配置参考: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 - 代码结构: [CODE_STRUCTURE.md](CODE_STRUCTURE.md)
+- 变更记录: [CHANGELOG.md](CHANGELOG.md)（英文）
+- 许可协议: [LICENSE](LICENSE)（MIT）
 
 ### 🎨 PrintForm Studio —— 可视化调试工具
 

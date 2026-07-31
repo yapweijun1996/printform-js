@@ -77,7 +77,7 @@
 ## P3：发布治理
 
 - Protocol、PrintForm runtime 与 Studio 分别使用独立 SemVer。
-- 发布兼容矩阵、CHANGELOG、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT）
+- 发布兼容矩阵、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT；✅ [CHANGELOG.md](../CHANGELOG.md) 已于同日新增，Keep a Changelog 格式，`[Unreleased]` 一段——独立 SemVer 决策尚未做，暂无版本号可归档）
 - GitHub Release 附两个经过验证的自包含单 HTML 试点文件。
 - ✅ 已实现（2026-07-31）：构建过程生成 Service Worker precache manifest（`scripts/app-shell.mjs` 走产物目录），避免手工列表漂移。此前手写清单已漂移两次（新增模块忘记登记 → 离线时该模块 404），并且对比发现旧清单还漏了 `core/runtime.js`。
 - 每个浏览器维护独立截图/打印基线和容差，不比较跨引擎像素一致性。
