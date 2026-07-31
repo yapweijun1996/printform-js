@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐 `d968c5b`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
+> 最后核对：2026-07-31（对齐 `f79f8eb`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | 已完成（2026-07-31） | 全库审查 31 处修复/改进：核心 2、v1+脚本 9、v2 安全 16、agent/开发者 UX 4（commits `00e3b7f`、`ebd5d20`、`1bc63d7`、`53d4a52`） | ✅ |
 | 已完成（2026-07-31） | E5 收尾（预览红框 overlay `1dc2856`、diff 面板 `ebf3931`）+ E11 维护成本优化第一批 | ✅ |
-| 已完成（2026-07-31） | E6/E7：P0-A 事务闭环 + P0-B 信任闭环的**代码硬门**（`f4ca539`、`bda0379`、`1e6cb3e`、`d968c5b` 等） | ✅ |
+| 已完成（2026-07-31） | E6/E7：P0-A 事务闭环 + P0-B 信任闭环的**代码硬门**（`f4ca539`、`bda0379`、`1e6cb3e`、`f79f8eb` 等） | ✅ |
 | 待办（非代码） | Production Ready 的剩余退出条件：两模板 × 四浏览器 × 全边界场景矩阵验收并留存结论 | ⬜ |
 | 长期 | E8 工程师工作流 → E9 分页引擎演进 → E10 发布治理 | ⬜ |
 
@@ -39,6 +39,8 @@
 **顺带修复的测试基础设施缺陷**：Node 22+/25 内置的全局 `localStorage`（无 `--localstorage-file` 时是不可用的空对象桩）会遮蔽 vitest jsdom 环境本应提供的可用实现，导致任何触碰 `localStorage` 的测试在此 Node 版本下静默失败（`ui-i18n.test.js` 此前用文件内 `vi.stubGlobal` 单独绕过，其余文件未设防）。已加共享 `tests/setup/local-storage-polyfill.js`（纯内存 Storage 实现，按测试文件隔离）并在 `vite.config.js` 的 `test.setupFiles` 注册，后续任何新测试触碰 `localStorage`/`sessionStorage` 都自动受益，无需各自 workaround。
 
 **顺带发现的本地验证陷阱**：`playwright.config.js` 的 `webServer.reuseExistingServer` 在非 CI 环境下为 `true`——如果本机手动起了另一个服务器占用 4174 端口（例如用浏览器工具单独预览某个页面），Playwright 会静默复用那个服务器而不是自己管理的 `site-dist` 服务器。只依赖仓库根目录也存在的文件（`demo001.html` 等）的用例不受影响，但依赖 `site-dist` 专属产物（如两个试点导出 HTML）的用例会遇到假失败（404 页面被当成真实响应，断言超时）。**验证 e2e 前先确认没有手动服务器占用 4174**，或直接看失败信息里是不是内容像"Not found"页面。CI 环境不受影响（`reuseExistingServer` 在 CI 下强制为 `false`）。
+
+**第三个陷阱（2026-07-31 新发现，代价最大：让 CI 连红三个提交）**：`npx playwright test --project=chromium` 只跑一个引擎，而 CI 跑三个（Chromium/Firefox/WebKit）。本地长期只跑 Chromium 会让"全绿"这个说法比它听起来窄得多——本仓库出现过的具体后果是：`e2e/golden-pagination.spec.js` 的行分布黄金数字从 Chromium 抓取后被断言给全部三个引擎，Chromium 与 WebKit 恰好一致、Firefox 不一致，于是 `c081a91` 之后每一次 push 的 CI 都失败，而本地每次都绿。**根因是本机压根没装 Firefox/WebKit**（`npx playwright install firefox webkit`），所以从来没机会发现。规则：(1) 涉及**渲染结果**的断言，合并前必须跑一次不带 `--project` 的全量 `npm run test:e2e`；(2) 行分布/页数这类量是字体度量的函数，**连同一引擎跨操作系统都可能不同**（实测 Firefox 行分布 macOS 与 CI Linux 就不一样），所以精确数字只钉 Chromium 基准，跨引擎只断言不变量（总数守恒、区块落在正确页）——见 ROADMAP P3「每个浏览器维护独立基线，不比较跨引擎像素一致性」；(3) push 后顺手 `gh run list` 看一眼，别默认本地绿就等于 CI 绿。
 
 **第二个陷阱（2026-07-31 新发现，比端口冲突更隐蔽）**：`playwright.config.js` 的 `webServer.command` 是不带参数的 `node scripts/serve-site.mjs`，其默认根目录是 `site-dist/`——`npm run build:site` 生成的**构建快照**（对 `studio-v2/`/`studio/`/`docs/`/`img/` 做的是纯文件拷贝，不是符号链接）。这和 `.claude/launch.json` 显式传 `"."` 参数、直接服务仓库根目录实时源码的开发预览完全不同。`package.json` 的 `test:e2e` 脚本本身有 `pretest:e2e: npm run build:site` 钩子，所以**正常使用 `npm run test:e2e`（CI 也是这样跑的）不受影响**——踩坑的前提是像本 session 调试时那样为了单独跑某条用例、图快而直接执行 `npx playwright test`（跳过了 pretest 钩子）。只跑过 `npm run build:assets`（只重建 `dist/printform.js`/`dist/printform-document.js`）也不够，因为 `site-dist/studio-v2/` 是整个目录的纯拷贝，`build:assets` 不会碰它。**不会有任何报错或警告**，只是新功能的断言莫名其妙对不上（真实案例：P0-A #12 的 `candidateHash` 字段在直接服务源码根目录的浏览器里工作正常，但同一个用 `npx playwright test` 直接跑的 e2e 用例稳定复现 `undefined`——用独立脚本对比两种服务方式才定位到是 `site-dist/` 陈旧快照，不是代码回归）。**结论：本地要单独用 `npx playwright test` 而不是 `npm run test:e2e` 时，先手动跑一次 `npm run build:site`**；否则就用 `npm run test:e2e -- --project=chromium` 这类形式，让 pretest 钩子自动兜底。
 

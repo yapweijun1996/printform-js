@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `d968c5b`，197 个单测 + 25 个 E2E 全绿；**六项 P0 硬门的代码部分全部完成**（P0-A #12–14 + P0-B #16–19），原 #15 已并入 #12。成熟度仍是 Production Pilot——剩下的是浏览器矩阵发布验收，不是代码工作）。
+> 最后核对：2026-07-31（对齐 `f79f8eb`，197 个单测 + 25 个 E2E 全绿；**六项 P0 硬门的代码部分全部完成**（P0-A #12–14 + P0-B #16–19），原 #15 已并入 #12。成熟度仍是 Production Pilot——剩下的是浏览器矩阵发布验收，不是代码工作）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -50,7 +50,9 @@
 
 | P0-B #19：Attestation 补全——新增 `printformRuntimeHash`（此前只哈希 document runtime，换掉分页引擎不会被任何检查发现）与 `cspScriptHashes`；`browsers` 从硬编码 `["Chromium","Firefox","WebKit"]` 改为由 #18 的 evidence receipt 推导（无审查的导出为空数组，诚实留空）；`verifyImportedProject` 与 `validate:v2` 同步校验第二段 runtime，用独立错误码 `PRINTFORM_RUNTIME_HASH_MISMATCH` 与 document runtime 区分 | （待提交） | 3 个新单测（双 runtime + CSP hash 写入且与实际 CSP 一致、篡改分页引擎只触发 `PRINTFORM_RUNTIME_HASH_MISMATCH` 而非 document runtime 的、browsers 有/无审查两种取值）+ e2e 下载用例新增 attestation 断言（双 hash 不同、cspScriptHashes 与文档 CSP 匹配、browsers 恰好一个、layoutReview 含 2 张 evidence）。**CLI 实测**：重新构建后两个试点样本 `validate:v2` 全过（`printformRuntimeHashValid: true`）；往 `pf-printform-runtime` 注入一行代码后，只报 `PRINTFORM_RUNTIME_HASH_MISMATCH`（document runtime 与 content hash 仍 valid，证明错误码分离有效），退出码 1，干净文件退出码 0。196 单测 + 25 E2E 全绿。**已知 fail-closed 破坏**（范围内已确认）：本次之前导出的文件不含 `printformRuntimeHash`，重新导入降级 Untrusted |
 
-| 契约版本第五处副本：Agent 连接面板的「Command contract」在 `index.html` 里硬编码 `1.1.0`，跨过 1.2.0 与 2.0.0 两次升级都没改，面板显示的版本与 `get_capabilities` 实际返回的不一致 | `d968c5b` | 修法不是把数字改对，而是让它**发空值、启动时从 `AGENT_CONTRACT_VERSION` 填**——最坏情况留白，不会理直气壮显示错的。新增单测断言发布的 HTML 里该元素必须为空，字面量无法溜回来（延续 `1e6cb3e` 的守卫思路，不再写"下次记得改"的提醒）。**未动** `mcp/server.mjs` 的 `serverInfo.version`：那是 stdio 服务器自身实现版本，与契约版本是两个概念，数字只是碰巧相同。浏览器实测面板与 `get_capabilities` 均为 2.0.0；197 单测 + 25 E2E 全绿 |
+| 契约版本第五处副本：Agent 连接面板的「Command contract」在 `index.html` 里硬编码 `1.1.0`，跨过 1.2.0 与 2.0.0 两次升级都没改，面板显示的版本与 `get_capabilities` 实际返回的不一致 | `f79f8eb` | 修法不是把数字改对，而是让它**发空值、启动时从 `AGENT_CONTRACT_VERSION` 填**——最坏情况留白，不会理直气壮显示错的。新增单测断言发布的 HTML 里该元素必须为空，字面量无法溜回来（延续 `1e6cb3e` 的守卫思路，不再写"下次记得改"的提醒）。**未动** `mcp/server.mjs` 的 `serverInfo.version`：那是 stdio 服务器自身实现版本，与契约版本是两个概念，数字只是碰巧相同。浏览器实测面板与 `get_capabilities` 均为 2.0.0；197 单测 + 25 E2E 全绿 |
+
+| **CI 自 `c081a91` 起连红三个提交**：`golden-pagination.spec.js` 的行分布黄金数字从 Chromium 抓取却断言给全部三个引擎，Firefox 不一致（Chromium/WebKit `[17,21,10,0]`，Firefox macOS `[15,20,13,0]`、CI Linux `[16,20,12,0]`——同引擎跨 OS 都不同）。本地始终绿是因为**本机没装 Firefox/WebKit**，我一直只跑 `--project=chromium` | `f79f8eb` | 改法：跨引擎只断言不变量（总行数守恒 48、PADDT 页无数据行、ptac/paddt 落位数组——实测三引擎完全一致），精确分布用 `test.skip(browserName !== "chromium")` 只钉 Chromium 基准，与既有性能预算用例和 ROADMAP P3「不比较跨引擎像素一致性」一致。demo001 与 index015 三引擎确实一致，保持无条件断言不放松。装好 Firefox/WebKit 后本地跑全量三引擎：65 通过 / 10 跳过 / 0 失败。**教训已写入 ROADMAP §2.1 第三条陷阱**：涉及渲染结果的断言合并前必须跑不带 `--project` 的全量 e2e，push 后 `gh run list` 确认，别拿本地单引擎的绿当 CI 的绿 |
 
 ## 🔄 进行中
 
