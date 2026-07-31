@@ -18,9 +18,9 @@ who don't need the diary.
   Agent Contract command bus shared across the UI, WebMCP, and a CDP gateway —
   so AI agents and humans go through the same validated command path.
 - Studio v2 engineer panels: table column widths, print font scale, page
-  settings (paper size), and repeated-areas (header/footer/docinfo repeat
-  flags), all applying directly against the live preview with no raw-JSON
-  editing required.
+  settings (paper size), repeated-areas (header/footer/docinfo repeat
+  flags), and a brand heading color, all applying directly against the
+  live preview with no raw-JSON editing required.
 - Side-by-side diff review before applying a manual source edit, replacing a
   single-line `confirm()` dialog.
 - Studio-issued layout evidence receipts (geometric fingerprints, not pixel
@@ -31,6 +31,9 @@ who don't need the diary.
   and five print locales — plus an on-demand `workflow_dispatch` CI job to
   reproduce it on a Linux runner.
 - MIT license.
+- `npm run doctor`: a one-command local health check (unit tests, the
+  production build, and protocol validation for both pilot exports) with
+  a one-page pass/fail summary.
 
 ### Changed
 

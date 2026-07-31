@@ -2,7 +2,7 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐 `1bb53aa`（含 `94f2c7e` 修复 e2e flake））。
+> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐 `07b3947`）。
 
 ---
 

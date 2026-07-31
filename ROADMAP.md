@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐 `1bb53aa`（含 `94f2c7e` 修复 e2e flake）；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
+> 最后核对：2026-07-31（对齐 `07b3947`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -49,10 +49,9 @@
 
 ### 2.2 Debug 能力（降低排查成本）
 
-- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）。
+- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）、`npm run doctor`（一条命令跑单测+生产构建+两个试点 `validate:v2`，逐步实时输出 + 结尾一页 PASS/FAIL 汇总；刻意不含 e2e——那是 CI 每次 push 都跑的三引擎慢检查，doctor 是给"我这份工作树健不健康"的快速一问）。
 - 计划：
   1. v2 结构化 trace 事件替代 console 依赖（P2 前置项，先定义事件形状）。
-  2. `npm run doctor`：一条命令跑 测试 + build + validate:v2 两个试点，输出一页体检报告。
 
 ### 2.3 仓库形态收编（减少认知负担）
 
