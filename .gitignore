@@ -8,3 +8,4 @@ playwright-report/
 *.log
 coverage/
 /spike/
+browser-matrix-result.json

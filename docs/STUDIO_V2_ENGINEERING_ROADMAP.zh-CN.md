@@ -44,9 +44,9 @@
 退出条件：
 
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
-- ⬜ Sales Invoice 与 Purchase Order 在四浏览器通过空值、1、45、100、500 行、长文本和多语言场景——**这是发布流程验收，不是代码改动能单独达成的**：现有 e2e 覆盖三引擎（Chromium/Firefox/WebKit）与两模板的边界行数，尚未系统性跑满"四浏览器 × 全场景"矩阵并留存结论。
+- ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现一处待决策项**：Purchase Order 的分页位置与页数随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页），根因是该模板装满 15 行后仅剩 1.42px 余量，Firefox 的 docinfo+页脚高出约 2.56px 就掉到 14 行；功能无缺陷（零溢出零丢行），但是否接受属产品决策。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，但上面的浏览器矩阵验收条款未达成，因此文档状态**仍为 Production Pilot**，不改 Production Ready。
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收也已执行且全过。文档状态**仍暂记为 Production Pilot**：矩阵带出的 Purchase Order 跨引擎页数差异尚未决策（接受 / 给模板留余量 / 锁定确定性高度），Production Ready 是对外承诺，应由维护者在了解该差异后显式宣布，不由一次跑批的绿灯自动推导。
 
 ## P1：工程师工作流
 

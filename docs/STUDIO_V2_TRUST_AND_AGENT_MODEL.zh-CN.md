@@ -31,7 +31,7 @@
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-**六项 P0 的代码硬门已于 2026-07-31 全部完成**，但状态**仍为 Production Pilot**：路线图 P0-B 退出条件还包含"Sales Invoice 与 Purchase Order 在四浏览器通过全部边界场景"这一发布流程验收——现有 e2e 覆盖三引擎与两模板的边界行数，但没有系统跑满该矩阵并留存结论。这不是代码改动能单独达成的，因此不据此改成熟度。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。状态**仍暂记为 Production Pilot**：矩阵发现 Purchase Order 的分页页数随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页，功能无缺陷但打印张数不同），该差异是接受还是修复尚未决策；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
 
 ## 数据隐私
 
