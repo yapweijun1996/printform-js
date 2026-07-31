@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `8f0718b`，213 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板，仅剩 Branding/Data contract 待范围讨论。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，建议先在 Linux/Windows 重跑一次矩阵）。
+> 最后核对：2026-07-31（对齐 `af64b25`，213 个单测 + 三引擎 E2E 全绿（65 通过/10 跳过）；**六项 P0 硬门代码部分 + 浏览器矩阵验收（88/88）+ 跨引擎分页收敛均已完成**，原 #15 已并入 #12；P1 新增 Table columns + Print font scale + Page settings + Repeated areas 四个面板，仅剩 Branding/Data contract 待范围讨论；新增 CI `workflow_dispatch` 可在 Ubuntu runner 上按需跑浏览器矩阵，尚待实际触发出 Linux 数据。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -62,6 +62,8 @@
 
 | P1（部分）：Page settings + Repeated areas 面板——页面尺寸（`data-papersize-width/height`）与七个 repeat-* 标记（header/docinfo/rowheader/ptacRowheader/footer/footerLogo/footerPagenum）都只是 `.printform` 根元素上的 data-* 属性，**没有专属操作类型**，不像 set_column_widths/set_font_scale 那样；改为经通用 `set_attribute` 操作（每属性一条，同一 `apply_changes` 里打包多条，一次点击一次 revision）。新增 `core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 只读回两个标准模板实际用到的字段，不覆盖 `src/printform/config.js` 里更大的引擎级配置面（如 docinfo002-005、footer002-005、PADDT 专属配置等） | `8f0718b` | 7 个新单测（含"模板缺 papersize 属性返回 null 而非 0"——`Number(null)` 恰好是 finite 的 0，必须先 `hasAttribute` 再转数字，否则静默返回假数据；以及"模板没设的 flag 不猜引擎默认值，直接跳过"）；213 单测 + 65 E2E（10 跳过，1 次 Firefox 超时复测后确认是并行负载导致的既有 flake、非本次改动引入，已建 spawn_task 另行根查）全绿。**浏览器实测**：Sales Invoice 页高 1050→1200 后 `logicalPages` 从 3 变 2（45 行默认样本装进更少页，数值证据而非肉眼判断）；Footer 标记 关→开后面板正确读回 `true`；Restore 恢复草稿后两个面板都正确显示恢复后的值（非仅 revision 计数器）；切到 Purchase Order 模板（通过真实 `change` 事件，而非只设 DOM value——因为 `document-select` 的 change handler 有 `window.confirm` dirty-guard，自动化 `form_input` 设值不触发确认对话框会被脏检查静默复位）后两个面板正确显示该模板的真实值（750×1050、7 个 flag、7 列）；全程控制台零报错。**范围收敛**：Branding 配色（无现成 CSS 变量约定）与 Data contract 表单编辑器（无现成操作、量级堪比独立功能）经用户确认后未纳入本批，需要单独一轮范围讨论 |
 
+| A3（部分）：浏览器矩阵验收接入 CI，可在真实 Linux runner 上按需复现——新增 `.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，不进 push/PR 的快速通道，理由同 `scripts/browser-matrix.mjs` 自身注释：15–25 分钟不适合当每次提交的门槛）；跑 `npm ci` → 装 4 个浏览器目标（含 `chrome` channel，装不上时脚本自身已有 SKIP 逻辑不会让 job 炸）→ `npm run build:site` → `node scripts/browser-matrix.mjs` → 结果 JSON 存 90 天 artifact | `af64b25` | 本地 macOS 用 `--quick` 跑了一次 72/72 全过、零分歧（含 Purchase Order 全部 引擎 `[14,14,14,3]` 完全一致），确认 B1–B4 四个新面板没有破坏此前的跨引擎收敛修复（`4b0cdc1`）；YAML 用 `python3 -c "import yaml; yaml.safe_load(...)"` 校验语法通过。**诚实说明（本项未完成的部分）**：这只验证了 workflow 本身的自动化步骤在当前代码状态下是对的，**并未在真实 Linux 上执行过**——workflow 文件要先推到远程才能被 `workflow_dispatch` 触发，而 push 属于需要用户显式许可的操作，本次未做；真正的"Linux 已验证"结论要等这个 workflow 在 GitHub Actions 上实际跑完一次才成立，届时应回填 docs/BROWSER_MATRIX.zh-CN.md 与本行的 Linux 实测结果 |
+
 ## 🔄 进行中
 
 （无）
@@ -72,7 +74,7 @@
 
 ### 宣布 Production Ready 前建议补的一步（非阻塞）
 
-浏览器矩阵是**在 macOS 单机**跑的，而同一引擎跨操作系统已知存在度量差异（ROADMAP §2.1 第三条陷阱：Firefox 行分布在 macOS 与 CI 的 Linux 上就不同）。本次修复留了约 8.6px 双侧余量，按实测 24.62px 波动足以吸收，但**未在 Linux/Windows 实跑验证**。若要覆盖，在目标系统上重跑 `node scripts/browser-matrix.mjs` 即可。
+浏览器矩阵是**在 macOS 单机**跑的，而同一引擎跨操作系统已知存在度量差异（ROADMAP §2.1 第三条陷阱：Firefox 行分布在 macOS 与 CI 的 Linux 上就不同）。本次修复留了约 8.6px 双侧余量，按实测 24.62px 波动足以吸收，但**未在 Linux/Windows 实跑验证**。**推进中**：`.github/workflows/browser-matrix.yml`（`workflow_dispatch`）已就绪，可在 GitHub Actions 的 Ubuntu runner 上按需一键跑一次 Linux 矩阵——但需要先 push 到远程并手动触发（`gh workflow run browser-matrix.yml` 或网页 Actions 页面），本次会话未做（push 需用户显式许可）。Windows 仍无对应通道，仍需另行安排。
 
 ### 其他候选方向（均未开始、未确认范围）
 

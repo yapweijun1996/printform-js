@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐 `8f0718b`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
+> 最后核对：2026-07-31（对齐 `af64b25`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -17,7 +17,7 @@
 | 已完成（2026-07-31） | Purchase Order 跨引擎分页收敛：非行区 +16px 让 15 组合全部落到每页 14 行，复跑矩阵 22 个可比格子零分歧 | ✅ |
 | 长期 | E8 工程师工作流 → E9 分页引擎演进 → E10 发布治理 | ⬜ |
 
-里程碑对外状态（Pilot → Production Ready → Template Scale）沿用工程路线图的发布顺序表。**当前仍是 Production Pilot**：六项 P0 的代码硬门已齐、浏览器矩阵已跑满全过、跨引擎分页差异也已收敛。Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导——宣布前建议先在 Linux/Windows 上重跑一次矩阵（本次仅 macOS 单机执行，而同引擎跨操作系统已知存在度量差异，见 §2.1 第三条陷阱）。
+里程碑对外状态（Pilot → Production Ready → Template Scale）沿用工程路线图的发布顺序表。**当前仍是 Production Pilot**：六项 P0 的代码硬门已齐、浏览器矩阵已跑满全过、跨引擎分页差异也已收敛。Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导——宣布前建议先在 Linux/Windows 上重跑一次矩阵（本次仅 macOS 单机执行，而同引擎跨操作系统已知存在度量差异，见 §2.1 第三条陷阱）。**推进中**：`.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发）已就绪，可在 Ubuntu Actions runner 上按需复现，但需 push 后手动触发才能拿到真实 Linux 数据（本次未 push，push 需用户显式许可）；Windows 仍无对应通道。
 
 ---
 
