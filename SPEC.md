@@ -2,7 +2,7 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-07-31（对齐 `63513b2`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+> 最后核对：2026-07-31（对齐 `d968c5b`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
 
 ---
 
@@ -110,7 +110,7 @@
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（196 个，37 文件） | `npm test -- --run` | 必须全绿 |
+| 单元测试（197 个，37 文件） | `npm test -- --run` | 必须全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
 | E2E（Playwright，25 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 16） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1）；**改动 `studio-v2`/`studio`/`docs`/`img` 后必须先 `npm run build:site` 再跑，Playwright 默认 `webServer` 服务的是 `site-dist/` 构建快照而非实时源码**（见 ROADMAP.md §2.1） |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |

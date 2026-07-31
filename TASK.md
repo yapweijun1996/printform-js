@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `63513b2`，196 个单测 + 25 个 E2E 全绿；**六项 P0 硬门的代码部分全部完成**（P0-A #12–14 + P0-B #16–19），原 #15 已并入 #12。成熟度仍是 Production Pilot——剩下的是浏览器矩阵发布验收，不是代码工作）。
+> 最后核对：2026-07-31（对齐 `d968c5b`，197 个单测 + 25 个 E2E 全绿；**六项 P0 硬门的代码部分全部完成**（P0-A #12–14 + P0-B #16–19），原 #15 已并入 #12。成熟度仍是 Production Pilot——剩下的是浏览器矩阵发布验收，不是代码工作）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -49,6 +49,8 @@
 | P0-B #18：Studio 签发布局验收证据 + Agent Contract 2.0.0——新增第 16 个工具 `capture_layout_evidence`（把场景渲染成未提交候选并签发 receipt，不推进 revision）；`inspectRenderedDocument` 输出 `pageGeometry`（每页直接子元素 class + 页内相对整数矩形，无业务文本）；`complete_layout_review` 改为只接受 `evidenceIds`，旧式 `evidence`/`browser`/`scenarios` 自述字段一律拒绝 | （待提交） | **证据形态经 grilling 确认为几何指纹而非像素截图**：沙箱 iframe 不透明 origin 让父页读不到 DOM，像素只能走 foreignObject→canvas（canvas 污染风险 + 保真缺陷 + 单张数 MB + 真实数据模式下像素即业务数据，与隐私策略冲突），而"防 Agent 伪造"的目标由给 Studio 自己的测量结果签名即完整达成。9 个新/改单测（layout-review.test.js 重写为 10 个：正向通过、旧式拒绝、伪造 id 拒绝、场景不全拒绝、mutation 失效、指纹按场景不同、渲染不干净不签发但返回原因、无渲染器 `EVIDENCE_UNAVAILABLE`、捕获不推进 revision）+ 1 个新 e2e；193 单测 + 25 E2E 全绿。**浏览器实测**：真实签发 default/long-text 两张 receipt（指纹确实不同、revision 保持 0、browser 正确识别为 Chromium 148），旧式自述字段被拒 `EVIDENCE_RECEIPT_REQUIRED`、伪造 id 被拒 `EVIDENCE_UNKNOWN`、只给 default 被拒 `REVIEW_SCENARIOS_REQUIRED`、齐全后审查通过且 `request_export` ready；随后 mutation 一次，确认 receipt store 被清空（旧 id 报 `EVIDENCE_UNKNOWN`）、导出重新被 `LAYOUT_REVIEW_REQUIRED` 阻断；全程控制台零报错。**顺带修复**：`agent-setup.json` 的 `verification.expectedCommandContractVersion` 在 #14 那次漏改（仍是 1.1.0），会让照此引导的 Agent 拒绝一个完全正确的 Studio——已新增一个单测把版本号/工具数从代码推导校验，四处手工副本不再靠人记；`mcp-server.test.js` 的工具数硬编码也改为从 `TOOL_CONTRACTS.length` 推导。**另修一个既有 e2e 竞态**（非本次引入，但被新测试加重的并行负载暴露）：`studio-v1.spec.js` 用 `#status-a` 的 `/\d/` 当渲染完成信号，会匹配上一个模板遗留的状态甚至 "0 页"，导致在 iframe 重载间隙数到 0 页；改为直接等待 `.printform_page` 可见，修复前 3 次全量跑挂 1 次，修复后连跑 4 次全绿 |
 
 | P0-B #19：Attestation 补全——新增 `printformRuntimeHash`（此前只哈希 document runtime，换掉分页引擎不会被任何检查发现）与 `cspScriptHashes`；`browsers` 从硬编码 `["Chromium","Firefox","WebKit"]` 改为由 #18 的 evidence receipt 推导（无审查的导出为空数组，诚实留空）；`verifyImportedProject` 与 `validate:v2` 同步校验第二段 runtime，用独立错误码 `PRINTFORM_RUNTIME_HASH_MISMATCH` 与 document runtime 区分 | （待提交） | 3 个新单测（双 runtime + CSP hash 写入且与实际 CSP 一致、篡改分页引擎只触发 `PRINTFORM_RUNTIME_HASH_MISMATCH` 而非 document runtime 的、browsers 有/无审查两种取值）+ e2e 下载用例新增 attestation 断言（双 hash 不同、cspScriptHashes 与文档 CSP 匹配、browsers 恰好一个、layoutReview 含 2 张 evidence）。**CLI 实测**：重新构建后两个试点样本 `validate:v2` 全过（`printformRuntimeHashValid: true`）；往 `pf-printform-runtime` 注入一行代码后，只报 `PRINTFORM_RUNTIME_HASH_MISMATCH`（document runtime 与 content hash 仍 valid，证明错误码分离有效），退出码 1，干净文件退出码 0。196 单测 + 25 E2E 全绿。**已知 fail-closed 破坏**（范围内已确认）：本次之前导出的文件不含 `printformRuntimeHash`，重新导入降级 Untrusted |
+
+| 契约版本第五处副本：Agent 连接面板的「Command contract」在 `index.html` 里硬编码 `1.1.0`，跨过 1.2.0 与 2.0.0 两次升级都没改，面板显示的版本与 `get_capabilities` 实际返回的不一致 | `d968c5b` | 修法不是把数字改对，而是让它**发空值、启动时从 `AGENT_CONTRACT_VERSION` 填**——最坏情况留白，不会理直气壮显示错的。新增单测断言发布的 HTML 里该元素必须为空，字面量无法溜回来（延续 `1e6cb3e` 的守卫思路，不再写"下次记得改"的提醒）。**未动** `mcp/server.mjs` 的 `serverInfo.version`：那是 stdio 服务器自身实现版本，与契约版本是两个概念，数字只是碰巧相同。浏览器实测面板与 `get_capabilities` 均为 2.0.0；197 单测 + 25 E2E 全绿 |
 
 ## 🔄 进行中
 
