@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-07-31（对齐 `3699991`；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板；成熟度仍是 Production Pilot——见 E7 说明）。
+> 最后核对：2026-07-31（对齐 `4c50a35`；E1–E7 全部完成，六项 P0 代码硬门齐；E8 新增 Table columns + Print font scale + Page settings + Repeated areas + Branding 五个面板；成熟度仍是 Production Pilot——见 E7 说明）。
 
 | # | Epic | 状态 | 说明 / 证据 |
 |---|---|---|---|
@@ -14,6 +14,6 @@
 | E6 | P0-A 事务闭环 | ✅ | 单调 revision（`1bc63d7`）、operations 判别联合 schema 校验（`77d9722`）、候选项目在复用的可见预览 iframe 中真实渲染 + candidateHash 缓存（TASK.md #12+#13，含原 P0-B #15 nonce 需求，`f4ca539`）、Agent Contract 版本声明 1.1.0→1.2.0（TASK.md #14，`bda0379`，向后兼容的次版本升级，非路线图原设想的破坏性 2.0 两阶段提交切换——就此分歧征询用户后确认范围）。P0-A 六项全部完成 |
 | E7 | P0-B 信任闭环（证据体系） | ✅ | `event.source` 目标 iframe 校验、元素级越界/对比度定位、渲染内容数量+顺序+identity 完整性校验（`ROW_*` 四项）、重复区缺失+重叠检测（`535c58c`）、Studio 签发布局证据 receipt + Agent Contract 2.0.0（#18，`1e6cb3e`，证据形态经确认为几何指纹而非像素截图）、attestation 覆盖两段 runtime hash + CSP script hash + 真实浏览器凭证（#19，`63513b2`）。原 nonce 需求（原 #15）已并入 E6/#12。**代码硬门全完成，但成熟度仍是 Production Pilot**——路线图 P0-B 退出条件含"两模板 × 四浏览器 × 全场景矩阵"这类发布流程验收，非代码可达成 |
 | E8 | P1 工程师结构化工作流 | 🔶 | 已完成：高层语义工具第一批 `set_column_widths`/`set_font_scale`（`46254d6`）、semantic diff drawer 取代 confirm 对话框（`ebf3931`，供 Apply 前变更审查用）、Table columns + Print font scale 可视化面板（`90a6c70`）、Page settings + Repeated areas 可视化面板（`8f0718b`，复用通用 `set_attribute` 操作，因为这两类字段没有专属操作类型）、Branding 品牌色面板（`d2fe47a`，新增 `set_brand_color` 操作，范围收敛到 `.pf-brand` 标题色一处，而非全套用色 token 化）、Data contract 面板（`3699991`，中档范围：schema 树只读展示 + 编辑样本值/既有约束，复用 `replace_schema`/`replace_sample_data`，不做增删字段/数组逐行编辑）。**六个结构化面板全部完成**，达成 ROADMAP P1"无需编辑原始 JSON/CSS 即可完成常见修改"这一核心退出条件。待办（ROADMAP P1 其余项，规模均较小）：Raw 编辑器移入 Advanced 模式、图片资源校验、生成 ERP 接入片段、细化连接状态展示 |
-| E9 | P2 分页引擎演进 | ⬜ | PaginationSession、结构化 trace、性能预算（100 行 <2s、500 行 <5s）；硬约束：v1 ERP DOM 行为不变 |
+| E9 | P2 分页引擎演进 | 🔶 | 已完成：行高预测量缓存（`4c50a35`，先用 spike 画像定位真因——72% 耗时在 `getBoundingClientRect`——再动手，不猜架构；金标准分页断言三引擎逐页行分布字节不差，新增"500 行+放大字号"回归护栏）。待办：PaginationSession/PageContext/LayoutPlan 类重构（按 grilling 定的顺序，做完 trace 事件后再评估是否还值得）、结构化 trace 事件；硬约束：v1 ERP DOM 行为不变 |
 | E10 | P3 发布治理 | 🔶 | 已完成：LICENSE（MIT）、SW precache manifest 构建期自动生成（`eebcae1`）、[CHANGELOG.md](CHANGELOG.md)（Keep a Changelog 格式，`5d06702`）、**独立 SemVer + 兼容矩阵**（`5cea34f`：引擎 1.0.0 / Studio 0.9.0 / 协议 2.0.0 / Agent Contract 2.0.0 四条线各自 SSOT，派生副本全部机器校验，见 [docs/COMPATIBILITY_MATRIX.zh-CN.md](docs/COMPATIBILITY_MATRIX.zh-CN.md)）。待办：GitHub Release 附试点导出（发布材料已备妥，最终 push/tag/release 由维护者执行）、版本化模板目录 |
 | E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（`4a0c5e0`）、PR 模板（`c081a91`）、3 页分页黄金样本（`c081a91`，Playwright 共 21 测试）、`studio-v1.spec.js` 满载并行 flake 修复（`94f2c7e`）、`npm run doctor` 一键体检脚本（`07b3947`）。待办：文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |

@@ -58,6 +58,9 @@ Contract 2.0.0.
 - The service worker's offline precache manifest is now generated at build
   time from the actual build output, instead of hand-maintained (the
   hand-written list had silently drifted twice).
+- Large documents with an enlarged font paginate substantially faster: row
+  heights are now pre-measured in one batch and the common case skips a
+  redundant layout reflow per row. Pagination output is unchanged.
 
 ### Fixed
 

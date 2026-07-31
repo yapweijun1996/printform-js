@@ -67,14 +67,14 @@
 
 ## P2：分页引擎演进
 
+- ✅ 已实现（2026-07-31，`4c50a35`）：预先测量并缓存行高度，减少 clone/append/measure/remove 造成的 layout thrashing。`spike/` 画像先行定位真因（72% 耗时在 `getBoundingClientRect`，根因是逐行读写交替 + 每次迭代重新测量行高），改动两处：循环前一次性批量预测量全部行高（消灭读写交替），非边界普通行用已知行高做算术预测（留 50px 安全余量）跳过容器回流测量；越过边界仍走原有精确路径不变。金标准分页断言三引擎逐页行分布字节不差；新增 e2e 把"500 行+放大字号"这个曾经的真实痛点组合钉成永久回归护栏。详见 TASK.md 对应行。
 - 引入每个表单独立的 `PaginationSession`、`PageContext`、`LayoutPlan` 与 `RenderResult`。
 - `formatAll()` 始终返回 Promise 和结构化结果，不吞掉 formatter 错误。
 - 保持现有 class、`data-*` 与 v1 ERP DOM 行为；每一步用旧样本做回归。
-- 预先测量并缓存行高度，减少 clone/append/measure/remove 造成的 layout thrashing。
 - 以结构化 trace event 取代 Studio 对 console 的依赖。
 - 为同一 major 建立显式 minor migration registry 和 golden fixtures。
 
-退出条件：100 行首次可见不超过 2 秒，500 行完整分页不超过 5 秒，且 v1 关键路径无回归。
+退出条件：100 行首次可见不超过 2 秒，500 行完整分页不超过 5 秒，且 v1 关键路径无回归。（预算本身已长期满足；本次新增的是"500 行+放大字号"这个此前唯一未覆盖的真实慢场景的专属回归护栏）
 
 ## P3：发布治理
 
