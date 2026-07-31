@@ -8,6 +8,7 @@ import { currentFontBasePt } from "../core/typography.js";
 import { currentBrandColor } from "../core/branding.js";
 import { inspectColumnGroups } from "../core/column-inspection.js";
 import { inspectPageSettings, inspectRepeatFlags } from "../core/page-inspection.js";
+import { applyDataContractEdits, inspectDataContract } from "../core/data-contract-inspection.js";
 import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
 import { installAgentGateway } from "../adapters/gateway.js";
 import { sanitizeExecutableContent } from "../core/operations.js";
@@ -76,6 +77,7 @@ function setEditors(project) {
   renderPageSettings(inspectPageSettings(project.templateHtml));
   renderRepeatFlags(inspectRepeatFlags(project.templateHtml));
   renderBrandColor(currentBrandColor(project.themeCss));
+  renderDataContract(inspectDataContract(project.schema, project.sampleData));
 }
 
 // null when the theme has never had a brand color injected (no sensible
@@ -144,6 +146,156 @@ function renderColumnWidthGroups(groups) {
     wrapper.append(fields, button);
     container.appendChild(wrapper);
   });
+}
+
+// Deliberately rebuilt from scratch on every load/change, same as the other
+// structured panels: schema shape can change out from under this panel via
+// the raw editors below it, and there is no stable identity to patch against
+// mid-edit anyway (unlike a text field, this is a whole tree).
+function renderDataContract(fields) {
+  const container = $("#data-contract-fields");
+  container.innerHTML = "";
+  renderDataContractFields(fields, container);
+  $("#apply-data-contract-button").disabled = !fields.length;
+}
+
+function renderDataContractFields(fields, container) {
+  fields.forEach((field) => {
+    if (field.type === "object") {
+      const details = document.createElement("details");
+      details.className = "dc-group";
+      const summary = document.createElement("summary");
+      summary.textContent = field.key + (field.required ? " *" : "");
+      const body = document.createElement("div");
+      body.className = "dc-group-body";
+      renderDataContractFields(field.fields, body);
+      details.append(summary, body);
+      container.appendChild(details);
+      return;
+    }
+    const row = document.createElement("div");
+    row.className = "dc-field";
+    row.dataset.path = field.path;
+    row.dataset.type = field.type;
+
+    const name = document.createElement("div");
+    name.className = "dc-field-name";
+    name.textContent = field.key + (field.required ? " *" : "");
+    row.appendChild(name);
+
+    if (field.type === "array") {
+      const note = document.createElement("span");
+      note.className = "dc-array-note";
+      note.textContent = t("editor.dataContractArrayNote");
+      name.appendChild(note);
+      container.appendChild(row);
+      return;
+    }
+
+    const controls = document.createElement("div");
+    controls.className = "dc-field-row";
+
+    const requiredLabel = document.createElement("label");
+    const requiredInput = document.createElement("input");
+    requiredInput.type = "checkbox";
+    requiredInput.checked = field.required;
+    requiredInput.dataset.role = "required";
+    requiredLabel.append(requiredInput, document.createTextNode(t("editor.dataContractRequired")));
+    controls.appendChild(requiredLabel);
+
+    const sampleInput = document.createElement("input");
+    sampleInput.dataset.role = "sample";
+    if (field.type === "boolean") {
+      sampleInput.type = "checkbox";
+      sampleInput.checked = Boolean(field.sampleValue);
+    } else {
+      sampleInput.type = field.type === "number" || field.type === "integer" ? "number" : "text";
+      if (field.type === "integer") sampleInput.step = "1";
+      sampleInput.value = field.sampleValue ?? "";
+    }
+    const sampleLabel = document.createElement("label");
+    sampleLabel.append(document.createTextNode(t("editor.dataContractSample")), sampleInput);
+    controls.appendChild(sampleLabel);
+
+    const constraints = field.constraints || {};
+    const numericConstraintKeys = field.type === "string" ? ["minLength", "maxLength"] : (field.type === "number" || field.type === "integer") ? ["minimum", "maximum"] : [];
+    numericConstraintKeys.forEach((key) => {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.dataset.role = key;
+      input.value = constraints[key] ?? "";
+      const label = document.createElement("label");
+      label.append(document.createTextNode(t(`editor.dataContract.${key}`)), input);
+      controls.appendChild(label);
+    });
+
+    if (field.type !== "boolean") {
+      const enumInput = document.createElement("input");
+      enumInput.type = "text";
+      enumInput.dataset.role = "enum";
+      enumInput.placeholder = t("editor.dataContractEnumPlaceholder");
+      enumInput.value = Array.isArray(constraints.enum) ? constraints.enum.join(", ") : "";
+      const enumLabel = document.createElement("label");
+      enumLabel.append(document.createTextNode(t("editor.dataContractEnum")), enumInput);
+      controls.appendChild(enumLabel);
+    }
+
+    row.appendChild(controls);
+    container.appendChild(row);
+  });
+}
+
+function parseSampleValue(type, input) {
+  if (type === "boolean") return input.checked;
+  if (type === "integer") return Math.trunc(Number(input.value));
+  if (type === "number") return Number(input.value);
+  return input.value;
+}
+
+function parseEnumValue(type, rawText) {
+  const trimmed = rawText.trim();
+  if (!trimmed) return undefined;
+  return trimmed.split(",").map((token) => {
+    const value = token.trim();
+    return (type === "number" || type === "integer") ? Number(value) : value;
+  });
+}
+
+// Reads every rendered leaf row and re-derives the full schema + sampleData
+// via applyDataContractEdits, then commits both in one apply_changes call —
+// same shape as Repeated areas bundling several set_attribute calls into one
+// revision. Submitting every field's current value (not just ones the
+// engineer actually touched) is harmless: preview's diff.changed short-
+// circuits to a no-op when nothing actually differs, same as the raw
+// source-editor Apply path.
+async function applyDataContract() {
+  try {
+    const edits = {};
+    // Array rows carry data-path (for the read-only note) but no editable
+    // controls -- excluded here, not just skipped on a missing element,
+    // since the empty NodeList otherwise silently loses those fields (harmless,
+    // arrays aren't editable) while a missing-element crash on any OTHER type
+    // would be a real bug worth seeing.
+    $("#data-contract-fields").querySelectorAll('.dc-field[data-path]:not([data-type="array"])').forEach((row) => {
+      const path = row.dataset.path;
+      const type = row.dataset.type;
+      const edit = { required: row.querySelector('[data-role="required"]').checked };
+      edit.sampleValue = parseSampleValue(type, row.querySelector('[data-role="sample"]'));
+      ["minLength", "maxLength", "minimum", "maximum"].forEach((key) => {
+        const input = row.querySelector(`[data-role="${key}"]`);
+        if (!input) return;
+        edit[key] = input.value === "" ? undefined : Number(input.value);
+      });
+      const enumInput = row.querySelector('[data-role="enum"]');
+      if (enumInput) edit.enum = parseEnumValue(type, enumInput.value);
+      edits[path] = edit;
+    });
+    const { schema, sampleData } = applyDataContractEdits(bus.project.schema, bus.project.sampleData, edits);
+    const operations = [{ type: "replace_schema", value: schema }, { type: "replace_sample_data", value: sampleData }];
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "data contract edit" });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.dataContractApplied"));
+  } catch (error) { toast(t("toast.dataContractFailed", { message: error.message })); }
 }
 
 function renderQuality(validation) {
@@ -497,6 +649,7 @@ function refreshLocalizedUi() {
   // in JS at render time and are otherwise invisible to applyMessages().
   renderColumnWidthGroups(inspectColumnGroups(bus.project.templateHtml, bus.project));
   renderRepeatFlags(inspectRepeatFlags(bus.project.templateHtml));
+  renderDataContract(inspectDataContract(bus.project.schema, bus.project.sampleData));
 }
 
 function bindUi() {
@@ -515,6 +668,7 @@ function bindUi() {
   $("#brand-color-input").addEventListener("input", (event) => { $("#brand-color-text").value = event.target.value; });
   $("#apply-page-settings-button").addEventListener("click", applyPageSettings);
   $("#apply-repeat-flags-button").addEventListener("click", applyRepeatFlags);
+  $("#apply-data-contract-button").addEventListener("click", applyDataContract);
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);

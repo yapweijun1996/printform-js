@@ -16,6 +16,19 @@
 .brand-color-row { display: flex; gap: 6px; }
 .brand-color-row input[type="color"] { flex: 0 0 44px; min-height: 36px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; }
 .brand-color-row input[type="text"] { flex: 1; min-height: 36px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.dc-hint { margin: 0 0 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.dc-group { margin: 4px 0; border: 1px solid var(--border); border-radius: 6px; }
+.dc-group > summary { padding: 6px 8px; color: #263451; font-size: 11px; font-weight: 800; cursor: pointer; }
+.dc-group > .dc-group-body { padding: 2px 8px 8px; }
+.dc-field { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; padding: 6px 0; border-top: 1px solid #edf0f5; }
+.dc-group-body > .dc-field:first-child, .dc-field:first-child { border-top: 0; }
+.dc-field-name { grid-column: 1 / -1; color: #263451; font-size: 11px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dc-field-name .dc-array-note { margin-left: 6px; color: var(--muted); font-weight: 400; font-style: italic; }
+.dc-field-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dc-field-row label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.dc-field-row input[type="text"], .dc-field-row input[type="number"] { width: 96px; min-height: 28px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 11px; }
+.dc-field-row input[data-role="sample"] { width: 180px; }
+.dc-field-row input[type="checkbox"] { margin: 0; }
 details { margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 summary { padding: 9px 10px; color: #263451; background: #f4f7fb; font-size: 12px; font-weight: 800; cursor: pointer; }
 textarea { display: block; width: 100%; min-height: 210px; padding: 10px; resize: vertical; border: 0; border-top: 1px solid var(--border); color: #172033; background: #fbfcfe; font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 2; }

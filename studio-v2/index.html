@@ -101,6 +101,11 @@
         <div id="repeat-flags-fields" class="repeat-flags"></div>
         <button id="apply-repeat-flags-button" class="secondary" type="button" data-ui-i18n="editor.applyRepeatedAreas">Apply repeated areas</button>
       </fieldset>
+      <fieldset class="asset-slots"><legend data-ui-i18n="editor.dataContract">Data contract</legend>
+        <p class="dc-hint" data-ui-i18n="editor.dataContractHint">View schema structure, edit sample values and existing field constraints. Adding or removing fields still requires the raw editors below.</p>
+        <div id="data-contract-fields"></div>
+        <button id="apply-data-contract-button" class="secondary" type="button" data-ui-i18n="editor.applyDataContract">Apply data contract changes</button>
+      </fieldset>
       <details open><summary data-ui-i18n="section.manifest">Manifest</summary><label class="visually-hidden" for="manifest-editor" data-ui-i18n="editor.manifestJson">Manifest JSON</label><textarea id="manifest-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.schema">JSON Schema</summary><label class="visually-hidden" for="schema-editor" data-ui-i18n="editor.schemaJson">JSON Schema</label><textarea id="schema-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.translations">Translations</summary><label class="visually-hidden" for="i18n-editor" data-ui-i18n="editor.translationsJson">Translations JSON</label><textarea id="i18n-editor" spellcheck="false"></textarea></details>
