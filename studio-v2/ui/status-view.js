@@ -2,6 +2,37 @@ import { t, translateIssue } from "./ui-i18n.js";
 
 const $ = (selector) => document.querySelector(selector);
 
+// Maps a validation issue path prefix to the source editor that owns it, so
+// quality-gate entries can jump straight to the right textarea.
+const PATH_EDITORS = [
+  ["/manifest", "manifest-editor"],
+  ["/schema", "schema-editor"],
+  ["/i18n", "i18n-editor"],
+  ["/theme", "theme-editor"],
+  ["/template", "template-editor"],
+  ["/sampleData", "sample-editor"],
+  ["/trust", "template-editor"]
+];
+
+function editorForPath(path) {
+  const hit = PATH_EDITORS.find(([prefix]) => String(path || "").startsWith(prefix));
+  return hit ? hit[1] : null;
+}
+
+function focusEditor(editorId) {
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  const details = editor.closest("details");
+  if (details) details.open = true;
+  editor.scrollIntoView({ block: "center", behavior: "smooth" });
+  editor.focus({ preventScroll: true });
+  editor.classList.remove("editor-flash");
+  // restart the highlight animation even when re-clicking the same entry
+  void editor.offsetWidth;
+  editor.classList.add("editor-flash");
+  editor.addEventListener("animationend", () => editor.classList.remove("editor-flash"), { once: true });
+}
+
 export function renderQualityView(validation, trust) {
   const summary = $("#quality-summary");
   summary.textContent = validation.productionValid
@@ -13,6 +44,14 @@ export function renderQualityView(validation, trust) {
     const li = document.createElement("li");
     li.className = item.severity || (validation.errors.includes(item) ? "error" : "warning");
     li.textContent = `${item.code}: ${translateIssue(item)}`;
+    const editorId = editorForPath(item.path);
+    if (editorId) {
+      li.classList.add("clickable");
+      li.title = item.path;
+      li.tabIndex = 0;
+      li.addEventListener("click", () => focusEditor(editorId));
+      li.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); focusEditor(editorId); } });
+    }
     list.appendChild(li);
   });
   $("#export-button").disabled = !validation.productionValid;

@@ -74,11 +74,15 @@ export function validateProject(project, options = {}) {
   } else if (manifest.protocolVersion !== PROTOCOL_VERSION) {
     warnings.push(warning("PROTOCOL_MIGRATION_AVAILABLE", `Protocol ${manifest.protocolVersion} requires a reviewed same-major migration`, "/manifest/protocolVersion"));
   }
+  // Schema-profile and data errors carry node-relative paths ("/properties/x",
+  // "/unexpectedField"); prefix them with their owning section so UIs and
+  // agents can route each issue to the right editor/source.
+  const prefixPath = (prefix) => (item) => ({ ...item, path: `${prefix}${!item.path || item.path === "/" ? "" : item.path}` });
   const profile = validateSchemaProfile(project.schema);
-  errors.push(...profile.errors);
+  errors.push(...profile.errors.map(prefixPath("/schema")));
   if (profile.valid) {
     const dataReport = validateData(project.schema, project.sampleData);
-    errors.push(...dataReport.errors);
+    errors.push(...dataReport.errors.map(prefixPath("/sampleData")));
     if (dataReport.valid) errors.push(...validateBusinessRules(project.sampleData).errors);
   }
   errors.push(...validateI18n(project).errors);
@@ -109,26 +113,61 @@ export function validateProject(project, options = {}) {
   };
 }
 
+// Short CSS path scoped to the containing logical page, so an agent can
+// locate a flagged element without screenshots.
+function cssPathWithinPage(node) {
+  const parts = [];
+  let current = node;
+  let depth = 6;
+  while (current && current.nodeType === 1 && depth > 0 && !current.classList.contains("printform_page")) {
+    if (current.id) { parts.unshift(`#${current.id}`); return parts.join(" > "); }
+    const tag = current.tagName.toLowerCase();
+    const parent = current.parentElement;
+    if (!parent) break;
+    const siblings = Array.from(parent.children).filter((child) => child.tagName === current.tagName);
+    parts.unshift(siblings.length > 1 ? `${tag}:nth-of-type(${siblings.indexOf(current) + 1})` : tag);
+    current = parent;
+    depth -= 1;
+  }
+  return parts.join(" > ") || node.tagName?.toLowerCase() || "unknown";
+}
+
+function issueEntry(code, node, pageIndex) {
+  const rect = node.getBoundingClientRect();
+  const text = (node.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60);
+  return {
+    code,
+    pageIndex,
+    selector: cssPathWithinPage(node),
+    rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
+    ...(text ? { text } : {})
+  };
+}
+
+const MAX_ISSUE_DETAILS = 20;
+
 export function inspectRenderedDocument(doc, manifest) {
   const errors = [];
   const warnings = [];
   const pages = doc.querySelectorAll(".printform_page");
+  const pageList = Array.from(pages);
+  const pageIndexOf = (node) => pageList.indexOf(node.closest?.(".printform_page") || node);
   const limit = manifest.acceptance?.maxLogicalPages || LIMITS.logicalPages;
   if (!pages.length) errors.push(error("PAGINATION_FAILED", "PrintForm did not produce logical pages"));
   if (pages.length > limit) errors.push(error("PAGE_LIMIT", `${pages.length} pages exceed the ${limit} page limit`));
-  const overflow = Array.from(pages).flatMap((page) => {
+  const overflow = pageList.flatMap((page, pageIndex) => {
     const pageRect = page.getBoundingClientRect();
     return Array.from(page.querySelectorAll("table,td,th,img,[data-pf-text],[data-pf-href]")).filter((node) => {
       const rect = node.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return false;
       return rect.left < pageRect.left - 1 || rect.right > pageRect.right + 1;
-    });
+    }).map((node) => ({ node, pageIndex }));
   });
   if (overflow.length) errors.push(error("HORIZONTAL_OVERFLOW", `${overflow.length} rendered elements overflow horizontally`));
   const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
   const expectedPageHeight = Number(templateRoot?.dataset.papersizeHeight) || 0;
   const verticalOverflow = expectedPageHeight
-    ? Array.from(pages).filter((page) => Math.max(page.scrollHeight, page.getBoundingClientRect().height) > expectedPageHeight + 1)
+    ? pageList.filter((page) => Math.max(page.scrollHeight, page.getBoundingClientRect().height) > expectedPageHeight + 1)
     : [];
   if (verticalOverflow.length) errors.push(error("VERTICAL_OVERFLOW", `${verticalOverflow.length} logical pages exceed the ${expectedPageHeight}px page height`));
   if (!doc.documentElement.lang) errors.push(error("LANG_MISSING", "Exported document requires an html lang attribute"));
@@ -139,5 +178,12 @@ export function inspectRenderedDocument(doc, manifest) {
   const lowContrast = contrastFailures(doc);
   if (lowContrast.length) errors.push(error("CONTRAST_FAILURE", `${lowContrast.length} text elements do not meet WCAG contrast thresholds`));
   warnings.push(warning("PRINT_PREVIEW_REQUIRED", "Confirm fonts, DPI and page margins in the system print preview"));
-  return { valid: errors.length === 0, errors, warnings, metrics: { logicalPages: pages.length, overflowElements: overflow.length, verticalOverflowPages: verticalOverflow.length, contrastFailures: lowContrast.length } };
+  // Element-level details (selector + geometry) so agents can target fixes
+  // without screenshots; capped per category to bound the report size.
+  const issues = [
+    ...overflow.slice(0, MAX_ISSUE_DETAILS).map(({ node, pageIndex }) => issueEntry("HORIZONTAL_OVERFLOW", node, pageIndex)),
+    ...verticalOverflow.slice(0, MAX_ISSUE_DETAILS).map((page) => issueEntry("VERTICAL_OVERFLOW", page, pageIndexOf(page))),
+    ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node)))
+  ];
+  return { valid: errors.length === 0, errors, warnings, issues, metrics: { logicalPages: pages.length, overflowElements: overflow.length, verticalOverflowPages: verticalOverflow.length, contrastFailures: lowContrast.length } };
 }

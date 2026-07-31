@@ -1,6 +1,11 @@
 const CACHE_PREFIX = "printform-studio-v2";
-const CACHE_VERSION = "2.1.0-__PRINTFORM_BUILD__";
+const BUILD_ID = "__PRINTFORM_BUILD__";
+const CACHE_VERSION = `2.1.0-${BUILD_ID}`;
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
+// Unstamped build id = running from the repo, not a Pages deploy. Cache-first
+// with a never-changing cache name would serve stale app files forever in
+// local dev, so fall back to network-first there.
+const DEV_MODE = BUILD_ID.startsWith("__");
 const APP_SHELL = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
   "./agent-setup.json", "./agent-setup.schema.json", "./AGENT_SETUP.md", "./llms.txt",
@@ -33,10 +38,19 @@ self.addEventListener("fetch", (event) => {
   // shell when the network is down so offline reloads keep working.
   const isNavigation = event.request.mode === "navigate";
   const matchOptions = isNavigation ? { ignoreSearch: true } : undefined;
-  event.respondWith(caches.match(event.request, matchOptions).then((cached) => cached || fetch(event.request).then((response) => {
+  const fromNetwork = () => fetch(event.request).then((response) => {
     if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
     return response;
-  }).catch((error) => {
+  });
+  if (DEV_MODE) {
+    event.respondWith(fromNetwork().catch(() => caches.match(event.request, matchOptions).then((cached) => {
+      if (cached) return cached;
+      if (isNavigation) return caches.match("./index.html");
+      return Response.error();
+    })));
+    return;
+  }
+  event.respondWith(caches.match(event.request, matchOptions).then((cached) => cached || fromNetwork().catch((error) => {
     if (isNavigation) return caches.match("./index.html");
     throw error;
   })));

@@ -281,7 +281,7 @@ listenForPreview($("#preview-frame"), (message) => {
     renderQuality(bus.readiness());
     const ready = message.payload.status === "ready";
     renderStatus(ready ? "status.ready" : "status.blocked", ready ? "ready" : "blocked");
-    renderMetrics(message.payload.metrics);
+    renderMetrics(message.payload.issues?.length ? { ...message.payload.metrics, issues: message.payload.issues } : message.payload.metrics);
   } else toast(t("toast.previewError", { message: message.payload.message }));
 });
 

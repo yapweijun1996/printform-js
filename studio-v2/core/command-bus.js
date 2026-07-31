@@ -51,7 +51,8 @@ export class CommandBus extends EventTarget {
       productionValid: base.productionValid && this.renderReport.status === "ready",
       errors: unique([...base.errors, ...(this.renderReport.validation?.errors || [])]),
       warnings: unique([...base.warnings, ...(this.renderReport.validation?.warnings || [])]),
-      metrics: { ...base.metrics, ...(this.renderReport.metrics || {}) }
+      metrics: { ...base.metrics, ...(this.renderReport.metrics || {}) },
+      issues: this.renderReport.issues || []
     };
   }
 
@@ -94,7 +95,7 @@ export class CommandBus extends EventTarget {
         this.reviewReceipt = null;
         this.reviewAttempts += 1;
         if (this.reviewAttempts > 3) throw Object.assign(new Error("The three-pass automatic review limit is exhausted for this revision"), { code: "REVIEW_ATTEMPT_LIMIT" });
-        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, metrics: this.renderReport.metrics });
+        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, metrics: this.renderReport.metrics, issues: this.renderReport.issues || [] });
       }
       if (name === "complete_layout_review") {
         this.ensureRevision(input.expectedRevision);
