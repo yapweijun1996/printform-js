@@ -55,13 +55,15 @@
 - Raw HTML/CSS/JSON 移入 Advanced 模式，仍可手改并稳定 round-trip。
 - ✅ 已实现（2026-07-31）：`ui/diff-view.js` 并排 diff 面板取代 `window.confirm` 一次性文本对话框（逐行 LCS 高亮）。仍是模态而非常驻侧栏，"persistent drawer" 的呈现形式留待与其余 P1 面板一起重新设计。
 - ✅ 已实现（2026-07-31，`90a6c70`）：Table columns 面板——`core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组并解析真实 i18n 标签；另加一个本列表之外的 Print font scale 面板（`typography.js` 的 `currentFontBasePt()` 读回当前基础字号）。两者都遵循 `set_locale`/`set_asset_source` 的直接应用模式，经通用 `apply_changes` 工具传入单个 `set_column_widths`/`set_font_scale` operation（这两个操作类型本身没有专属 CommandBus 工具）。Locale 面板（打印语言选择器）在本项之前已存在。
-- ✅ 已实现（2026-07-31，`8f0718b`）：Page settings + Repeated areas 面板——`core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 从 `.printform` 根元素的 data-* 属性读回页面尺寸与七个 repeat-* 标记，只覆盖两个标准模板实际用到的字段（不是 `src/printform/config.js` 里更大的引擎级配置面）。这两类字段连操作类型都没有，直接复用完全通用的 `set_attribute`（每属性一条，打包进同一 `apply_changes`）。仍缺 Branding（配色）、Data contract（表单编辑器），这两项范围明显更大，留待单独讨论。
+- ✅ 已实现（2026-07-31，`8f0718b`）：Page settings + Repeated areas 面板——`core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 从 `.printform` 根元素的 data-* 属性读回页面尺寸与七个 repeat-* 标记，只覆盖两个标准模板实际用到的字段（不是 `src/printform/config.js` 里更大的引擎级配置面）。这两类字段连操作类型都没有，直接复用完全通用的 `set_attribute`（每属性一条，打包进同一 `apply_changes`）。
+- ✅ 已实现（2026-07-31，`d2fe47a`）：Branding 品牌色面板——两个模板的品牌色散落十几处硬编码 hex，全部 token 化是更大的独立设计任务；范围收敛到 `.pf-brand` 标题色一处，新增 `core/branding.js` + `set_brand_color` 操作。
+- ✅ 已实现（2026-07-31，`3699991`）：Data contract 面板——中档范围，schema 树只读展示 + 表单编辑样本值与既有约束（required/min·maxLength/minimum·maximum/enum），复用既有 `replace_schema`/`replace_sample_data` 整段替换操作而非新增操作类型。**不做**增删字段（牵动模板绑定与 i18n 同步，需单独设计）与数组逐行编辑（表单对 45 行数据没有可用性，`items` 类字段仍走原始 JSON）。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
 - 草稿按源文件 fingerprint 保存、限时保留；未知导入默认关闭缓存。
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。
 - 连接状态区分 WebMCP registered、CDP discovered、Agent connected 与 last command。
 
-退出条件：工程师无需编辑大段原始 JSON/CSS，即可完成两个标准模板的常见品牌、页面、表格与 locale 修改。
+退出条件：✅ 工程师无需编辑大段原始 JSON/CSS，即可完成两个标准模板的常见品牌、页面、表格与 locale 修改——六个结构化面板（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）已覆盖。上方图片校验、草稿 fingerprint、ERP 接入片段生成、连接状态细化仍是独立的 P1 增量项，非本退出条件的必要部分。
 
 ## P2：分页引擎演进
 

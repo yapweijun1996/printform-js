@@ -28,8 +28,10 @@ Contract 2.0.0.
   so AI agents and humans go through the same validated command path.
 - Studio v2 engineer panels: table column widths, print font scale, page
   settings (paper size), repeated-areas (header/footer/docinfo repeat
-  flags), and a brand heading color, all applying directly against the
-  live preview with no raw-JSON editing required.
+  flags), brand heading color, and a data contract panel (view schema
+  structure, edit sample values and existing field constraints), all
+  applying directly against the live preview with no raw-JSON editing
+  required for common changes.
 - Side-by-side diff review before applying a manual source edit, replacing a
   single-line `confirm()` dialog.
 - Studio-issued layout evidence receipts (geometric fingerprints, not pixel
