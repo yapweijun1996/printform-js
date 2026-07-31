@@ -5,6 +5,7 @@ import { stableStringify } from "../core/json.js";
 import { analyzeMigration } from "../core/migrations.js";
 import { currentFontBasePt } from "../core/typography.js";
 import { inspectColumnGroups } from "../core/column-inspection.js";
+import { inspectPageSettings, inspectRepeatFlags } from "../core/page-inspection.js";
 import { createSampleDocument, sampleDocumentKey } from "../samples/catalog.js";
 import { installAgentGateway } from "../adapters/gateway.js";
 import { sanitizeExecutableContent } from "../core/operations.js";
@@ -70,6 +71,34 @@ function setEditors(project) {
   $("#revision-label").textContent = t("editor.revision", { revision: bus.revision });
   $("#font-scale-input").value = currentFontBasePt(project.themeCss);
   renderColumnWidthGroups(inspectColumnGroups(project.templateHtml, project));
+  renderPageSettings(inspectPageSettings(project.templateHtml));
+  renderRepeatFlags(inspectRepeatFlags(project.templateHtml));
+}
+
+// null when the template has no .printform root with papersize attributes
+// (not expected for either standard sample, but a hand-edited raw template
+// could lack one) — leave the fields blank rather than showing stale numbers.
+function renderPageSettings(pageSettings) {
+  $("#page-width-input").value = pageSettings?.width ?? "";
+  $("#page-height-input").value = pageSettings?.height ?? "";
+  $("#apply-page-settings-button").disabled = !pageSettings;
+}
+
+function renderRepeatFlags(flags) {
+  const container = $("#repeat-flags-fields");
+  container.innerHTML = "";
+  flags.forEach((flag) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = flag.value;
+    input.dataset.attribute = flag.attribute;
+    const span = document.createElement("span");
+    span.textContent = t(`repeatFlag.${flag.key}`);
+    label.append(input, span);
+    container.appendChild(label);
+  });
+  $("#apply-repeat-flags-button").disabled = !flags.length;
 }
 
 // Rebuilt from the template on every load/change (same as the raw editors
@@ -307,6 +336,36 @@ async function applyColumnWidths(tableSelector, fieldsContainer) {
   } catch (error) { toast(t("toast.columnWidthsFailed", { message: error.message })); }
 }
 
+// Page settings/Repeated areas have no dedicated operation type at all —
+// unlike set_column_widths/set_font_scale, they go through the fully generic
+// set_attribute operation (one call per attribute, bundled into a single
+// apply_changes so both fields/all flags commit as one revision).
+async function applyPageSettings() {
+  try {
+    const selector = ".printform";
+    const width = $("#page-width-input").value;
+    const height = $("#page-height-input").value;
+    const operations = [
+      { type: "set_attribute", selector, name: "data-papersize-width", value: width },
+      { type: "set_attribute", selector, name: "data-papersize-height", value: height }
+    ];
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: `page settings: ${width}x${height}` });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.pageSettingsApplied"));
+  } catch (error) { toast(t("toast.pageSettingsFailed", { message: error.message })); }
+}
+
+async function applyRepeatFlags() {
+  try {
+    const selector = ".printform";
+    const inputs = Array.from($("#repeat-flags-fields").querySelectorAll("input"));
+    const operations = inputs.map((input) => ({ type: "set_attribute", selector, name: input.dataset.attribute, value: input.checked ? "y" : "n" }));
+    const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "repeated areas" });
+    if (!result.ok) throw new Error(result.error.message);
+    toast(t("toast.repeatFlagsApplied"));
+  } catch (error) { toast(t("toast.repeatFlagsFailed", { message: error.message })); }
+}
+
 async function importFile(file) {
   try {
     const html = await readHtmlFile(file);
@@ -406,6 +465,7 @@ function refreshLocalizedUi() {
   // static labels), but this panel's button text/placeholders are generated
   // in JS at render time and are otherwise invisible to applyMessages().
   renderColumnWidthGroups(inspectColumnGroups(bus.project.templateHtml, bus.project));
+  renderRepeatFlags(inspectRepeatFlags(bus.project.templateHtml));
 }
 
 function bindUi() {
@@ -420,6 +480,8 @@ function bindUi() {
   $("#locale-select").addEventListener("change", async (event) => { const result = await bus.execute("set_locale", { expectedRevision: bus.revision, locale: event.target.value }); if (!result.ok) toast(result.error.message); });
   $("#apply-logo-button").addEventListener("click", applyLogoSources);
   $("#apply-font-scale-button").addEventListener("click", applyFontScale);
+  $("#apply-page-settings-button").addEventListener("click", applyPageSettings);
+  $("#apply-repeat-flags-button").addEventListener("click", applyRepeatFlags);
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value));
   $("#diagnostics-button").addEventListener("click", downloadDiagnostics);
   $("#reset-trust-button").addEventListener("click", resetTrust);

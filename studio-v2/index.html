@@ -85,6 +85,17 @@
       <fieldset class="asset-slots"><legend data-ui-i18n="editor.tableColumns">Table columns</legend>
         <div id="column-widths-groups"></div>
       </fieldset>
+      <fieldset class="asset-slots"><legend data-ui-i18n="editor.pageSettings">Page settings</legend>
+        <label for="page-width-input" data-ui-i18n="editor.pageWidth">Page width (px)</label>
+        <input id="page-width-input" type="number" min="1" step="1">
+        <label for="page-height-input" data-ui-i18n="editor.pageHeight">Page height (px)</label>
+        <input id="page-height-input" type="number" min="1" step="1">
+        <button id="apply-page-settings-button" class="secondary" type="button" data-ui-i18n="editor.applyPageSettings">Apply page settings</button>
+      </fieldset>
+      <fieldset class="asset-slots"><legend data-ui-i18n="editor.repeatedAreas">Repeated areas</legend>
+        <div id="repeat-flags-fields" class="repeat-flags"></div>
+        <button id="apply-repeat-flags-button" class="secondary" type="button" data-ui-i18n="editor.applyRepeatedAreas">Apply repeated areas</button>
+      </fieldset>
       <details open><summary data-ui-i18n="section.manifest">Manifest</summary><label class="visually-hidden" for="manifest-editor" data-ui-i18n="editor.manifestJson">Manifest JSON</label><textarea id="manifest-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.schema">JSON Schema</summary><label class="visually-hidden" for="schema-editor" data-ui-i18n="editor.schemaJson">JSON Schema</label><textarea id="schema-editor" spellcheck="false"></textarea></details>
       <details><summary data-ui-i18n="section.translations">Translations</summary><label class="visually-hidden" for="i18n-editor" data-ui-i18n="editor.translationsJson">Translations JSON</label><textarea id="i18n-editor" spellcheck="false"></textarea></details>
