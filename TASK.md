@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `4c50a35`，232 个单测 + 三引擎 E2E 66 项全绿（10 跳过，零 flake）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；**P1 六个结构化面板全部完成**（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）；**D1 独立 SemVer + 兼容矩阵已落地**（引擎 1.0.0/Studio 0.9.0/协议与契约 2.0.0）；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；`studio-v1.spec.js` 满载并行 flake 已修复（`94f2c7e`）；新增 `npm run doctor` 一键体检；**P2 行高预测量缓存已落地**（spike 画像定位真因，金标准分页断言字节不差）；P3 新增 CHANGELOG.md，GitHub Release v1.0.0 材料已备妥待维护者发布。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
+> 最后核对：2026-07-31（对齐 `7ab5e8a`，232 个单测 + 三引擎 E2E 66 项全绿（10 跳过，零 flake）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；**P1 六个结构化面板全部完成**（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）；**D1 独立 SemVer + 兼容矩阵已落地**（引擎 1.0.0/Studio 0.9.0/协议与契约 2.0.0）；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；`studio-v1.spec.js` 满载并行 flake 已修复（`94f2c7e`）；新增 `npm run doctor` 一键体检；**P2 核心退出条件已达成**（行高预测量缓存 `4c50a35`，spike 画像定位真因，金标准分页断言字节不差；`PaginationSession` 类重构与结构化 trace 事件经评估判定暂不做，非待办）；P3 新增 CHANGELOG.md，GitHub Release v1.0.0 材料已备妥待维护者发布。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
