@@ -1,7 +1,7 @@
 import { sha256, stableStringify } from "./json.js";
 
 export const LAYOUT_REVIEW_CHECKLIST = Object.freeze([
-  "Inspect full-page screenshots for every logical page",
+  "Inspect redacted geometry evidence for every logical page",
   "Check clipping, overlap, horizontal and vertical overflow",
   "Check hierarchy, 9pt readability, spacing and table column balance",
   "Check repeated letterhead, document context, footer and page numbers",
@@ -20,6 +20,21 @@ function fail(code, message) {
   const error = new Error(message);
   error.code = code;
   throw error;
+}
+
+function safeSnapshot(report) {
+  const snapshot = report?.safeSnapshot;
+  if (!snapshot || snapshot.redacted !== true || snapshot.source !== "geometry-only" || snapshot.mimeType !== "image/svg+xml") return undefined;
+  if (typeof snapshot.dataUrl !== "string" || !["data:image/svg+xml;base64,", "data:image/svg+xml;charset=utf-8,"].some((prefix) => snapshot.dataUrl.startsWith(prefix))) return undefined;
+  return structuredClone(snapshot);
+}
+
+function safePixelSnapshot(report) {
+  const snapshot = report?.pixelSnapshot;
+  if (report?.provenance?.visualMode !== "pixels" || !snapshot || snapshot.source !== "sandbox-pixel" || snapshot.syntheticData !== true || snapshot.redacted !== false) return undefined;
+  const dataUrl = typeof snapshot.dataUrl === "string" ? snapshot.dataUrl : "";
+  if (!/^data:image\/(?:png|jpeg|webp);base64,/.test(dataUrl) || !["image/png", "image/jpeg", "image/webp"].includes(snapshot.mimeType) || dataUrl.length > 5_000_000) return undefined;
+  return structuredClone({ ...snapshot, dataUrl });
 }
 
 // Best-effort browser identity for the receipt. Never trusted from agent
@@ -45,19 +60,59 @@ export async function createEvidenceReceipt({ evidenceId, revision, scenario, re
   if (renderReport?.status !== "ready") {
     fail("EVIDENCE_RENDER_NOT_READY", `Scenario "${scenario}" did not render cleanly, so no evidence can be issued`);
   }
+  const provenance = renderReport.provenance;
+  if (!provenance || provenance.source !== "candidate" || provenance.revision !== revision || !provenance.candidateHash || !provenance.baseProjectHash) {
+    fail("EVIDENCE_PROVENANCE_REQUIRED", `Scenario "${scenario}" is missing candidate provenance`);
+  }
+  const snapshot = safeSnapshot(renderReport);
+  const pixelSnapshot = safePixelSnapshot(renderReport);
+  if (renderReport.provenance.visualMode === "pixels" && !pixelSnapshot) fail("PIXEL_CAPTURE_UNAVAILABLE", `Scenario "${scenario}" did not produce a safe synthetic pixel snapshot`);
+  const capturedPages = pixelSnapshot?.pageCount || snapshot?.pageCount || 0;
+  const totalPages = Number.isInteger(renderReport.metrics?.logicalPages) ? renderReport.metrics.logicalPages : 0;
+  if (!capturedPages || !totalPages || capturedPages < totalPages) {
+    fail("EVIDENCE_COVERAGE_INCOMPLETE", `Scenario "${scenario}" captured ${capturedPages} of ${totalPages} logical pages`);
+  }
   return Object.freeze({
     evidenceId,
     revision,
     scenario,
+    candidateHash: provenance.candidateHash,
+    baseProjectHash: provenance.baseProjectHash,
     browser: Object.freeze({ ...browser }),
     layoutFingerprint: await sha256(stableStringify(renderReport.pageGeometry || [])),
     renderReportHash: await sha256(stableStringify(renderReport)),
+    snapshotHash: await sha256(stableStringify(snapshot || null)),
+    ...(snapshot ? { snapshot: Object.freeze(snapshot) } : {}),
+    visualMode: pixelSnapshot ? "pixels" : "geometry",
+    ...(pixelSnapshot ? { pixelSnapshotHash: await sha256(stableStringify(pixelSnapshot.dataUrl)), pixelSnapshot: Object.freeze(pixelSnapshot) } : {}),
+    coverage: Object.freeze({ capturedPages, totalPages, complete: true }),
     metrics: Object.freeze(structuredClone(renderReport.metrics || {})),
     createdAt: new Date().toISOString()
   });
 }
 
-export function createLayoutReviewReceipt(revision, renderReport, input, attempt, evidenceStore = new Map()) {
+// An unsigned observation lets the multimodal reviewer inspect a broken
+// scenario before a clean, signed evidence receipt can exist. It is never
+// accepted by complete_layout_review and carries only the same privacy-gated
+// images, geometry, metrics and issue codes already allowed through gateway
+// sanitization.
+export function createLayoutObservation({ revision, scenario, renderReport }) {
+  const snapshot = safeSnapshot(renderReport);
+  const pixelSnapshot = safePixelSnapshot(renderReport);
+  if (!snapshot && !pixelSnapshot) return null;
+  return {
+    revision,
+    scenario,
+    visualMode: pixelSnapshot ? "pixels" : "geometry",
+    ...(snapshot ? { snapshot } : {}),
+    ...(pixelSnapshot ? { pixelSnapshot } : {}),
+    metrics: structuredClone(renderReport?.metrics || {}),
+    issues: structuredClone(renderReport?.issues || []),
+    validation: structuredClone(renderReport?.validation || null)
+  };
+}
+
+export function createLayoutReviewReceipt(revision, renderReport, input, attempt, evidenceStore = new Map(), expectedBaseProjectHash = "") {
   if (renderReport?.status !== "ready") fail("LAYOUT_PREVIEW_NOT_READY", "A ready browser render is required before layout review completion");
   if (input.reviewer !== "ai-agent") fail("AI_REVIEW_REQUIRED", "Layout review must be completed by an AI agent");
   // Agent Contract 2.0: self-declared evidence labels and browser strings are
@@ -72,14 +127,15 @@ export function createLayoutReviewReceipt(revision, renderReport, input, attempt
     const receipt = evidenceStore.get(id);
     if (!receipt) fail("EVIDENCE_UNKNOWN", `Evidence receipt ${id} was not issued by this Studio session`);
     if (receipt.revision !== revision) fail("EVIDENCE_STALE", `Evidence receipt ${id} belongs to revision ${receipt.revision}, not ${revision}`);
+    if (!expectedBaseProjectHash || receipt.baseProjectHash !== expectedBaseProjectHash) fail("EVIDENCE_PROVENANCE_MISMATCH", `Evidence receipt ${id} does not describe the current project`);
     return receipt;
   });
   const covered = new Set(receipts.map((receipt) => receipt.scenario));
   const missing = REQUIRED_EVIDENCE_SCENARIOS.filter((scenario) => !covered.has(scenario));
   if (missing.length) fail("REVIEW_SCENARIOS_REQUIRED", `Missing evidence for scenario(s): ${missing.join(", ")}`);
   const findings = Array.isArray(input.findings) ? input.findings : [];
-  const unresolved = findings.filter((item) => item.status !== "fixed" && blockingSeverity.has(item.severity));
-  if (unresolved.length) fail("REVIEW_ISSUES_OPEN", `${unresolved.length} major or critical layout issues are not fixed`);
+  const blocking = findings.filter((item) => blockingSeverity.has(item.severity));
+  if (blocking.length) fail("REVIEW_ISSUES_OPEN", `${blocking.length} major or critical layout issues remain in the fresh evidence`);
   const metrics = renderReport.metrics || {};
   if (metrics.overflowElements || metrics.verticalOverflowPages || metrics.contrastFailures) {
     fail("REVIEW_METRICS_FAILED", "Layout metrics still contain production-blocking failures");
@@ -93,7 +149,7 @@ export function createLayoutReviewReceipt(revision, renderReport, input, attempt
     reviewer: "ai-agent",
     browsers,
     scenarios: [...covered],
-    evidence: receipts.map(({ evidenceId, scenario, layoutFingerprint, renderReportHash, createdAt }) => ({ evidenceId, scenario, layoutFingerprint, renderReportHash, createdAt })),
+    evidence: receipts.map(({ evidenceId, scenario, candidateHash, baseProjectHash, layoutFingerprint, renderReportHash, snapshotHash, visualMode, pixelSnapshotHash, coverage, createdAt }) => ({ evidenceId, scenario, candidateHash, baseProjectHash, layoutFingerprint, renderReportHash, snapshotHash, visualMode, pixelSnapshotHash, coverage, createdAt })),
     findings: findings.map(({ code, severity, status, message }) => ({ code, severity, status, message })),
     summary: String(input.summary || "Visual layout review passed"),
     attempt,

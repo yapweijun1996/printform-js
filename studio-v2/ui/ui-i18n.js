@@ -1,4 +1,5 @@
 import EN from "./locales/en.js";
+import TRACE_MESSAGES from "./locales/trace-locales.js";
 
 export const UI_LOCALES = Object.freeze(["en-MY", "zh-CN", "ms-MY", "ja-JP", "vi-VN"]);
 const STORAGE_KEY = "printform-studio-v2-ui-locale";
@@ -14,7 +15,7 @@ function interpolate(value, variables) {
 }
 
 export function t(key, variables = {}, fallback = key) {
-  return interpolate(messages[key] ?? EN[key] ?? fallback, variables);
+  return interpolate(TRACE_MESSAGES[locale]?.[key] ?? messages[key] ?? EN[key] ?? fallback, variables);
 }
 
 export function currentUiLocale() { return locale; }
@@ -29,6 +30,8 @@ function applyMessages(root) {
   const select = root.getElementById("ui-locale-select");
   if (select) select.value = locale;
 }
+
+export function applyUiI18n(root = document) { applyMessages(root); }
 
 export async function setUiLocale(nextLocale, root = document, persist = true) {
   const requested = UI_LOCALES.includes(nextLocale) ? nextLocale : "en-MY";

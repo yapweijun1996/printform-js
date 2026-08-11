@@ -29,6 +29,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run check:agrun
+
       - run: npx playwright install --with-deps chromium firefox webkit
 
       # Pretest builds the allowlisted Pages artifact and runs unit tests;

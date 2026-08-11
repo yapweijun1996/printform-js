@@ -8,6 +8,8 @@ export class RevisionHistory {
 
   get revision() { return this.entries[this.cursor].revision; }
   get project() { return this.entries[this.cursor].project; }
+  get canUndo() { return this.cursor > 0; }
+  get canRedo() { return this.cursor < this.entries.length - 1; }
 
   commit(project, reason) {
     // Monotonic, never derived from the cursor: undo-then-commit must NOT
@@ -26,6 +28,13 @@ export class RevisionHistory {
     if (expectedRevision !== this.revision) throw revisionConflict(expectedRevision, this.revision);
     if (this.cursor === 0) return { changed: false, revision: this.revision, project: this.project };
     this.cursor -= 1;
+    return { changed: true, revision: this.revision, project: this.project };
+  }
+
+  redo(expectedRevision) {
+    if (expectedRevision !== this.revision) throw revisionConflict(expectedRevision, this.revision);
+    if (this.cursor >= this.entries.length - 1) return { changed: false, revision: this.revision, project: this.project };
+    this.cursor += 1;
     return { changed: true, revision: this.revision, project: this.project };
   }
 }

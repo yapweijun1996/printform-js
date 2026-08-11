@@ -2,10 +2,10 @@ const CACHE_PREFIX = "printform-studio-v2";
 const BUILD_ID = "__PRINTFORM_BUILD__";
 const CACHE_VERSION = `2.1.0-${BUILD_ID}`;
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
-// Unstamped build id = running from the repo, not a Pages deploy. Cache-first
-// with a never-changing cache name would serve stale app files forever in
-// local dev, so fall back to network-first there.
-const DEV_MODE = BUILD_ID.startsWith("__");
+// Placeholder and local build ids are running from the repo, not a Pages
+// deploy. Cache-first with a never-changing cache name would serve stale app
+// files forever in local preview, so fall back to network-first there.
+const DEV_MODE = BUILD_ID === "local" || BUILD_ID.startsWith("__");
 // Replaced with a real array literal by scripts/build-site.mjs, which walks the
 // built output. It used to be maintained by hand, and adding a module without
 // remembering to list it here broke offline loading twice in one day — the

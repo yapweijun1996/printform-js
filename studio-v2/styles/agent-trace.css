@@ -1,0 +1,56 @@
+.ai-trace-panel {
+  margin: 0 0 7px;
+  border: 1px solid #dce3ef;
+  border-radius: 10px;
+  background: #f8faff;
+}
+
+.ai-trace-panel > summary {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  color: #53617a;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 750;
+  list-style: none;
+}
+
+.ai-trace-panel > summary::-webkit-details-marker { display: none; }
+.ai-trace-panel > summary::before { content: "▸"; color: #2457d6; }
+.ai-trace-panel[open] > summary::before { content: "▾"; }
+
+.ai-trace-count {
+  min-width: 19px;
+  margin-left: auto;
+  padding: 2px 5px;
+  border-radius: 99px;
+  color: #3156a8;
+  background: #e5edff;
+  text-align: center;
+}
+
+.ai-trace-body { padding: 0 8px 8px; }
+.ai-trace-toolbar { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+.ai-trace-note { margin-right: auto; color: #7a879c; font-size: 8px; }
+.ai-trace-toolbar button { min-height: 26px; padding: 0 7px; border-radius: 7px; font-size: 8px; }
+
+.ai-trace-log {
+  max-height: 178px;
+  margin: 0;
+  padding: 6px 7px 6px 26px;
+  overflow: auto;
+  border-radius: 7px;
+  color: #cdd8f4;
+  background: #15213a;
+  font: 9px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.ai-trace-log li { padding: 3px 4px; overflow-wrap: anywhere; word-break: break-word; }
+.ai-trace-item + .ai-trace-item { border-top: 1px solid #ffffff12; }
+.ai-trace-action { color: #f3f6ff; background: #20345b; }
+.ai-trace-event { color: #c5d2ec; }
+.ai-trace-error { color: #ffc4c4; background: #4a2636; }
+.ai-trace-empty { color: #91a0bf; }

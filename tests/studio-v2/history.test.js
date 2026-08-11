@@ -39,4 +39,23 @@ describe("RevisionHistory monotonic revisions", () => {
     const result = history.undo(0);
     expect(result).toEqual({ changed: false, revision: 0, project: { a: 1 } });
   });
+
+  it("supports redo after undo and invalidates redo after a new commit", () => {
+    const history = new RevisionHistory({ a: 1 });
+    history.commit({ a: 2 }, "one");
+    history.commit({ a: 3 }, "two");
+    expect(history.undo(2).revision).toBe(1);
+    expect(history.canRedo).toBe(true);
+    expect(history.redo(1)).toMatchObject({ changed: true, revision: 2, project: { a: 3 } });
+    expect(history.canRedo).toBe(false);
+    history.undo(2);
+    history.commit({ a: 4 }, "three");
+    expect(history.canRedo).toBe(false);
+  });
+
+  it("rejects redo against a stale expectedRevision", () => {
+    const history = new RevisionHistory({ a: 1 });
+    history.commit({ a: 2 }, "one");
+    expect(() => history.redo(0)).toThrowError(revisionConflict(0, 1).message);
+  });
 });

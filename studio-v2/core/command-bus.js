@@ -1,11 +1,15 @@
-import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION } from "./constants.js";
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION, STUDIO_VERSION } from "./constants.js";
 import { validateProject } from "./acceptance.js";
 import { RevisionHistory, revisionConflict } from "./history.js";
 import { applyOperations, diffProjects, previewSourceEdit } from "./operations.js";
 import { createScenario, SAMPLE_SCENARIOS } from "./sample-scenarios.js";
 import { TOOL_CONTRACTS } from "./tool-contracts.js";
+import { getOperationCatalog } from "./operation-catalog.js";
+import { inspectDesignState } from "./design-state.js";
 import { PRINT_LOCALES } from "./i18n.js";
-import { createEvidenceReceipt, createLayoutReviewReceipt, detectBrowser, layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST, REQUIRED_EVIDENCE_SCENARIOS } from "./layout-review.js";
+import { layoutReviewStatus, LAYOUT_REVIEW_CHECKLIST } from "./layout-review.js";
+import { executeReviewCommand, REVIEW_COMMANDS } from "./command-bus-review.js";
+import { attachRenderProvenance, hasRenderProvenance, hashRenderProject, provenanceError, verifyCurrentRender } from "./render-provenance.js";
 import { sha256, stableStringify } from "./json.js";
 
 // In-memory only — a memory-management knob, not a correctness dependency.
@@ -73,6 +77,7 @@ export class CommandBus extends EventTarget {
 
   get project() { return this.history.project; }
   get revision() { return this.history.revision; }
+  historyState() { return { revision: this.revision, canUndo: this.history.canUndo, canRedo: this.history.canRedo }; }
 
   ensureRevision(expected) {
     if (expected !== this.revision) throw revisionConflict(expected, this.revision);
@@ -84,36 +89,43 @@ export class CommandBus extends EventTarget {
     return mergeRenderReport(base, this.renderReport);
   }
 
-  recordRenderReport(report) { this.renderReport = structuredClone(report); }
+  recordRenderReport(report, provenance = null) {
+    this.renderReport = provenance ? attachRenderProvenance(report, provenance) : structuredClone(report);
+  }
 
   // Real pagination for a not-yet-committed candidate, cached by content
   // hash so a preview_changes immediately followed by the identical
   // apply_changes doesn't pay for a second render. Returns null (not a
   // rejected promise) when no renderer is available, so callers can treat
   // "no real report" as a plain fallback rather than an error path.
-  async getCandidateReport(candidate, revision) {
+  async getCandidateReport(candidate, revision, scenario = null, renderOptions = {}) {
     if (!this.renderCandidate) return null;
     const hash = await sha256(stableStringify(candidate));
+    const visualMode = renderOptions.visualMode === "pixels" ? "pixels" : "geometry";
+    const cacheKey = `${hash}:${visualMode}`;
+    const baseProjectHash = await hashRenderProject(this.project);
+    const provenance = { revision, candidateHash: hash, baseProjectHash, source: "candidate", scenario, visualMode };
     const now = Date.now();
-    const cached = this.candidateReports.get(hash);
-    if (cached && cached.expiresAt > now) return { hash, report: cached.report };
+    const cached = this.candidateReports.get(cacheKey);
+    if (cached && cached.expiresAt > now) return { hash, report: attachRenderProvenance(cached.report, provenance) };
     let report;
     try {
-      report = await this.renderCandidate(candidate, revision);
+      report = await this.renderCandidate(candidate, revision, { ...renderOptions, visualMode, allowSyntheticPixels: visualMode === "pixels" });
     } catch (error) {
       report = { status: "blocked", validation: { valid: false, errors: [{ code: "RENDER_FAILED", path: "/", message: error?.message || "Candidate render failed" }], warnings: [] }, issues: [], metrics: {} };
     }
-    this.candidateReports.set(hash, { report, expiresAt: now + CANDIDATE_REPORT_TTL_MS });
+    this.candidateReports.set(cacheKey, { report, expiresAt: now + CANDIDATE_REPORT_TTL_MS });
     for (const [key, entry] of this.candidateReports) {
       if (entry.expiresAt <= now) this.candidateReports.delete(key);
     }
-    return { hash, report };
+    return { hash, report: attachRenderProvenance(report, provenance) };
   }
 
   readiness() {
     const base = this.validation();
     const pending = [];
     if (!this.renderReport) pending.push({ code: "PREVIEW_REQUIRED", message: "A current browser layout report is required before production export", path: "/", severity: "error" });
+    else if (!hasRenderProvenance(this.renderReport, "committed") || this.renderReport.provenance.revision !== this.revision) pending.push({ code: "RENDER_PROVENANCE_REQUIRED", message: "The current render must be issued for this committed revision", path: "/renderReport", severity: "error" });
     const review = layoutReviewStatus(this.reviewReceipt, this.revision);
     if (review.status !== "pass") pending.push({ code: "LAYOUT_REVIEW_REQUIRED", message: "A current AI full-page UI/UX review is required before production export", path: "/review", severity: "error" });
     return { ...base, valid: base.valid && !pending.length, productionValid: base.productionValid && !pending.length, errors: [...base.errors, ...pending], reviewReceipt: review.status === "pass" ? this.reviewReceipt : null };
@@ -147,53 +159,15 @@ export class CommandBus extends EventTarget {
         // layoutEvidenceReceipts also needs a real renderer: without one,
         // capture_layout_evidence fails closed and no review can ever pass.
         const capabilities = { candidateHash: true, candidateRealRender: Boolean(this.renderCandidate), layoutEvidenceReceipts: Boolean(this.renderCandidate) };
-        return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, capabilities, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
+        return this.success({ protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, studioVersion: STUDIO_VERSION, capabilities, tools: TOOL_CONTRACTS, sampleScenarios: SAMPLE_SCENARIOS, locales: PRINT_LOCALES, humanExportRequired: true, completionPolicy: "AI layout review must pass for the current revision before request_export can be ready" });
       }
       if (name === "get_project_summary") return this.success({ revision: this.revision, title: this.project.manifest.title, locale: this.project.manifest.locale, trust: this.project.trust, protocolVersion: this.project.manifest.protocolVersion, review: layoutReviewStatus(this.reviewReceipt, this.revision), validation: this.validation() });
       if (name === "inspect_document") return this.success({ revision: this.revision, ...inspectTemplate(this.project.templateHtml) });
+      if (name === "inspect_design_state") return this.success(inspectDesignState({ ...this.project, revision: this.revision }));
+      if (name === "get_operation_catalog") return this.success({ revision: this.revision, operations: getOperationCatalog() });
       if (name === "validate_project") return this.success({ revision: this.revision, validation: this.validation() });
       if (name === "get_layout_review_status") return this.success({ revision: this.revision, review: layoutReviewStatus(this.reviewReceipt, this.revision), checklist: LAYOUT_REVIEW_CHECKLIST });
-      if (name === "begin_layout_review") {
-        this.ensureRevision(input.expectedRevision);
-        if (this.renderReport?.status !== "ready") throw Object.assign(new Error("Wait for a ready browser preview before starting review"), { code: "LAYOUT_PREVIEW_NOT_READY" });
-        this.reviewReceipt = null;
-        this.reviewAttempts += 1;
-        if (this.reviewAttempts > 3) throw Object.assign(new Error("The three-pass automatic review limit is exhausted for this revision"), { code: "REVIEW_ATTEMPT_LIMIT" });
-        return this.success({ revision: this.revision, attempt: this.reviewAttempts, checklist: LAYOUT_REVIEW_CHECKLIST, requiredScenarios: REQUIRED_EVIDENCE_SCENARIOS, metrics: this.renderReport.metrics, issues: this.renderReport.issues || [] });
-      }
-      if (name === "capture_layout_evidence") {
-        this.ensureRevision(input.expectedRevision);
-        if (!this.renderCandidate) {
-          throw Object.assign(new Error("This session cannot render scenarios, so it cannot issue layout evidence"), { code: "EVIDENCE_UNAVAILABLE" });
-        }
-        // Rendered as a candidate, never committed: capturing evidence for
-        // long-text must not mutate the draft (that would bump the revision
-        // and invalidate the default-scenario receipt captured moments ago).
-        const candidate = { ...this.project, sampleData: createScenario(this.defaultSample, input.scenario) };
-        const { report } = await this.getCandidateReport(candidate, this.revision);
-        // A scenario that doesn't render cleanly yields no receipt — but its
-        // validation comes back so the agent can fix it. There is no other way
-        // to see a non-committed scenario's real errors.
-        if (report.status !== "ready") {
-          return this.success({ revision: this.revision, scenario: input.scenario, evidence: null, validation: report.validation, metrics: report.metrics });
-        }
-        const receipt = await createEvidenceReceipt({
-          evidenceId: globalThis.crypto.randomUUID(),
-          revision: this.revision,
-          scenario: input.scenario,
-          renderReport: report,
-          browser: detectBrowser()
-        });
-        this.evidenceReceipts.set(receipt.evidenceId, receipt);
-        return this.success({ revision: this.revision, scenario: input.scenario, evidence: receipt, requiredScenarios: REQUIRED_EVIDENCE_SCENARIOS, capturedScenarios: Array.from(new Set(Array.from(this.evidenceReceipts.values(), (item) => item.scenario))) });
-      }
-      if (name === "complete_layout_review") {
-        this.ensureRevision(input.expectedRevision);
-        if (!this.reviewAttempts) throw Object.assign(new Error("begin_layout_review must be called first"), { code: "REVIEW_NOT_STARTED" });
-        this.reviewReceipt = createLayoutReviewReceipt(this.revision, this.renderReport, input, this.reviewAttempts, this.evidenceReceipts);
-        this.dispatchEvent(new CustomEvent("review", { detail: { revision: this.revision, review: this.reviewReceipt } }));
-        return this.success({ revision: this.revision, review: this.reviewReceipt });
-      }
+      if (REVIEW_COMMANDS.has(name)) return this.success(await executeReviewCommand(this, name, input));
       if (name === "preview_changes") {
         const preview = this.preview(input.operations, input.expectedRevision);
         const candidateReport = await this.getCandidateReport(preview.candidate, preview.revision);
@@ -202,11 +176,34 @@ export class CommandBus extends EventTarget {
       }
       if (name === "apply_changes") {
         const preview = this.preview(input.operations, input.expectedRevision);
-        if (!preview.diff.changed) return this.success({ revision: this.revision, diff: preview.diff, validation: preview.validation, candidateHash: null });
+        const hasApprovalBinding = input.expectedCandidateHash !== undefined || input.requireValid === true;
+        if (!preview.diff.changed && !hasApprovalBinding) return this.success({ revision: this.revision, diff: preview.diff, validation: preview.validation, candidateHash: null });
         const candidateReport = await this.getCandidateReport(preview.candidate, preview.revision);
         const validation = candidateReport ? mergeRenderReport(preview.validation, candidateReport.report) : preview.validation;
+        const candidateHash = candidateReport?.hash || null;
+        if (input.expectedCandidateHash !== undefined && candidateHash !== input.expectedCandidateHash) {
+          throw Object.assign(new Error("Approved candidate no longer matches the current preview"), {
+            code: "CANDIDATE_HASH_MISMATCH",
+            expectedCandidateHash: input.expectedCandidateHash,
+            actualCandidateHash: candidateHash,
+            validation
+          });
+        }
+        if (input.requireValid === true && !validation.valid) {
+          throw Object.assign(new Error("Candidate validation failed"), { code: "CANDIDATE_INVALID", validation });
+        }
+        if (!preview.diff.changed) return this.success({ revision: this.revision, diff: preview.diff, validation, candidateHash });
         const revision = this.commit(preview.candidate, input.reason || "agent change");
-        return this.success({ revision, diff: preview.diff, validation, candidateHash: candidateReport?.hash || null });
+        // The approved candidate was already rendered by the same isolated
+        // preview runtime and pinned by candidateHash. Promote that exact
+        // report to committed provenance so a follow-up automatic layout
+        // review can start immediately instead of racing the UI change event.
+        if (candidateReport?.report?.status === "ready" && candidateHash) {
+          this.recordRenderReport(candidateReport.report, {
+            revision, candidateHash, baseProjectHash: candidateHash, source: "committed"
+          });
+        }
+        return this.success({ revision, diff: preview.diff, validation, candidateHash });
       }
       if (name === "preview_source_edit") {
         this.ensureRevision(input.expectedRevision);
@@ -243,13 +240,30 @@ export class CommandBus extends EventTarget {
         }
         return this.success(result);
       }
+      if (name === "redo_revision") {
+        const result = this.history.redo(input.expectedRevision);
+        if (result.changed) {
+          this.renderReport = null;
+          this.reviewReceipt = null;
+          this.reviewAttempts = 0;
+          this.evidenceReceipts.clear();
+          this.dispatchEvent(new CustomEvent("change", { detail: { revision: result.revision, project: result.project, reason: "redo" } }));
+        }
+        return this.success(result);
+      }
       if (name === "request_export") {
         const validation = this.readiness();
+        if (this.renderReport?.status === "ready") {
+          const currentRender = await verifyCurrentRender(this.renderReport, this.project, this.revision);
+          if (!currentRender.ok && !validation.errors.some((item) => item.code === currentRender.code)) {
+            validation.valid = false; validation.productionValid = false; validation.errors.push(provenanceError(currentRender));
+          }
+        }
         return this.success({ revision: this.revision, ready: validation.productionValid, validation, requiresUserConfirmation: true });
       }
       throw Object.assign(new Error(`Unknown tool: ${name}`), { code: "UNKNOWN_TOOL" });
     } catch (error) {
-      return { ok: false, error: { code: error.code || "COMMAND_FAILED", message: error.message, expectedRevision: error.expectedRevision, actualRevision: error.actualRevision } };
+      return { ok: false, error: { code: error.code || "COMMAND_FAILED", message: error.message, expectedRevision: error.expectedRevision, actualRevision: error.actualRevision, expectedCandidateHash: error.expectedCandidateHash, actualCandidateHash: error.actualCandidateHash, validation: error.validation } };
     }
   }
 

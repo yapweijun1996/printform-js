@@ -13,6 +13,7 @@ function findArray(value) {
 
 export function createScenario(sampleData, scenario) {
   const data = cloneJson(sampleData);
+  if (scenario === "default") return data;
   // Totals math is keyed to data.items — prefer it explicitly so a project
   // whose first depth-first array is something else (e.g. address lines)
   // doesn't get that array replaced by generated rows.

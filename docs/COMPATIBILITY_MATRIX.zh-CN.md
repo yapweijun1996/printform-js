@@ -1,6 +1,6 @@
 # 版本与兼容矩阵
 
-> 最后核对：2026-07-31（对齐 `3515409` 之后的 SemVer 落地提交）。
+> 最后核对：2026-08-04（对齐嵌入式 AI Designer 与 Agent Contract 2.1.0）。
 >
 > 本仓库有**四条独立的版本线**。它们描述四种不同的东西、按四种不同的节奏变化，共用一个数字只会让其中三条被迫做无意义的跳版。
 
@@ -9,13 +9,13 @@
 | 版本线 | 当前 | 事实来源（SSOT） | 它描述什么 | 什么情况下会升 major |
 |---|---|---|---|---|
 | **PrintForm 引擎** | 1.0.0 | [src/version.js](../src/version.js) → `PrintForm.version` | `dist/printform.js` 这个零依赖分页脚本本身 | 改变既有 ERP DOM 的分页结果、移除 `data-*` 配置项、改掉 `*_processed` class 约定 |
-| **Studio v2** | 0.9.0 | [studio-v2/core/constants.js](../studio-v2/core/constants.js) `STUDIO_VERSION` | 编辑器应用本身（UI、面板、PWA） | 工程师工作流出现不兼容的重大改动；**升到 1.0.0 专门保留给维护者显式宣布 Production Ready 的那一刻** |
+| **Studio v2** | 0.10.0 | [studio-v2/core/constants.js](../studio-v2/core/constants.js) `STUDIO_VERSION` | 编辑器应用本身（UI、面板、PWA） | 工程师工作流出现不兼容的重大改动；**升到 1.0.0 专门保留给维护者显式宣布 Production Ready 的那一刻** |
 | **单 HTML 协议** | 2.0.0 | 同上 `PROTOCOL_VERSION` | 导出文件的结构契约（`pf-manifest`/`pf-schema`/`pf-template`… 各区块的 id 与语义） | 旧版导出文件无法再被本版 Studio 正确解析 |
-| **Agent Contract** | 2.0.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（16 个工具的入参/返回/错误码） | 删除工具、改变既有工具的入参形状或返回契约（如 2.0.0 那次 `complete_layout_review` 改用 `evidenceIds`） |
+| **Agent Contract** | 2.1.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（18 个工具的入参/返回/错误码）；新增 operation catalog、design inspection 与 apply candidate safety flags | 删除工具、改变既有工具的入参形状或返回契约（如 2.0.0 那次 `complete_layout_review` 改用 `evidenceIds`） |
 
 ## 为什么必须拆开
 
-一次真实的例子：Agent Contract 从 1.2.0 升到 2.0.0（`complete_layout_review` 改用 `evidenceIds`）时，**导出文件的结构一个字节都没变**——协议还是 2.0.0，任何已导出的旧文件依然可以正常打开、渲染、验证。如果这四条线共用一个版本号，那次改动会强迫协议也跳 major，等于向所有已交付的 HTML 文件的持有者广播一个不存在的破坏性变更。
+一次真实的例子：Agent Contract 从 1.2.0 升到 2.0.0（`complete_layout_review` 改用 `evidenceIds`）时，**导出文件的结构一个字节都没变**；本次 2.1.0 继续保持 Protocol 2.0.0，并以 additive tools/optional flags 扩展命令面。如果这四条线共用一个版本号，那些改动会强迫协议也跳 major，等于向所有已交付的 HTML 文件的持有者广播不存在的破坏性变更。
 
 反过来同理：Studio 加一个工程师面板（如本轮的 Table columns / Brand color）不该让分页引擎跳版，因为引擎的字节没有变化，用户手上那份 `dist/printform.js` 的行为完全一致。
 

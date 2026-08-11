@@ -34,14 +34,15 @@
 | 自包含单 HTML | Current | 协议、样本、主题与两段 runtime 可封装在同一文件 |
 | 声明式数据绑定 | Current | 使用 JSON Pointer；不执行表达式或业务公式 |
 | Studio 静态 PWA | Current | 可部署到 GitHub Pages，并缓存最后成功的应用壳 |
-| UI/WebMCP/CDP 命令面 | Current | 共用同一 `CommandBus.execute`；Agent Contract **2.0.0**，16 个工具 |
+| UI/WebMCP/CDP 命令面 | Current | 共用同一 `CommandBus.execute`；Agent Contract **2.1.0**，18 个工具，含 operation catalog/design inspection 与候选安全 flags |
+| 嵌入式 AI Designer | Current | 可折叠 side panel；默认 own-gpt-server 走公开 server-auth gateway（无需浏览器解锁），OpenAI/Gemini/Custom BYOK 仍使用加密 vault；会话、stream/Stop、preview→validated auto-apply→validation、Undo/Redo；生产导出仍由人工完成 |
 | 五语言打印内容与 Studio UI | Current | `en-MY`、`zh-CN`、`ms-MY`、`ja-JP`、`vi-VN` |
 | 人工生产导出确认 | Current | AI/MCP 不能代替最终点击 |
 | 单调 revision（undo 不复用） | Current | 2026-07-31 落地；过期写入稳定返回 `REVISION_CONFLICT` |
 | 预览消息目标 iframe 校验 | Current | `event.source === contentWindow`；一次性 nonce 需求已并入候选渲染的请求 token 排序机制（不再单列为独立项）；candidate hash 已实现 |
 | 元素级布局诊断 | Current | 渲染报告 issues 带页内 selector、页码与坐标，经 `validate_project` 暴露 |
 | 候选项目真实分页 dry-run | Current | `preview_changes`/`apply_changes` 复用可见预览 iframe 做真实分页渲染（非仅内存校验+静态 diff），按 `candidateHash` 缓存渲染报告 |
-| Studio 签发的布局证据 | Current | Studio 自测的**几何指纹**（`layoutFingerprint`，非像素截图——见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)），Agent 不能自我声明证据 |
+| Studio 签发的布局证据 | Current | Studio 自测的**几何指纹**（`layoutFingerprint`）与可选 geometry-only SVG；synthetic mode 可选 bounded pixel raster + `pixelSnapshotHash`，real-data mode 硬拒绝像素，receipt 同时绑定 revision/`baseProjectHash` |
 | 双 runtime 完整证明 | Current | `printformRuntimeHash`（分页引擎）+ 既有 document runtime hash + `cspScriptHashes`；`browsers` 由 evidence receipt 推导，非硬编码 |
 | 内容顺序、遗漏与重叠证明 | Current | `ROW_COUNT_MISMATCH`/`ROW_DUPLICATE_INDEX`/`ROW_MISSING_INDEX`/`ROW_ORDER_MISMATCH`/`HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 全部落地 |
 | 工程师结构化面板 | Current | Table columns、Print font scale、Page settings、Repeated areas、Brand color；Data contract 仍是 Backlog |

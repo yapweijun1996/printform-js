@@ -30,7 +30,7 @@ export async function createStandaloneHtml(project, options = {}) {
   }
   const assets = await inlineProjectAssets(project, options.baseUrl);
   const sources = await loadRuntimeSources();
-  const html = await serializeStandalone(assets.project, sources, validation, { trusted: options.requireTrusted !== false, networkDisabled: options.networkDisabled });
+  const html = await serializeStandalone(assets.project, sources, validation, { trusted: options.requireTrusted !== false, networkDisabled: options.networkDisabled, scriptNonce: options.scriptNonce });
   const bytes = new TextEncoder().encode(html).byteLength;
   if (bytes > (project.manifest.acceptance?.maxHtmlBytes || LIMITS.htmlBytes)) {
     const error = new Error(`Export is ${bytes} bytes and exceeds the configured limit`);

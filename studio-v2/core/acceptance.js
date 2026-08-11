@@ -258,12 +258,8 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
     ...verticalOverflow.slice(0, MAX_ISSUE_DETAILS).map((page) => issueEntry("VERTICAL_OVERFLOW", page, pageIndexOf(page))),
     ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node)))
   ];
-  // Compact structural geometry of what Studio actually rendered: every
-  // page's direct children by class and integer rect. This is the payload a
-  // layout evidence receipt hashes (P0-B #18) — Studio measured it itself,
-  // so signing it proves the layout an agent claims to have reviewed is the
-  // one Studio really produced, with no pixels involved (pixels would carry
-  // real ERP data and fall under the real-data privacy rules).
+  // Compact structural geometry of what Studio rendered; the evidence receipt
+  // hashes this Studio-measured payload without exposing pixels or ERP values.
   //
   // Coordinates are page-relative, NOT viewport-relative: getBoundingClientRect
   // shifts with scroll position, so raw rects would hash differently for the

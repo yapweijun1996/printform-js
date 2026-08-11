@@ -6,7 +6,7 @@
     "name": "PrintForm Studio v2",
     "url": "https://yapweijun1996.github.io/printform-js/studio-v2/",
     "protocolVersion": "2.0.0",
-    "commandContractVersion": "2.0.0",
+    "commandContractVersion": "2.1.0",
     "humanGuide": "https://yapweijun1996.github.io/printform-js/studio-v2/AGENT_SETUP.md",
     "llmsText": "https://yapweijun1996.github.io/printform-js/studio-v2/llms.txt"
   },
@@ -103,7 +103,7 @@
       "mode": "mcp-call",
       "instruction": "Call list_webmcp_tools and require all expected Studio tools before editing.",
       "mcpTool": "list_webmcp_tools",
-      "expectedToolCount": 16
+      "expectedToolCount": 18
     },
     {
       "id": "verify-capabilities",
@@ -115,10 +115,10 @@
   ],
   "verification": {
     "requiredMcpTools": ["new_page", "list_webmcp_tools", "execute_webmcp_tool"],
-    "requiredStudioTools": ["get_capabilities", "get_project_summary", "preview_changes", "apply_changes", "validate_project", "get_layout_review_status", "begin_layout_review", "capture_layout_evidence", "complete_layout_review", "request_export"],
+    "requiredStudioTools": ["get_capabilities", "get_project_summary", "inspect_design_state", "get_operation_catalog", "preview_changes", "apply_changes", "validate_project", "get_layout_review_status", "begin_layout_review", "capture_layout_evidence", "complete_layout_review", "request_export"],
     "expectedProtocolVersion": "2.0.0",
-    "expectedCommandContractVersion": "2.0.0",
-    "expectedWebMcpToolCount": 16
+    "expectedCommandContractVersion": "2.1.0",
+    "expectedWebMcpToolCount": 18
   },
   "safety": {
     "isolatedTemporaryProfileRequired": true,

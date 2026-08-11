@@ -29,7 +29,7 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 
 ## Recommended Chrome DevTools MCP WebMCP route
 
-Studio progressively registers `document.modelContext` tools when the browser enables WebMCP. The configuration below was verified against Chrome 150 and `chrome-devtools-mcp` 1.6.0 on 2026-07-30. Chrome DevTools MCP launches Chrome itself, injects the required feature flags, and creates an isolated temporary profile; engineers do not run or clean up a separate browser profile.
+Studio progressively registers `navigator.modelContext` tools when the browser enables WebMCP. The configuration below was verified against Chrome 150 and `chrome-devtools-mcp` 1.6.0 on 2026-07-30. Chrome DevTools MCP launches Chrome itself, injects the required feature flags, and creates an isolated temporary profile; engineers do not run or clean up a separate browser profile.
 
 ```toml
 [mcp_servers.chrome-devtools]
@@ -94,19 +94,57 @@ The fallback launcher now uses Chrome 150's `WebMCP,DevToolsWebMCPSupport` featu
 
 ## Connection check
 
-The steps below exercise the **current Pilot contract**. Its review evidence values are Agent-submitted labels, not Studio-issued screenshot receipts; passing them does not by itself prove Production Ready.
+The steps below exercise the **current Pilot contract**. Layout evidence is issued by Studio: `capture_layout_evidence` renders the current draft scenario, returns a receipt with an `evidenceId`, and binds it to both the revision and `baseProjectHash`. Use `visualMode: "pixels"` only in synthetic-data mode; Studio then creates a bounded sandbox DOM-to-canvas pixel raster. Real-data mode is hard-gated to geometry-only evidence, while geometry remains the cross-browser fallback. Pixel rasterization omits source URLs and uses safe placeholders for image assets. `complete_layout_review` accepts only those IDs for the current revision and scenarios. The agent gateway also redacts rendered text, business amounts and raw validation messages before an external model sees them.
 
 1. Open the Studio v2 PWA in the isolated profile. Use `?sample=purchase-order-red` for the Crimson purchase-order pilot or select it from **Standard sample**.
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
-4. Use `preview_changes` with the current revision before `apply_changes`.
-5. Exercise `default` and `long-text`, then manually inspect full-page screenshots rather than relying on metrics alone.
-6. Call `begin_layout_review`, repair every major or critical finding, and call the current `complete_layout_review` with `full-page-screenshot` and `layout-metrics` evidence labels for the current revision.
-7. Treat the resulting receipt as Pilot evidence only. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.
+4. Use `inspect_design_state` and `get_operation_catalog`, then use `preview_changes` with the current revision before `apply_changes`.
+5. Exercise `default` and `long-text`. In synthetic-data mode the embedded AI review receives bounded, complete-page pixel rasters plus safe metrics; in real-data mode it receives complete-page geometry-only SVG snapshots. A broken scenario returns an unsigned safe observation for diagnosis, never a completion receipt. A human should still inspect the actual browser/system print preview rather than relying on agent evidence alone.
+6. Call `begin_layout_review` and `capture_layout_evidence` for required scenarios. Any major or critical finding blocks completion even if the caller labels it `fixed`; apply a revision-bound repair, capture fresh evidence, then call `complete_layout_review` with the new clean `evidenceIds`.
+7. Treat the resulting receipt as Studio-issued layout evidence. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.
 
-Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. Studio limits automated review to three passes per revision. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
+Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. The embedded loop permits at most three passes and two approved repairs; repeated repairs are rejected. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
 
-Agent Contract 2.0 will replace self-declared evidence labels with Studio-issued evidence IDs and make `apply_changes` consume a real preview receipt. This is Target behavior and is not available until `get_capabilities` reports the 2.0 contract.
+Agent Contract 2.1 adds `get_operation_catalog`, `inspect_design_state`, and optional `expectedCandidateHash`/`requireValid` flags on `apply_changes`. The embedded AI Designer uses an in-memory proposal ID and an internally signed binding token, then automatically submits the exact candidate with `expectedCandidateHash` and `requireValid: true`; it does not show an Apply approval step. End users can Undo or Redo committed revisions. External WebMCP/CDP agents may continue sending the backward-compatible `operations[]` form when those flags are omitted. `request_export` is readiness-only: AI never receives Production Export UI permission.
+
+## Embedded AI Designer and BYOK
+
+The Studio includes a collapsible AI Designer panel backed by the pinned
+same-origin `agrun.min.js` bundle. It supports OpenAI, Gemini and an
+OpenAI-compatible Custom LLM. Provider keys are stored only as PBKDF2-HMAC-
+SHA256 (600,000 iterations) + AES-256-GCM ciphertext in IndexedDB; the
+derived key and decrypted credential exist only while the vault is unlocked.
+
+The embedded action flow is:
+
+```text
+inspect → operation catalog → preview_changes → host auto-apply (candidate hash + requireValid) → validate
+review → full-page evidence/observation → multimodal decision
+       → repair proposal → host auto-apply after validation → fresh evidence → pass or block
+```
+
+The embedded controller runs Agrun in `native_tools` mode with
+`nativeToolsFailurePolicy: "hard_fail"`. A design turn must finish through a
+terminal PrintForm action; ordinary provider prose is stopped with
+`TERMINAL_ACTION_REQUIRED` instead of consuming the full step budget. If the
+provider emits an unambiguous safe JSON semantic operation where the planner
+envelope is invalid, the controller converts it into the same native
+`preview_changes` action. High-risk raw replacement text is ignored.
+
+The AI runtime cannot production-export, cannot use Web search/URL/workspace
+actions, and cannot mutate an untrusted document. Real-data mode keeps chat
+sessions in memory and applies the same gateway redaction, but user-entered
+values or raw replacement text can still be intentionally sent to the chosen
+provider. The default runtime step limit is 100 (bounded to 4–100). The panel
+always reports token usage; a USD cap is enabled only when the user supplies
+both input and output prices for the selected model, so the Studio never
+guesses current provider pricing.
+
+Agrun stream events are projected at the controller boundary. The UI and its
+memory-only trace receive action names, phases, statuses, error codes and
+numeric usage, but not raw prompts, image data URLs, credentials, normalized
+provider input or terminal run state.
 
 ## Production sample artifacts
 

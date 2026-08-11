@@ -17,6 +17,7 @@ const PILOT_EXPORTS = [
 ];
 
 const steps = [
+  { label: "AGRUN vendor integrity", command: "npm", args: ["run", "check:agrun"] },
   { label: "Unit tests + production build", command: "npm", args: ["run", "build:site"] },
   ...PILOT_EXPORTS.map((file) => ({ label: `validate:v2 — ${file}`, command: "npm", args: ["run", "validate:v2", "--", file] }))
 ];

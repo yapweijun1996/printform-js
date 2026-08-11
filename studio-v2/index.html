@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- The parent app is same-origin-only. The nonce is shared only with the
+       generated, sandboxed preview runtime and bridge. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-cHJpbnRmb3JtLXN0dWRpby12Mi1wcmV2aWV3LTIwMjY'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="theme-color" content="#173d9a">
   <meta name="description" content="Production-oriented, agent-compatible PrintForm Studio">
   <meta name="printform-agent-bootstrap" content="./agent-setup.json">
@@ -14,11 +17,14 @@
   <link rel="stylesheet" href="./styles/base.css">
   <link rel="stylesheet" href="./styles/layout.css">
   <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/agent-panel.css">
+  <link rel="stylesheet" href="./styles/agent-trace.css">
+  <link rel="stylesheet" href="./styles/agent-settings-modal.css">
 </head>
 <body>
   <a class="skip-link" href="#preview-panel" data-ui-i18n="skip.preview">Skip to preview</a>
   <header class="topbar">
-    <div>
+    <div class="topbar-brand">
       <p class="eyebrow">PRINTFORM STUDIO</p>
       <h1>Studio v2 <span class="badge">Protocol 2.0</span></h1>
     </div>
@@ -28,6 +34,12 @@
         <option value="en-MY">English</option><option value="zh-CN">简体中文</option><option value="ms-MY">Bahasa Melayu</option>
         <option value="ja-JP">日本語</option><option value="vi-VN">Tiếng Việt</option>
       </select>
+      <button id="inspector-toggle" class="secondary inspector-toggle" type="button" aria-controls="inspector-panel" aria-expanded="false" data-ui-i18n-aria-label="inspector.openLabel" data-ui-i18n-title="inspector.openLabel" aria-label="Open AI Designer" title="Open AI Designer">
+        <span class="ai-launcher-icon" aria-hidden="true">✦</span><span data-ui-i18n="inspector.open">AI Designer</span>
+      </button>
+      <button id="editor-toggle" class="secondary editor-toggle" type="button" aria-controls="editor-panel" aria-expanded="true" aria-label="Hide source editor" title="Hide source editor">
+        <span aria-hidden="true">☷</span><span id="editor-toggle-label" data-ui-i18n="editor.toggle.hide">Hide source</span>
+      </button>
       <label class="button secondary" for="import-file" data-ui-i18n="actions.import">Import HTML</label>
       <input id="import-file" class="visually-hidden" type="file" accept="text/html,.html">
       <button id="validate-button" class="secondary" type="button" data-ui-i18n="actions.validate">Validate</button>
@@ -37,9 +49,13 @@
     </nav>
   </header>
 
-  <aside id="update-banner" class="banner hidden" role="status">
-    <span data-ui-i18n="banner.update">A new PWA version is ready. Save your draft before switching.</span>
-    <button id="update-button" type="button" data-ui-i18n="banner.updateAction">Safe upgrade</button>
+  <aside id="update-banner" class="banner update-banner hidden" role="status" aria-live="polite">
+    <span id="update-message" data-ui-i18n="banner.update">A new PWA version is ready. Save your draft before switching.</span>
+    <span id="update-status" class="banner-status hidden" aria-live="polite"></span>
+    <div class="update-actions">
+      <button id="save-upgrade-button" type="button" data-ui-i18n="banner.saveAndUpgrade">Save draft &amp; upgrade</button>
+      <button id="update-button" class="secondary" type="button" data-ui-i18n="banner.updateAction">Safe upgrade</button>
+    </div>
   </aside>
   <aside id="restore-banner" class="banner hidden" role="status">
     <span data-ui-i18n="banner.restore">A non-authoritative recovery draft from the last seven days was found.</span>
@@ -51,10 +67,13 @@
   </aside>
 
   <main class="workspace">
-    <aside class="editor-panel" aria-label="Structured source editor" data-ui-i18n-aria-label="editor.aria">
+    <aside id="editor-panel" class="editor-panel" aria-label="Structured source editor" data-ui-i18n-aria-label="editor.aria" aria-hidden="false">
       <div class="panel-heading">
         <div><h2 data-ui-i18n="editor.projectSource">Project source</h2><p id="revision-label">Revision 0</p></div>
-        <button id="apply-source-button" type="button" data-ui-i18n="editor.applySource">Preview and apply</button>
+        <div class="panel-heading-actions">
+          <button id="apply-source-button" type="button" data-ui-i18n="editor.applySource">Preview and apply</button>
+          <button id="editor-panel-close" class="secondary editor-panel-close" type="button" aria-label="Hide source editor" title="Hide source editor" data-ui-i18n="editor.toggle.hide">Hide source</button>
+        </div>
       </div>
       <label for="document-select" data-ui-i18n="editor.standardSample">Standard sample</label>
       <select id="document-select">
@@ -97,7 +116,7 @@
         <input id="page-height-input" type="number" min="1" step="1">
         <button id="apply-page-settings-button" class="secondary" type="button" data-ui-i18n="editor.applyPageSettings">Apply page settings</button>
       </fieldset>
-      <fieldset class="asset-slots"><legend data-ui-i18n="editor.repeatedAreas">Repeated areas</legend>
+      <fieldset class="asset-slots repeat-settings"><legend data-ui-i18n="editor.repeatedAreas">Repeated areas</legend>
         <div id="repeat-flags-fields" class="repeat-flags"></div>
         <button id="apply-repeat-flags-button" class="secondary" type="button" data-ui-i18n="editor.applyRepeatedAreas">Apply repeated areas</button>
       </fieldset>
@@ -123,20 +142,31 @@
       <div class="preview-viewport"><iframe id="preview-frame" title="PrintForm isolated print preview" data-ui-i18n-title="preview.iframeTitle" sandbox="allow-scripts"></iframe></div>
     </section>
 
-    <aside class="inspector-panel" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
-      <section><h2 data-ui-i18n="inspector.quality">Quality gate</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>
-      <section><h2 data-ui-i18n="inspector.agent">Agent connection</h2><dl class="facts"><div><dt data-ui-i18n="inspector.contract">Command contract</dt><dd id="contract-version"></dd></div><div><dt data-ui-i18n="inspector.webmcp">WebMCP</dt><dd id="webmcp-status" data-ui-i18n="agent.checking">Checking</dd></div><div><dt data-ui-i18n="inspector.cdp">CDP Gateway</dt><dd data-ui-i18n="inspector.exposed">Exposed</dd></div><div><dt data-ui-i18n="inspector.review">AI layout review</dt><dd id="review-status" data-ui-i18n="review.pending">Pending</dd></div><div><dt data-ui-i18n="inspector.dataPolicy">Data policy</dt><dd id="data-policy" data-ui-i18n="data.synthetic">Synthetic data only</dd></div></dl>
-        <div class="agent-bootstrap" aria-labelledby="agent-setup-title">
-          <h3 id="agent-setup-title" data-ui-i18n="agentSetup.title">Connect Codex or Claude Code</h3>
-          <p data-ui-i18n="agentSetup.summary">Give your AI agent this Studio URL. It can discover the verified MCP setup, request approval, restart, and connect through WebMCP.</p>
-          <p class="agent-bootstrap-links"><a href="./AGENT_SETUP.md" data-ui-i18n="agentSetup.guide">Step-by-step guide</a><a href="./agent-setup.json" data-ui-i18n="agentSetup.manifest">Machine manifest</a></p>
-          <p class="agent-handoff" data-ui-i18n="agentSetup.handoff">AI agent: read the linked setup manifest before editing this document.</p>
+    <aside id="inspector-panel" class="inspector-panel" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
+      <div class="inspector-header">
+        <div class="inspector-tabs" role="tablist" aria-label="Studio inspector tabs">
+          <button id="quality-tab" role="tab" aria-selected="false" aria-controls="quality-tabpanel" type="button">Quality</button>
+          <button id="agent-tab" role="tab" aria-selected="false" aria-controls="agent-tabpanel" type="button">Agent</button>
+          <button id="ai-designer-tab" role="tab" aria-selected="true" aria-controls="ai-designer-tabpanel" type="button">AI Designer</button>
         </div>
-      </section>
-      <section><h2 data-ui-i18n="inspector.metrics">Render metrics</h2><pre id="metrics-output" data-ui-i18n="inspector.noMetrics">No metrics yet</pre></section>
-      <section class="inspector-actions"><button id="undo-button" class="secondary" type="button" data-ui-i18n="inspector.undo">Undo revision</button><button id="reset-trust-button" class="secondary hidden" type="button" data-ui-i18n="inspector.resetTrust">Remove scripts and reset trust</button><button id="diagnostics-button" class="secondary" type="button" data-ui-i18n="inspector.diagnostics">Download redacted diagnostics</button></section>
+        <button id="inspector-close" class="secondary inspector-close" type="button" data-ui-i18n="inspector.close" data-ui-i18n-aria-label="inspector.close" aria-label="Close">Close</button>
+      </div>
+      <div id="quality-tabpanel" role="tabpanel" tabindex="0" aria-labelledby="quality-tab" hidden>
+        <section><h2 data-ui-i18n="inspector.quality">Quality gate</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>
+        <section><h2 data-ui-i18n="inspector.metrics">Render metrics</h2><pre id="metrics-output" data-ui-i18n="inspector.noMetrics">No metrics yet</pre></section>
+        <section class="inspector-actions"><button id="undo-button" class="secondary" type="button" data-ui-i18n="inspector.undo">Undo revision</button><button id="redo-button" class="secondary" type="button" data-ui-i18n="inspector.redo">Redo revision</button><button id="reset-trust-button" class="secondary hidden" type="button" data-ui-i18n="inspector.resetTrust">Remove scripts and reset trust</button><button id="diagnostics-button" class="secondary" type="button" data-ui-i18n="inspector.diagnostics">Download redacted diagnostics</button></section>
+      </div>
+      <div id="agent-tabpanel" role="tabpanel" tabindex="0" aria-labelledby="agent-tab" hidden>
+        <section><h2 data-ui-i18n="inspector.agent">Agent connection</h2><dl class="facts"><div><dt data-ui-i18n="inspector.contract">Command contract</dt><dd id="contract-version"></dd></div><div><dt data-ui-i18n="inspector.webmcp">WebMCP</dt><dd id="webmcp-status" data-ui-i18n="agent.checking">Checking</dd></div><div><dt data-ui-i18n="inspector.cdp">CDP Gateway</dt><dd data-ui-i18n="inspector.exposed">Exposed</dd></div><div><dt data-ui-i18n="inspector.review">AI layout review</dt><dd id="review-status" data-ui-i18n="review.pending">Pending</dd></div><div><dt data-ui-i18n="inspector.dataPolicy">Data policy</dt><dd id="data-policy" data-ui-i18n="data.synthetic">Synthetic data only</dd></div></dl>
+          <div class="agent-bootstrap" aria-labelledby="agent-setup-title"><h3 id="agent-setup-title" data-ui-i18n="agentSetup.title">Connect Codex or Claude Code</h3><p data-ui-i18n="agentSetup.summary">Give your AI agent this Studio URL. It can discover the verified MCP setup, request approval, restart, and connect through WebMCP.</p><p class="agent-bootstrap-links"><a href="./AGENT_SETUP.md" data-ui-i18n="agentSetup.guide">Step-by-step guide</a><a href="./agent-setup.json" data-ui-i18n="agentSetup.manifest">Machine manifest</a></p><p class="agent-handoff" data-ui-i18n="agentSetup.handoff">AI agent: read the linked setup manifest before editing this document.</p></div>
+        </section>
+      </div>
+      <div id="ai-designer-tabpanel" role="tabpanel" tabindex="0" aria-labelledby="ai-designer-tab"></div>
     </aside>
   </main>
+  <button id="ai-floating-launcher" class="ai-floating-launcher" type="button" aria-controls="inspector-panel" aria-expanded="false" data-ui-i18n-aria-label="inspector.openLabel" data-ui-i18n-title="inspector.openLabel" aria-label="Open AI Designer" title="Open AI Designer">
+    <span class="ai-floating-icon" aria-hidden="true">✦</span>
+  </button>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <div id="source-diff-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="source-diff-title">
@@ -151,6 +181,7 @@
     </div>
   </div>
 
+  <script src="./vendor/agrun.min.js" defer integrity="sha256-N3uP0Bhv3vjl5SHBtv1p6+Ty7RhTjLPEx2lI806QYZU=" crossorigin="anonymous"></script>
   <script type="module" src="./ui/app.js"></script>
 </body>
 </html>

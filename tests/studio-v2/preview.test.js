@@ -19,6 +19,13 @@ describe("buildPreviewBridge request token", () => {
     const script = buildPreviewBridge(1, true, "42;alert(1)//");
     expect(script).toContain('token: "42;alert(1)//"');
   });
+
+  it("forwards vertical wheel input from the sandboxed preview", () => {
+    const script = buildPreviewBridge(1, true, 2);
+    expect(script).toContain('addEventListener("wheel"');
+    expect(script).toContain('type: "wheel"');
+    expect(script).toContain("deltaY: event.deltaY");
+  });
 });
 
 describe("listenForPreview identity check", () => {

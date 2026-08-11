@@ -70,6 +70,7 @@ describe("link-only AI agent bootstrap", () => {
     // the shipped worker precaches nothing and offline dies silently.
     // Coverage for the generator itself lives in tests/app-shell.test.js.
     expect(serviceWorker).toContain('const APP_SHELL = "__PRINTFORM_APP_SHELL__"');
+    expect(serviceWorker).toContain('const DEV_MODE = BUILD_ID === "local" || BUILD_ID.startsWith("__")');
     for (const asset of ["agent-setup.json", "agent-setup.schema.json", "AGENT_SETUP.md", "llms.txt"]) {
       expect(fs.existsSync(`studio-v2/${asset}`)).toBe(true);
     }

@@ -2,7 +2,7 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。Agent Contract 2.0.0 已实现（见《契约升级》）。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。Agent Contract 2.1.0 已实现（见《契约升级》）。
 
 ## 信任边界
 
@@ -45,7 +45,7 @@ Current 默认策略（未知 HTML 或 JSON 一律视为可能含真实 ERP 数�
 
 ## Backlog（早期设想，已评估未采纳）：破坏性两阶段提交
 
-本节是 Agent Contract 2.0 最初设想的写路径重设计——`apply_changes` 只认 `previewId`/`candidateHash`，不再接受直接传 `operations[]`。**2026-07-31 已就此评估并与用户确认：不采纳**（见 DESIGN.md §4.7、TASK.md #14）。原因：`operations[]` 判别联合 schema 校验、候选项目真实渲染（复用可见预览 iframe）、`candidateHash` 内容寻址缓存这三项已经达成"绝不提交未经真实验证的候选"这一信任目标，且是**非破坏性**实现——`apply_changes` 至今仍接受直接传 `operations[]`（未命中 `candidateHash` 缓存时退化为内联真实渲染再提交）。真实契约版本历史是 1.1.0→1.2.0（非破坏性声明候选渲染能力）→2.0.0（唯一破坏性变更是 `complete_layout_review` 改用 `evidenceIds`，见下一节）。
+本节是 Agent Contract 2.0 最初设想的写路径重设计。当前实现保留直接传 `operations[]` 的旧 caller 兼容性，同时在 2.1.0 为嵌入式 AI proposal 增加可选 `expectedCandidateHash` 与 `requireValid`：两项都提供时，候选必须与已预览 hash 一致且 validation 必须通过，否则不得 commit。真实契约版本历史是 1.1.0→1.2.0（候选渲染能力）→2.0.0（`complete_layout_review` 改用 `evidenceIds`）→2.1.0（operation catalog、design inspection 与安全 apply flags）。
 
 以下是当初设想、未采纳的具体形状，保留仅供历史参考：
 
@@ -81,12 +81,14 @@ revision 使用永不复用的单调编号——**这部分已实现**，undo �
   browser: { name, version },
   layoutFingerprint,   // sha256(每页直接子元素的 class + 页内相对整数矩形)
   renderReportHash,    // sha256(完整渲染报告)
+  visualMode,          // "geometry" or synthetic-data-only "pixels"
+  pixelSnapshotHash,   // only present for synthetic pixel evidence
   metrics,
   createdAt
 }
 ```
 
-**证据是 Studio 自己测量的几何指纹，不是像素截图。** 权衡记录（2026-07-31 与用户确认）：预览 iframe 是不透明 origin 沙箱，父页读不到其 DOM，真像素只能在 iframe 内走 foreignObject→canvas，有 canvas 污染风险、字体保真缺陷、单张数 MB，且像素在真实数据模式下**就是业务数据**（与本文《数据隐私》默认策略直接冲突）。而 #18 要防的是"Agent 谎称自己看过"——Studio 自己渲染、自己测量的报告本身就是事实，给它签名即已达成防伪造。Agent 仍可用自己的 CDP 截图工具看像素，只是那不构成证据。`layoutFingerprint` 用**页内相对坐标**，否则同一份布局在不同滚动位置会哈希出不同值。
+**证据仍以 Studio 自己测量的几何指纹为基础。** synthetic-data session 可显式请求 `visualMode: "pixels"`，像素在 sandbox iframe 内由 DOM-to-canvas rasterizer 生成；它不携带源 URL，图片位置使用安全 placeholder，并以 `pixelSnapshotHash` 参与视觉回归比较。real-data session 在 gateway 层硬拒绝像素模式（`PIXEL_EVIDENCE_SYNTHETIC_ONLY`），只允许 geometry-only SVG，因此业务值不会进入像素 evidence。`layoutFingerprint` 用**页内相对坐标**，并由 evidence 的 `baseProjectHash` 绑定当前 draft，否则同一份证据不能证明当前项目。
 
 渲染不干净的场景不签发证据（`evidence: null`），但返回该场景的 validation 供 Agent 修复——这是唯一能看到未提交场景真实错误的途径。无渲染器的会话（CLI 校验器、单测）返回 `EVIDENCE_UNAVAILABLE`，绝不伪造 receipt。
 
@@ -114,7 +116,7 @@ Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否�
 
 ## 契约升级
 
-Agent Contract 2.0.0 已于 2026-07-31 切换（`core/constants.js`）。破坏性变更**只有一处**：`complete_layout_review` 改为要求 `evidenceIds`，拒绝旧式 `evidence`/`browser`/`scenarios` 自述字段——保留它们等于让 Agent 继续自证，#18 的安全目标会归零，所以这里必须破。
+Agent Contract 2.0.0 已于 2026-07-31 切换（`core/constants.js`）。2.1.0 是 additive 扩展：新增两个只读工具，并为 `apply_changes` 增加可选安全 flags；不提供 flags 的旧 caller 保持原行为。破坏性变更仍只有一处：`complete_layout_review` 改为要求 `evidenceIds`，拒绝旧式 `evidence`/`browser`/`scenarios` 自述字段。
 
 其余写路径**保持向后兼容**：`apply_changes` 仍接受直接传 `operations[]`（1.2.0 加入的真实候选渲染是可加能力，非破坏性）。这与本文早期设想的"2.0 不保留任何 1.x 写路径"不同——真实实现中信任目标已由候选真实渲染达成，无必要连带破坏调用方式。
 

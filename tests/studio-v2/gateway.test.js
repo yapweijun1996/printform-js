@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
-import { installAgentGateway } from "../../studio-v2/adapters/gateway.js";
+import { executeAgentCommand, installAgentGateway } from "../../studio-v2/adapters/gateway.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 
 describe("installAgentGateway JSON input handling", () => {
@@ -36,5 +36,14 @@ describe("installAgentGateway JSON input handling", () => {
     installAgentGateway(bus, scope);
     expect(scope.PrintFormStudioAgent).toBeDefined();
     expect(typeof scope.PrintFormStudioAgent.execute).toBe("function");
+  });
+
+  it("rejects pixel evidence before rendering when the session is real-data", async () => {
+    let rendered = false;
+    const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => { rendered = true; return { status: "ready" }; } });
+    const result = await executeAgentCommand(bus, "capture_layout_evidence", { expectedRevision: 0, scenario: "default", visualMode: "pixels" }, { realData: true });
+    expect(result).toMatchObject({ ok: false, error: { code: "PIXEL_EVIDENCE_SYNTHETIC_ONLY" } });
+    expect(rendered).toBe(false);
+    expect(bus.revision).toBe(0);
   });
 });

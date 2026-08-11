@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
+import { hashRenderProject } from "../../studio-v2/core/render-provenance.js";
+import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
 
-const readyMetrics = { logicalPages: 3, overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 };
+const readyMetrics = { logicalPages: 1, overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 };
 const readyReport = { status: "ready", validation: { errors: [], warnings: [] }, metrics: readyMetrics };
 const review = { expectedRevision: 0, reviewer: "ai-agent", findings: [], summary: "Hierarchy, pagination, logos and totals reviewed" };
 
@@ -11,14 +13,20 @@ const review = { expectedRevision: 0, reviewer: "ai-agent", findings: [], summar
 // genuinely different fingerprints.
 function renderCandidateStub(project) {
   const rows = project.sampleData.items?.length || 0;
-  return Promise.resolve({
+  const report = {
     ...readyReport,
     pageGeometry: [{ pageIndex: 0, width: 794, height: 1123, children: [{ className: "pheader_processed", x: 0, y: 0, width: 794, height: 80 + rows }] }]
-  });
+  };
+  return Promise.resolve({ ...report, safeSnapshot: createRedactedLayoutSnapshot(report) });
 }
 
 function busWithEvidence() {
   return new CommandBus(createSalesInvoiceProject(), { renderCandidate: renderCandidateStub });
+}
+
+async function recordCommitted(bus) {
+  const projectHash = await hashRenderProject(bus.project);
+  bus.recordRenderReport(readyReport, { revision: bus.revision, candidateHash: projectHash, baseProjectHash: projectHash, source: "committed" });
 }
 
 async function captureBoth(bus) {
@@ -33,7 +41,7 @@ async function captureBoth(bus) {
 describe("revision-bound AI layout review", () => {
   it("passes with Studio-issued evidence and becomes stale after a change", async () => {
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     expect((await bus.execute("request_export")).result.ready).toBe(false);
     const evidenceIds = await captureBoth(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
@@ -45,10 +53,22 @@ describe("revision-bound AI layout review", () => {
 
   it("rejects open major findings", async () => {
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     const evidenceIds = await captureBoth(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     const result = await bus.execute("complete_layout_review", { ...review, evidenceIds, findings: [{ code: "SPARSE_PAGE", severity: "major", status: "open", message: "Totals are isolated" }] });
+    expect(result.error.code).toBe("REVIEW_ISSUES_OPEN");
+  });
+
+  it("rejects a self-declared fixed major finding without fresh clean evidence", async () => {
+    const bus = busWithEvidence();
+    await recordCommitted(bus);
+    const evidenceIds = await captureBoth(bus);
+    await bus.execute("begin_layout_review", { expectedRevision: 0 });
+    const result = await bus.execute("complete_layout_review", {
+      ...review, evidenceIds,
+      findings: [{ code: "SPARSE_PAGE", severity: "major", status: "fixed", message: "Claimed fixed" }]
+    });
     expect(result.error.code).toBe("REVIEW_ISSUES_OPEN");
   });
 
@@ -57,7 +77,7 @@ describe("revision-bound AI layout review", () => {
     // at screenshots. Accepting these alongside receipts would leave the
     // bypass open, so they are refused even when valid receipts also exist.
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     const evidenceIds = await captureBoth(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     const result = await bus.execute("complete_layout_review", {
@@ -69,7 +89,7 @@ describe("revision-bound AI layout review", () => {
 
   it("rejects an evidenceId this Studio session never issued", async () => {
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     const evidenceIds = await captureBoth(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     const result = await bus.execute("complete_layout_review", { ...review, evidenceIds: [...evidenceIds, "forged-evidence-id"] });
@@ -78,7 +98,7 @@ describe("revision-bound AI layout review", () => {
 
   it("requires evidence for both default and long-text", async () => {
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     const only = await bus.execute("capture_layout_evidence", { expectedRevision: 0, scenario: "default" });
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     const result = await bus.execute("complete_layout_review", { ...review, evidenceIds: [only.result.evidence.evidenceId] });
@@ -88,10 +108,10 @@ describe("revision-bound AI layout review", () => {
 
   it("invalidates issued receipts as soon as the draft mutates", async () => {
     const bus = busWithEvidence();
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     const evidenceIds = await captureBoth(bus);
     await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Changed" }] });
-    bus.recordRenderReport(readyReport);
+    await recordCommitted(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 1 });
     const result = await bus.execute("complete_layout_review", { ...review, expectedRevision: 1, evidenceIds });
     // Cleared by commit, so the old ids no longer resolve at all.
@@ -137,5 +157,31 @@ describe("revision-bound AI layout review", () => {
     await captureBoth(bus);
     expect(bus.revision).toBe(0);
     expect(bus.project.sampleData.items).toHaveLength(45);
+  });
+
+  it("builds default and long-text evidence from the current draft sample", async () => {
+    const project = createSalesInvoiceProject();
+    project.sampleData.items = project.sampleData.items.slice(0, 1);
+    const observed = [];
+    const bus = new CommandBus(project, { renderCandidate: async (candidate) => {
+      observed.push(candidate.sampleData.items.length);
+      return renderCandidateStub(candidate);
+    } });
+    const defaultEvidence = await bus.execute("capture_layout_evidence", { expectedRevision: 0, scenario: "default" });
+    const longEvidence = await bus.execute("capture_layout_evidence", { expectedRevision: 0, scenario: "long-text" });
+    expect(observed).toEqual([1, 1]);
+    expect(defaultEvidence.result.evidence.candidateHash).toBe(defaultEvidence.result.evidence.baseProjectHash);
+    expect(longEvidence.result.evidence.baseProjectHash).toBe(defaultEvidence.result.evidence.baseProjectHash);
+  });
+
+  it("fails closed when the committed render provenance no longer matches the draft", async () => {
+    const bus = busWithEvidence();
+    await recordCommitted(bus);
+    bus.project.sampleData.items = bus.project.sampleData.items.slice(0, 1);
+    const result = await bus.execute("request_export");
+    expect(result.ok).toBe(true);
+    expect(result.result.ready).toBe(false);
+    expect(result.result.validation.errors).toContainEqual(expect.objectContaining({ code: "RENDER_PROVENANCE_STALE" }));
+    expect(bus.revision).toBe(0);
   });
 });

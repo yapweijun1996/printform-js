@@ -141,12 +141,17 @@ function escapeHtml(text) {
   return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function jsonBlock(id, type, value) {
-  return `<script id="${id}" type="${type}">\n${escapeScript(stableStringify(value))}\n</script>`;
+function scriptNonceAttribute(nonce) {
+  return nonce ? ` nonce="${escapeHtml(nonce)}"` : "";
+}
+
+function jsonBlock(id, type, value, nonce) {
+  return `<script id="${id}" type="${type}"${scriptNonceAttribute(nonce)}>\n${escapeScript(stableStringify(value))}\n</script>`;
 }
 
 export async function serializeStandalone(project, sources, validation, options = {}) {
   const runtimeVersion = sources.runtimeVersion || "2.0.0";
+  const scriptNonce = options.scriptNonce || "";
   const inlineDocumentRuntime = `\n${escapeScript(sources.documentRuntime)}\n`;
   const inlinePrintformRuntime = `\n${escapeScript(sources.printform)}\n`;
   const runtimeHash = await sha256(inlineDocumentRuntime);
@@ -164,8 +169,8 @@ export async function serializeStandalone(project, sources, validation, options 
   // permanently blocked from export despite the capability being declared.
   const externalSources = project.manifest.assets?.allowExternalHttps ? " https:" : "";
   const untrustedCsp = options.networkDisabled
-    ? `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:${externalSources}; font-src data:${externalSources}; connect-src 'none'; base-uri 'none'; form-action 'none'`
-    : "default-src 'self' data: blob: https:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https:; font-src data: https:";
+    ? `default-src 'none'; script-src ${scriptNonce ? `'nonce-${scriptNonce}'` : "'unsafe-inline'"}; style-src 'unsafe-inline'; img-src data: blob:${externalSources}; font-src data:${externalSources}; connect-src 'none'; base-uri 'none'; form-action 'none'`
+    : `default-src 'self' data: blob: https:; script-src ${scriptNonce ? `'nonce-${scriptNonce}'` : "'unsafe-inline'"}; style-src 'unsafe-inline'; img-src data: https:; font-src data: https:`;
   const csp = trusted
     ? `default-src 'none'; script-src 'sha256-${documentHash}' 'sha256-${printformHash}'; style-src 'unsafe-inline'; img-src data:${externalSources}; font-src data:${externalSources}; connect-src 'none'; base-uri 'none'; form-action 'none'`
     : untrustedCsp;
@@ -181,18 +186,18 @@ export async function serializeStandalone(project, sources, validation, options 
   <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}">
   ${trustBanner}
   <title>${escapeHtml(title)}</title>
-  ${jsonBlock(SECTION_IDS.manifest, "application/json", project.manifest)}
-  ${jsonBlock(SECTION_IDS.schema, "application/schema+json", project.schema)}
-  ${jsonBlock(SECTION_IDS.i18n, "application/json", project.i18n || {})}
+  ${jsonBlock(SECTION_IDS.manifest, "application/json", project.manifest, scriptNonce)}
+  ${jsonBlock(SECTION_IDS.schema, "application/schema+json", project.schema, scriptNonce)}
+  ${jsonBlock(SECTION_IDS.i18n, "application/json", project.i18n || {}, scriptNonce)}
   <style id="${SECTION_IDS.theme}">\n${project.themeCss.trim().replace(/<\/style/gi, "<\\/style")}\n</style>
 </head>
 <body>
   <main id="pf-mount" aria-live="polite"></main>
   <template id="${SECTION_IDS.template}">\n${project.templateHtml.trim()}\n</template>
-  ${jsonBlock(SECTION_IDS.sampleData, "application/json", project.sampleData)}
-  ${jsonBlock(SECTION_IDS.attestation, "application/json", attestation)}
-  <script id="pf-document-runtime" data-version="${escapeHtml(runtimeVersion)}" data-hash="${runtimeHash}">${inlineDocumentRuntime}</script>
-  <script id="pf-printform-runtime">${inlinePrintformRuntime}</script>
+  ${jsonBlock(SECTION_IDS.sampleData, "application/json", project.sampleData, scriptNonce)}
+  ${jsonBlock(SECTION_IDS.attestation, "application/json", attestation, scriptNonce)}
+  <script${scriptNonceAttribute(scriptNonce)} id="pf-document-runtime" data-version="${escapeHtml(runtimeVersion)}" data-hash="${runtimeHash}">${inlineDocumentRuntime}</script>
+  <script${scriptNonceAttribute(scriptNonce)} id="pf-printform-runtime">${inlinePrintformRuntime}</script>
   ${customScripts}
 </body>
 </html>\n`;

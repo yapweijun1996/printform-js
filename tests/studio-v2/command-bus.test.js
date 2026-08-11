@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { executeAgentCommand } from "../../studio-v2/adapters/gateway.js";
+import { hashRenderProject } from "../../studio-v2/core/render-provenance.js";
+import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
 
 describe("PrintForm Studio v2 command bus", () => {
   it("previews atomically and rejects stale revisions", async () => {
@@ -43,6 +45,22 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.project.sampleData.items).toHaveLength(500);
     await bus.execute("undo_revision", { expectedRevision: 1 });
     expect(bus.project.sampleData.items).toHaveLength(45);
+    expect(bus.historyState()).toEqual({ revision: 0, canUndo: false, canRedo: true });
+    const redone = await bus.execute("redo_revision", { expectedRevision: 0 });
+    expect(redone.ok).toBe(true);
+    expect(redone.result.revision).toBe(1);
+    expect(bus.project.sampleData.items).toHaveLength(500);
+  });
+
+  it("keeps redo read-only for an untrusted project", async () => {
+    const project = createSalesInvoiceProject();
+    project.trust = "untrusted";
+    const bus = new CommandBus(project);
+    await bus.execute("set_sample_scenario", { expectedRevision: 0, scenario: "one" });
+    await bus.execute("undo_revision", { expectedRevision: 1 });
+    const result = await executeAgentCommand(bus, "redo_revision", { expectedRevision: 0 });
+    expect(result.error.code).toBe("UNTRUSTED_READ_ONLY");
+    expect(bus.revision).toBe(0);
   });
 
   it("builds every scenario from the immutable default sample", async () => {
@@ -82,7 +100,8 @@ describe("PrintForm Studio v2 command bus", () => {
     // (that stayed additive in 1.2.0), but layout evidence receipts now
     // require a real renderer — a session without one can never pass review.
     const withoutRenderer = await new CommandBus(createSalesInvoiceProject()).execute("get_capabilities");
-    expect(withoutRenderer.result.contractVersion).toBe("2.0.0");
+    expect(withoutRenderer.result.contractVersion).toBe("2.1.0");
+    expect(withoutRenderer.result.studioVersion).toBe("0.10.0");
     expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false, layoutEvidenceReceipts: false });
 
     const withRenderer = await new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ({ status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }) }).execute("get_capabilities");
@@ -175,12 +194,14 @@ describe("PrintForm Studio v2 command bus", () => {
   });
 
   it("requires the current browser layout report before production export", async () => {
-    const ready = { status: "ready", validation: { errors: [], warnings: [] }, metrics: { logicalPages: 3 }, pageGeometry: [] };
+    const report = { status: "ready", validation: { errors: [], warnings: [] }, metrics: { logicalPages: 1 }, pageGeometry: [{ width: 794, height: 1123, children: [] }] };
+    const ready = { ...report, safeSnapshot: createRedactedLayoutSnapshot(report) };
     const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ready });
     let request = await bus.execute("request_export");
     expect(request.result.ready).toBe(false);
     expect(request.result.validation.errors.some((item) => item.code === "PREVIEW_REQUIRED")).toBe(true);
-    bus.recordRenderReport(ready);
+    const projectHash = await hashRenderProject(bus.project);
+    bus.recordRenderReport(ready, { revision: bus.revision, candidateHash: projectHash, baseProjectHash: projectHash, source: "committed" });
     const evidenceIds = [];
     for (const scenario of ["default", "long-text"]) {
       const captured = await bus.execute("capture_layout_evidence", { expectedRevision: 0, scenario });
@@ -193,6 +214,6 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(review.ok).toBe(true);
     request = await bus.execute("request_export");
     expect(request.result.ready).toBe(true);
-    expect(request.result.validation.metrics.logicalPages).toBe(3);
+    expect(request.result.validation.metrics.logicalPages).toBe(1);
   });
 });

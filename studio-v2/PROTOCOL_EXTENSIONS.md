@@ -45,13 +45,31 @@ the content attestation remain valid.
 
 ## AI layout review gate
 
-Current Pilot behavior requires a layout review receipt bound to the current
-revision. The agent submits `full-page-screenshot` and `layout-metrics` labels
-for default and long-text scenarios. Major and critical findings must be fixed,
-and any subsequent change invalidates the receipt. These labels are policy-level
-claims; Studio does not currently store and sign the underlying screenshots.
+Current behavior requires a layout review receipt bound to the current revision and
+the current committed render provenance. Each scenario receipt also carries the
+candidate hash and `baseProjectHash`, so a preview from another draft cannot be
+reused for export readiness.
+The agent calls `capture_layout_evidence` for each required scenario and passes
+the returned Studio-issued `evidenceId` values to `complete_layout_review`.
+Self-declared `evidence`, `browser`, or `scenarios` labels are rejected. A
+broken scenario returns an unsigned safe observation so the reviewer can
+diagnose it, but observations can never complete the gate. Any major or
+critical finding in the fresh evidence blocks completion; a repair must create
+a new revision and new evidence rather than relabeling an old finding as fixed.
+Any subsequent change invalidates the receipt. Each receipt records complete
+logical-page coverage, a geometry/layout fingerprint, render-report hash and
+an optional geometry-only redacted SVG snapshot. In synthetic-data mode,
+`visualMode: "pixels"` adds a bounded sandbox DOM-to-canvas pixel raster and
+`pixelSnapshotHash`; real-data mode rejects that mode with
+`PIXEL_EVIDENCE_SYNTHETIC_ONLY`. Pixel rasters omit source URLs and use safe
+image placeholders. A person must still inspect system print preview and
+perform the final production export click.
 
-The Production Ready target replaces labels with Studio-issued evidence IDs
-bound to browser, scenario, revision, candidate hash, screenshot hash and render
-report. Until that target is implemented, a person must inspect system print
-preview and treat the result as a controlled Pilot export.
+The embedded reviewer owns a bounded three-pass loop. The model must choose
+one terminal action per pass: propose a semantic repair, complete with clean
+fresh receipts, or report blocked. Repair proposals are automatically applied
+by the host after the same validation guards. After Apply the host captures
+fresh evidence automatically;
+the model cannot apply or request export. Runtime events are projected to safe
+operational metadata before reaching UI trace observers, so prompts, images,
+credentials and provider payloads are not retained there.

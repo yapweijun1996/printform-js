@@ -11,13 +11,13 @@ function resolveModelContext(host) {
   return null;
 }
 
-function toToolDefinition(bus, contract) {
+function toToolDefinition(bus, contract, options) {
   return {
     name: contract.name,
     description: contract.description,
     inputSchema: contract.inputSchema,
     async execute(input = {}) {
-      const response = await executeAgentCommand(bus, contract.name, input);
+      const response = await executeAgentCommand(bus, contract.name, input, { realData: Boolean(options.isRealData()) });
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
         structuredContent: response,
@@ -27,10 +27,11 @@ function toToolDefinition(bus, contract) {
   };
 }
 
-export function installWebMcpAdapter(bus, host = null) {
+export function installWebMcpAdapter(bus, host = null, options = {}) {
+  const adapterOptions = { ...options, isRealData: typeof options.isRealData === "function" ? options.isRealData : () => false };
   const modelContext = resolveModelContext(host);
   if (!modelContext) return { supported: false, api: "none", registered: [], dispose() {} };
-  const tools = TOOL_CONTRACTS.map((contract) => toToolDefinition(bus, contract));
+  const tools = TOOL_CONTRACTS.map((contract) => toToolDefinition(bus, contract, adapterOptions));
 
   if (typeof modelContext.registerTool === "function") {
     const controller = new AbortController();
