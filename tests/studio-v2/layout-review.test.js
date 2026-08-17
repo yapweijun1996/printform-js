@@ -3,6 +3,7 @@ import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { hashRenderProject } from "../../studio-v2/core/render-provenance.js";
 import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
+import { approveAndApply } from "./transaction-test-helpers.js";
 
 const readyMetrics = { logicalPages: 1, overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 };
 const readyReport = { status: "ready", validation: { errors: [], warnings: [] }, metrics: readyMetrics };
@@ -47,7 +48,8 @@ describe("revision-bound AI layout review", () => {
     await bus.execute("begin_layout_review", { expectedRevision: 0 });
     expect((await bus.execute("complete_layout_review", { ...review, evidenceIds })).ok).toBe(true);
     expect((await bus.execute("request_export")).result.ready).toBe(true);
-    await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Changed" }] });
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Changed" }] });
+    await approveAndApply(bus, preview);
     expect((await bus.execute("request_export")).result.validation.errors).toContainEqual(expect.objectContaining({ code: "LAYOUT_REVIEW_REQUIRED" }));
   });
 
@@ -110,7 +112,8 @@ describe("revision-bound AI layout review", () => {
     const bus = busWithEvidence();
     await recordCommitted(bus);
     const evidenceIds = await captureBoth(bus);
-    await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Changed" }] });
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Changed" }] });
+    await approveAndApply(bus, preview);
     await recordCommitted(bus);
     await bus.execute("begin_layout_review", { expectedRevision: 1 });
     const result = await bus.execute("complete_layout_review", { ...review, expectedRevision: 1, evidenceIds });

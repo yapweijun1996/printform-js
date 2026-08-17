@@ -17,3 +17,15 @@ export async function passLayoutReview(page) {
     });
   });
 }
+
+export async function openInspector(page) {
+  if (await page.locator("#inspector-panel").getAttribute("aria-hidden") === "true") {
+    await page.locator("#inspector-toggle").click();
+  }
+}
+
+export async function openEditor(page) {
+  if (await page.locator("#editor-panel").getAttribute("aria-hidden") === "true") {
+    await page.locator("#editor-toggle").click();
+  }
+}

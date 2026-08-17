@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openInspector } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
@@ -8,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test("lets desktop users close and reopen the persistent inspector rail", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
+  await openInspector(page);
   await expect(page.locator("#inspector-panel")).toBeVisible();
   await expect(page.locator("#inspector-panel")).toHaveAttribute("aria-hidden", "false");
   await expect(page.locator("#ai-designer-tab")).toHaveAttribute("aria-selected", "true");
@@ -57,6 +59,7 @@ test("renders the inspector as a full-height right side panel", async ({ page })
 
 test("keeps the preview clear of the persistent inspector near the desktop breakpoint", async ({ page }) => {
   await page.setViewportSize({ width: 1100, height: 720 });
+  await openInspector(page);
   await expect(page.locator("#inspector-panel")).toBeVisible();
   const layout = await page.evaluate(() => {
     const preview = document.querySelector("#preview-panel").getBoundingClientRect();

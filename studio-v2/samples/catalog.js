@@ -1,9 +1,11 @@
 import { createSalesInvoiceProject } from "./sales-invoice.js";
 import { createPurchaseOrderProject } from "./purchase-order.js";
+import { createProgressClaimProject } from "./progress-claim.js";
 
 export const SAMPLE_DOCUMENTS = Object.freeze({
   "sales-invoice": { label: "Sales Invoice — Blue", create: createSalesInvoiceProject },
-  "purchase-order-red": { label: "Purchase Order — Crimson", create: createPurchaseOrderProject }
+  "purchase-order-red": { label: "Purchase Order — Crimson", create: createPurchaseOrderProject },
+  "progress-claim": { label: "Progress Claim — Northpeak", create: createProgressClaimProject }
 });
 
 export function createSampleDocument(key = "sales-invoice") {

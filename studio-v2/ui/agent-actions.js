@@ -1,4 +1,4 @@
-import { OPERATION_DEFINITIONS } from "../core/operation-schemas.js";
+import { AGENT_OPERATION_DEFINITIONS } from "../core/operation-schemas.js";
 
 function clone(value) { return structuredClone(value); }
 
@@ -8,7 +8,7 @@ function actionError(name, output) {
 }
 
 function operationSchemas() {
-  return Object.entries(OPERATION_DEFINITIONS).map(([type, definition]) => ({
+  return Object.entries(AGENT_OPERATION_DEFINITIONS).map(([type, definition]) => ({
     ...clone(definition.schema),
     properties: { ...clone(definition.schema.properties), type: { type: "string", const: type } }
   }));
@@ -81,6 +81,7 @@ export function makePrintFormActions({ Agrun, gateway, createProposal, onFailure
     if (!response.ok) return response;
     const proposal = await createProposal({
       proposalId: crypto.randomUUID(), revision: response.result.revision,
+      transactionId: response.result.transactionId,
       operations: clone(normalized), candidateHash: response.result.candidateHash,
       diff: clone(response.result.diff), validation: clone(response.result.validation), ...clone(proposalMeta)
     });

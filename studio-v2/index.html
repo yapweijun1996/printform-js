@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./styles/agent-trace.css">
   <link rel="stylesheet" href="./styles/agent-settings-modal.css">
 </head>
-<body>
+<body class="inspector-closed">
   <a class="skip-link" href="#preview-panel" data-ui-i18n="skip.preview">Skip to preview</a>
   <header class="topbar">
     <div class="topbar-brand">
@@ -37,8 +37,8 @@
       <button id="inspector-toggle" class="secondary inspector-toggle" type="button" aria-controls="inspector-panel" aria-expanded="false" data-ui-i18n-aria-label="inspector.openLabel" data-ui-i18n-title="inspector.openLabel" aria-label="Open AI Designer" title="Open AI Designer">
         <span class="ai-launcher-icon" aria-hidden="true">✦</span><span data-ui-i18n="inspector.open">AI Designer</span>
       </button>
-      <button id="editor-toggle" class="secondary editor-toggle" type="button" aria-controls="editor-panel" aria-expanded="true" aria-label="Hide source editor" title="Hide source editor">
-        <span aria-hidden="true">☷</span><span id="editor-toggle-label" data-ui-i18n="editor.toggle.hide">Hide source</span>
+      <button id="editor-toggle" class="secondary editor-toggle" type="button" aria-controls="editor-panel" aria-expanded="false" aria-label="Show source editor" title="Show source editor">
+        <span aria-hidden="true">☷</span><span id="editor-toggle-label" data-ui-i18n="editor.toggle.show">Show source</span>
       </button>
       <label class="button secondary" for="import-file" data-ui-i18n="actions.import">Import HTML</label>
       <input id="import-file" class="visually-hidden" type="file" accept="text/html,.html">
@@ -67,7 +67,7 @@
   </aside>
 
   <main class="workspace">
-    <aside id="editor-panel" class="editor-panel" aria-label="Structured source editor" data-ui-i18n-aria-label="editor.aria" aria-hidden="false">
+  <aside id="editor-panel" class="editor-panel is-closed" aria-hidden="true" aria-label="Structured source editor" data-ui-i18n-aria-label="editor.aria">
       <div class="panel-heading">
         <div><h2 data-ui-i18n="editor.projectSource">Project source</h2><p id="revision-label">Revision 0</p></div>
         <div class="panel-heading-actions">
@@ -79,6 +79,7 @@
       <select id="document-select">
         <option value="sales-invoice" data-ui-i18n="sample.invoice">Sales Invoice — Blue</option>
         <option value="purchase-order-red" data-ui-i18n="sample.purchaseOrder">Purchase Order — Crimson</option>
+        <option value="progress-claim">Progress Claim — Northpeak</option>
       </select>
       <label class="privacy-toggle"><input id="real-data-mode" type="checkbox"> <span data-ui-i18n="editor.realData">This session contains real ERP data (disable recovery cache)</span></label>
       <label for="scenario-select" data-ui-i18n="editor.boundarySample">Boundary sample</label>
@@ -142,7 +143,7 @@
       <div class="preview-viewport"><iframe id="preview-frame" title="PrintForm isolated print preview" data-ui-i18n-title="preview.iframeTitle" sandbox="allow-scripts"></iframe></div>
     </section>
 
-    <aside id="inspector-panel" class="inspector-panel" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
+    <aside id="inspector-panel" class="inspector-panel is-closed" aria-hidden="true" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
       <div class="inspector-header">
         <div class="inspector-tabs" role="tablist" aria-label="Studio inspector tabs">
           <button id="quality-tab" role="tab" aria-selected="false" aria-controls="quality-tabpanel" type="button">Quality</button>

@@ -47,6 +47,10 @@ export function attachRowTypeMethods(FormatterClass) {
     return this.isPtacRow(row) ? "ptac-rowitem" : "prowitem";
   };
 
+  FormatterClass.prototype.getRowTableId = function getRowTableId(row) {
+    return row?.getAttribute?.("data-pf-table-id") || row?.getAttribute?.("data-pf-table") || "default";
+  };
+
   FormatterClass.prototype.shouldSkipRowHeaderForRow = function shouldSkipRowHeaderForRow(row) {
     if (!row) {
       return false;

@@ -2,8 +2,14 @@
   "name": "printform-js",
   "private": true,
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "license": "MIT",
   "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
+  "dependencies": {
+    "jsdom": "^27.0.1"
+  },
   "scripts": {
     "build": "npm run test -- --run && npm run build:assets && node scripts/postbuild-generate-preview.js",
     "build:assets": "node scripts/run-vite.js build && node scripts/build-document-runtime.mjs",
@@ -16,18 +22,21 @@
     "test": "vitest",
     "pretest:e2e": "npm run build:site",
     "test:e2e": "playwright test",
+    "e2e:install:chromium": "playwright install chromium",
+    "pretest:e2e:chromium": "npm run build:site",
+    "test:e2e:chromium": "npm run e2e:install:chromium && playwright test --project=chromium",
     "validate:v2": "node scripts/validate-printform-v2.mjs",
     "sync:agrun": "node scripts/sync-agrun.mjs",
     "check:agrun": "node scripts/sync-agrun.mjs",
     "check:agrun:upstream": "node scripts/sync-agrun.mjs --check-upstream",
     "doctor": "node scripts/doctor.mjs",
+    "studio:transaction-server": "node scripts/transaction-server.mjs",
     "studio:mcp": "node mcp/server.mjs",
     "studio:agent-browser": "node scripts/launch-studio-agent-browser.mjs",
     "docs": "node scripts/generate-config-docs.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.0",
-    "jsdom": "^27.0.1",
     "vite": "^8.1.5",
     "vitest": "^3.2.4",
     "ws": "^8.21.1"

@@ -60,11 +60,11 @@ function renderColumnWidthGroups(groups, onApply) {
 }
 
 function renderDataContractFields(fields, container) {
-  fields.forEach((field) => {
+  (Array.isArray(fields) ? fields : []).forEach((field) => {
     if (field.type === "object") {
       const details = document.createElement("details"); details.className = "dc-group";
       const summary = document.createElement("summary"); summary.textContent = `${field.key}${field.required ? " *" : ""}`;
-      const body = document.createElement("div"); body.className = "dc-group-body"; renderDataContractFields(field.fields, body);
+      const body = document.createElement("div"); body.className = "dc-group-body"; renderDataContractFields(field.fields || [], body);
       details.append(summary, body); container.append(details); return;
     }
     const row = document.createElement("div"); row.className = "dc-field"; row.dataset.path = field.path; row.dataset.type = field.type;

@@ -9,20 +9,19 @@ import { VAULT_POLICY } from "../../studio-v2/ui/agent-vault.js";
 import { inspectColumnGroups } from "../../studio-v2/core/column-inspection.js";
 import { buildRuntimeBudget, validateProviderProfile } from "../../studio-v2/ui/agent-provider.js";
 import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
+import { approveAndApply } from "./transaction-test-helpers.js";
 
 describe("AI Designer contract and safety boundary", () => {
-  it("publishes all 13 operation schemas and examples from one validator SSOT", () => {
+  it("publishes the safe semantic operation schemas and examples from one validator SSOT", () => {
     const catalog = getOperationCatalog();
-    expect(catalog).toHaveLength(13);
+    expect(catalog).toHaveLength(7);
     catalog.forEach((entry) => expect(validateData(entry.inputSchema, entry.example).valid, entry.type).toBe(true));
-    expect(new Set(catalog.map((entry) => entry.type)).size).toBe(13);
+    expect(new Set(catalog.map((entry) => entry.type)).size).toBe(7);
     const preview = TOOL_CONTRACTS.find((tool) => tool.name === "preview_changes");
-    const apply = TOOL_CONTRACTS.find((tool) => tool.name === "apply_changes");
-    for (const tool of [preview, apply]) {
-      const schemas = tool.inputSchema.properties.operations.items.oneOf;
-      expect(schemas).toHaveLength(13);
-      expect(new Set(schemas.map((schema) => schema.properties.type.const)).size).toBe(13);
-    }
+    const schemas = preview.inputSchema.properties.operations.items.oneOf;
+    expect(schemas).toHaveLength(7);
+    expect(new Set(schemas.map((schema) => schema.properties.type.const)).size).toBe(7);
+    expect(TOOL_CONTRACTS.find((tool) => tool.name === "apply_changes").inputSchema.properties.operations).toBeUndefined();
   });
 
   it("returns safe design state without sample values or asset sources", () => {
@@ -30,7 +29,7 @@ describe("AI Designer contract and safety boundary", () => {
     const state = inspectDesignState({ ...project, revision: 4 });
     const serialized = JSON.stringify(state);
     expect(state.revision).toBe(4);
-    expect(state.supportedOperations).toHaveLength(13);
+    expect(state.supportedOperations).toHaveLength(7);
     expect(serialized).not.toContain("USB-C Docking Station");
     expect(serialized).not.toContain("data:image/");
     expect(serialized).not.toContain("Example Business");
@@ -51,19 +50,21 @@ describe("AI Designer contract and safety boundary", () => {
     const renderer = async () => ({ status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} });
     const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: renderer });
     const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_brand_color", hex: "#123456" }] });
-    const mismatch = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_brand_color", hex: "#654321" }], expectedCandidateHash: preview.result.candidateHash, requireValid: true });
+    const mismatch = await bus.execute("approve_transaction", { expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: "sha256:not-the-preview", requireValid: true });
     expect(mismatch.error.code).toBe("CANDIDATE_HASH_MISMATCH");
     expect(bus.revision).toBe(0);
-    const invalid = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "replace_template", value: "<div></div>" }], requireValid: true });
+    const invalidPreview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "replace_template", value: "<div></div>" }] });
+    const invalid = await bus.execute("approve_transaction", { expectedRevision: 0, transactionId: invalidPreview.result.transactionId, expectedCandidateHash: invalidPreview.result.candidateHash, requireValid: true });
     expect(invalid.error.code).toBe("CANDIDATE_INVALID");
     expect(bus.revision).toBe(0);
   });
 
-  it("keeps legacy apply behavior when new safety flags are omitted", async () => {
+  it("rejects direct apply when the preview transaction is missing", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
-    const result = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "replace_template", value: "<div></div>" }] });
-    expect(result.ok).toBe(true);
-    expect(bus.revision).toBe(1);
+    const result = await bus.execute("apply_changes", { expectedRevision: 0, expectedCandidateHash: null });
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe("TRANSACTION_REQUIRED");
+    expect(bus.revision).toBe(0);
   });
 
   it("previews and applies every catalog operation through the real command bus", async () => {
@@ -72,27 +73,24 @@ describe("AI Designer contract and safety boundary", () => {
     template.innerHTML = project.templateHtml;
     const logo = template.content.querySelector('[data-pf-asset-slot="letterhead-logo"]');
     const columns = inspectColumnGroups(project.templateHtml, project)[0];
+    const bus = new CommandBus(project);
+    const components = (await bus.execute("list_components")).result.components;
+    const header = components.find((component) => component.type === "DocumentHeader") || components[0];
+    const tableHeader = components.find((component) => component.role === "table-header") || header;
     const operations = [
-      { type: "set_manifest_value", path: "/title", value: "Agent test invoice" },
-      { type: "replace_manifest", value: structuredClone(project.manifest) },
-      { type: "replace_schema", value: structuredClone(project.schema) },
-      { type: "replace_i18n", value: structuredClone(project.i18n) },
-      { type: "replace_sample_data", value: structuredClone(project.sampleData) },
-      { type: "replace_theme", value: project.themeCss },
-      { type: "replace_template", value: project.templateHtml },
       { type: "set_asset_slot", slot: "letterhead-logo", source: logo.getAttribute("src") },
-      { type: "set_text", selector: "h1.pf-brand", value: "Agent Test Company" },
-      { type: "set_attribute", selector: "h1.pf-brand", name: "data-agent-test", value: "true" },
       { type: "set_column_widths", tableSelector: columns.tableSelector, widths: columns.columns.map((column) => column.width || "auto") },
       { type: "set_font_scale", basePt: 9.5 },
-      { type: "set_brand_color", hex: "#123456" }
+      { type: "set_brand_color", hex: "#123456" },
+      { type: "update_component", componentId: header.id, patch: { keepTogether: true } },
+      { type: "bind_field", componentId: header.id, bindingType: "text", pointer: "/title" },
+      { type: "set_pagination_rule", componentId: tableHeader.id, rule: "repeatHeader", value: true }
     ];
-    const bus = new CommandBus(project);
     for (const operation of operations) {
       const expectedRevision = bus.revision;
       const preview = await bus.execute("preview_changes", { expectedRevision, operations: [operation] });
       expect(preview.ok, operation.type).toBe(true);
-      const applied = await bus.execute("apply_changes", { expectedRevision, operations: [operation] });
+      const applied = await approveAndApply(bus, preview);
       expect(applied.ok, operation.type).toBe(true);
     }
   });

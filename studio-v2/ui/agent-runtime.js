@@ -137,9 +137,16 @@ export class DesignerRuntimeController {
     }
     try {
       await this.approval.verify(proposal.approvalToken, proposalId);
+      const approved = await this.gateway.execute("approve_transaction", {
+        expectedRevision: proposal.revision,
+        transactionId: proposal.transactionId,
+        expectedCandidateHash: proposal.candidateHash,
+        requireValid: true,
+      });
+      if (!approved.ok) throw Object.assign(new Error(`Approval failed (${approved.error?.code || "APPROVAL_FAILED"}).`), { code: approved.error?.code || "APPROVAL_FAILED" });
       const applied = await this.gateway.execute("apply_changes", {
         expectedRevision: proposal.revision,
-        operations: clone(proposal.operations),
+        transactionId: proposal.transactionId,
         expectedCandidateHash: proposal.candidateHash,
         requireValid: true,
         reason: "AI Designer auto-applied proposal"
@@ -237,6 +244,7 @@ export class DesignerRuntimeController {
     await this.createProposal({
       proposalId: crypto.randomUUID(),
       revision: result.revision ?? expectedRevision,
+      transactionId: result.transactionId,
       operations: clone(parsed.operations),
       candidateHash: result.candidateHash,
       diff: clone(result.diff),

@@ -27,13 +27,11 @@ describe("provider text proposal recovery", () => {
     expect(parseTextProposal('{"type":"invented_operation","value":true}')).toBeNull();
     expect(parseTextProposal('{"type":"replace_template","value":"<div></div>"}')).toBeNull();
     expect(parseTextProposal('Example only: {"type":"set_brand_color","hex":"#854d0e"}')).toBeNull();
-    expect(parseTextProposal('{"type":"replace_template","value":"<div></div>"}', { allowHighRisk: true })).toMatchObject({
-      operations: [{ type: "replace_template" }]
-    });
+    expect(parseTextProposal('{"type":"replace_template","value":"<div></div>"}', { allowHighRisk: true })).toBeNull();
   });
 
   it("bounds text scanning and operation count", () => {
-    expect(TEXT_PROPOSAL_LIMITS).toMatchObject({ maxTextChars: 20000, maxJsonCandidates: 64, maxOperations: 13 });
-    expect(parseTextProposal(JSON.stringify({ operations: Array.from({ length: 14 }, () => ({ type: "set_brand_color", hex: "#854d0e" })) }))).toBeNull();
+    expect(TEXT_PROPOSAL_LIMITS).toMatchObject({ maxTextChars: 20000, maxJsonCandidates: 64, maxOperations: 7 });
+    expect(parseTextProposal(JSON.stringify({ operations: Array.from({ length: 8 }, () => ({ type: "set_brand_color", hex: "#854d0e" })) }))).toBeNull();
   });
 });

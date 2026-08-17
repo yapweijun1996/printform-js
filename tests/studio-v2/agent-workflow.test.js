@@ -79,7 +79,7 @@ describe("AI Designer deterministic proposal workflow", () => {
     expect(bus.revision).toBe(1);
     expect(bus.project.themeCss).toContain("#854d0e");
     expect(fake.runCount()).toBe(1);
-    expect(calls.map((call) => call.name)).toEqual(["get_project_summary", "preview_changes", "apply_changes", "validate_project"]);
+    expect(calls.map((call) => call.name)).toEqual(["get_project_summary", "preview_changes", "approve_transaction", "apply_changes", "validate_project"]);
     await expect(controller.applyApprovedProposal(proposals[0].proposalId, profile)).rejects.toMatchObject({ code: "PROPOSAL_NOT_FOUND" });
   });
 
@@ -104,7 +104,7 @@ describe("AI Designer deterministic proposal workflow", () => {
     expect(JSON.stringify(events)).not.toContain("secret value");
   });
 
-  it("publishes all 13 discriminated operation schemas and no model apply action", async () => {
+  it("publishes the safe discriminated operation schemas and no model apply action", async () => {
     const fake = fakeAgrun(async () => {});
     await DesignerRuntimeController.create({
       Agrun: fake.Agrun,
@@ -116,8 +116,8 @@ describe("AI Designer deterministic proposal workflow", () => {
     const actions = fake.options().customActions;
     const preview = actions.find((action) => action.name === "printform_preview_changes");
     const schemas = preview.planner.argsSchema.operations.items.oneOf;
-    expect(schemas).toHaveLength(13);
-    expect(new Set(schemas.map((schema) => schema.properties.type.const)).size).toBe(13);
+    expect(schemas).toHaveLength(7);
+    expect(new Set(schemas.map((schema) => schema.properties.type.const)).size).toBe(7);
     expect(actions.map((action) => action.name)).not.toContain("printform_apply_approved_proposal");
     const brandPreview = actions.find((action) => action.name === "printform_preview_brand_color");
     expect(brandPreview.outputSchema.controls).toEqual(["complete"]);

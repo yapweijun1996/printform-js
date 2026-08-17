@@ -2,7 +2,79 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-07-31（对齐 `7ab5e8a`）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+> 最后核对：2026-08-17（Production Verification）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+
+---
+
+## 0. Studio v2 Production Foundation 规格（Current）
+
+### 0.0 Verification gate（2026-08-17）
+
+受控发布候选的实证门为：E13-SERVER 后单测 **70 files / 378 tests**、`build:site` PASS、`check:agrun` PASS、三份 pilot `validate:v2` PASS、Chromium Playwright **56/56 PASS**、`npm audit --audit-level=high` 0 high、Windows `npm run doctor` 5/5 PASS、`git diff --check` PASS。当前认证范围只包括 Playwright Chromium revision 1234；Firefox/WebKit/真实 Safari/打印机链仍需各自认证，不作 pixel-identical 承诺。
+
+Browser verification matrix:
+
+| 场景 | Chromium 证据 | 发布含义 |
+|---|---|---|
+| Progress Claim | printable isolated preview、无 overflow、截图附件 | PASS |
+| 顺序多表 | Valuation → Variation → Materials → Certification，续页只重复 active table header | PASS |
+| 数据规模 | 100 / 500 / 1000 行，两次运行 page signature 与 page count 一致 | PASS |
+| 纸张 | A4 @ 96dpi portrait (794×1122) / landscape (1122×794)，边界与重复表头检查 | PASS |
+| Diagnostics | row-too-tall、overflow、blank、header、footer/page number、signature/total/keep-together、orphan totals | PASS |
+| Evidence Pack | approved revision、FormSpec/runtime/preview/export hash、security、page count、browser receipt | PASS |
+
+事务的当前边界：E13 已提供 durable store contract、状态机、lease、CAS、故障恢复和 Evidence anchoring。浏览器默认 localStorage adapter 仍只保证 offline/single-session；跨进程/跨设备必须使用实现 `read/write/compareAndSwap` 的 server backend，且在发布门中声明 `atomicRevisionCas=true`。
+
+### 0.1 FormSpec envelope
+
+单 HTML Protocol 保持兼容；`pf-form-spec` 是可选 `application/json` 区块。当前 registry 字段包括 `version`、`document`（paper/orientation/margins）、`sections`、`components`、`bindings`、`tokens` 与 `pagination`。组件类型由 `studio-v2/core/form-spec.js` 的 registry 约束，重复 ID、未知类型和缺失 sections 必须报错。没有该区块的旧模板走 `legacy-adapter`，不被静默改写。
+
+核心映射：`DocumentHeader→.pheader`、`DocumentMeta→.pdocinfo*`、`DataTable/VariationTable→.prowheader + .prowitem`、`SignatureBlock→signature component`、`PageFooter→.pfooter*`。Agent 修改组件 ID、binding 和 pagination rule；rendered `.printform_page` 只属于派生预览。
+
+### 0.2 Transaction contract
+
+Agent 写路径固定为 `begin_transaction → preview_changes → validate → approve_transaction → apply_changes`。`apply_changes` 必须带 `transactionId` 和与 preview 相同的 `expectedCandidateHash`；缺 preview、审批、当前 revision、有效性或 content hash 时 fail closed。commit 前先持久化 `COMMITTING` intent，最终 revision 通过 durable compare-and-swap；旧 revision 永远不会被静默覆盖。事务记录包括 `transaction_id`、`form_id`、`base_revision`、`working_revision`、`owner`、`agent_id`、`status/state`、`patches/changes`、`validation_result`、`preview_hash`、`candidate_content_hash`、`approval`、`lease`、timestamps、`commit_result`、`evidence_pack_ref`。
+
+状态值（API `status` 使用兼容的小写值，`state` 提供大写显示名）为：`DRAFT`、`PREVIEWED`、`VALIDATED`、`APPROVED`、`COMMITTING`、`COMMITTED`、`ROLLED_BACK`、`EXPIRED`、`CONFLICTED`、`RECOVERY_REQUIRED`。非法迁移返回 `INVALID_TRANSACTION_STATE`；stale commit 返回 `REVISION_CONFLICT { expectedRevision, actualRevision }`。
+
+Lease 包含 `owner`、`lease_id`、`lease_expires_at`、`heartbeat`。过期 transaction 会变成 `EXPIRED`；takeover 创建新 transaction，不重写旧记录。`renew_lease`、`release_lease`、`takeover_transaction`、`recover_transaction`、`resolve_conflict` 是受限语义 API，不能直接修改存储。
+
+### 0.3 Diagnostics / evidence
+
+每项 render issue 至少输出 `code`、`component_id`、`page`、`measured_size`、`available_size`、`reason` 与 `recommended_action`。当前诊断码包括 `ROW_TOO_TALL`、`ACTIVE_TABLE_HEADER_MISSING/INCORRECT`、`BLANK_PAGE`、`SIGNATURE_SPLIT`、`TOTAL_BLOCK_SPLIT`、`KEEP_TOGETHER_FAILURE`、`ORPHAN_TOTAL`、`FOOTER_MISSING`、`PAGE_NUMBER_MISSING/INVALID`；水平/垂直 overflow 由 acceptance geometry 产生同一类 page/size details。
+
+Evidence Pack 必须绑定 revision、FormSpec hash、protocol/schema/runtime 版本和 hash、validation/page count、preview hash、normalized export HTML hash、security status 与 timestamp。trusted publish 遇 mandatory validation/security fail 必须拒绝。
+
+### 0.4 Durable recovery and evidence contract
+
+`get_revision` 读取 durable head；`get_audit_events` 返回 append-only sequence（`transaction_started`、`lease_acquired`、`preview_created`、`approved`、`commit_started`、`revision_committed`、`conflict_detected`、`lease_expired`、`recovered`、`evidence_anchored` 等）。`recover_transaction` 只依据 durable head 和 commit intent 作三态判定：匹配即 committed、仍为 base 即 rolled back、未知差异即 conflicted。
+
+发布证据链为：
+
+```text
+artifact hash ↔ Evidence Pack hash ↔ committed revision
+             ↕                    ↕
+       FormSpec/preview/runtime  transaction + audit event
+```
+
+旧 localStorage journal 不会被删除；首次使用 E13 时以新 durable key 写入，旧记录继续只读可见。localStorage 仍只支持 offline/single-session；跨设备发布必须通过 E13-SERVER 的 atomic backend，不能把浏览器本地存储当成多用户锁服务。
+
+### 0.5 E13-SERVER server-backed contract（Current）
+
+生产服务由 `scripts/transaction-server.mjs` 启动，HTTP API 只接受 `SERVER_COMMANDS` 中的 semantic commands，并要求 server token（生产环境应由部署层替换为正式认证）。数据库是 Node `node:sqlite` 的 WAL SQLite 文件，最低 Node 版本为 `22.5.0`。事务 envelope 与 projection 表在一个 SQLite write transaction 中写入；最终 revision CAS 是真实 SQL 条件更新。
+
+| 数据 | durable representation | 一致性规则 |
+|---|---|---|
+| form head / revisions | `durable_form_state` + `durable_revisions` | `BEGIN IMMEDIATE`；CAS 失败即 `REVISION_CONFLICT` |
+| transactions / leases | `durable_transactions.state_json` + `lease_expires_at` projection | lease 由 server database time 判定，过期后只能 takeover |
+| audit | `durable_audit_events.sequence` append-only projection | event id 去重，actor/revision/hash/server timestamp 保留 |
+| evidence | envelope `evidence_anchors` + `durable_evidence_anchors` | `(form_key, committed_revision)` 唯一；pack hash 不同则冲突 |
+
+网络/崩溃语义：提交前响应丢失时客户端先查询 transaction；已提交则 retry 返回 `already_committed`，正在提交则返回 `COMMIT_IN_PROGRESS`，不可确认时返回 recovery 状态并 fail closed。服务重启会恢复 `COMMITTING` / `RECOVERY_REQUIRED`；CAS 前故障判定 rollback，CAS 后 head 与 intent 匹配判定 committed，其他情况判定 conflicted/recovery-required。
+
+E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆盖真实 SQLite 文件、双 session CAS race、server clock lease、lost-response retry、process crash/restart、network reconnect、Evidence anchor retry；`70/378` 全量单测与 Chromium 56/56 仍为独立回归门。
+
+部署边界：当前只认证一个 writer service 进程管理一个 SQLite 文件。多实例 active-active、外部数据库故障转移、跨设备浏览器 UI 远程 store adapter 和 durable artifact blob registry 是下一 Epic，不允许通过复制服务进程的方式假装已经支持。
 
 ---
 
@@ -46,7 +118,7 @@
 
 ---
 
-## 3. Studio v2 规格（Production Pilot）
+## 3. Studio v2 规格（Production Candidate，受控范围）
 
 ### 3.1 协议 2.0.0 单 HTML 结构
 
@@ -62,11 +134,11 @@
 - 「重置信任」= 剥离可执行内容 + 重置 flag；validateProject 独立重扫内容（`EXECUTABLE_MARKUP_PRESENT`）。
 - CSP：trusted 导出用双 runtime sha256 hash；untrusted / 预览用 `unsafe-inline` 变体；`manifest.assets.allowExternalHttps` 在所有变体中同步打开 `img-src/font-src https:`。
 
-### 3.3 命令契约（Agent Contract 2.0.0）
+### 3.3 命令契约（Agent Contract 3.0.0）
 
-- 16 个工具见 [studio-v2/core/tool-contracts.js](studio-v2/core/tool-contracts.js)；全部经 `CommandBus.execute` 返回统一 `{ok, result|error{code,…}}`（含网关层 JSON 解析失败 `INVALID_INPUT_JSON`）。
-- `get_capabilities` 返回 `capabilities: { candidateHash: true, candidateRealRender, layoutEvidenceReceipts }`：`candidateHash` 是契约形状（`preview_changes`/`apply_changes` 响应恒定携带该字段，值可能为 `null`）；后两者反映当前会话是否真的注入了浏览器渲染器（有 DOM 的 Studio UI 为 `true`，CLI 校验器/单测等无 DOM 环境为 `false`——此时无法签发布局证据，审查永远无法通过，是刻意的 fail-closed）。
-- **2.0.0 唯一的破坏性变更**是 `complete_layout_review` 改用 `evidenceIds`（见 §3.5）。其余写路径保持向后兼容：`apply_changes` 仍接受直接传 `operations[]`，不强制先 `preview_changes`。
+- 35 个工具见 [studio-v2/core/tool-contracts.js](studio-v2/core/tool-contracts.js)；全部经 `CommandBus.execute` 返回统一 `{ok, result|error{code,…}}`（含网关层 JSON 解析失败 `INVALID_INPUT_JSON`）。Agent 面只发布 semantic operation allowlist；raw source preview 保留为 Studio 内部命令。新增的 transaction/recovery tools 只操作 domain service，不暴露数据库。
+- `get_capabilities` 除 `candidateHash`、`candidateRealRender`、`layoutEvidenceReceipts` 外返回 `persistentAudit`、`durableTransactions`、`atomicRevisionCas` 与 `leaseRecovery`。其中 localStorage 可为 durable audit，但 `atomicRevisionCas=false`；只有注入 backend `compareAndSwap` 才能作为多 session 发布条件。`candidateHash` 是契约形状（`preview_changes`/`apply_changes` 响应恒定携带该字段，值可能为 `null`）；渲染器能力仍按当前会话真实注入状态 fail closed。
+- **3.0.0 当前写入不变量**是 `begin/preview → approve → apply`：`apply_changes` 必须带已批准的 `transactionId`、当前 revision 和同一 candidate hash；不再接受直接传 `operations[]`。`complete_layout_review` 仍要求 `evidenceIds`（见 §3.5）。
 - 写命令必须带 `expectedRevision`；revision 单调递增、undo 不复用；过期写入返回 `REVISION_CONFLICT`。
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
@@ -78,7 +150,7 @@
 - Page settings（页面尺寸 `data-papersize-width/height`）与 Repeated areas（七个 `data-repeat-*` 标记）**没有专属操作类型**，经由通用 `set_attribute` 逐属性调用、在同一次 `apply_changes` 里打包多条实现（studio-v2/core/page-inspection.js 只读回两个标准模板实际用到的字段）。
 - 布局审查：`capture_layout_evidence`（按场景签发证据，见 §3.5）→ `begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 `evidenceIds`/findings/summary，major/critical open 阻断）；任何 mutation 使审查、渲染报告与已签发证据同时失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
-- `preview_changes`/`apply_changes` 在浏览器环境下对候选项目做**真实分页渲染**（复用 UI 的可见预览 iframe，不止 schema/业务规则校验）：返回的 `validation` 携带真实 `issues[]`/`metrics`（含 `logicalPages` 等只有真实渲染才有的字段），并附带 `candidateHash`（`sha256(stableStringify(candidate))`）。`apply_changes` 若命中与刚才 `preview_changes` 相同的 `candidateHash`（即同一组 operations 作用在同一 revision 上）直接复用已渲染的报告提交，不重新渲染；未命中（跳过 preview 直接 apply）则内联渲染一次再提交——不存在"绕过真实渲染直接提交"的路径。渲染失败/超时归为 `RENDER_FAILED` 校验错误，不会让调用挂起。无浏览器上下文（单测、CLI 校验器）时二者退化为原有的纯 schema/业务规则校验，`candidateHash` 为 `null`。
+- `preview_changes` 在浏览器环境下对候选项目做**真实分页渲染**（复用 UI 的可见预览 iframe，不止 schema/业务规则校验）：返回的 `validation` 携带真实 `issues[]`/`metrics`（含 `logicalPages` 等只有真实渲染才有的字段），并附带 `candidateHash`（`sha256(stableStringify(candidate))`）。`approve_transaction` 固定该候选，`apply_changes` 只接受同一 transaction/revision/hash 并复用已渲染报告；缺 preview/approval、候选内容变化或渲染失败均 fail closed。无浏览器上下文（单测、CLI 校验器）时仍能做静态 schema/业务规则 preview，但不会伪造真实 render evidence。
 
 ### 3.4 渲染报告与错误路径
 

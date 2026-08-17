@@ -1,6 +1,8 @@
 import { LIMITS, PROTOCOL_VERSION, SECTION_IDS, TRUST } from "./constants.js";
 import { parseJson, sha256, sha256Base64, stableStringify } from "./json.js";
 import { withPrintTypography } from "./typography.js";
+import { createEmptyFormSpec, getFormSpec } from "./form-spec.js";
+import { assertTrustedContent } from "./content-security.js";
 
 const ALLOWED_EXECUTABLE_IDS = new Set(["pf-document-runtime", "pf-printform-runtime"]);
 
@@ -45,14 +47,17 @@ export function parseProjectHtml(html) {
   const manifest = readJsonSection(doc, "manifest");
   const template = requireElement(doc, SECTION_IDS.template);
   const theme = requireElement(doc, SECTION_IDS.theme);
+  const attestation = readJsonSection(doc, "attestation", null);
   return {
     manifest,
     schema: readJsonSection(doc, "schema"),
     i18n: readJsonSection(doc, "i18n", {}),
     themeCss: theme.textContent,
     templateHtml: template.innerHTML.trim(),
+    spec: readJsonSection(doc, "formSpec", null),
     sampleData: readJsonSection(doc, "sampleData"),
-    attestation: readJsonSection(doc, "attestation", null),
+    attestation,
+    revision: Number.isInteger(attestation?.evidence?.revision) ? attestation.evidence.revision : 0,
     runtime: readRuntimeMetadata(doc),
     trust: detectTrust(doc),
     customScripts: readCustomScripts(doc),
@@ -68,11 +73,12 @@ function readRuntimeMetadata(doc) {
 export function canonicalProjectContent(project) {
   const templateDoc = new DOMParser().parseFromString(`<template id="pf-canonical">${project.templateHtml}</template>`, "text/html");
   const normalizedTemplate = templateDoc.getElementById("pf-canonical").innerHTML.trim();
+  const spec = getFormSpec(project);
   const sections = [stableStringify(project.manifest), stableStringify(project.schema)];
   if (Object.keys(project.i18n || {}).length) sections.push(stableStringify(project.i18n));
   return [
     ...sections, project.themeCss.trim(),
-    normalizedTemplate, stableStringify(project.sampleData), project.runtime?.version || "",
+    normalizedTemplate, stableStringify(spec), stableStringify(project.sampleData), project.runtime?.version || "",
     project.runtime?.hash || "", ...(project.customScripts || [])
   ].join("\n---printform-section---\n");
 }
@@ -93,7 +99,7 @@ export async function createAttestation(project, validation, runtimeSource, runt
     // not relaxed to unsafe-inline after signing.
     cspScriptHashes: options.cspScriptHashes || [],
     contentHash: await sha256(canonicalProjectContent(candidate)),
-    validatedAt: new Date().toISOString(),
+    validatedAt: options.validatedAt || new Date().toISOString(),
     validator: "PrintForm Studio v2",
     result: validation.valid ? "pass" : "fail",
     summary: { errors: validation.errors.length, warnings: validation.warnings.length },
@@ -155,15 +161,19 @@ export async function serializeStandalone(project, sources, validation, options 
   const inlineDocumentRuntime = `\n${escapeScript(sources.documentRuntime)}\n`;
   const inlinePrintformRuntime = `\n${escapeScript(sources.printform)}\n`;
   const runtimeHash = await sha256(inlineDocumentRuntime);
-  const next = { ...project, runtime: { version: runtimeVersion, hash: runtimeHash } };
+  const spec = getFormSpec(project);
+  const next = { ...project, spec, runtime: { version: runtimeVersion, hash: runtimeHash } };
   const trusted = options.trusted !== false && project.trust !== TRUST.untrusted && validation.valid;
+  if (trusted) assertTrustedContent(next, { allowExternalHttps: next.manifest.assets?.allowExternalHttps === true });
   const [documentHash, printformHash] = await Promise.all([
     sha256Base64(inlineDocumentRuntime), sha256Base64(inlinePrintformRuntime)
   ]);
   const attestation = await createAttestation(next, validation, inlineDocumentRuntime, runtimeVersion, {
     printformRuntimeSource: inlinePrintformRuntime,
-    cspScriptHashes: [`sha256-${documentHash}`, `sha256-${printformHash}`]
+    cspScriptHashes: [`sha256-${documentHash}`, `sha256-${printformHash}`],
+    validatedAt: options.validatedAt,
   });
+  if (options.evidenceSummary) attestation.evidence = structuredClone(options.evidenceSummary);
   // allowExternalHttps must open img/font in EVERY variant, or a project that
   // legitimately keeps an https logo can never reach a "ready" preview and is
   // permanently blocked from export despite the capability being declared.
@@ -189,6 +199,7 @@ export async function serializeStandalone(project, sources, validation, options 
   ${jsonBlock(SECTION_IDS.manifest, "application/json", project.manifest, scriptNonce)}
   ${jsonBlock(SECTION_IDS.schema, "application/schema+json", project.schema, scriptNonce)}
   ${jsonBlock(SECTION_IDS.i18n, "application/json", project.i18n || {}, scriptNonce)}
+  ${jsonBlock(SECTION_IDS.formSpec, "application/json", spec, scriptNonce)}
   <style id="${SECTION_IDS.theme}">\n${project.themeCss.trim().replace(/<\/style/gi, "<\\/style")}\n</style>
 </head>
 <body>
@@ -210,6 +221,6 @@ export function createEmptyProject() {
     i18n: {},
     themeCss: withPrintTypography("#pf-mount { color: #111; font-family: Arial, sans-serif; }"),
     templateHtml: "<div class=\"printform\"><div class=\"pheader\"><h1 data-pf-text=\"/title\"></h1></div></div>",
-    sampleData: {}, attestation: null, runtime: null, trust: TRUST.trusted, trustReasons: [], customScripts: [], sourceHtml: ""
+    spec: createEmptyFormSpec("printform"), sampleData: {}, attestation: null, runtime: null, trust: TRUST.trusted, trustReasons: [], customScripts: [], sourceHtml: "", revision: 0
   };
 }

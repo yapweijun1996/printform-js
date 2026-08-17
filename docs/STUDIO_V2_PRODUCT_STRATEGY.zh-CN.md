@@ -61,12 +61,13 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 
 ## 模板策略
 
-Production Ready 前只固化两个生产试点：
+Production Ready 前固化三个生产试点：
 
 - Sales Invoice：验证金额、税额、明细、合计和大数据量分页。
 - Purchase Order：验证多区块文档信息、每页重复、条款、审批与最后页 footer。
+- Progress Claim：验证工程进度、合同与索赔摘要、估值明细、变更、结算和签名区。
 
-Quotation、Delivery Order、Credit Note 等进入 Backlog。只有两个试点都通过 P0 硬门和四浏览器功能保证后，才建立版本化模板目录。
+Quotation、Delivery Order、Credit Note 等进入 Backlog。只有三个试点都通过 P0 硬门和四浏览器功能保证后，才建立版本化模板目录。
 
 ## 产品指标
 

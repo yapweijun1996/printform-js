@@ -106,7 +106,7 @@ The steps below exercise the **current Pilot contract**. Layout evidence is issu
 
 Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. The embedded loop permits at most three passes and two approved repairs; repeated repairs are rejected. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
 
-Agent Contract 2.1 adds `get_operation_catalog`, `inspect_design_state`, and optional `expectedCandidateHash`/`requireValid` flags on `apply_changes`. The embedded AI Designer uses an in-memory proposal ID and an internally signed binding token, then automatically submits the exact candidate with `expectedCandidateHash` and `requireValid: true`; it does not show an Apply approval step. End users can Undo or Redo committed revisions. External WebMCP/CDP agents may continue sending the backward-compatible `operations[]` form when those flags are omitted. `request_export` is readiness-only: AI never receives Production Export UI permission.
+Agent Contract 3.0 exposes a semantic FormSpec/component registry and requires `preview_changes` → `approve_transaction` → `apply_changes` with an exact transaction ID and candidate hash. `apply_changes` no longer accepts `operations[]`; raw source preview remains a Studio-internal command and is not an Agent tool. The embedded AI Designer follows the same transaction path. Use `get_transaction`, `get_revision`, `get_audit_events`, `get_transaction_history` and `get_evidence_pack` for durable audit/recovery state. Lease recovery uses `renew_lease`, `release_lease`, `takeover_transaction` and `recover_transaction`; releasing a lease expires the uncommitted record, and takeover creates a fresh transaction. Stale or conflicted drafts must be explicitly resolved before a new preview. End users can Undo or Redo committed revisions. `request_export` is readiness-only: AI never receives Production Export UI permission.
 
 ## Embedded AI Designer and BYOK
 
@@ -148,4 +148,4 @@ provider input or terminal run state.
 
 ## Production sample artifacts
 
-`npm run build:site` emits two self-contained reference documents under `site-dist/studio-v2/samples/`: `sales-invoice-v2.html` and `purchase-order-red-v2.html`. They are generated from the same structured source modules loaded by Studio; do not hand-edit a generated artifact and expect its trusted attestation to remain valid.
+`npm run build:site` emits three self-contained reference documents under `site-dist/studio-v2/samples/`: `sales-invoice-v2.html`, `purchase-order-red-v2.html`, and `progress-claim-northpeak-v2.html`. They are generated from the same structured source modules loaded by Studio; do not hand-edit a generated artifact and expect its trusted attestation to remain valid.

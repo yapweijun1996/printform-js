@@ -1,9 +1,9 @@
-import { OPERATION_DEFINITIONS } from "../core/operation-schemas.js";
+import { AGENT_OPERATION_DEFINITIONS } from "../core/operation-schemas.js";
 import { validateData } from "../core/schema.js";
 
 const MAX_TEXT_CHARS = 20000;
 const MAX_JSON_CANDIDATES = 64;
-const MAX_OPERATIONS = 13;
+const MAX_OPERATIONS = Object.keys(AGENT_OPERATION_DEFINITIONS).length;
 const RECOVERABLE_RISKS = new Set(["low", "medium"]);
 const PROPOSAL_CUE = /\b(?:semantic\s+)?(?:proposal|operation(?:s)?|proposed\s+changes?)\b|\bpreview\b/i;
 
@@ -75,7 +75,7 @@ function validateOperations(values, allowHighRisk) {
   const operations = values.map(parseOperation);
   if (operations.some((operation) => !isObject(operation))) return null;
   for (const operation of operations) {
-    const definition = OPERATION_DEFINITIONS[operation.type];
+    const definition = AGENT_OPERATION_DEFINITIONS[operation.type];
     if (!definition || (!allowHighRisk && !RECOVERABLE_RISKS.has(definition.risk))) return null;
     if (!validateData(definition.schema, operation).valid) return null;
   }

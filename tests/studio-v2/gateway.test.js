@@ -46,4 +46,16 @@ describe("installAgentGateway JSON input handling", () => {
     expect(rendered).toBe(false);
     expect(bus.revision).toBe(0);
   });
+
+  it("blocks raw source and non-semantic operations at the Agent gateway", async () => {
+    const bus = new CommandBus(createSalesInvoiceProject());
+    const raw = await executeAgentCommand(bus, "preview_source_edit", { expectedRevision: 0, section: "template", content: "<div>raw</div>" });
+    expect(raw.error.code).toBe("AGENT_RAW_SOURCE_BLOCKED");
+    const arbitrary = await executeAgentCommand(bus, "preview_changes", {
+      expectedRevision: 0,
+      operations: [{ type: "replace_template", value: "<div>raw</div>" }]
+    });
+    expect(arbitrary.error.code).toBe("AGENT_OPERATION_NOT_ALLOWED");
+    expect(bus.revision).toBe(0);
+  });
 });

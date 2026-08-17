@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openEditor } from "./studio-v2-helpers.js";
 
 test.describe("synthetic pixel evidence boundary", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "Sandbox pixel rasterization is validated in Chromium; geometry evidence covers other engines.");
@@ -6,6 +7,7 @@ test.describe("synthetic pixel evidence boundary", () => {
   test("captures synthetic pixels and rejects pixel evidence in real-data mode", async ({ page }) => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await openEditor(page);
     const result = await page.evaluate(async () => {
       const summary = await window.PrintFormStudioAgent.execute("get_project_summary");
       return window.PrintFormStudioAgent.execute("capture_layout_evidence", {

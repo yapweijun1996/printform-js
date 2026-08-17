@@ -35,12 +35,20 @@ export function attachSectionMethods(FormatterClass) {
     const allRows = Array.from(this.formEl.querySelectorAll(ROW_SELECTOR));
     const paddtRows = allRows.filter((row) => this.isPaddtRow(row));
     const mainRows = allRows.filter((row) => !this.isPaddtRow(row));
+    const rowHeaders = Array.from(this.formEl.querySelectorAll(".prowheader"));
+    const rowHeadersById = {};
+    rowHeaders.forEach((header) => {
+      const tableId = this.getRowTableId(header);
+      if (!rowHeadersById[tableId]) rowHeadersById[tableId] = header;
+    });
     this.paddtRows = paddtRows;
 
     return {
       header: this.formEl.querySelector(".pheader"),
       docInfos,
-      rowHeader: this.formEl.querySelector(".prowheader"),
+      rowHeader: rowHeaders[0] || null,
+      rowHeaders,
+      rowHeadersById,
       footerVariants,
       footerLogo: this.formEl.querySelector(`.${FOOTER_LOGO_VARIANT.className}`),
       footerPagenum: this.formEl.querySelector(`.${FOOTER_PAGENUM_VARIANT.className}`),
@@ -53,6 +61,7 @@ export function attachSectionMethods(FormatterClass) {
       header: DomHelpers.measureHeight(sections.header),
       docInfos: {},
       rowHeader: DomHelpers.measureHeight(sections.rowHeader),
+      rowHeaders: Object.fromEntries((sections.rowHeaders || []).map((header) => [this.getRowTableId(header), DomHelpers.measureHeight(header)])),
       footerVariants: {},
       footerLogo: DomHelpers.measureHeight(sections.footerLogo),
       footerPagenum: DomHelpers.measureHeight(sections.footerPagenum)
@@ -71,7 +80,7 @@ export function attachSectionMethods(FormatterClass) {
     sections.docInfos.forEach((docInfo) => {
       DomHelpers.markAsProcessed(docInfo.element, docInfo.className);
     });
-    DomHelpers.markAsProcessed(sections.rowHeader, "prowheader");
+    (sections.rowHeaders || [sections.rowHeader]).forEach((header) => DomHelpers.markAsProcessed(header, "prowheader"));
     sections.footerVariants.forEach((footer) => {
       DomHelpers.markAsProcessed(footer.element, footer.className);
     });

@@ -17,6 +17,29 @@ const SECTION_META = {
 };
 
 export function createStudioActions({ getBus, getFingerprint, setFingerprint, getDirty, setDirty, getEditor, installBus, toast }) {
+  async function applyPreview(bus, preview, reason, requireValid = false) {
+    const approved = await bus.execute("approve_transaction", {
+      expectedRevision: preview.result.revision,
+      transactionId: preview.result.transactionId,
+      expectedCandidateHash: preview.result.candidateHash,
+      requireValid,
+    });
+    if (!approved.ok) throw new Error(approved.error.message);
+    return bus.execute("apply_changes", {
+      expectedRevision: preview.result.revision,
+      transactionId: preview.result.transactionId,
+      expectedCandidateHash: preview.result.candidateHash,
+      requireValid,
+      reason,
+    });
+  }
+
+  async function previewAndApply(bus, operations, reason, requireValid = false) {
+    const preview = await bus.execute("preview_changes", { expectedRevision: bus.revision, operations });
+    if (!preview.ok) throw new Error(preview.error.message);
+    return applyPreview(bus, preview, reason, requireValid);
+  }
+
   function sourceDiffSections(changedSections) {
     const bus = getBus();
     return changedSections.map((key) => {
@@ -44,7 +67,7 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, ge
       const bus = getBus(); const operations = getEditor("sourceOperations")(); const preview = await bus.execute("preview_changes", { expectedRevision: bus.revision, operations });
       if (!preview.ok) throw new Error(preview.error.message); if (!preview.result.diff.changed) return toast(t("toast.noChanges"));
       if (!await showSourceDiff(preview.result.diff.changedSections, preview.result.validation.errors.length)) return;
-      const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "human-approved source edit" }); if (!result.ok) throw new Error(result.error.message); toast(t("toast.applied", { revision: result.result.revision }));
+       const result = await applyPreview(bus, preview, "human-approved source edit"); if (!result.ok) throw new Error(result.error.message); toast(t("toast.applied", { revision: result.result.revision }));
     } catch (error) { toast(t("toast.applyFailed", { message: error.message })); }
   }
 
@@ -54,7 +77,7 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, ge
   }
 
   async function applyOperation(operation, successKey, failureKey, reason) {
-    try { const bus = getBus(); const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations: [operation], reason }); if (!result.ok) throw new Error(result.error.message); toast(t(successKey)); }
+    try { const bus = getBus(); const result = await previewAndApply(bus, [operation], reason); if (!result.ok) throw new Error(result.error.message); toast(t(successKey)); }
     catch (error) { toast(t(failureKey, { message: error.message })); }
   }
   const applyFontScale = () => applyOperation({ type: "set_font_scale", basePt: Number($("#font-scale-input").value) }, "toast.fontScaleApplied", "toast.fontScaleFailed", "font scale");
@@ -62,11 +85,11 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, ge
   const applyColumnWidths = (tableSelector, fields) => applyOperation({ type: "set_column_widths", tableSelector, widths: Array.from(fields.querySelectorAll("input"), (input) => input.value.trim()) }, "toast.columnWidthsApplied", "toast.columnWidthsFailed", "column widths");
 
   async function applyPageSettings() {
-    try { const bus = getBus(); const operations = [{ type: "set_attribute", selector: ".printform", name: "data-papersize-width", value: $("#page-width-input").value }, { type: "set_attribute", selector: ".printform", name: "data-papersize-height", value: $("#page-height-input").value }]; const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "page settings" }); if (!result.ok) throw new Error(result.error.message); toast(t("toast.pageSettingsApplied")); }
+    try { const bus = getBus(); const operations = [{ type: "set_attribute", selector: ".printform", name: "data-papersize-width", value: $("#page-width-input").value }, { type: "set_attribute", selector: ".printform", name: "data-papersize-height", value: $("#page-height-input").value }]; const result = await previewAndApply(bus, operations, "page settings"); if (!result.ok) throw new Error(result.error.message); toast(t("toast.pageSettingsApplied")); }
     catch (error) { toast(t("toast.pageSettingsFailed", { message: error.message })); }
   }
-  async function applyRepeatFlags() { const operations = Array.from($("#repeat-flags-fields").querySelectorAll("input"), (input) => ({ type: "set_attribute", selector: ".printform", name: input.dataset.attribute, value: input.checked ? "y" : "n" })); try { const bus = getBus(); const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations, reason: "repeated areas" }); if (!result.ok) throw new Error(result.error.message); toast(t("toast.repeatFlagsApplied")); } catch (error) { toast(t("toast.repeatFlagsFailed", { message: error.message })); } }
-  async function applyDataContract() { try { const bus = getBus(); const result = await bus.execute("apply_changes", { expectedRevision: bus.revision, operations: getEditor("dataContractOperations")(), reason: "data contract edit" }); if (!result.ok) throw new Error(result.error.message); toast(t("toast.dataContractApplied")); } catch (error) { toast(t("toast.dataContractFailed", { message: error.message })); } }
+  async function applyRepeatFlags() { const operations = Array.from($("#repeat-flags-fields").querySelectorAll("input"), (input) => ({ type: "set_attribute", selector: ".printform", name: input.dataset.attribute, value: input.checked ? "y" : "n" })); try { const bus = getBus(); const result = await previewAndApply(bus, operations, "repeated areas"); if (!result.ok) throw new Error(result.error.message); toast(t("toast.repeatFlagsApplied")); } catch (error) { toast(t("toast.repeatFlagsFailed", { message: error.message })); } }
+  async function applyDataContract() { try { const bus = getBus(); const result = await previewAndApply(bus, getEditor("dataContractOperations")(), "data contract edit"); if (!result.ok) throw new Error(result.error.message); toast(t("toast.dataContractApplied")); } catch (error) { toast(t("toast.dataContractFailed", { message: error.message })); } }
 
   async function importFile(file) {
     try { const html = await readHtmlFile(file); const verified = await verifyImportedProject(parseProjectHtml(html), html); const migration = analyzeMigration(verified.project); if (migration.action === "read-only") throw new Error(t("error.protocolReadOnly", { source: migration.source })); let project = verified.project; if (migration.action === "preview") { if (!window.confirm(t("confirm.migration", { source: migration.source, target: migration.target }))) throw new Error(t("error.migrationRejected")); project = migration.candidate; } setFingerprint(`${file.name}:${file.size}:${file.lastModified}`); setDirty(false); installBus(project, "import"); }
@@ -76,7 +99,7 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, ge
   async function exportDocument(trusted, { confirmExport = true } = {}) {
     const blank = trusted ? null : window.open("", "_blank");
     try { let validation; if (trusted) { const readiness = await getBus().execute("request_export"); if (!readiness.result?.ready) throw new Error(t("error.qualityNotReady")); validation = readiness.result.validation; if (!window.confirm(t("confirm.productionExport", { warnings: validation.warnings.length }))) return { ok: false, reason: "cancelled" }; } else if (confirmExport && !window.confirm(t("confirm.untrustedExport"))) { blank?.close(); return { ok: false, reason: "cancelled" }; }
-      const result = await createStandaloneHtml(getBus().project, { requireTrusted: trusted, validation }); const filename = `${getBus().project.manifest.documentId || "printform"}${trusted ? "" : "-untrusted"}.html`;
+      const bus = getBus(); const transactionId = trusted ? await bus.ensurePublishTransaction() : bus.transactionStore.head.transaction_id; const transaction = transactionId ? bus.getTransaction(transactionId) : null; const previewHash = transaction?.preview_hash || bus.renderReport?.provenance?.candidateHash; const result = await createStandaloneHtml(bus.project, { requireTrusted: trusted, validation, revision: bus.revision, previewHash, transactionId }); if (trusted && result.evidencePack) bus.recordEvidencePack(result.evidencePack); const filename = `${bus.project.manifest.documentId || "printform"}${trusted ? "" : "-untrusted"}.html`;
       if (trusted && "showSaveFilePicker" in window && window.confirm(t("confirm.savePicker")) && await saveHtmlWithPicker(result.html, filename, t("picker.description"))) { setDirty(false); clearRecoveryDraft(); toast(t("toast.saved", { filename })); return { ok: true, mode: "saved", filename }; }
       downloadHtml(result.html, filename); setDirty(false); clearRecoveryDraft(); toast(t("toast.exported", { filename, bytes: result.bytes })); blank?.close(); return { ok: true, mode: "download", filename };
     } catch (error) { blank?.close(); toast(t("toast.exportFailed", { message: error.message })); return { ok: false, reason: "failed", error }; }

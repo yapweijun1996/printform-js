@@ -11,6 +11,7 @@
 - `npm run test:e2e`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
+- `npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html`
 - 确认 Pages artifact 只包含 `site-dist/`，不包含源码仓库或开发凭证。
 
 ## Production Pilot 浏览器烟测

@@ -143,12 +143,49 @@ function sanitizeObservation(observation, realData = false) {
   };
 }
 
+function sanitizeTransaction(transaction) {
+  if (!transaction || typeof transaction !== "object") return transaction;
+  const operation = (item = {}) => Object.fromEntries(
+    ["type", "path", "selector", "slot", "tableSelector", "componentId", "bindingType"]
+      .filter((key) => item[key] !== undefined)
+      .map((key) => [key, item[key]]),
+  );
+  return {
+    transaction_id: transaction.transaction_id,
+    form_id: transaction.form_id,
+    base_revision: transaction.base_revision,
+    working_revision: transaction.working_revision,
+    owner: transaction.owner,
+    agent_id: transaction.agent_id,
+    status: transaction.status,
+    state: transaction.state,
+    patches: Array.isArray(transaction.patches) ? transaction.patches.map(operation) : [],
+    changes: Array.isArray(transaction.changes) ? transaction.changes.map(operation) : [],
+    preview_hash: transaction.preview_hash,
+    candidate_content_hash: transaction.candidate_content_hash,
+    candidate_form_spec_hash: transaction.candidate_form_spec_hash,
+    validation_result: sanitizeValidation(transaction.validation_result),
+    approval: transaction.approval && { actor: transaction.approval.actor, approved_at: transaction.approval.approved_at, preview_hash: transaction.approval.preview_hash },
+    lease: transaction.lease && { owner: transaction.lease.owner, lease_id: transaction.lease.lease_id, lease_expires_at: transaction.lease.lease_expires_at, heartbeat: transaction.lease.heartbeat },
+    created_at: transaction.created_at,
+    updated_at: transaction.updated_at,
+    previewed_at: transaction.previewed_at,
+    approved_at: transaction.approved_at,
+    committed_at: transaction.committed_at,
+    commit_result: transaction.commit_result && Object.fromEntries(Object.entries(transaction.commit_result).filter(([key]) => /status|revision|hash|at$/.test(key))),
+    evidence_pack_ref: transaction.evidence_pack_ref && Object.fromEntries(Object.entries(transaction.evidence_pack_ref).filter(([key]) => /hash|revision|at$|transaction_id/.test(key))),
+    conflict: transaction.conflict,
+    supersedes_transaction_id: transaction.supersedes_transaction_id,
+  };
+}
+
 function sanitizeError(error = {}) {
   const result = { code: error.code || "COMMAND_FAILED", message: "Command failed" };
   if (Number.isInteger(error.expectedRevision)) result.expectedRevision = error.expectedRevision;
   if (Number.isInteger(error.actualRevision)) result.actualRevision = error.actualRevision;
   if (typeof error.expectedCandidateHash === "string") result.expectedCandidateHash = error.expectedCandidateHash;
   if (typeof error.actualCandidateHash === "string") result.actualCandidateHash = error.actualCandidateHash;
+  for (const key of ["transactionId", "owner", "leaseId", "phase"]) if (typeof error[key] === "string") result[key] = error[key];
   if (error.validation) result.validation = sanitizeValidation(error.validation);
   return result;
 }
@@ -177,6 +214,8 @@ export function sanitizeAgentResult(name, result, { realData = false } = {}) {
       attempt: sanitized.reviewReceipt.attempt
     };
   }
+  if (sanitized.transaction) sanitized.transaction = sanitizeTransaction(sanitized.transaction);
+  if (Array.isArray(sanitized.transactions)) sanitized.transactions = sanitized.transactions.map(sanitizeTransaction);
   return sanitized;
 }
 

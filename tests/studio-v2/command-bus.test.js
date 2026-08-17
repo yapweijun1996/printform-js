@@ -4,6 +4,8 @@ import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice
 import { executeAgentCommand } from "../../studio-v2/adapters/gateway.js";
 import { hashRenderProject } from "../../studio-v2/core/render-provenance.js";
 import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
+import { AGENT_CONTRACT_VERSION, STUDIO_VERSION } from "../../studio-v2/core/constants.js";
+import { approveAndApply } from "./transaction-test-helpers.js";
 
 describe("PrintForm Studio v2 command bus", () => {
   it("previews atomically and rejects stale revisions", async () => {
@@ -12,16 +14,16 @@ describe("PrintForm Studio v2 command bus", () => {
     const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
     expect(preview.ok).toBe(true);
     expect(bus.revision).toBe(0);
-    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    const applied = await approveAndApply(bus, preview);
     expect(applied.result.revision).toBe(1);
     expect(bus.project.manifest.title).toBe("Revised invoice");
-    const stale = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    const stale = await bus.execute("apply_changes", { expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash });
     expect(stale.error.code).toBe("REVISION_CONFLICT");
   });
 
-  it("surfaces a stable INVALID_OPERATION_SHAPE error through apply_changes for a malformed operation, leaving the draft untouched", async () => {
+  it("surfaces a stable INVALID_OPERATION_SHAPE error during preview, leaving the draft untouched", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
-    const result = await bus.execute("apply_changes", {
+    const result = await bus.execute("preview_changes", {
       expectedRevision: 0,
       operations: [{ type: "set_manifest_value", path: "/title", value: "x", notAField: true }]
     });
@@ -95,20 +97,17 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.revision).toBe(1);
   });
 
-  it("declares render-dependent capabilities in get_capabilities based on whether a renderCandidate was actually injected", async () => {
-    // Agent Contract 2.0.0: apply_changes still accepts operations[] directly
-    // (that stayed additive in 1.2.0), but layout evidence receipts now
-    // require a real renderer — a session without one can never pass review.
+  it("declares render, FormSpec and transaction capabilities", async () => {
     const withoutRenderer = await new CommandBus(createSalesInvoiceProject()).execute("get_capabilities");
-    expect(withoutRenderer.result.contractVersion).toBe("2.1.0");
-    expect(withoutRenderer.result.studioVersion).toBe("0.10.0");
-    expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false, layoutEvidenceReceipts: false });
+    expect(withoutRenderer.result.contractVersion).toBe(AGENT_CONTRACT_VERSION);
+    expect(withoutRenderer.result.studioVersion).toBe(STUDIO_VERSION);
+    expect(withoutRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: false, layoutEvidenceReceipts: false, formSpec: true, transactions: true, persistentAudit: false, durableTransactions: false, atomicRevisionCas: false, leaseRecovery: true });
 
     const withRenderer = await new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => ({ status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }) }).execute("get_capabilities");
-    expect(withRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: true, layoutEvidenceReceipts: true });
+    expect(withRenderer.result.capabilities).toEqual({ candidateHash: true, candidateRealRender: true, layoutEvidenceReceipts: true, formSpec: true, transactions: true, persistentAudit: false, durableTransactions: false, atomicRevisionCas: false, leaseRecovery: true });
   });
 
-  it("falls back to static-only validation for preview_changes/apply_changes when no renderCandidate is injected", async () => {
+  it("falls back to static-only validation for a preview transaction when no renderCandidate is injected", async () => {
     // The default constructor path (every existing unit test, the CLI
     // validator) must behave exactly as before P0-A #12: no DOM, no real
     // render, no candidateHash — just schema/business-rule validation.
@@ -117,7 +116,7 @@ describe("PrintForm Studio v2 command bus", () => {
     const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
     expect(preview.ok).toBe(true);
     expect(preview.result.candidateHash).toBeNull();
-    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    const applied = await approveAndApply(bus, preview);
     expect(applied.result.candidateHash).toBeNull();
     expect(applied.result.revision).toBe(1);
   });
@@ -154,7 +153,7 @@ describe("PrintForm Studio v2 command bus", () => {
     const operations = [{ type: "set_manifest_value", path: "/title", value: "Cached path" }];
     const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
     expect(renderCount).toBe(1);
-    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations });
+    const applied = await approveAndApply(bus, preview);
     expect(applied.ok).toBe(true);
     expect(applied.result.candidateHash).toBe(preview.result.candidateHash);
     expect(applied.result.validation.metrics.logicalPages).toBe(3);
@@ -163,14 +162,14 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(renderCount).toBe(1);
   });
 
-  it("renders once per distinct candidate — apply_changes without a prior preview_changes still gets a real render", async () => {
+  it("rejects apply_changes without a prior approved preview", async () => {
     let renderCount = 0;
     const renderCandidate = async () => { renderCount += 1; return { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: { logicalPages: 1 } }; };
     const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
-    const applied = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: "Direct apply" }] });
-    expect(applied.ok).toBe(true);
-    expect(renderCount).toBe(1);
-    expect(applied.result.candidateHash).toEqual(expect.any(String));
+    const applied = await bus.execute("apply_changes", { expectedRevision: 0, expectedCandidateHash: null });
+    expect(applied.ok).toBe(false);
+    expect(applied.error.code).toBe("TRANSACTION_REQUIRED");
+    expect(renderCount).toBe(0);
   });
 
   it("turns a rejected renderCandidate into a RENDER_FAILED error instead of throwing, and still lets the caller decide whether to commit", async () => {
@@ -182,15 +181,16 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(preview.result.validation.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "RENDER_FAILED" })]));
   });
 
-  it("does not invoke renderCandidate for a no-op apply_changes (unchanged operations)", async () => {
+  it("commits a no-op transaction without advancing the revision", async () => {
     let renderCount = 0;
     const renderCandidate = async () => { renderCount += 1; return { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} }; };
     const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate });
-    const result = await bus.execute("apply_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: bus.project.manifest.title }] });
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_manifest_value", path: "/title", value: bus.project.manifest.title }] });
+    const result = await approveAndApply(bus, preview);
     expect(result.ok).toBe(true);
     expect(result.result.diff.changed).toBe(false);
     expect(bus.revision).toBe(0);
-    expect(renderCount).toBe(0);
+    expect(renderCount).toBe(1);
   });
 
   it("requires the current browser layout report before production export", async () => {

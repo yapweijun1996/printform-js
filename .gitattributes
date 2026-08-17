@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Vendored third-party scripts are hash/SRI-pinned for integrity checks.
+# Never let Git rewrite their line endings, or the checked-out bytes will
+# stop matching the recorded sha256/sri in agrun.provenance.js.
+studio-v2/vendor/agrun.min.js -text

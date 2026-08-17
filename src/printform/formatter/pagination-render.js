@@ -63,19 +63,57 @@ export function attachPaginationRenderMethods(FormatterClass) {
       }
 
       if (currentHeight === 0) {
-        this.refreshPageContextForRow(pageContext, row, heights);
+        this.refreshPageContextForRow(pageContext, row, heights, sections);
         const container = this.getCurrentPageContainer(outputContainer);
         this.ensureFirstPageSections(
           container,
           sections,
           heights,
           logFn,
-          pageContext.skipRowHeader
+          pageContext.skipRowHeader,
+          pageContext.tableId
         );
-        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
         currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         if (this.debug) {
           console.log(`[printform] Page ${this.currentPage} start: firstSectionHeight=${currentHeight}px, pageLimit=${pageContext.limit}px`);
+        }
+      }
+
+      // A legacy formatter used one global .prowheader. Insert the active
+      // table's header when a sequential table starts on the same page; page
+      // creation below also receives this table id for continuation pages.
+      const activeTableId = this.getRowTableId(row);
+      const activeHeader = this.ensureActiveTableHeader(
+        this.getCurrentPageContainer(outputContainer),
+        sections,
+        logFn,
+        activeTableId,
+      );
+      if (activeHeader) {
+        const activeContainer = this.getCurrentPageContainer(outputContainer);
+        currentHeight = this.measureContentHeight(activeContainer, pageContext.repeatingHeight);
+        const hasPriorRows = activeContainer.querySelector(".prowitem_processed, .ptac-rowitem_processed, .paddt-rowitem_processed");
+        if (currentHeight > pageContext.limit && hasPriorRows) {
+          activeContainer.removeChild(activeHeader);
+          const skipDummyRowItems = this.shouldSkipDummyRowItemsForContext(pageContext);
+          currentHeight = this.prepareNextPage(
+            outputContainer,
+            sections,
+            logFn,
+            pageContext.limit,
+            currentHeight,
+            footerState,
+            footerSpacerTemplate,
+            this.shouldSkipRowHeaderForRow(row),
+            skipDummyRowItems,
+            pageContext.repeatingHeight,
+            activeTableId,
+          );
+          this.refreshPageContextForRow(pageContext, row, heights, sections);
+          const nextContainer = this.getCurrentPageContainer(outputContainer);
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
+          currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
         }
       }
 
@@ -107,11 +145,12 @@ export function attachPaginationRenderMethods(FormatterClass) {
             footerSpacerTemplate,
             nextSkipRowHeader,
             skipDummyRowItems,
-            pageContext.repeatingHeight
+            pageContext.repeatingHeight,
+            this.getRowTableId(row)
           );
-          this.refreshPageContextForRow(pageContext, row, heights);
+          this.refreshPageContextForRow(pageContext, row, heights, sections);
           const container = this.getCurrentPageContainer(outputContainer);
-          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
           currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         }
 
@@ -145,11 +184,12 @@ export function attachPaginationRenderMethods(FormatterClass) {
             footerSpacerTemplate,
             nextSkipRowHeader,
             skipDummyRowItems,
-            pageContext.repeatingHeight
+            pageContext.repeatingHeight,
+            this.getRowTableId(row)
           );
-          this.refreshPageContextForRow(pageContext, row, heights);
+          this.refreshPageContextForRow(pageContext, row, heights, sections);
           const nextContainer = this.getCurrentPageContainer(outputContainer);
-          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+          pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
           currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
         }
 
@@ -203,11 +243,12 @@ export function attachPaginationRenderMethods(FormatterClass) {
           footerSpacerTemplate,
           nextSkipRowHeader,
           skipDummyRowItems,
-          pageContext.repeatingHeight
+          pageContext.repeatingHeight,
+          this.getRowTableId(row)
         );
-        this.refreshPageContextForRow(pageContext, row, heights);
+        this.refreshPageContextForRow(pageContext, row, heights, sections);
         const container = this.getCurrentPageContainer(outputContainer);
-        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+        pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
         currentHeight = this.measureContentHeight(container, pageContext.repeatingHeight);
         DomHelpers.appendRowItem(container, row, null, index, baseClass);
         if (logFn) {
@@ -288,11 +329,12 @@ export function attachPaginationRenderMethods(FormatterClass) {
         footerSpacerTemplate,
         nextSkipRowHeader,
         skipDummyRowItems,
-        pageContext.repeatingHeight
+        pageContext.repeatingHeight,
+        this.getRowTableId(row)
       );
-      this.refreshPageContextForRow(pageContext, row, heights);
+      this.refreshPageContextForRow(pageContext, row, heights, sections);
       const nextContainer = this.getCurrentPageContainer(outputContainer);
-      pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader);
+      pageContext.repeatingHeight = this.computeRepeatingHeightForPage(sections, heights, pageContext.skipRowHeader, pageContext.tableId);
       currentHeight = this.measureContentHeight(nextContainer, pageContext.repeatingHeight);
       DomHelpers.appendRowItem(nextContainer, row, null, index, baseClass);
       if (logFn) {

@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { openEditor } from "./studio-v2-helpers.js";
 
 test("presents repeated areas as clear, accessible responsive cards", async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await openEditor(page);
   await expect(page.locator("#repeat-flags-fields .repeat-flag-card")).toHaveCount(7, { timeout: 20_000 });
 
   const initial = await page.locator("#repeat-flags-fields").evaluate((container) => {

@@ -1,15 +1,29 @@
 export class RevisionHistory {
-  constructor(initialProject, limit = 50) {
+  constructor(initialProject, limit = 50, initialRevision = 0) {
     this.limit = limit;
-    this.entries = [{ revision: 0, project: initialProject, reason: "initial", timestamp: Date.now() }];
+    const revision = Number.isInteger(initialRevision) && initialRevision >= 0 ? initialRevision : 0;
+    this.entries = [{ revision, project: initialProject, reason: "initial", timestamp: Date.now() }];
     this.cursor = 0;
-    this.nextRevision = 1;
+    this.nextRevision = revision + 1;
   }
 
   get revision() { return this.entries[this.cursor].revision; }
   get project() { return this.entries[this.cursor].project; }
   get canUndo() { return this.cursor > 0; }
   get canRedo() { return this.cursor < this.entries.length - 1; }
+
+  hydrate(entries) {
+    const valid = Array.isArray(entries) ? entries.filter((entry) => Number.isInteger(entry?.revision) && entry.project) : [];
+    if (!valid.length) return;
+    this.entries = valid.slice(-this.limit).map((entry) => ({
+      revision: entry.revision,
+      project: structuredClone(entry.project),
+      reason: entry.reason || "recovered",
+      timestamp: entry.timestamp || Date.now(),
+    }));
+    this.cursor = this.entries.length - 1;
+    this.nextRevision = Math.max(...this.entries.map((entry) => entry.revision)) + 1;
+  }
 
   commit(project, reason) {
     // Monotonic, never derived from the cursor: undo-then-commit must NOT

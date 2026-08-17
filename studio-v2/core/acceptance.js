@@ -3,6 +3,9 @@ import { validateData, validateSchemaProfile } from "./schema.js";
 import { validateAssetSlots } from "./assets.js";
 import { validateI18n } from "./i18n.js";
 import { validateBusinessRules } from "./business-rules.js";
+import { getFormSpec, validateFormSpec } from "./form-spec.js";
+import { collectPaginationDiagnostics } from "./render-diagnostics.js";
+import { validateTrustedContent } from "./content-security.js";
 
 function error(code, message, path = "/") {
   return { code, message, path, severity: "error" };
@@ -87,6 +90,12 @@ export function validateProject(project, options = {}) {
   }
   errors.push(...validateI18n(project).errors);
   errors.push(...validateAssetSlots(project).errors);
+  const security = validateTrustedContent(project);
+  errors.push(...security.errors.map((entry) => ({ ...entry, path: `/${entry.path}` })));
+  const formSpec = getFormSpec(project);
+  const formSpecReport = validateFormSpec(formSpec);
+  errors.push(...formSpecReport.errors.map((code) => error(code, `FormSpec validation failed: ${code}`, "/spec")));
+  if (!project.spec?.components?.length && formSpecReport.valid) warnings.push(warning("FORMSPEC_LEGACY_ADAPTER", "Legacy template is being validated through the generated FormSpec adapter", "/spec"));
   const limits = {
     maxHtmlBytes: LIMITS.htmlBytes,
     maxRows: LIMITS.rows,
@@ -109,6 +118,7 @@ export function validateProject(project, options = {}) {
     productionValid: errors.length === 0,
     errors,
     warnings,
+    security,
     metrics: { rows, logicalPages: options.logicalPages || 0, htmlBytes: options.htmlBytes || 0 }
   };
 }
@@ -134,10 +144,18 @@ function cssPathWithinPage(node) {
 
 function issueEntry(code, node, pageIndex) {
   const rect = node.getBoundingClientRect();
+  const page = node.closest?.(".printform_page");
+  const pageRect = page?.getBoundingClientRect?.() || { width: 0, height: 0 };
   const text = (node.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60);
   return {
     code,
     pageIndex,
+    page: pageIndex + 1,
+    component_id: node.getAttribute?.("data-pf-component-id") || node.getAttribute?.("data-pf-table-id") || node.id || null,
+    measured_size: { width: Math.round(rect.width), height: Math.round(rect.height) },
+    available_size: { width: Math.round(pageRect.width), height: Math.round(pageRect.height) },
+    reason: code === "HORIZONTAL_OVERFLOW" ? "Element exceeds the logical page width" : "Rendered geometry exceeds the validated page boundary",
+    recommended_action: code === "HORIZONTAL_OVERFLOW" ? "Reduce column widths or typography and verify the paper width" : "Inspect the active section and keep it inside the page boundary",
     selector: cssPathWithinPage(node),
     rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
     ...(text ? { text } : {})
@@ -251,12 +269,20 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
   const lowContrast = contrastFailures(doc);
   if (lowContrast.length) errors.push(error("CONTRAST_FAILURE", `${lowContrast.length} text elements do not meet WCAG contrast thresholds`));
   warnings.push(warning("PRINT_PREVIEW_REQUIRED", "Confirm fonts, DPI and page margins in the system print preview"));
+  const paginationDiagnostics = collectPaginationDiagnostics(doc, manifest);
+  paginationDiagnostics.errors.forEach((diagnostic) => {
+    errors.push({
+      ...error(diagnostic.code, diagnostic.reason, `/render/page/${diagnostic.page}`),
+      details: diagnostic,
+    });
+  });
   // Element-level details (selector + geometry) so agents can target fixes
   // without screenshots; capped per category to bound the report size.
   const issues = [
     ...overflow.slice(0, MAX_ISSUE_DETAILS).map(({ node, pageIndex }) => issueEntry("HORIZONTAL_OVERFLOW", node, pageIndex)),
     ...verticalOverflow.slice(0, MAX_ISSUE_DETAILS).map((page) => issueEntry("VERTICAL_OVERFLOW", page, pageIndexOf(page))),
-    ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node)))
+    ...lowContrast.slice(0, MAX_ISSUE_DETAILS).map((node) => issueEntry("CONTRAST_FAILURE", node, pageIndexOf(node))),
+    ...paginationDiagnostics.issues.slice(0, MAX_ISSUE_DETAILS)
   ];
   // Compact structural geometry of what Studio rendered; the evidence receipt
   // hashes this Studio-measured payload without exposing pixels or ERP values.
@@ -294,6 +320,7 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
       verticalOverflowPages: verticalOverflow.length,
       contrastFailures: lowContrast.length,
       renderedRows: actualRowCount,
+      ...paginationDiagnostics.metrics,
       ...(Number.isFinite(expectedRowCount) ? { expectedRows: expectedRowCount } : {})
     }
   };

@@ -14,7 +14,8 @@ export function attachPaginationSpacingMethods(FormatterClass) {
     spacerTemplate,
     skipRowHeader,
     skipDummyRowItems,
-    repeatingHeight
+    repeatingHeight,
+    tableId = "default"
   ) {
     const container = this.getCurrentPageContainer(outputContainer);
     const filledHeight = this.applyRemainderSpacing(
@@ -33,7 +34,7 @@ export function attachPaginationSpacingMethods(FormatterClass) {
     this.currentPageContainer = null;
     this.createNewLogicalPage(outputContainer);
     const nextContainer = this.getCurrentPageContainer(outputContainer);
-    this.appendRepeatingSections(nextContainer, sections, logFn, skipRowHeader);
+    this.appendRepeatingSections(nextContainer, sections, logFn, skipRowHeader, tableId);
     return filledHeight;
   };
 

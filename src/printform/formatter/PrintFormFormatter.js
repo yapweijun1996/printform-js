@@ -123,6 +123,8 @@ export class PrintFormFormatter {
           footerVariants: [],
           footerLogo: sections.footerLogo,
           footerPagenum: sections.footerPagenum,
+          rowHeaders: sections.rowHeaders,
+          rowHeadersById: sections.rowHeadersById,
           rows: this.paddtRows
         };
 

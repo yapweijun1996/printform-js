@@ -3,6 +3,7 @@ import path from "node:path";
 import { JSDOM } from "jsdom";
 import { createSalesInvoiceProject } from "../studio-v2/samples/sales-invoice.js";
 import { createPurchaseOrderProject } from "../studio-v2/samples/purchase-order.js";
+import { createProgressClaimProject } from "../studio-v2/samples/progress-claim.js";
 import { validateProject } from "../studio-v2/core/acceptance.js";
 import { serializeStandalone } from "../studio-v2/core/project-model.js";
 import { collectAppShell } from "./app-shell.mjs";
@@ -42,7 +43,8 @@ async function writePilotExports() {
   fs.mkdirSync(samples, { recursive: true });
   const pilots = [
     ["sales-invoice-v2.html", createSalesInvoiceProject()],
-    ["purchase-order-red-v2.html", createPurchaseOrderProject()]
+    ["purchase-order-red-v2.html", createPurchaseOrderProject()],
+    ["progress-claim-northpeak-v2.html", createProgressClaimProject()]
   ];
   for (const [filename, project] of pilots) {
     const validation = validateProject(project);

@@ -6,6 +6,8 @@
 >
 > 权威语言：中文；英文 README 与 Agent setup 只提供摘要和入口
 
+> **2026-08-17 当前覆盖**：Production Foundation 已完成代码基础。当前版本为 Studio `0.11.0`、Agent Contract `3.0.0`、Protocol `2.0.0`；Agent 写路径必须经过事务化 `preview → approve → apply`，公共 `apply_changes` 不再接受直接 `operations[]`。详细证据与未关闭门禁见[生产差距审计](STUDIO_V2_PRODUCTION_GAP_AUDIT.zh-CN.md)。
+
 ## 状态词
 
 - **Current**：仓库当前已经实现，并有相应测试或人工验证依据。
@@ -23,6 +25,7 @@
 | 理解 AI 与安全边界 | [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) | 六项 P0 信任闭环硬门（Current，代码已完成）与已评估未采纳的历史设想（Backlog） |
 | 安排工程实施 | [工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) | P0–P3 依赖、接口和退出条件 |
 | 执行发布验收 | [发布检查表](STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md) | Pilot 检查与 Production Ready 硬门 |
+| 生产差距审计 | [深度生产差距审计](STUDIO_V2_PRODUCTION_GAP_AUDIT.zh-CN.md) | 当前实现证据、P0/P1/P2 差距、目标架构与迁移验收 |
 | 查版本与组合兼容性 | [兼容矩阵](COMPATIBILITY_MATRIX.zh-CN.md) | 四条独立版本线、各自 SSOT 与升 major 判据 |
 | 配置 Codex/Claude | [Agent setup](../studio-v2/AGENT_SETUP.md) | Current MCP/WebMCP 接入步骤 |
 | 维护旧 Studio | [Studio v1 设计](STUDIO_DESIGN.zh-CN.md) | Legacy v1，不是 v2 规范 |
@@ -34,7 +37,7 @@
 | 自包含单 HTML | Current | 协议、样本、主题与两段 runtime 可封装在同一文件 |
 | 声明式数据绑定 | Current | 使用 JSON Pointer；不执行表达式或业务公式 |
 | Studio 静态 PWA | Current | 可部署到 GitHub Pages，并缓存最后成功的应用壳 |
-| UI/WebMCP/CDP 命令面 | Current | 共用同一 `CommandBus.execute`；Agent Contract **2.1.0**，18 个工具，含 operation catalog/design inspection 与候选安全 flags |
+| UI/WebMCP/CDP 命令面 | Current | 共用同一 `CommandBus.execute`；Agent Contract **3.0.0**，26 个工具，含 FormSpec、事务、诊断、证据与安全导出查询 |
 | 嵌入式 AI Designer | Current | 可折叠 side panel；默认 own-gpt-server 走公开 server-auth gateway（无需浏览器解锁），OpenAI/Gemini/Custom BYOK 仍使用加密 vault；会话、stream/Stop、preview→validated auto-apply→validation、Undo/Redo；生产导出仍由人工完成 |
 | 五语言打印内容与 Studio UI | Current | `en-MY`、`zh-CN`、`ms-MY`、`ja-JP`、`vi-VN` |
 | 人工生产导出确认 | Current | AI/MCP 不能代替最终点击 |
@@ -45,11 +48,13 @@
 | Studio 签发的布局证据 | Current | Studio 自测的**几何指纹**（`layoutFingerprint`）与可选 geometry-only SVG；synthetic mode 可选 bounded pixel raster + `pixelSnapshotHash`，real-data mode 硬拒绝像素，receipt 同时绑定 revision/`baseProjectHash` |
 | 双 runtime 完整证明 | Current | `printformRuntimeHash`（分页引擎）+ 既有 document runtime hash + `cspScriptHashes`；`browsers` 由 evidence receipt 推导，非硬编码 |
 | 内容顺序、遗漏与重叠证明 | Current | `ROW_COUNT_MISMATCH`/`ROW_DUPLICATE_INDEX`/`ROW_MISSING_INDEX`/`ROW_ORDER_MISMATCH`/`HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 全部落地 |
-| 工程师结构化面板 | Current | Table columns、Print font scale、Page settings、Repeated areas、Brand color；Data contract 仍是 Backlog |
+| FormSpec / Component Registry | Current | `get_form_spec`、组件列举/读取、binding 与 pagination rule；旧 HTML 由 legacy adapter 兼容 |
+| Agent 事务与证据 | Current | `BEGIN → PREVIEW → APPROVE → APPLY → COMMIT`，持久 journal、Evidence Pack 与 trusted export allowlist |
+| 工程师结构化面板 | Current | Table columns、Print font scale、Page settings、Repeated areas、Brand color、Data contract |
 
 ## 成熟度规则
 
-Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。以下六项 P0 硬门的**代码部分已于 2026-07-31 全部完成**：
+Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。2026-08-17 Production Foundation 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist 与 Evidence Pack；旧的 2026-07-31 六项硬门记录保留作历史证据，不代表本阶段的发布门已全部关闭：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中执行真实分页渲染，`apply_changes` 命中同一 `candidateHash` 直接复用报告提交。
 2. ✅ revision 永不复用；写操作用 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性两阶段提交，评估后判定当前机制已达成同等安全目标）。

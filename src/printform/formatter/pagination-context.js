@@ -9,26 +9,31 @@ export function attachPaginationContextMethods(FormatterClass) {
       baseLimit: heightPerPage,
       limit: heightPerPage,
       skipRowHeader: false,
+      tableId: "default",
+      rowHeaderHeight: 0,
       isPtacPage: false,
       isPaddtPage: false,
       repeatingHeight: 0
     };
   };
 
-  FormatterClass.prototype.refreshPageContextForRow = function refreshPageContextForRow(pageContext, row, heights) {
+  FormatterClass.prototype.refreshPageContextForRow = function refreshPageContextForRow(pageContext, row, heights, sections) {
     if (!pageContext) {
       return pageContext;
     }
     const skipRowHeader = this.shouldSkipRowHeaderForRow(row);
-    const rowHeaderHeight = heights.rowHeader || 0;
+    const tableId = this.getRowTableId(row);
+    const rowHeaderHeight = heights.rowHeaders?.[tableId] ?? heights.rowHeader ?? 0;
     pageContext.skipRowHeader = skipRowHeader;
+    pageContext.tableId = tableId;
+    pageContext.rowHeaderHeight = rowHeaderHeight;
     pageContext.isPtacPage = this.isPtacRow(row);
     pageContext.isPaddtPage = this.isPaddtRow(row);
     pageContext.limit = pageContext.baseLimit + (skipRowHeader ? rowHeaderHeight : 0);
     return pageContext;
   };
 
-  FormatterClass.prototype.computeRepeatingHeightForPage = function computeRepeatingHeightForPage(sections, heights, skipRowHeader) {
+  FormatterClass.prototype.computeRepeatingHeightForPage = function computeRepeatingHeightForPage(sections, heights, skipRowHeader, tableId = "default") {
     let total = 0;
     if (this.config.repeatHeader && sections.header) {
       total += heights.header || 0;
@@ -38,8 +43,9 @@ export function attachPaginationContextMethods(FormatterClass) {
         total += heights.docInfos[docInfo.key] || 0;
       }
     });
-    if (this.config.repeatRowheader && sections.rowHeader && !skipRowHeader) {
-      total += heights.rowHeader || 0;
+    const rowHeader = sections.rowHeadersById?.[tableId] || sections.rowHeader;
+    if (this.config.repeatRowheader && rowHeader && !skipRowHeader) {
+      total += heights.rowHeaders?.[tableId] ?? heights.rowHeader ?? 0;
     }
     return normalizeHeight(total);
   };

@@ -1,8 +1,73 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-07-31（对齐 `7ab5e8a`；E11 专项计划第 2.1–2.4 节现已全部完成，仅 2.5 文档防漂移是持续性工作项，非一次性任务；P2 类重构经评估判定暂不做）。
+> 最后核对：2026-08-17（E13-SERVER Durable Backend Deployment & Recovery Acceptance）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
+
+---
+
+## 0. 当前阶段：Studio v2 Production Foundation（2026-08-17）
+
+状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库和浏览器 UI remote-store wiring 仍未认证。
+
+本阶段在现有 Protocol、CommandBus 与 PrintForm runtime 上做最小增量：FormSpec/component registry、Active Table Context、多页确定性诊断、Agent transaction gate、trusted export allowlist、Evidence Pack，以及 E13 durable transaction store/state machine/CAS/lease/recovery/server adapter 已进入代码和测试。仍不扩大为一般 Production Ready，因为当前服务只认证单 writer SQLite 部署，浏览器默认 localStorage 仍是 offline/single-session fallback，Firefox/WebKit/真实 Safari/打印机链也未认证。
+
+已完成的代码门：
+
+- `get_form_spec` / `list_components` 与语义组件操作；旧 HTML 通过 legacy adapter 兼容。
+- 多个顺序表格按 active table 重复当前表头；formatter 仍是唯一分页责任方。
+- `ROW_TOO_TALL`、overflow、keep-together、footer/page-number、blank page 等结构化诊断。
+- `BEGIN → PREVIEW → APPROVE → APPLY → COMMIT`，候选 hash 不一致或失败时回滚。
+- trusted export 的脚本/事件处理器/危险 URL/外部资源 allowlist 与 content hash。
+- durable transaction store/server adapter：transaction/revision/lease/audit/evidence anchor 持久化；真实 SQL CAS、server clock lease、commit/evidence retry 幂等；发布门失败时 fail closed。
+
+E12 的独立运维任务 `OPS-NANOID`、`OPS-PLAYWRIGHT`、`OPS-WINDOWS-DOCTOR` 已有独立证据；退出条件已满足。E13-SERVER 的 bounded backend 与 acceptance 已完成；后续转向 HA/recovery hardening，不在本阶段增加 AI 功能。
+
+### 0.1 E12 验证记录
+
+- Chromium Playwright `1.62.0` / revision `1234`：**56/56 PASS**。
+- Browser matrix：Progress Claim、四个顺序表、100/500/1000 行、A4 @ 96dpi portrait/landscape、13 类 pagination diagnostic、approved export Evidence Pack。
+- 工具链（历史 E12）：68 files / 361 unit tests、`build:site`、`check:agrun`、三份 pilot `validate:v2`、Windows `doctor` 5/5、`git diff --check` PASS。
+- 供应链：`nanoid 3.3.18`，`npm audit --audit-level=high` 0 vulnerabilities。
+- 认证边界：本阶段只认证 Chromium reference runtime；不把历史三引擎矩阵或 WebKit 结果解释为真实 Safari/打印机认证。
+
+### 0.2 E13 实施与剩余门
+
+| 能力 | 当前实现 | 剩余硬门 |
+|---|---|---|
+| Durable store | `DurableTransactionStore` + localStorage/offline + `SqliteDurableBackend` server adapter | 外部数据库迁移/HA 与 artifact blob registry |
+| State machine | `DRAFT → PREVIEWED → VALIDATED → APPROVED → COMMITTING → COMMITTED`，含 expired/conflicted/recovery paths | 长时间 TTL/cleanup policy 的部署参数 |
+| CAS | SQLite `BEGIN IMMEDIATE` + SQL conditional update；stale overwrite 被拒 | active-active writer/fencing 与外部 DB CAS |
+| Lease | server database time、heartbeat/renew/release、expiry、new-id takeover | 长 TTL cleanup、监控与跨实例 takeover policy |
+| Recovery | process crash/restart、network lost response、retry、Evidence retry 已验证 | server failover、kill-point 全量演练与自动化告警 |
+| Evidence | pack ↔ artifact ↔ revision ↔ transaction ↔ audit anchor durable projection | 独立 artifact blob/attestation registry |
+
+E12 的单用户路径保留兼容，不做破坏式替换。
+
+### 0.3 E13-SERVER 验收记录
+
+| 门 | 结果 |
+|---|---|
+| Real backend | SQLite WAL/FULL durable file；normalized transaction/revision/audit/evidence projections；Node `>=22.5.0` |
+| CAS / lease | 双独立 session 一胜一 `REVISION_CONFLICT`；server DB time lease expiry/takeover；clock skew 不影响结果 |
+| retry / recovery | lost response 与 reconnect 不重复 revision；commit retry `already_committed`；crash before/after CAS 重启可判定 |
+| evidence / audit | Evidence Pack hash/revision/transaction anchor 幂等；append-only event sequence 可重读 |
+| regression | E13-SERVER 8/8；全量 70 files / 378 tests；build:site、doctor 5/5、audit 0、validate:v2 3/3、Chromium 56/56 |
+| deployment boundary | 单 writer service + SQLite 文件；active-active/HA/remote UI adapter 未认证，保留 Production Candidate |
+
+### 0.4 推荐下一 Epic：E14 Durable Service Hardening（Target）
+
+不在本阶段实现，先记录为有边界的后续任务：
+
+| 任务 | 目标验收 |
+|---|---|
+| E14-01 数据库/迁移 | 外部 durable DB schema migration、备份/恢复演练、唯一约束与 CAS 在目标部署环境通过 |
+| E14-02 HA / fencing | active-active writer、leader lease、split-brain fencing、failover 后不重复 commit |
+| E14-03 remote client | Studio UI 可显式选择 server adapter；双浏览器/双设备 session 通过真实 remote transaction flow |
+| E14-04 recovery operations | abandoned transaction TTL、lease cleanup、crash/retry/runbook、告警与可观测性 |
+| E14-05 artifact registry | Evidence Pack 与 HTML artifact 的 durable blob/manifest/attestation registry 可独立恢复 |
+
+E14 的退出条件是“多实例/多设备故障时仍无 silent overwrite、double commit、partial publish 或 ambiguous recovery”；在此之前，E13-SERVER 仅作为受控单 writer Production Candidate。
 
 ---
 
@@ -17,7 +82,7 @@
 | 已完成（2026-07-31） | Purchase Order 跨引擎分页收敛：非行区 +16px 让 15 组合全部落到每页 14 行，复跑矩阵 22 个可比格子零分歧 | ✅ |
 | 长期 | E8 工程师工作流 → E9 分页引擎演进 → E10 发布治理 | ⬜ |
 
-里程碑对外状态（Pilot → Production Ready → Template Scale）沿用工程路线图的发布顺序表。**当前仍是 Production Pilot**：六项 P0 的代码硬门已齐、浏览器矩阵已跑满全过、跨引擎分页差异也已收敛。Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`）两个操作系统上跑过，均 88/88 全过、零分歧（结果见 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」）——同引擎跨操作系统的度量差异担忧（§2.1 第三条陷阱）在这两个系统上没有出现分歧。**仅剩 Windows 未验证**，GitHub Actions 无现成的 Windows+四浏览器方案，非阻塞待办。
+里程碑对外状态（Pilot → Production Candidate → Production Ready → Template Scale）沿用工程路线图的发布顺序表。E13-SERVER 已把受控部署的服务端事务恢复/并发门跑通，但 Production Ready 仍由维护者显式宣布，不由一次跑批绿灯自动推导；当前承诺仍限定为单 writer service、Chromium reference runtime、人工审批和既定安全门。
 
 ---
 

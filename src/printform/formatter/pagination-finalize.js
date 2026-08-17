@@ -23,11 +23,13 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
         available -= h;
       }
     });
-    if (this.config.repeatRowheader && sections.rowHeader) {
+    const rowHeaderHeights = Object.values(heights.rowHeaders || {});
+    const maxRowHeaderHeight = rowHeaderHeights.length ? Math.max(...rowHeaderHeights) : (heights.rowHeader || 0);
+    if (this.config.repeatRowheader && (sections.rowHeaders?.length || sections.rowHeader)) {
       if (this.debug) {
-        console.log(`[printform]   - repeatRowheader: ${heights.rowHeader}px`);
+        console.log(`[printform]   - repeatRowheader (max active table): ${maxRowHeaderHeight}px`);
       }
-      available -= heights.rowHeader;
+      available -= maxRowHeaderHeight;
     }
     sections.footerVariants.forEach((footer) => {
       if (this.config[footer.repeatFlag]) {
@@ -139,12 +141,13 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
       spacerTemplate,
       true,
       skipDummyRowItems,
-      repeatingHeight
+      repeatingHeight,
+      "default"
     );
 
     const finalPageStartHeight = allowance;
     const container = this.getCurrentPageContainer(outputContainer);
-    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, true);
+    const nextRepeatingHeight = this.computeRepeatingHeightForPage(sections, heights, true, "default");
     this.applyRemainderSpacing(
       container,
       defaultHeightPerPage,

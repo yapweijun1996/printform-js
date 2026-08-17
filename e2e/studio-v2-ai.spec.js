@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openEditor, openInspector } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
@@ -8,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test("loads the embedded agrun Designer skill and keeps BYOK ciphertext secret", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The browser storage smoke runs once in Chromium");
+  await openInspector(page);
   await page.locator("#ai-designer-tab").click();
   await expect(page.locator("#ai-designer-tabpanel")).toBeVisible();
   const result = await page.evaluate(async () => {
@@ -92,6 +94,7 @@ test("keeps the AI Designer panel inside a narrow viewport", async ({ page }) =>
 
 test("keeps the tablet workspace flush with the viewport below dynamic banners", async ({ page }) => {
   await page.setViewportSize({ width: 995, height: 778 });
+  await openEditor(page);
   await page.locator("#update-banner").evaluate((node) => node.classList.remove("hidden"));
   const layout = await page.evaluate(() => {
     window.scrollTo(0, document.documentElement.scrollHeight);
@@ -119,6 +122,7 @@ test("keeps the tablet workspace flush with the viewport below dynamic banners",
 
 test("keeps the stacked mobile Studio vertically scrollable", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
+  await openEditor(page);
   const mobile = await page.evaluate(() => {
     window.scrollTo(0, document.documentElement.scrollHeight);
     return {
@@ -262,6 +266,7 @@ test("closes and reopens the inspector from the visible panel control", async ({
 
 test("lets users hide and reopen the structured source editor while using AI Designer", async ({ page }) => {
   await page.setViewportSize({ width: 995, height: 778 });
+  await openEditor(page);
   await expect(page.locator("#editor-panel")).toBeVisible();
   await expect(page.locator("#editor-panel")).toHaveAttribute("aria-hidden", "false");
   await page.locator("#editor-panel-close").click();

@@ -29,6 +29,13 @@ describe("inspectDataContract", () => {
   it("returns an empty list for a schema with no object properties", () => {
     expect(inspectDataContract({ type: "string" }, {})).toEqual([]);
   });
+
+  it("represents opaque object maps without making the editor recurse into undefined fields", () => {
+    const fields = inspectDataContract({ type: "object", properties: {
+      totals: { type: "object", additionalProperties: { type: "string" } }
+    } }, { totals: { gross: "10.00" } });
+    expect(fields[0]).toEqual({ key: "totals", path: "/totals", type: "object", required: false, fields: [] });
+  });
 });
 
 describe("applyDataContractEdits", () => {

@@ -5,7 +5,11 @@ import { FOOTER_LOGO_VARIANT, FOOTER_PAGENUM_VARIANT } from "../config.js";
 import { DomHelpers } from "../dom.js";
 
 export function attachRenderingMethods(FormatterClass) {
-  FormatterClass.prototype.ensureFirstPageSections = function ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader) {
+  FormatterClass.prototype.getSectionRowHeader = function getSectionRowHeader(sections, tableId = "default") {
+    return sections.rowHeadersById?.[tableId] || sections.rowHeader || null;
+  };
+
+  FormatterClass.prototype.ensureFirstPageSections = function ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader, tableId = "default") {
     let consumedHeight = 0;
     if (sections.header) {
       DomHelpers.appendClone(container, sections.header, logFn, "pheader");
@@ -20,16 +24,17 @@ export function attachRenderingMethods(FormatterClass) {
         consumedHeight += heights.docInfos[docInfo.key] || 0;
       }
     });
-    if (sections.rowHeader && !skipRowHeader) {
-      DomHelpers.appendClone(container, sections.rowHeader, logFn, "prowheader");
+    const rowHeader = this.getSectionRowHeader(sections, tableId);
+    if (rowHeader && !skipRowHeader) {
+      DomHelpers.appendClone(container, rowHeader, logFn, "prowheader");
       if (!this.config.repeatRowheader) {
-        consumedHeight += heights.rowHeader;
+        consumedHeight += heights.rowHeaders?.[tableId] ?? heights.rowHeader ?? 0;
       }
     }
     return consumedHeight;
   };
 
-  FormatterClass.prototype.appendRepeatingSections = function appendRepeatingSections(container, sections, logFn, skipRowHeader) {
+  FormatterClass.prototype.appendRepeatingSections = function appendRepeatingSections(container, sections, logFn, skipRowHeader, tableId = "default") {
     if (this.config.repeatHeader) {
       DomHelpers.appendClone(container, sections.header, logFn, "pheader");
     }
@@ -39,9 +44,21 @@ export function attachRenderingMethods(FormatterClass) {
         this.registerPageNumberClone(clone);
       }
     });
-    if (this.config.repeatRowheader && !skipRowHeader) {
-      DomHelpers.appendClone(container, sections.rowHeader, logFn, "prowheader");
+    const rowHeader = this.getSectionRowHeader(sections, tableId);
+    if (this.config.repeatRowheader && rowHeader && !skipRowHeader) {
+      DomHelpers.appendClone(container, rowHeader, logFn, "prowheader");
     }
+  };
+
+  FormatterClass.prototype.ensureActiveTableHeader = function ensureActiveTableHeader(container, sections, logFn, tableId) {
+    if (!this.config.repeatRowheader) return null;
+    const rowHeader = this.getSectionRowHeader(sections, tableId);
+    if (!rowHeader) return null;
+    const hasHeader = Array.from(container.querySelectorAll(".prowheader_processed")).some(
+      (node) => this.getRowTableId(node) === tableId,
+    );
+    if (hasHeader) return null;
+    return DomHelpers.appendClone(container, rowHeader, logFn, "prowheader");
   };
 
   FormatterClass.prototype.registerPageNumberClone = function registerPageNumberClone(node) {

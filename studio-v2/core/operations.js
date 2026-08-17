@@ -4,6 +4,8 @@ import { validateData } from "./schema.js";
 import { OPERATION_SCHEMAS } from "./operation-schemas.js";
 import { setPrintTypographyBase } from "./typography.js";
 import { setBrandColor } from "./branding.js";
+import { isUnsafeAttribute } from "./content-security.js";
+import { createLegacyFormSpec, findComponent, findComponentNode, updateComponentSpec } from "./form-spec.js";
 
 export function cloneProject(project) {
   return {
@@ -11,9 +13,11 @@ export function cloneProject(project) {
     manifest: cloneJson(project.manifest),
     schema: cloneJson(project.schema),
     i18n: cloneJson(project.i18n || {}),
+    spec: cloneJson(project.spec),
     sampleData: cloneJson(project.sampleData),
     attestation: cloneJson(project.attestation),
     runtime: cloneJson(project.runtime),
+    revision: project.revision ?? 0,
     customScripts: [...(project.customScripts || [])],
     trustReasons: [...(project.trustReasons || [])],
     sourceHtml: ""
@@ -24,6 +28,54 @@ function templateDocument(html) {
   const template = document.createElement("template");
   template.innerHTML = html;
   return template;
+}
+
+function ensureFormSpec(project) {
+  project.spec = project.spec?.components?.length ? cloneJson(project.spec) : createLegacyFormSpec(project);
+  return project.spec;
+}
+
+function componentTemplateNode(project, componentId) {
+  const template = templateDocument(project.templateHtml);
+  const component = findComponent(project.spec, componentId);
+  return { template, component, node: findComponentNode(template, component) };
+}
+
+function applyComponentUpdate(project, operation) {
+  const spec = ensureFormSpec(project);
+  project.spec = updateComponentSpec(spec, operation.componentId, operation.patch);
+  const { template, component, node } = componentTemplateNode({ ...project, spec }, operation.componentId);
+  if (!component || !node) return;
+  const patch = operation.patch || {};
+  if (patch.keepTogether !== undefined) node.setAttribute("data-pf-keep-together", String(patch.keepTogether));
+  if (patch.tableId) node.setAttribute("data-pf-table-id", patch.tableId);
+  if (patch.styleToken) node.setAttribute("data-pf-style-token", patch.styleToken);
+  if (patch.binding) Object.entries(patch.binding).forEach(([key, value]) => node.setAttribute(`data-pf-${key}`, value));
+  project.templateHtml = template.innerHTML.trim();
+}
+
+function applyBindingUpdate(project, operation) {
+  const spec = ensureFormSpec(project);
+  const component = findComponent(spec, operation.componentId);
+  if (!component) throw Object.assign(new Error(`Unknown FormSpec component: ${operation.componentId}`), { code: "COMPONENT_NOT_FOUND" });
+  const binding = { ...(component.binding || {}), [operation.bindingType]: operation.pointer };
+  applyComponentUpdate(project, { type: "update_component", componentId: operation.componentId, patch: { binding } });
+}
+
+function applyPaginationRule(project, operation) {
+  const spec = ensureFormSpec(project);
+  const component = findComponent(spec, operation.componentId);
+  if (!component) throw Object.assign(new Error(`Unknown FormSpec component: ${operation.componentId}`), { code: "COMPONENT_NOT_FOUND" });
+  spec.pagination.rules = { ...(spec.pagination?.rules || {}), [operation.componentId]: { rule: operation.rule, value: operation.value } };
+  project.spec = spec;
+  const { template, node } = componentTemplateNode(project, operation.componentId);
+  if (node && operation.rule === "keepTogether") node.setAttribute("data-pf-keep-together", String(operation.value));
+  if (node && operation.rule === "pageBreakBefore") node.classList.toggle("tb_page_break_before", operation.value);
+  if (operation.rule === "repeatHeader") {
+    const root = template.content.querySelector(".printform");
+    if (root) root.setAttribute("data-repeat-rowheader", operation.value ? "y" : "n");
+  }
+  project.templateHtml = template.innerHTML.trim();
 }
 
 function requireSelector(template, selector) {
@@ -96,6 +148,10 @@ function applyOperation(project, operation) {
     requireSelector(template, operation.selector).textContent = String(operation.value ?? "");
     project.templateHtml = template.innerHTML.trim();
   } else if (operation.type === "set_attribute") {
+    const unsafeAttribute = isUnsafeAttribute(operation.name, operation.value, {
+      allowExternalHttps: project.manifest?.assets?.allowExternalHttps === true,
+    });
+    if (unsafeAttribute) throw Object.assign(new Error(`Unsafe attribute rejected: ${operation.name}`), { code: unsafeAttribute });
     const template = templateDocument(project.templateHtml);
     const target = requireSelector(template, operation.selector);
     if (operation.value === null) target.removeAttribute(operation.name);
@@ -133,16 +189,22 @@ function applyOperation(project, operation) {
     project.themeCss = setPrintTypographyBase(project.themeCss, operation.basePt);
   } else if (operation.type === "set_brand_color") {
     project.themeCss = setBrandColor(project.themeCss, operation.hex);
-  } else throw Object.assign(new Error(`Unsupported operation: ${operation.type}`), { code: "UNSUPPORTED_OPERATION" });
+  } else if (operation.type === "update_component") applyComponentUpdate(project, operation);
+  else if (operation.type === "bind_field") applyBindingUpdate(project, operation);
+  else if (operation.type === "set_pagination_rule") applyPaginationRule(project, operation);
+  else throw Object.assign(new Error(`Unsupported operation: ${operation.type}`), { code: "UNSUPPORTED_OPERATION" });
   // themeCss is serialized raw into <style>: a "</style><script>…" payload
   // breaks out of the style element, so it must demote trust exactly like a
   // <script> in the template does.
   if (/<script[\s>]/i.test(project.templateHtml) || /<\/style|<script[\s>]/i.test(project.themeCss || "")) project.trust = TRUST.untrusted;
+  if (!["update_component", "bind_field", "set_pagination_rule"].includes(operation.type) && project.spec) project.spec = createLegacyFormSpec(project);
   project.attestation = null;
 }
 
 export function applyOperations(project, operations) {
-  if (!Array.isArray(operations) || !operations.length) throw Object.assign(new Error("At least one operation is required"), { code: "EMPTY_OPERATION_SET" });
+  if (!Array.isArray(operations)) throw Object.assign(new Error("Operations must be an array"), { code: "INVALID_OPERATION_SET" });
+  // Empty is an intentional no-op candidate used to anchor a publish at a
+  // revision that has not received a content edit yet.
   const candidate = cloneProject(project);
   operations.forEach((operation) => applyOperation(candidate, operation));
   return candidate;

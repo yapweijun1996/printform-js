@@ -27,6 +27,11 @@ function markAllProcessed(form) {
   PROCESSABLE_CLASSES.forEach((cls) => {
     form.querySelectorAll(`.${cls}`).forEach((node) => node.classList.replace(cls, `${cls}_processed`));
   });
+  // The real formatter resolves logical page placeholders during finalization.
+  // Keep this lightweight runtime mock faithful now that the deterministic
+  // validator rejects unresolved page-number placeholders.
+  form.querySelectorAll("[data-page-number]").forEach((node) => { node.textContent = "1"; });
+  form.querySelectorAll("[data-page-total]").forEach((node) => { node.textContent = "1"; });
 }
 
 describe("PrintFormDocument runtime", () => {

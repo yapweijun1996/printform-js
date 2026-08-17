@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openEditor, openInspector } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
@@ -15,8 +16,9 @@ test("renders a preview_changes candidate for real before apply_changes reuses t
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");
     const operations = [{ type: "set_font_scale", basePt: 14 }];
     const preview = await window.PrintFormStudioAgent.execute("preview_changes", { expectedRevision: summary.result.revision, operations });
-    const applied = await window.PrintFormStudioAgent.execute("apply_changes", { expectedRevision: summary.result.revision, operations, reason: "e2e candidate cache reuse" });
-    return { revision: summary.result.revision, preview, applied };
+    const approved = await window.PrintFormStudioAgent.execute("approve_transaction", { expectedRevision: summary.result.revision, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash, requireValid: false });
+    const applied = await window.PrintFormStudioAgent.execute("apply_changes", { expectedRevision: summary.result.revision, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash, reason: "e2e candidate cache reuse" });
+    return { revision: summary.result.revision, preview, approved, applied };
   });
 
   expect(result.preview.ok).toBe(true);
@@ -26,7 +28,9 @@ test("renders a preview_changes candidate for real before apply_changes reuses t
   expect(result.preview.result.validation.metrics.expectedRows).toBe(45);
   expect(result.preview.result.validation.metrics.renderedRows).toBe(45);
   expect(result.revision).toBe(0);
+  expect(result.approved.ok).toBe(true);
   expect(result.applied.ok).toBe(true);
+  await openEditor(page);
   expect(result.applied.result.candidateHash).toBe(result.preview.result.candidateHash);
   expect(result.applied.result.validation.metrics.logicalPages).toBe(result.preview.result.validation.metrics.logicalPages);
   await expect(page.locator("#revision-label")).toHaveText("Revision 1");
@@ -38,15 +42,18 @@ test("lets the end user undo and redo an automatically validated design revision
   const result = await page.evaluate(async () => {
     const operations = [{ type: "set_brand_color", hex: "#b42318" }];
     const preview = await window.PrintFormStudioAgent.execute("preview_changes", { expectedRevision: 0, operations });
+    const approved = await window.PrintFormStudioAgent.execute("approve_transaction", { expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash, requireValid: true });
     const applied = await window.PrintFormStudioAgent.execute("apply_changes", {
-      expectedRevision: 0, operations, expectedCandidateHash: preview.result.candidateHash, requireValid: true,
+      expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash, requireValid: true,
       reason: "e2e red purchase-order style"
     });
-    return { preview, applied };
+    return { preview, approved, applied };
   });
 
   expect(result.preview.ok).toBe(true);
+  expect(result.approved.ok).toBe(true);
   expect(result.applied.ok).toBe(true);
+  await openInspector(page);
   await expect(page.locator("#revision-label")).toHaveText("Revision 1");
   await page.locator("#ai-designer-tab").click();
   await expect(page.locator("#ai-undo-revision")).toBeEnabled();

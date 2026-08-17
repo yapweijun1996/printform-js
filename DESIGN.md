@@ -2,7 +2,96 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> 本文以代码为唯一事实来源，最后核对：2026-07-31（对齐 `7ab5e8a`）。
+> 本文以代码为唯一事实来源，最后核对：2026-08-17（Production Verification；对齐当前工作树）。
+
+---
+
+## 0. 2026-08-17 Studio v2 Production Foundation（Current）
+
+本节覆盖本轮实现，优先级高于本文早期对“直接 operations apply”的历史描述。
+
+### 0.1 Production Verification 结果
+
+状态：🔶 **YES, WITH CHANGES — Production Candidate**，范围限定为受控 Chromium、A4 portrait/landscape、单 Studio 会话的 AI-assisted ERP printing；这不是对所有浏览器、打印机或多用户部署的 Production Ready 声明。
+
+- Playwright `@playwright/test 1.62.0` / Chromium revision `1234` 已安装；全量 Chromium E2E **56/56 PASS**。
+- 覆盖 Progress Claim、Valuation → Variation → Materials → Certification 顺序表、100/500/1000 行、A4 portrait/landscape、分页诊断和 trusted export Evidence Pack。
+- `nanoid` lockfile 已到 `3.3.18`；`npm audit --audit-level=high` 为 0 vulnerabilities。
+- Windows `npm run doctor` 已改为由当前 Node 进程调用 npm CLI，最终 **5 steps / 0 failed**。
+- 本阶段发现的 PTAC/PADDT 诊断误报已修复；`tests/studio-v2/render-diagnostics.test.js` 增加回归护栏。预览区和 topbar 都保留横向滚动处理。
+
+E13 foundation 与 E13-SERVER bounded backend 已在本工作树完成；当前结论仍是 **YES, WITH CHANGES — remain Production Candidate**。浏览器 UI 继续保留 localStorage/offline adapter，跨设备生产部署必须显式接入带原子 CAS 的 server backend；因此已证明服务端协议、恢复和冲突语义，但没有把 localStorage 宣称成多用户锁服务。
+
+```text
+Project / single-HTML envelope
+  ├─ optional pf-form-spec → FormSpec + Component Registry（SSOT for Agent edits）
+  └─ legacy template → generated legacy-adapter FormSpec
+             ↓
+      semantic Agent Gateway / UI CommandBus
+             ↓ BEGIN → PREVIEW → VALIDATE → APPROVE → COMMIT
+             ↓
+      sandbox DOM → deterministic PrintForm pagination
+             ↓
+      page diagnostics → Evidence Pack → human export
+```
+
+- `studio-v2/core/form-spec.js` 是语义 registry；`templateHtml` 仍是 legacy runtime projection。旧 HTML 没有 `pf-form-spec` 时由 adapter 生成 inspection，不破坏旧文件。
+- Agent gateway 只发布 allowlisted semantic operations；raw source preview 和 raw operations 只保留给 Studio 内部编辑路径。
+- `apply_changes` 没有 operations 直写入口。每次 Agent 写入必须引用同一 `transactionId`、当前 revision、candidate hash 和已批准 preview；候选 content hash 还会防止 preview 后外部修改。
+- `src/printform/**` 仍是唯一分页责任方。Active Table Context 由 row 的 `data-pf-table-id` 驱动，Agent 不计算页码、不复制 table header。
+- Trusted export 通过 `content-security.js` allowlist、runtime/artifact hash 和 `evidence-pack.js`；localStorage 只是当前 Studio 的离线 adapter，服务端审计与跨设备锁由 E13-SERVER 提供。
+
+### 0.2 E13 Durable Transaction / Concurrency / Recovery（Current，2026-08-17）
+
+`studio-v2/core/durable-transaction-store.js` 是新的存储边界，不改变 Protocol/ FormSpec 或 PrintForm 分页器。它保存单一 form envelope 的 durable head、最近 revision snapshot、transaction records、append-only audit events、Evidence Pack 与 anchor。存储可以是：
+
+| adapter | 能力 | 发布边界 |
+|---|---|---|
+| `localStorage` | 浏览器刷新/同一 profile 恢复，顺序 CAS 检查 | offline/single-session；不宣称跨 tab 原子锁 |
+| `backend.read/write/compareAndSwap` | 服务/进程/设备共享，最终 commit 由 backend CAS | Controlled Deployment 的必需实现 |
+| `createMemoryDurableBackend()` | deterministic test double，支持真正的 in-process CAS | 仅测试 |
+
+写路径由 `transaction-service.js` 统一执行：
+
+```text
+DRAFT --preview--> PREVIEWED --valid--> VALIDATED --approve--> APPROVED
+  --commit intent--> COMMITTING --CAS--> COMMITTED
+       ├─ lease timeout → EXPIRED → takeover creates a new transaction
+       ├─ stale revision → CONFLICTED → explicit rollback
+       └─ crash/unknown result → RECOVERY_REQUIRED → recover_transaction
+```
+
+每条 transaction 至少有 `form_id`、`base_revision`、`working_revision`、`owner`、`agent_id`、`patches/changes`、`preview_hash`、`candidate_content_hash`、`candidate_form_spec_hash`、`validation_result`、`approval`、`lease`、timestamps、`commit_result` 与 `evidence_pack_ref`。`apply_changes` 不能绕过 approved preview；commit 先写 `COMMITTING` intent，再执行 durable CAS，CAS 后任何异常都进入 recovery，而不是假装 rollback。
+
+恢复规则是确定性的：durable head 的 `(revision, transaction_id, project_hash)` 与 commit intent 匹配则标记 `COMMITTED`；head 仍是 base revision 则标记 `ROLLED_BACK`；两者都不匹配则标记 `CONFLICTED`。Lease 过期不会复用旧 transaction；`takeover_transaction` 创建新 lease/new id，旧记录保留为审计历史。
+
+Evidence Pack 写入与 committed revision 原子锚定：`artifact_hash ↔ evidence_pack_hash ↔ committed_revision ↔ transaction_id ↔ form_spec_hash/preview_hash`，并追加 `evidence_anchored` event。旧 `TransactionJournal`/`get_transaction_history` 保留为兼容镜像；新的 recovery/API 使用 `get_transaction`、`get_revision`、`get_audit_events`、`recover_transaction` 等语义命令。
+
+明确不改变：不引入第二个渲染器、不把 rendered DOM 当 SSOT、不让 AI 执行 JavaScript/CSS/HTML、不把 pixel canvas 当设计模型。
+
+### 0.3 E13-SERVER Durable Backend Acceptance（Current，2026-08-17）
+
+状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 已通过受控部署验收，但认证边界是“单个 SQLite writer service + 多个 HTTP client session + 人工审批”；尚未认证 active-active writer、外部 HA 数据库、浏览器 UI 的远程 store wiring 或跨浏览器打印链。
+
+实现入口：`studio-v2/server/sqlite-durable-backend.mjs`、`studio-v2/server/transaction-http-server.mjs`、`scripts/transaction-server.mjs`。Node runtime 要求 `>=22.5.0`，使用内置 `node:sqlite`，不引入新的数据库服务。SQLite 开启 WAL、`synchronous=FULL`、foreign keys 和 busy timeout；form envelope 是 canonical state，`durable_transactions`、`durable_revisions`、`durable_audit_events`、`durable_evidence_anchors` 是同一写入事务中的可查询 projection。
+
+```text
+independent client sessions / devices
+             ↓ semantic HTTP allowlist + auth/CORS
+TransactionHttpServer（server database clock）
+             ↓ per-request CommandBus
+DurableTransactionStore（unchanged domain contract）
+             ↓ BEGIN IMMEDIATE + SQL compare-and-swap
+SQLite WAL file（head / revisions / transactions / audit / evidence）
+```
+
+- 最终 revision 使用 SQL `UPDATE ... WHERE version = expectedVersion`，不是 application-memory CAS；两个连接同时提交时只允许一个获胜，另一个返回 `REVISION_CONFLICT` 并带 `expectedRevision` / `actualRevision`。
+- lease 的时间源是 SQLite `strftime('now')`；client timestamp 只作为输入记录，不参与过期判断。过期 lease 不能复用，takeover 产生新 transaction 和新 lease。
+- `transaction_id` 是 commit idempotency key。响应丢失后重试只读取已提交 durable record，返回 `already_committed: true`；同一 revision 的 Evidence Pack 以 pack hash 做幂等锚定，不重复写 anchor。
+- server 启动会扫描 `COMMITTING` / `RECOVERY_REQUIRED`，按 durable head 与 commit intent 确定 `COMMITTED`、`ROLLED_BACK` 或 `CONFLICTED`；无法证明安全提交时 fail closed，不猜测成功。
+- HTTP surface 只允许 semantic commands 与 revision/audit/evidence 查询；没有 arbitrary SQL、JavaScript、HTML、DOM mutation API。`localStorage` 仍是离线/单会话 fallback，不是多用户锁。
+
+E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库文件；多个设备/Agent 通过该服务竞争同一 CAS。若要 active-active 或多实例，需要下一阶段的 leader/fencing 或外部数据库事务与共享 artifact registry，不能直接复制当前 process 启动 recovery 逻辑。
 
 ---
 
@@ -17,7 +106,7 @@
 └──────────┬───────────────────┬──────────────────────────┘
            │                   │
 ┌──────────▼─────────┐  ┌──────▼──────────────────────────┐
-│  Studio v1（冻结）   │  │  Studio v2（Production Pilot）   │
+│  Studio v1（冻结）   │  │  Studio v2（Production Candidate）│
 │  studio/           │  │  studio-v2/                      │
 │  可视化调参 + 模板    │  │  单 HTML 协议 2.0.0 + Agent 命令  │
 │  Mustache 数据绑定   │  │  总线 + WebMCP/CDP + PWA         │
@@ -69,7 +158,7 @@
 - **结构模式必须加载原始模板**（不做 `renderWithData`）：bridge 的区块索引与 `withWorkingDoc` 的原始子节点索引才能对齐，`{{ }}` 绑定才不会被编辑毁掉（同上）。
 - mustache-lite：转义含 `'` 与 `` ` ``；不配对 section 抛错（`renderWithData` 已接错误 UI）。
 
-## 4. Studio v2（Production Pilot，Current）
+## 4. Studio v2（Production Candidate，受控范围，Current）
 
 ### 4.1 分层
 

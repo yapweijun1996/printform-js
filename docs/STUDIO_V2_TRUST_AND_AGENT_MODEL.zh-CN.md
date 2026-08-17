@@ -2,7 +2,9 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。Agent Contract 2.1.0 已实现（见《契约升级》）。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-08-17 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply，旧的 2.1.0 叙述仅作为历史记录。
+
+> 本轮新增的 Production Foundation 还包括 FormSpec/component registry、Active Table Context、结构化 pagination diagnostics、strict trusted-export allowlist 与持久化 Evidence Pack。若本文下方的 2026-07-31 历史段落与此覆盖冲突，以本段和 `DESIGN.md`/`SPEC.md` 为准。
 
 ## 信任边界
 
@@ -26,7 +28,7 @@
 ## Current：Pilot 限制
 
 - ✅ 已解除（2026-07-31）：`preview_changes` 现在真实分页候选项目（复用可见预览 iframe，非隐藏 iframe——见[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) P0-A 第 3 项）。
-- ✅ 已解除（2026-07-31）：`apply_changes` 命中 candidateHash 缓存时复用已渲染报告，未命中则内联真实渲染后再提交，不存在绕过真实渲染的提交路径。仍接受直接传 `operations[]`（经确认的非破坏性设计，信任目标已达成）。
+- ✅ 已升级（2026-08-17）：`apply_changes` 只能提交已批准 transaction 的 candidate；必须匹配 transaction ID、revision 与 candidate hash，公共契约不接受直接传 `operations[]`。命令总线仍可复用已渲染 candidate report，并在候选内容变化时 fail closed。
 - ✅ 已解除（2026-07-31）：review evidence 改为 Studio 签发的 receipt，Agent 自述标签被拒（见下方《验收证据》）。
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
@@ -45,7 +47,7 @@ Current 默认策略（未知 HTML 或 JSON 一律视为可能含真实 ERP 数�
 
 ## Backlog（早期设想，已评估未采纳）：破坏性两阶段提交
 
-本节是 Agent Contract 2.0 最初设想的写路径重设计。当前实现保留直接传 `operations[]` 的旧 caller 兼容性，同时在 2.1.0 为嵌入式 AI proposal 增加可选 `expectedCandidateHash` 与 `requireValid`：两项都提供时，候选必须与已预览 hash 一致且 validation 必须通过，否则不得 commit。真实契约版本历史是 1.1.0→1.2.0（候选渲染能力）→2.0.0（`complete_layout_review` 改用 `evidenceIds`）→2.1.0（operation catalog、design inspection 与安全 apply flags）。
+本节是 Agent Contract 2.0 最初设想的写路径重设计；2026-08-17 已落地为公共事务化写路径。真实契约版本历史是 1.1.0→1.2.0（候选渲染能力）→2.0.0（`complete_layout_review` 改用 `evidenceIds`）→2.1.0（operation catalog、design inspection 与安全 apply flags）→3.0.0（FormSpec、transaction gate、persistent journal/evidence 与 raw Agent write 收口）。
 
 以下是当初设想、未采纳的具体形状，保留仅供历史参考：
 
@@ -61,7 +63,7 @@ preview_changes({ expectedRevision, operations, scenarios })
 // }
 ```
 
-设想中的原子提交（未采纳，`apply_changes` 实际仍接受直接传 `operations[]`）：
+历史设想中的原子提交（当前公共 API 已采用等价的显式事务形状）：
 
 ```js
 apply_changes({ expectedRevision, previewId, candidateHash, reason })
@@ -116,8 +118,8 @@ Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否�
 
 ## 契约升级
 
-Agent Contract 2.0.0 已于 2026-07-31 切换（`core/constants.js`）。2.1.0 是 additive 扩展：新增两个只读工具，并为 `apply_changes` 增加可选安全 flags；不提供 flags 的旧 caller 保持原行为。破坏性变更仍只有一处：`complete_layout_review` 改为要求 `evidenceIds`，拒绝旧式 `evidence`/`browser`/`scenarios` 自述字段。
+Agent Contract 3.0.0 已于 2026-08-17 切换（`core/constants.js`）。2.1.0 的 operation catalog/design inspection 与 layout review 能力继续保留；3.0.0 收紧公共 Agent 写路径，增加 FormSpec、transaction、diagnostics、revision/evidence 查询工具。`complete_layout_review` 仍要求 `evidenceIds`，拒绝旧式自述字段。
 
-其余写路径**保持向后兼容**：`apply_changes` 仍接受直接传 `operations[]`（1.2.0 加入的真实候选渲染是可加能力，非破坏性）。这与本文早期设想的"2.0 不保留任何 1.x 写路径"不同——真实实现中信任目标已由候选真实渲染达成，无必要连带破坏调用方式。
+其余读取路径保持兼容；公共 Agent 的写路径则以 3.0.0 的 fail-closed transaction contract 为准。Studio 内部 raw source/editor 命令不是 Agent 工具，也不构成对外写入兼容承诺。
 
 WebMCP、第一方 CDP bridge 与 UI 共享同一 `CommandBus.execute`，天然同步切换。当前能力以 `get_capabilities` 返回的 `contractVersion` 与 `capabilities` 为准（`candidateHash`、`candidateRealRender`、`layoutEvidenceReceipts`）。

@@ -1,8 +1,78 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-07-31（对齐 `7ab5e8a`，232 个单测 + 三引擎 E2E 66 项全绿（10 跳过，零 flake）；**六项 P0 硬门代码部分 + 浏览器矩阵验收在 macOS 与 Linux 两系统各 88/88 + 跨引擎分页收敛均已完成**，原 #15 已并入 #12；**P1 六个结构化面板全部完成**（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）；**D1 独立 SemVer + 兼容矩阵已落地**（引擎 1.0.0/Studio 0.9.0/协议与契约 2.0.0）；CI `workflow_dispatch` 浏览器矩阵已在 GitHub Actions Ubuntu runner 实测通过；`studio-v1.spec.js` 满载并行 flake 已修复（`94f2c7e`）；新增 `npm run doctor` 一键体检；**P2 核心退出条件已达成**（行高预测量缓存 `4c50a35`，spike 画像定位真因，金标准分页断言字节不差；`PaginationSession` 类重构与结构化 trace 事件经评估判定暂不做，非待办）；P3 新增 CHANGELOG.md，GitHub Release v1.0.0 材料已备妥待维护者发布。成熟度仍是 Production Pilot——Production Ready 由维护者显式宣布，仅剩 Windows 浏览器矩阵未验证）。
+> 最后核对：2026-08-17（E13-SERVER Durable Backend Deployment & Recovery Acceptance）。E12 数字保留为历史记录；当前工作树的最新门禁与范围见下方“E13-SERVER 验证收口”。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
+
+---
+
+## 🧱 Studio v2 Production Foundation + Verification（2026-08-17）
+
+本批是 P0 基础建设，目标是把 Studio v2 从“可打印 pilot”推进到“安全、事务化、确定性、可留证的 Agent 发布基础”。**在本批退出前不增加新的 AI 设计能力。** 每项任务都在现有 Protocol / CommandBus / PrintForm runtime 上增量实现；失败时保留 last-known-good revision。
+
+| ID | 范围 | 验收标准 | 测试 / 依赖 / 回滚 |
+|---|---|---|---|
+| PF-01 | Canonical FormSpec 与 Component Registry；`pf-form-spec` 可选，旧 HTML 走 legacy adapter；Agent 只改语义组件 | `get_form_spec`、组件列举/读取、binding 与 pagination rule 可用；重复 ID/未知类型/缺失 section fail closed；旧样本仍可 preview/validate/export | `tests/studio-v2/form-spec.test.js`、acceptance 回归；依赖现有 Protocol；回滚为移除可选区块并继续使用 legacy adapter |
+| PF-02 | Active Table Context；formatter 在顺序表格切换及续页时只重复 active table header | Valuation → Variation → Materials 长数据中，每页表头属于当前表；不重复已完成表格；100/500 行回归可复现 | `tests/active-table-context.test.js`、`e2e/active-table-pagination.spec.js`；依赖 row `data-pf-table-id`；回滚恢复 formatter 的 table-aware 分支 |
+| PF-03 | Deterministic pagination diagnostics | 输出 component/page/measured/available/reason/action；覆盖 row-too-tall、overflow、blank、footer/page-number、orphan totals、signature/total keep-together | `tests/studio-v2/render-diagnostics.test.js`、acceptance tests；依赖现有 DOM geometry；回滚仅关闭新增诊断合并，不改变 pagination |
+| PF-04 | Safe Agent transaction；preview candidate → validate → explicit approve → apply/commit；journal 持久化 | `apply_changes` 无 transaction/approved preview/hash 一律拒绝；候选内容被外部修改时 fail closed；失败不改 last-known-good；有 revision/history/rollback | `command-bus`、`agent-workflow`、`production-foundation` tests；依赖现有 revision history；回滚禁用 Agent write path，保留 Studio 内部编辑 |
+| PF-05 | Trusted Export strict allowlist 与 Evidence Pack | script/iframe/object/embed、事件属性、javascript URL、未允许外部资源被拒；artifact 包含 revision/FormSpec/runtime/validation/page/preview/export/security/timestamp；mandatory gate 失败不发布 | `content-security.test.js`、`exporter.test.js`、`production-foundation.test.js`；依赖现有 exporter/attestation；回滚到 untrusted preview，禁止 trusted publish |
+| PF-06 | Production evidence close-out | ✅ 已完成：记录全量 test/build/validate:v2、真实 Chromium E2E 与发布 hash；不把缺失环境标为 PASS | `npm test -- --run`、`npm run build:site`、`npm run check:agrun`、`npm run validate:v2`、Chromium Playwright 56/56；依赖 OPS 任务；回滚不发布 artifact |
+
+### 独立运维任务（不与 P0 代码混改）
+
+| ID | 范围 | 验收标准 | 测试 / 依赖 / 回滚 |
+|---|---|---|---|
+| OPS-NANOID | ✅ 处理 `nanoid@3.3.16` high severity 间接依赖 | lockfile `3.3.18`；`npm audit --audit-level=high` 无 high，lockfile、build、test、validate:v2 全通过 | npm audit + 全量门禁；依赖上游 Vite/PostCSS 兼容性；仅回滚 lockfile/dependency patch |
+| OPS-PLAYWRIGHT | ✅ 固定 Chromium 版本并补可复现安装入口 | Active Table 多表长数据与 Production Verification 在真实 Chromium 执行；revision `1234`；56/56 | `npm run test:e2e -- --project=chromium`；CI 继续安装 Chromium/Firefox/WebKit；回滚安装步骤或版本 pin |
+| OPS-WINDOWS-DOCTOR | ✅ 修复 Windows 下 npm 子进程调用 | `npm run doctor` 在 Windows 5/5 PASS；实现使用当前 Node + npm CLI，保留 macOS/Linux 路径 | doctor smoke + CI；依赖 Node/npm CLI；回滚仅脚本适配，不改应用代码 |
+
+### E12 验证收口
+
+| 证据 | 结果 |
+|---|---|
+| Unit / build / AGRUN / pilot validation | 68 files / 361 tests；`build:site`、`check:agrun`、3 pilot `validate:v2` PASS |
+| Chromium E2E | 56/56 PASS；Progress Claim、四顺序表、100/500/1000 行、paper modes、diagnostics、Evidence Pack |
+| Security / toolchain | nanoid 3.3.18；audit 0 high；Windows doctor 5/5；`git diff --check` PASS |
+| 认证边界 | Chromium revision 1234 / A4 @ 96dpi portrait+landscape；Firefox/WebKit/真实 Safari/打印机链未在本阶段重新认证 |
+
+### E13 Durable Transaction / Concurrency / Recovery（2026-08-17，第一阶段完成）
+
+实现边界：不重写 `PrintForm.js`，不替换 Protocol/FormSpec，不增加 AI 设计能力。新的 durable store 是可替换 adapter；localStorage 继续支持离线/单会话，server backend 才是跨设备发布条件。
+
+| ID | 范围 | 验收标准 | 测试 / 依赖 / 回滚 |
+|---|---|---|---|
+| E13-01 | Durable Transaction Store + state machine | 持久化 transaction、lease、patches、validation/approval、commit result、evidence ref；非法 state transition fail closed | `durable-transaction-store.js`、`transaction-state.js`、`transaction-recovery.test.js`；回滚删除新 durable key，保留旧 journal/API |
+| E13-02 | Optimistic concurrency / atomic CAS | 同一 base revision 只有 CAS 获胜者提交；stale agent 得到 `REVISION_CONFLICT`，记录 expected/actual revision，不改 last-known-good | shared backend two-session test；server adapter 必须实现 backend CAS；localStorage 明确降级为单会话 |
+| E13-03 | Lease / stale cleanup / takeover | heartbeat、renew、release、expiry；takeover 生成新 transaction id，旧记录 append-only | lease expiry/renew/takeover tests；回滚禁用 takeover command，不影响 committed revisions |
+| E13-04 | Crash-safe commit / recovery | CAS 前失败恢复为 rollback；CAS 后失败从 durable head 恢复为 committed；无法判定进入 conflicted/recovery-required | injected crash before/after revision CAS；回滚保留 commit intent 与恢复 API |
+| E13-05 | Evidence anchoring | artifact hash、Evidence Pack hash、revision、transaction、FormSpec/preview hash 与 audit event 可互相追溯 | evidence consistency test；失败时阻止 publish，保留已提交 revision |
+| E13-06 | Bounded semantic recovery API | `get_transaction`、`list_active_transactions`、`renew_lease`、`takeover_transaction`、`recover_transaction`、`resolve_conflict`、`get_revision`、`get_audit_events` 无 arbitrary DB mutation | command contracts + gateway redaction；回滚仅移除新命令，不改 domain invariants |
+
+### E13-SERVER Durable Backend Deployment & Recovery Acceptance（2026-08-17，已完成）
+
+实现边界：新增真实 SQLite backend 与 bounded HTTP semantic adapter；不重写 PrintForm.js、FormSpec、分页器或 AI Designer，不把 localStorage fallback 改成伪分布式锁。
+
+| ID | 范围 | 验收标准 | 测试 / 依赖 / 回滚 |
+|---|---|---|---|
+| E13-SERVER-01 | SQLite durable adapter | form envelope、transactions、revisions、lease projection、audit、evidence anchor 在 WAL/FULL 数据库文件中可重启读取；SQL CAS 不依赖内存 | `studio-v2/server/sqlite-durable-backend.mjs`；Node `>=22.5.0`；回滚移除 server adapter，local/offline contract 不变 |
+| E13-SERVER-02 | Server CAS + server-time lease | 双 session 同 base revision 只有一方提交；stale 返回 `REVISION_CONFLICT(expectedRevision, actualRevision)`；clock skew 不影响 lease expiry/takeover | `tests/studio-v2/server-transaction.test.js` CAS/lease cases；回滚禁用 server publish route，不改已提交 head |
+| E13-SERVER-03 | Idempotent commit / network failure | response lost、timeout/reconnect、duplicate request 不产生第二 revision；无法确认 durable state 时 fail closed | lost-response/reconnect tests；transaction id 是 idempotency key；回滚保留 query-before-retry，不自动重提未知 commit |
+| E13-SERVER-04 | Process crash / restart recovery | CAS 前 rollback、CAS 后 committed、未知阶段不静默成功；restart 后状态可确定；Evidence retry 不重复 anchor | crash/restart tests + durable audit/evidence query；回滚保留 `RECOVERY_REQUIRED`，禁止直接 publish |
+| E13-SERVER-05 | Semantic HTTP boundary / evidence registry | 只暴露 allowlisted commands；audit actor/server timestamp、Evidence Pack hash/revision/transaction/formSpec/preview/runtime 链可查询 | `transaction-http-server.mjs` + 8/8 server suite；回滚关闭 HTTP adapter，核心 CommandBus 不变 |
+| E13-SERVER-06 | CI / operational gates | build、doctor、audit、validate:v2、Chromium regression 与 server suite 结果可复核；Evidence artifact 上传 CI | `.github/workflows/ci.yml`、package scripts；回滚仅移除 CI artifact/entrypoint，不降低 security gate |
+
+### E13 验证收口
+
+| 证据 | 结果 |
+|---|---|
+| E13 unit/recovery suite | `tests/studio-v2/transaction-recovery.test.js` 8/8；全量 70 files / 378 tests |
+| Persistence/restart | shared durable backend reloads head project, revisions, transaction records and audit sequence |
+| Concurrency | two sessions from revision 0: one commit wins, stale session gets `REVISION_CONFLICT` and `conflicted` record |
+| Crash/recovery | failure injection at `during_commit` rolls back; `after_revision_write` recovers committed |
+| Evidence | `evidence_anchored` links pack/artifact/formSpec/preview/revision/transaction |
+| E13-SERVER acceptance | `tests/studio-v2/server-transaction.test.js` 8/8：真实 SQLite、CAS race、server clock lease、idempotent retry、process restart、network reconnect、Evidence anchor |
+| Current boundary | 单 writer service + SQLite 文件已验证；active-active/HA/fencing、外部数据库迁移、跨设备浏览器 UI remote-store wiring、长期 abandoned cleanup 与 artifact blob registry 仍未完成 |
 
 ---
 
@@ -105,6 +175,6 @@
 
 ## 📌 下一步
 
-P0-A 与 P0-B 的**代码硬门已全部完成**。**注意不要把这读成 Production Ready**：路线图 P0-B 退出条件还含"两模板 × 四浏览器 × 全边界场景通过"这一发布流程验收，不是代码改动能单独达成的，因此各文档的成熟度仍标 Production Pilot。
+P0-A、P0-B 与 E13-SERVER 的当前代码硬门已完成。**注意不要把这读成无条件 Production Ready**：当前认证仍限定为单 writer SQLite service、Chromium reference runtime、人工审批和既定安全门。
 
-见上方「待办」列出的四个候选方向（浏览器矩阵验收 / P1 面板 / P2 引擎 / P3 治理），都需要先对齐范围再动手。
+推荐下一 Epic：**E14 Durable Service Hardening**——外部数据库/迁移策略、active-active leader/fencing、跨设备浏览器 remote-store wiring、长时间 abandoned cleanup、故障注入矩阵和 artifact blob registry。E14 之前不增加新的 AI 设计能力，也不扩大多用户发布承诺。

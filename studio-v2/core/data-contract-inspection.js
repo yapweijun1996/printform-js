@@ -28,8 +28,8 @@ function walkObjectSchema(schema, sampleValue, pathPrefix) {
     const path = `${pathPrefix}/${key}`;
     const isRequired = required.has(key);
     const value = sampleValue && typeof sampleValue === "object" ? sampleValue[key] : undefined;
-    if (propSchema.type === "object" && propSchema.properties) {
-      return { key, path, type: "object", required: isRequired, fields: walkObjectSchema(propSchema, value, path) };
+    if (propSchema.type === "object") {
+      return { key, path, type: "object", required: isRequired, fields: propSchema.properties ? walkObjectSchema(propSchema, value, path) : [] };
     }
     if (propSchema.type === "array") {
       return { key, path, type: "array", required: isRequired };

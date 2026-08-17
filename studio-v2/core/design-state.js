@@ -2,7 +2,7 @@ import { inspectColumnGroups } from "./column-inspection.js";
 import { inspectPageSettings, inspectRepeatFlags } from "./page-inspection.js";
 import { currentBrandColor } from "./branding.js";
 import { currentFontBasePt } from "./typography.js";
-import { OPERATION_SCHEMAS } from "./operation-schemas.js";
+import { AGENT_OPERATION_DEFINITIONS } from "./operation-schemas.js";
 
 function inspectAssets(templateHtml) {
   const template = document.createElement("template");
@@ -27,6 +27,6 @@ export function inspectDesignState(project) {
     tables: inspectColumnGroups(project.templateHtml, project),
     repeatedAreas: Object.fromEntries(repeatFlags.map(({ key, value }) => [key, value])),
     assets: inspectAssets(project.templateHtml),
-    supportedOperations: Object.keys(OPERATION_SCHEMAS)
+    supportedOperations: Object.keys(AGENT_OPERATION_DEFINITIONS)
   };
 }

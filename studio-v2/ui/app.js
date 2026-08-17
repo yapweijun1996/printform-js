@@ -53,7 +53,11 @@ async function performHistoryAction(name) {
 
 function installBus(project, reason = "load") {
   webMcp?.dispose(); renderer?.replaceProject();
-  bus = new CommandBus(project, { renderCandidate: (...args) => renderer.renderCandidate(...args) });
+  bus = new CommandBus(project, {
+    renderCandidate: (...args) => renderer.renderCandidate(...args),
+    transactionStorage: window.localStorage,
+    agentId: "studio-ui",
+  });
   installAgentGateway(bus, window, { isRealData: () => $("#real-data-mode").checked });
   webMcp = installWebMcpAdapter(bus, null, { isRealData: () => $("#real-data-mode").checked });
   renderWebMcpStatus(webMcp);
@@ -75,7 +79,7 @@ function bindEditorToggle() {
   const label = $("#editor-toggle-label");
   const close = $("#editor-panel-close");
   if (!panel || !toggle) return null;
-  let open = true;
+  let open = false;
   function update(next, { moveFocus = false, restoreFocus = false, focusTarget = toggle } = {}) {
     open = Boolean(next);
     const actionKey = open ? "editor.toggle.hide" : "editor.toggle.show";
@@ -102,7 +106,8 @@ function bindEditorToggle() {
   }
   toggle.addEventListener("click", () => flip(toggle));
   close?.addEventListener("click", () => flip(close));
-  update(true);
+  // Keep source editing opt-in so the printable preview is the default view.
+  update(false);
   return { refresh: () => update(open) };
 }
 
@@ -155,9 +160,10 @@ function bindTabs() {
     const nextDesktop = window.innerWidth > 1080;
     if (nextDesktop === desktopLayout) return;
     desktopLayout = nextDesktop;
-    setOpen(nextDesktop);
   });
-  setOpen(desktopLayout);
+  // Keep the inspector opt-in on every viewport. Only an explicit launcher
+  // click should expose validation, agent, or AI Designer controls.
+  setOpen(false);
   panel.addEventListener("keydown", (event) => {
     if (event.key !== "Tab" || window.innerWidth > 1080 || !panel.classList.contains("is-open")) return;
     const activePanel = panel.querySelector('[role="tabpanel"]:not([hidden])');
@@ -183,6 +189,7 @@ function bindUi() {
   $("#real-data-mode").addEventListener("change", async (event) => { renderDataPolicy(event.target.checked); if (event.target.checked) clearRecoveryDraft(); await agentPanel.setRealData(event.target.checked); }); $("#overlay-toggle").addEventListener("change", (event) => { overlayEnabled = event.target.checked; renderer.toggleOverlay(overlayEnabled); });
   window.addEventListener("printform:ui-locale", refreshLocalizedUi); window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } }); editorToggle = bindEditorToggle(); bindTabs();
   bindHorizontalWheel($(".actions"));
+  bindHorizontalWheel($(".preview-viewport"));
 }
 
 async function changeUiLocale(event) { const previous = currentUiLocale(); try { await setUiLocale(event.target.value); } catch { event.target.value = previous; toast(t("toast.languageFailed")); } }
