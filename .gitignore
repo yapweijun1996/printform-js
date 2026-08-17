@@ -9,3 +9,8 @@ playwright-report/
 coverage/
 /spike/
 browser-matrix-result.json
+
+# Local Studio preview scratch files
+studio-v2-current.png
+tmp-progress-template.html
+tmp-progress-theme.css
