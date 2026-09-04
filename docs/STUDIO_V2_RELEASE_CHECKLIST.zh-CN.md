@@ -1,6 +1,8 @@
 # PrintForm Studio v2 发布检查表
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——六项硬门的代码部分已完成，但 Production Ready 状态本身仍需维护者显式宣布，不由代码完成或测试绿灯自动推导。
+>
+> 最后核对：2026-09-04。当前工作树已复核：70 files / 378 unit tests、doctor 5/5、三个 pilot `validate:v2`、Chromium E2E 56/56；完整三引擎 CI 结果仍以浏览器矩阵和 CI artifact 为准。
 
 ## Production Pilot 自动检查
 
@@ -9,6 +11,7 @@
 - `npm test -- --run`
 - `npm run build:site`
 - `npm run test:e2e`
+- `npm run test:e2e -- --project=chromium`（本机快速验证；2026-09-04 为 56/56）
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html`
@@ -54,3 +57,13 @@
 - AI/MCP 只能取得 readiness；工程师必须亲自确认系统打印预览并点击导出。
 - 记录协议、Studio、runtime 版本及当前实际完成的浏览器矩阵。
 - 未知导入按真实 ERP 数据处理；不默认上传缓存、日志、截图或遥测。
+
+## E14 AI Designer UX 验收（Target，不是当前 Production Ready 硬门）
+
+- AI panel 固定为 `Panel navigation → Current document context → Conversation → Composer`。
+- Preview 仍是 workspace source of truth；AI conversation 不得遮挡或替代质量门和生产导出。
+- Context Bar 必须来自真实 document/selection/scope state，不能是静态装饰文本。
+- Proposal、Change、Validation 必须分开显示；`Applied` 只能表示 transaction commit 成功。
+- Auto-apply safe changes 必须继续经过 preview、validation、approval、revision 和 candidate hash gate。
+- History、Changes、Activity、Settings 和 Gateway 默认按需打开；技术 trace 不进入普通聊天记录。
+- mobile、focus restore、tab semantics、keyboard navigation 和 1440px Production export visibility 必须有回归验证。

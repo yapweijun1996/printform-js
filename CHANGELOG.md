@@ -13,12 +13,28 @@ See [TASK.md](TASK.md) for the full engineering log with commit hashes, test
 counts, and verification detail; this file only lists what changed, for readers
 who don't need the diary.
 
+## [Unreleased]
+
+Current working-tree snapshot: runtime `1.0.0`, Studio `0.11.0`, Protocol
+`2.0.0`, and Agent Contract `3.0.0`. E13-SERVER provides the verified bounded
+single-writer SQLite transaction backend. E14 P0 implements the AI Designer
+information-architecture and interaction foundation: 4-layer IA (`Panel navigation
+→ Current document context → Conversation → Composer`), real state-connected
+Document Context, structured Proposal/Change/Validation cards with measurable
+target and before/after values, visible and predictable Apply mode (`Auto-apply
+safe changes` and `Preview before applying`), card-level batch Undo bound to
+the committed transaction revision, and simplified header with drawer-based session
+management. The latest local evidence is 72 test files / 385 tests, doctor 5/5,
+three pilot static validations, and Chromium E2E 59/59; broader browser, print-chain,
+HA, and current network-audit verification remain separate gates.
+
 ## [1.0.0] — 2026-07-31
 
 First tagged release. The engine itself long predates this tag — it has been in
 production ERP use for years — so 1.0.0 states its actual stability rather than
-implying it is new. Ships alongside Studio v2 0.9.0, protocol 2.0.0 and Agent
-Contract 2.0.0.
+implying it is new. At that release time it shipped alongside Studio v2 0.9.0,
+protocol 2.0.0 and Agent Contract 2.0.0; see `[Unreleased]` above and the
+compatibility matrix for the current version lines.
 
 ### Added
 

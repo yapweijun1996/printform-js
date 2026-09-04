@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-08-17（E13-SERVER Durable Backend Deployment & Recovery Acceptance）。E12 数字保留为历史记录；当前工作树的最新门禁与范围见下方“E13-SERVER 验证收口”。
+> 最后核对：2026-09-04。E12/E13/E14 数字保留为历史记录；当前工作树的最新门禁为 72 files / 385 tests、doctor 5/5、三个 pilot validate 通过、Chromium E2E 59/59。E14 P0 已全部完成。
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -159,6 +159,20 @@
 
 **六项 P0 硬门的代码部分已全部完成**（#12–14、#16–19），浏览器矩阵验收也已跑满并全过。
 
+### E14：AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target）
+
+本 Epic 来自 2026-09-04 的 Studio v2 UX review。它只改 AI Designer 的信息架构和交互呈现，不改变单 HTML SSOT、FormSpec、PrintForm 分页、CommandBus、Agent Contract 3.0.0、Evidence Pack 或人工 Production export。
+
+| ID | 范围 | 验收标准 | 依赖 / 回滚 | 状态 |
+|---|---|---|---|---|
+| E14-UI-01 | Panel IA 重排 | 固定层级为 `Panel navigation → Current document context → Conversation → Composer`；History/Settings/Activity/Gateway 按需打开；Preview 仍可见 | `agent-panel-view.js`、layout CSS；已完成 | ✅ 已完成 |
+| E14-UI-02 | Current Document Context | 显示真实 document、selection、scope、revision、render status 和 candidate/committed 状态；无 selection 时明确为 entire document | `agent-document-context.js` 与 app/CommandBus 真实状态绑定；已完成 | ✅ 已完成 |
+| E14-UI-03 | Proposal / Change / Validation cards | Proposal 显示 What/Where/Why/Safety；Change Card 显示 target、真实 before/after、validation、Applied/Reverted/Blocked 和 Undo | `agent-change-cards.js`，复用 transaction、candidate hash、RenderReport；已完成 | ✅ 已完成 |
+| E14-UI-04 | Apply mode 与 Undo | 明确显示 Preview before applying 或 Auto-apply safe changes；Auto-apply 仍经过 preview/approval/hash gate；AI batch Undo 与 transaction 对齐，global Undo/Redo 保留 | 可见 Apply mode 选择器，card-level batch undo；已完成 | ✅ 已完成 |
+| E14-UI-05 | Session/Settings/Activity | New chat、History drawer、Changes view、Settings modal 和 Activity log 责任分离；新 session 持久化后立即刷新并选中 | `agent-sessions.js`、settings modal、trace；已完成 | ✅ 已完成 |
+| E14-UI-06 | 状态、响应式与无障碍 | Idle/Generating/Applying/Validating/Done/Failed/Stopped 状态清楚；mobile full-screen；focus restore、tab semantics、keyboard navigation 和 1440px Production export visibility 有 E2E | 现有 responsive/focus tests，所有单文件 ≤300 行；已完成 | ✅ 已完成 |
+| E14-UI-07 | 回归与文档 | 新增 AI UX E2E 覆盖 conversation、proposal、change、undo、error、history、mobile 和真实 context；同步 DESIGN/SPEC/ROADMAP/相关 docs | 新增 `e2e/studio-v2-e14.spec.js`，59/59 E2E 全过；已完成 | ✅ 已完成 |
+
 ### 宣布 Production Ready 前建议补的一步（非阻塞）
 
 浏览器矩阵已在 **macOS 与 Linux（GitHub Actions Ubuntu runner）** 两个操作系统上跑过，均 88/88 全过、零分歧（Linux 结果见 A3、[docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。**仅剩 Windows 未验证**：GitHub Actions 没有现成的 Windows+四浏览器目标方案（`chrome`/`webkit` channel 在 `windows-latest` runner 上的可用性未知，需要单独调研），仍需另行安排；非阻塞。
@@ -167,7 +181,7 @@
 
 - **P1 工程师工作流**（EPIC E8）：**六个面板全部就绪**——Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）、Branding 品牌色（`d2fe47a`）、Data contract（`3699991`，中档范围：查看+改样本值+改既有约束，不含增删字段/数组逐行编辑）与 Locale（原已存在的打印语言选择器），另加一个路线图原列表之外的 Print font scale 面板。P1 阶段的工程实施已无未开始项。
 - **P2 分页引擎演进**（EPIC E9）：**核心退出条件已达成**（行高预测量缓存，`4c50a35`，100 行/500 行性能预算均满足）。`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构与结构化 trace 事件经评估后判定暂不值得做（无具体驱动力，见上方评估记录），非待办、非阻塞。仅剩 `formatAllPrintForms()` 吞掉单表单渲染错误这一独立小缺口留作未来可选项。
-- **P3 发布治理**（EPIC E10）：GitHub Release 附两个已验证试点导出（发布材料备妥后由维护者执行 push/tag/release）、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG、独立 SemVer + 兼容矩阵已完成）
+- **P3 发布治理**（EPIC E10）：GitHub Release 附两个已验证试点导出（发布材料备妥后由维护者执行 push/tag/release）、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG、独立 SemVer + 兼容矩阵已完成；当前版本线 runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0）
 
 ## 🚧 阻塞
 
@@ -177,4 +191,4 @@
 
 P0-A、P0-B 与 E13-SERVER 的当前代码硬门已完成。**注意不要把这读成无条件 Production Ready**：当前认证仍限定为单 writer SQLite service、Chromium reference runtime、人工审批和既定安全门。
 
-推荐下一 Epic：**E14 Durable Service Hardening**——外部数据库/迁移策略、active-active leader/fencing、跨设备浏览器 remote-store wiring、长时间 abandoned cleanup、故障注入矩阵和 artifact blob registry。E14 之前不增加新的 AI 设计能力，也不扩大多用户发布承诺。
+推荐下一阶段：**E14 P1/P2 体验增强或 E15 Durable Service Hardening**——E14 P0 现已将 candidate、validation、transaction、session 与 4 层 IA / Document Context / Change Card 完整交付。后续进入 **E15 Durable Service Hardening**：外部数据库/迁移策略、active-active leader/fencing、跨设备浏览器 remote-store wiring、长时间 abandoned cleanup、故障注入矩阵和 artifact blob registry。在 E15 完成前不扩大多用户发布承诺。

@@ -2,7 +2,7 @@
 
 > 本文全部属于 Target 或 Backlog；当前可用行为以[协议文档](PRINTFORM_V2_PROTOCOL.zh-CN.md)和 `get_capabilities` 为准。
 
-> **2026-08-17 当前覆盖**：Production Foundation 已在既有路线之上落地。FormSpec/component registry、Active Table Context、结构化 pagination diagnostics、显式 transaction gate、strict trusted export 与持久化 Evidence Pack 以 `DESIGN.md`、`SPEC.md` 和 `TASK.md` 为当前 SSOT；本页 2026-07-31 条目中的“直接 `operations[]` apply”、2.1.0 版本和“footer 未覆盖”均为历史状态。
+> **2026-09-04 当前覆盖**：Production Foundation 与 E13-SERVER 已落地。当前版本线为 runtime `1.0.0`、Studio `0.11.0`、Protocol `2.0.0`、Agent Contract `3.0.0`；公共 Agent 写入必须走 `begin/preview → approve → apply → commit`。本页旧条目中的直接 `operations[]` apply、2.1.0/旧版本和未完成的 Data contract 均为历史状态。最新 AI Designer IA/UX 决策已进入 E14 Target，但尚未进入代码。
 
 ## 原则
 
@@ -66,6 +66,39 @@
 
 退出条件：✅ 工程师无需编辑大段原始 JSON/CSS，即可完成两个标准模板的常见品牌、页面、表格与 locale 修改——六个结构化面板（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）已覆盖。上方图片校验、草稿 fingerprint、ERP 接入片段生成、连接状态细化仍是独立的 P1 增量项，非本退出条件的必要部分。
 
+## E14 / P0：AI Designer 信息架构与交互基础（P0 已完成，P1/P2 Target）
+
+现有 AI Designer 已完成 P0 4 层固定信息架构重排，提供实时状态绑定的 Current Document Context、结构化 Proposal/Change/Validation cards、可见且可预测的 Apply mode 选择器、强绑定的 Card-level Batch Undo/Redo，以及抽屉式会话管理。
+
+### 决策原则
+
+- **Conversation first**：AI panel 内 conversation 占主要空间；Preview 仍是整个 Studio 的事实来源。
+- **Controls on demand**：History、Settings、Gateway、Activity/Audit 和技术 trace 默认隐藏。
+- **Context always visible**：显示当前 document、selection、scope、revision、render status 和 candidate/committed 状态。
+- **History hidden until needed**：Conversation、Changes、Activity 三种数据分开建模，普通用户默认只看到 Conversation 和 Changes。
+
+### E14 目标分层
+
+| 优先级 | 范围 | 退出条件 |
+|---|---|---|
+| P0 | `Panel navigation → Context → Conversation → Composer`；Context Bar；Proposal/Change Card；可见 Apply mode；transaction-batch Undo；精简 header | ✅ 已完成：用户能理解 AI 看的是哪个文档和 scope；每个 change 有 target、状态、validation 和 Undo；应用继续满足 preview/approval/hash gate；72 files / 385 tests / 59 e2e 全部绿灯 |
+| P1 | History/Changes drawer、Settings 集中化、动态 quick prompts、stream/error state、mobile full-screen；~~focus restoration~~、~~tab semantics~~ ✅ 已落地（Panel navigation 与 Inspector 视图切换器合并为单条共用 header；分段式 `role="tab"` 切换器；header 动作按钮纳入 `<=1080` overlay 的 focus trap；`data-active-tab` 按 tab 作用域隐藏 AI 动作簇；Gateway 状态收敛为 header 圆点，`#ai-status` 保留为隐藏 live region） | session、gateway、audit 不再永久占据主界面；桌面、tablet、mobile 和键盘路径有自动化覆盖 |
+| P2 | before/after preview、preview 与 change card 双向 highlight、视觉层级 polish；~~可 resize rail~~ ✅ 已落地（左缘拖拽手柄，`--inspector-width` 320–900px，持久化 + 双击复位 + 方向键） | 增强能力不改变项目 SSOT、分页输出、事务或安全边界 |
+
+### E14 不变量
+
+- 不展示 AI hidden reasoning，只展示用户可验证的 What/Where/Why/Safety/Result。
+- Auto-apply safe changes 只能复用现有 candidate、validation、approval 和 transaction path；不能绕过公共 Agent Contract 3.0.0。
+- 当前事务模型是原子、fail-closed；第一版不默认支持含糊的 partial commit。被阻断的操作应留在 proposal 中，或拆成明确独立的 transaction batch。
+- 不让 AI 直接修改 rendered DOM，不将 selection label 当作没有底层映射的装饰文本。
+- 不改变人工 Production export、真实 ERP 数据默认 deny、real-data pixel evidence 禁止等既有规则。
+
+## E15：Durable Service Hardening（Target）
+
+E15 承接 E13-SERVER 的未认证边界，排在 E14 UX 之后。范围包括外部 durable database migration、active-active writer、leader/fencing、failover、abandoned transaction cleanup、跨设备 Studio remote-store wiring、故障演练和独立 artifact blob/attestation registry。
+
+E15 的前置依赖是 E13-SERVER 当前已验证的单 writer SQLite service、SQL CAS、server-time lease、幂等 retry、process restart recovery 和 Evidence anchor。退出条件是多实例/多设备故障时仍不会 silent overwrite、double commit、partial publish 或 ambiguous recovery。E15 完成前不得把单 writer backend 描述成 HA，也不得扩大多用户 Production Ready 承诺。
+
 ## P2：分页引擎演进
 
 - ✅ 已实现（2026-07-31，`4c50a35`）：预先测量并缓存行高度，减少 clone/append/measure/remove 造成的 layout thrashing。`spike/` 画像先行定位真因（72% 耗时在 `getBoundingClientRect`，根因是逐行读写交替 + 每次迭代重新测量行高），改动两处：循环前一次性批量预测量全部行高（消灭读写交替），非边界普通行用已知行高做算术预测（留 50px 安全余量）跳过容器回流测量；越过边界仍走原有精确路径不变。金标准分页断言三引擎逐页行分布字节不差；新增 e2e 把"500 行+放大字号"这个曾经的真实痛点组合钉成永久回归护栏。详见 TASK.md 对应行。
@@ -78,7 +111,7 @@
 ## P3：发布治理
 
 - ✅ 已升级（2026-08-17）：四条线继续独立 SemVer（引擎 1.0.0 / Studio 0.11.0 / 协议 2.0.0 / 契约 3.0.0）；FormSpec、transaction 与 Evidence Pack 属于 Studio/Agent additive envelope，单 HTML Protocol 保持 2.0.0 兼容。
-- 发布兼容矩阵、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT；✅ [CHANGELOG.md](../CHANGELOG.md) 已于同日新增，Keep a Changelog 格式，`[Unreleased]` 一段——独立 SemVer 决策尚未做，暂无版本号可归档）
+- 发布兼容矩阵、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT；✅ [CHANGELOG.md](../CHANGELOG.md) 使用 Keep a Changelog 格式，并已补充当前 `[Unreleased]` 快照；四条独立 SemVer 线已有当前版本）
 - GitHub Release 附两个经过验证的自包含单 HTML 试点文件。
 - ✅ 已实现（2026-07-31）：构建过程生成 Service Worker precache manifest（`scripts/app-shell.mjs` 走产物目录），避免手工列表漂移。此前手写清单已漂移两次（新增模块忘记登记 → 离线时该模块 404），并且对比发现旧清单还漏了 `core/runtime.js`。
 - 每个浏览器维护独立截图/打印基线和容差，不比较跨引擎像素一致性。
@@ -88,10 +121,11 @@
 
 | 里程碑 | 内容 | 对外状态 |
 |---|---|---|
-| 2.1 Trust A | P0-A 事务闭环（✅ 已完成，Agent Contract 1.2.0，非破坏性版本） | Production Pilot |
+| 2.1 Trust A | P0-A 事务闭环（✅ 已完成，Agent Contract 3.0.0） | Production Pilot |
 | 2.2 Trust B | P0-B 信任闭环、两个模板全矩阵 | Production Ready 候选 |
-| 2.3 Workflow | P1 工程师结构化体验 | Production Ready |
-| 2.4 Engine | P2 分页 session 与性能 | Production Ready |
+| 2.3 Workflow | P1 工程师结构化体验（主要面板已完成） | Production Candidate |
+| 2.4 AI Experience | E14 AI Designer IA & Interaction Foundation | Production Candidate |
+| 2.5 Engine | P2 分页性能与兼容回归（预算已达成） | Production Candidate |
 | 3.0 Governance | P3 独立版本与模板目录 | Template Scale |
 
 具体版本号在实施时分别属于 Studio、runtime 与 protocol；表中编号表示路线里程碑，不替代三者的 SemVer。

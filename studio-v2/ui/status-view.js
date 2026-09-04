@@ -56,6 +56,13 @@ export function renderQualityView(validation, trust) {
     list.appendChild(li);
   });
   $("#export-button").disabled = !validation.productionValid;
+  const chip = $("#export-readiness");
+  if (chip) {
+    const ready = validation.productionValid;
+    chip.className = `status ${ready ? "ready" : "blocked"}`;
+    chip.textContent = t(ready ? "actions.exportReady" : "actions.exportBlocked");
+    chip.setAttribute("aria-label", t(ready ? "actions.exportReadyLabel" : "actions.exportBlockedLabel"));
+  }
   const review = validation.reviewReceipt;
   $("#review-status").textContent = review ? t("review.pass", { revision: review.reviewedRevision }) : t("review.pending");
   $("#reset-trust-button").classList.toggle("hidden", trust !== "untrusted");

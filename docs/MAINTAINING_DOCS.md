@@ -1,12 +1,14 @@
 # 📚 文档维护指南
 
 > 如何保持 PrintForm.js 文档的更新和同步
+>
+> 最后核对：2026-09-04。Studio v2 的 Current/Target/Backlog 状态必须以代码、测试和下方 SSOT 分工为依据，不能只更新单个摘要页面。
 
 ---
 
 ## 📋 文档清单
 
-### 核心文档 (7个)
+### 核心文档
 
 | 文档 | 用途 | 更新方式 | 更新频率 |
 |------|------|---------|---------|
@@ -17,8 +19,13 @@
 | **CODE_STRUCTURE.md** | 代码结构说明 | 手动 | 中 (文件结构变更) |
 | **DEVELOPER_BOOK.md** | 开发者手册 | 手动 | 中 (开发流程变更) |
 | **docs/CONFIGURATION.md** | 配置参考 | **自动** | - (运行脚本) |
+| **DESIGN.md** | 架构、数据流和设计决策 | 手动 | 每次架构或重要 UX 决策 |
+| **SPEC.md** | 已实现行为和公共契约 | 手动 | 每次公共行为或错误码变更 |
+| **EPIC.md** | Epic 状态与范围 | 手动 | 每次 Epic 状态变化 |
+| **ROADMAP.md** | 阶段顺序与维护策略 | 手动 | 每次优先级或阻塞变化 |
+| **TASK.md** | 可执行任务、验收和回滚 | 手动 | 每次任务开始或完成 |
 
-### 可选文档 (2个)
+### 可选文档
 
 | 文档 | 用途 | 更新方式 |
 |------|------|---------|
@@ -133,8 +140,8 @@ npm run docs
 使用相对路径:
 
 ```markdown
-[Project Overview](PROJECT_OVERVIEW.md)
-[Configuration](docs/CONFIGURATION.md)
+[Project Overview](../PROJECT_OVERVIEW.md)
+[Configuration](CONFIGURATION.md)
 ```
 
 ### 4. 代码示例
@@ -160,7 +167,7 @@ npm run docs
 在文档末尾标注最后更新日期:
 
 ```markdown
-**最后更新:** 2026-01-16
+**最后更新:** 2026-09-04
 ```
 
 ---
@@ -173,6 +180,8 @@ npm run docs
 - [ ] 代码示例是否仍然正确
 - [ ] 配置说明是否与代码同步
 - [ ] 截图/图表是否需要更新
+- [ ] `DESIGN.md`、`SPEC.md`、`EPIC.md`、`ROADMAP.md`、`TASK.md` 与 v2 docs 的 Current/Target/Backlog 口径一致
+- [ ] 实现状态有单测、E2E、构建或人工证据支持
 
 ### 删除过时内容
 

@@ -6,6 +6,8 @@
 >
 > 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。**Linux 复现**：2026-07-31，GitHub Actions Ubuntu runner（`.github/workflows/browser-matrix.yml`，`workflow_dispatch`），构建对齐 `af64b25`，见下方「Linux 复现」一节。
 
+> 当前文档复核：2026-09-04。历史矩阵结果仍为 88/88；本次 Windows 工作树重新验证执行了 Chromium E2E 56/56，但没有重新运行完整四目标矩阵。Windows 仍是未覆盖的平台边界。
+
 ## 结论
 
 **88 个格子全部通过，零问题**，且修复后 22 个可比格子跨引擎逐页行数完全一致（首次跑批时有 4 个格子分歧，见下方「跨引擎分页差异」）。
@@ -80,4 +82,4 @@
 
 退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：88/88 通过，且跨引擎分页已收敛一致，并在 macOS 与 Linux 两个操作系统上分别验证过。
 
-但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前值得再确认的点：本矩阵在 macOS 单机执行，而已知**同一引擎跨操作系统也会有度量差异**（见 [ROADMAP.md](../ROADMAP.md) §2.1 第三条陷阱：Firefox 的行分布在 macOS 与 CI 的 Linux 上就不同）。本次修复留了约 8.6px 双侧余量，按 24.62px 的实测波动足以吸收，但**未在 Linux/Windows 上实跑验证**——若要覆盖，可在目标系统上重跑 `node scripts/browser-matrix.mjs`。
+但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前值得再确认的点：本矩阵在 macOS 与 Linux 已执行，而已知**同一引擎跨操作系统也会有度量差异**（见 [ROADMAP.md](../ROADMAP.md) §2.1 第三条陷阱：Firefox 的行分布在 macOS 与 CI 的 Linux 上就不同）。Windows 尚未完成完整矩阵；若要覆盖，应在目标 Windows 环境运行 `node scripts/browser-matrix.mjs`。

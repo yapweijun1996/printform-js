@@ -86,3 +86,28 @@ If PADDT rows exist:
 - PADDT pages only include logo + page number footers
 - PADDT-specific docinfo flags are applied
 
+---
+
+## 8) Studio v2 candidate and transaction flow
+
+Studio v2 keeps pagination ownership in the engine. A design request follows this
+bounded path:
+
+```text
+single-HTML project
+  -> ProjectModel / CommandBus
+  -> semantic operations
+  -> uncommitted candidate
+  -> visible sandbox render + RenderReport
+  -> transaction approval + candidate hash
+  -> atomic CAS commit
+  -> revision / audit / Evidence Pack / export readiness
+```
+
+`preview_changes` creates the candidate and render provenance. Public
+`apply_changes` accepts only an approved transaction with the expected revision
+and candidate hash; it does not provide a direct `operations[]` write path.
+`ui/agent-panel-runtime.js` may orchestrate the current embedded auto-apply
+workflow, but it still uses the same transaction gate. E14 changes how these
+states are shown to users, not the ownership or safety boundary.
+

@@ -2,23 +2,52 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> 本文以代码为唯一事实来源，最后核对：2026-08-17（Production Verification；对齐当前工作树）。
+> 本文以代码为唯一事实来源，最后核对：2026-09-04。历史章节保留原验收日期；当前版本、验证结果和未完成工作以本文的最新快照及相关 SSOT 文档为准。
 
 ---
 
-## 0. 2026-08-17 Studio v2 Production Foundation（Current）
+## 0. 2026-09-04 当前架构快照（Current）
+
+当前版本线：PrintForm runtime `1.0.0`、Studio `0.11.0`、Protocol `2.0.0`、Agent Contract `3.0.0`。产品成熟度仍为 **Production Pilot**；受控发布结论为 **YES, WITH CHANGES — Production Candidate**。已验证边界是单 writer SQLite service、人工批准、Chromium reference runtime、A4 portrait/landscape 和自包含 HTML，不代表 active-active、所有浏览器、打印机链或无人工审批的 Production Ready。
+
+2026-09-04 当前工作树验证结果：
+
+- `npm test -- --run`：72 个测试文件、385 个测试全部通过。
+- `npm run doctor`：5 steps、0 failed；包含 AGRUN integrity、production build 和三个 pilot `validate:v2`。
+- `npm run test:e2e -- --project=chromium`：59/59 通过，包含核心分页、Studio v1/v2、AI Designer、候选渲染、PWA、性能、导出路径以及新增的 E14 IA/Document Context/Change Card/Batch Undo 测试。
+- 三个 pilot export 的静态 `validate:v2` 均通过；该命令本身不提供浏览器分页或 overflow 证据。
+- E14 P0 目前已完成并有测试验证；P1/P2 未实现部分统一列为 Target/Pending。
+
+### 0.1 AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target）
+
+当前实现（E14 P0 Current）已完成 AI Designer 4 层固定信息架构重排（`Panel navigation → Current document context → Conversation → Composer`）、真实状态绑定的 Current Document Context 区域（展示文档名、选区、范围、版本、排版状态、候选/已提交状态）、结构化 Proposal/Change/Validation cards（展示目标、可测量的 Before/After、安全状态、验证结果）、可见且可预测的 Apply mode 选择器（`Auto-apply safe changes` 与 `Preview before applying`）、与已提交事务批次严格绑定的 Card-level Batch Undo/Redo，以及精简后的 Panel 导航和抽屉式会话管理。
+
+已采纳的 redesign 原则：
+
+1. **Conversation first**：AI panel 内 conversation 占主要空间；但整个 Studio 的 Preview 仍是文档事实来源和最终判断依据。
+2. **Controls on demand**：Settings、Gateway、History、Activity/Audit 和高级技术日志默认隐藏，按需打开。
+3. **Context always visible**：固定显示当前文档、selection、scope、render status 和 candidate/committed 状态。
+4. **History hidden until needed**：对话历史、文档变更和技术审计分开建模，不再同时常驻展示。
+
+目标的固定层级为：`Panel navigation → Document context → Conversation → Composer`（四个逻辑层，但 conversation 之上只有两条物理条带）。Panel navigation 已与 Inspector 视图切换器合并为单条共用 header（brand + Gateway 状态圆点 + `Designer/Quality/Agent` 分段切换器 + 图标动作簇 + Close，动作簇仅在 Designer tab 显示）；Apply mode 与 Draft history 现位于 Document context；Composer 只剩输入框。Proposal、Change、Validation 是 conversation 中的结构化卡片；History、Runtime trace 和 Settings 是 secondary drawer/modal。
+
+已完成的 P0 能力包括：IA 重排、真实 document/selection context、结构化 Proposal/Change Card、可见的 Apply mode、与 transaction batch 绑定的 Undo，以及精简 header。该目标不改变 CommandBus、revision、candidate hash、transaction、Evidence Pack 或人工 Production export 边界。Auto-apply 复用现有 preview/validation/approval 事务路径；不绕过 preview，不引入默认 partial commit。由于当前事务模型是 fail-closed/原子提交，存在验证错误时显示明确的“已阻断 (Blocked)”，并保持已提交版本不被篡改。
+
+P1 目标（Target）包括 History drawer、Settings 集中化、动态 quick prompts、streaming state、错误和 partial proposal 展示、移动端 full-screen chat。已落地：`focus restoration` 与 `tab semantics`（分段式 `role="tab"` 切换器 + header 动作按钮纳入 `<=1080` overlay 的 focus trap + `data-active-tab` 按 tab 作用域）、可 resize rail。P2 目标（Target）包括 before/after compare、preview 与 change card 双向 highlight、视觉层级和更完整的 E2E UX 覆盖。
+
+## 0.2 2026-08-17 Studio v2 Production Foundation（Current）
 
 本节覆盖本轮实现，优先级高于本文早期对“直接 operations apply”的历史描述。
 
-### 0.1 Production Verification 结果
+### 0.2.1 Production Verification 结果
 
 状态：🔶 **YES, WITH CHANGES — Production Candidate**，范围限定为受控 Chromium、A4 portrait/landscape、单 Studio 会话的 AI-assisted ERP printing；这不是对所有浏览器、打印机或多用户部署的 Production Ready 声明。
 
 - Playwright `@playwright/test 1.62.0` / Chromium revision `1234` 已安装；全量 Chromium E2E **56/56 PASS**。
 - 覆盖 Progress Claim、Valuation → Variation → Materials → Certification 顺序表、100/500/1000 行、A4 portrait/landscape、分页诊断和 trusted export Evidence Pack。
-- `nanoid` lockfile 已到 `3.3.18`；`npm audit --audit-level=high` 为 0 vulnerabilities。
+- `nanoid` lockfile 已到 `3.3.18`；`npm audit --audit-level=high` 的最后已记录结果为 0 high，本次文档更新未重新完成网络审计。
 - Windows `npm run doctor` 已改为由当前 Node 进程调用 npm CLI，最终 **5 steps / 0 failed**。
-- 本阶段发现的 PTAC/PADDT 诊断误报已修复；`tests/studio-v2/render-diagnostics.test.js` 增加回归护栏。预览区和 topbar 都保留横向滚动处理。
+- 本阶段发现的 PTAC/PADDT 诊断误报已修复；`tests/studio-v2/render-diagnostics.test.js` 增加回归护栏。预览区保留横向滚动处理；topbar 的 `.actions` 横向滚动（`bindHorizontalWheel` 仍在）现只是 721–1080px 及移动端的兜底——≥1081px 单条 56px 栏内所有动作可见，`Production export` 拆分主按钮始终不被滚出。
 
 E13 foundation 与 E13-SERVER bounded backend 已在本工作树完成；当前结论仍是 **YES, WITH CHANGES — remain Production Candidate**。浏览器 UI 继续保留 localStorage/offline adapter，跨设备生产部署必须显式接入带原子 CAS 的 server backend；因此已证明服务端协议、恢复和冲突语义，但没有把 localStorage 宣称成多用户锁服务。
 
@@ -41,7 +70,7 @@ Project / single-HTML envelope
 - `src/printform/**` 仍是唯一分页责任方。Active Table Context 由 row 的 `data-pf-table-id` 驱动，Agent 不计算页码、不复制 table header。
 - Trusted export 通过 `content-security.js` allowlist、runtime/artifact hash 和 `evidence-pack.js`；localStorage 只是当前 Studio 的离线 adapter，服务端审计与跨设备锁由 E13-SERVER 提供。
 
-### 0.2 E13 Durable Transaction / Concurrency / Recovery（Current，2026-08-17）
+### 0.3 E13 Durable Transaction / Concurrency / Recovery（Current，2026-08-17）
 
 `studio-v2/core/durable-transaction-store.js` 是新的存储边界，不改变 Protocol/ FormSpec 或 PrintForm 分页器。它保存单一 form envelope 的 durable head、最近 revision snapshot、transaction records、append-only audit events、Evidence Pack 与 anchor。存储可以是：
 
@@ -69,7 +98,7 @@ Evidence Pack 写入与 committed revision 原子锚定：`artifact_hash ↔ evi
 
 明确不改变：不引入第二个渲染器、不把 rendered DOM 当 SSOT、不让 AI 执行 JavaScript/CSS/HTML、不把 pixel canvas 当设计模型。
 
-### 0.3 E13-SERVER Durable Backend Acceptance（Current，2026-08-17）
+### 0.4 E13-SERVER Durable Backend Acceptance（Current，2026-08-17）
 
 状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 已通过受控部署验收，但认证边界是“单个 SQLite writer service + 多个 HTTP client session + 人工审批”；尚未认证 active-active writer、外部 HA 数据库、浏览器 UI 的远程 store wiring 或跨浏览器打印链。
 
@@ -197,8 +226,8 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 1. **`CommandBus` 通过依赖注入获得可选的候选渲染器**：`new CommandBus(initialProject, { renderCandidate })`，`renderCandidate(project, revision)` 是一个返回 `Promise<RenderReport>` 的异步函数。不传（现有单测直接 `new CommandBus(project)`、CLI 校验器等无 DOM 环境）时保持原行为——`preview_changes` 退化为纯 schema/业务规则校验，不阻塞、不报错，这是既有"CLI 不产出 `expectedRows`"式优雅降级的延伸，向后兼容零回归（`tests/studio-v2/command-bus.test.js` 有专门回归用例）。
 2. **`app.js` 的 `installBus()` 提供真实实现**：`renderCandidateForPreview(project, revision)` 复用 `renderPreview()`/`listenForPreview()` 和 `#preview-frame`，不另开一套 iframe 生命周期管理。
 3. **一层跨 iframe reload 存活的请求 token**（`runtime.js` 内部 `generation` 计数器在"整个 iframe 重载"这一级别的对应物）：无论请求来自人类编辑防抖（`schedulePreview`）还是 Agent 的 `preview_changes`/`apply_changes`，发起渲染前先领取一个单调递增 token，`ui/preview.js` 的 `buildPreviewBridge()` 把 token 原样写进两个 postMessage 回执（`rendered`/`error`）；父页 `listenForPreview` 回调按 token 先查 `pendingCandidateRenders`，命中就是候选请求的回执，未命中再退回既有的按 `revision` 匹配的已提交状态路径。这同时天然满足了 TASK.md 原 #15（"拒绝非本次预览的消息"）的需求——**#15 已并入本项，不再单独存在**。
-4. **`preview_changes`**：`candidate = applyOperations(project, operations)` 之后，若注入了 `renderCandidate` 就等待其真实渲染回执；用 `sha256(stableStringify(candidate))`（`core/json.js` 已有）算出 `candidateHash`，按 hash 缓存真实 render report（内存级，5 分钟 TTL——纯内存管理考虑而非正确性依赖，因为 revision 单调且从不复用，`ensureRevision` 已经能拦掉任何"底稿已变还想用旧预览"的情况）；返回的 `validation` 携带真实 `issues[]`/`metrics`，不再只是静态 schema 校验；渲染器 reject 时不抛出，落成 `RENDER_FAILED` 校验错误，`candidateHash` 依旧返回（hash 在调用渲染器之前就已算好）。
-5. **`apply_changes`**：同样计算 candidate 与 `candidateHash`；命中缓存（Agent 刚 `preview_changes` 过同一组 operations）直接复用已缓存的 report 提交，不重新渲染；未命中缓存（Agent 跳过 preview 直接 apply）则退化为内联做一次同样的真实渲染 round-trip 再提交；`diff.changed === false` 时两者都直接短路，不调用渲染器、不占用缓存。
+4. **`preview_changes`**：CommandBus 根据已允许的 semantic operations 生成 candidate，并在 UI 浏览器环境中等待可见预览 iframe 的真实渲染回执；用 `sha256(stableStringify(candidate))`（`core/json.js` 已有）计算 `candidateHash`，按 hash 缓存真实 RenderReport。返回的 validation 携带真实 `issues[]`/`metrics`；无 DOM 环境时只做静态 schema/业务规则校验，并明确不伪造浏览器 evidence。
+5. **`apply_changes`**：公共 Agent Contract 3.0.0 只接受已批准 transaction 的 `transactionId`、当前 revision 和同一 candidate hash，不再接受直接传入 `operations[]` 的写路径。命中缓存时复用已渲染 report；候选内容、revision、批准状态或 hash 任一不匹配都 fail closed。Studio 内部的结构化控件和 source editor 可以使用内部命令，但不构成公共 Agent API。
 
 **人类可见性**：候选渲染期间 `#candidate-preview-banner`（`.banner` 复用既有 `#update-banner`/`#restore-banner` 样式）显示"正在预览 AI 提议的改动（未提交）"提示；`pendingCandidateRenders` 清空时（成功/失败/超时）自动隐藏。下一次真正的 commit（人类编辑或 Agent apply）发生时，`schedulePreview()` 既有的防抖流程会自动把 iframe 刷新回真实已提交状态，不需要额外的"回滚"代码路径；`installBus()` 切换项目（导入/切样本/重置信任）时会拒绝并清空所有仍在等待的候选渲染，避免悬挂 Promise。
 
@@ -241,12 +270,21 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 
 ### 4.8 P1 工程师面板的统一模式（Current，2026-07-31 落地）
 
-五个面板（Table columns、Print font scale、Page settings、Repeated areas、Brand color）都遵循同一套读→写模式，不是各自发明：
+六个结构化面板（Table columns、Print font scale、Page settings、Repeated areas、Brand color、Data contract）都遵循同一套读→写模式，不是各自发明：
 
 - **读**：`core/*-inspection.js`（`column-inspection.js`/`page-inspection.js`）或对应模块的 `current*()` 读回函数（`typography.js` 的 `currentFontBasePt`、`branding.js` 的 `currentBrandColor`）从 `project.templateHtml`/`themeCss` 里描述当前真实值，只读不写；找不到对应字段一律返回 `null`/`[]`，不猜引擎默认值或编造假数据。
 - **写**：优先复用**已有的**语义操作（`set_column_widths`/`set_font_scale`/`set_brand_color`）；没有专属操作类型的字段（Page settings 的 `data-papersize-*`、Repeated areas 的七个 `data-repeat-*`）直接用通用 `set_attribute`，每属性一条、同一次 `apply_changes` 打包提交，不为每个简单 data-* 字段都新开一个操作类型。
-- **应用方式**：结构化单一用途控件（本节五个面板 + 已有的 locale-select/asset-slot）都直接 `bus.execute("apply_changes", {...})`，不经 diff 弹窗确认；只有原始 JSON/CSS/HTML 文本编辑器走 `ui/diff-view.js` 的并排 diff 确认流程（见 §4.4 附近的 Apply 前确认机制）。
+- **应用方式**：结构化单一用途控件（本节六个面板 + 已有的 locale-select/asset-slot）通过共享的 `preview → approve → apply` helper 提交，不经 diff 弹窗确认；只有原始 JSON/CSS/HTML 文本编辑器走 `ui/diff-view.js` 的并排 diff 确认流程（见 §4.3 的 Apply 前确认机制）。所有路径都仍受 Agent Contract 3.0.0 的 revision/hash/validation gate 约束。
 - **范围纪律**：每个面板都刻意只覆盖两个标准模板实际用到的字段，不覆盖 `src/printform/config.js` 里更大的引擎级配置面（如 `docinfo002-005`/`footer002-005`/PADDT 专属配置），也不做超出单一清晰切片的重设计——Brand color 只做 `.pf-brand` 一处标题色，不是把两个模板里另外十几处硬编码用色都 token 化，因为后者是量级明显更大、更主观的独立设计任务。
+
+### 4.9 Studio 顶栏信息架构（Current）
+
+`.topbar` 是单条 56px 栏（渐变已压平；brand 精简为 `Studio v2 [Protocol 2.0]`，`PRINTFORM STUDIO` eyebrow 全宽移除以让出行内空间）。`.actions` 顺序：locale-select → `#inspector-toggle`（图标 `✦`，仅 `body.inspector-closed` 显示，位置固定为第 2 个可见子元素）→ `#editor-toggle` → `#validate-button` → `#print-button` → `⋯ More` → `#export-readiness` → `.export-split`。
+
+- **层级**：深色栏上唯一 filled primary 是 `#export-button`（白底蓝字）；其余 secondary 按钮为半透明白 ghost。
+- **`⋯ More`** 弹出菜单只放 `Import HTML`；**`▾`** 拆分箭头弹出 `Export Untrusted`（同一个"其他导出方式"入口，不在 `⋯ More` 里重复）。两个菜单用原生 HTML Popover API（`popover` + `popovertarget`），顶层渲染绕开 `.topbar`/`.actions` 的 overflow 裁剪，Esc / 外点关闭；`ui/app.js` 的 `bindTopbarMenu` 只做定位（fixed，贴触发器下方右对齐）+ 同步 `aria-expanded` + Esc 后回焦。
+- **`#export-readiness`** 就绪芯片复用 `.status` / `.status.ready` / `.status.blocked`，由 `status-view.js` 的 `renderQualityView` 在 `#export-button.disabled` 之后同步（`● Ready` / `⚠ Blocked`）；文案刻意区别于预览区的 `#render-status`（"Printable"/"Blocked"），后者位置/文案不变。
+- **横向滚动**：`.actions` 的 `overflow-x:auto` + `bindHorizontalWheel` 保留，但 ≥1081px 不再溢出；721–1080px 及移动端作为兜底。`e2e/studio-v2-topbar.spec.js` 断言 1440px 无滚动 + 主动作可见 + `inspectorIndex === 1` + 菜单开合。
 
 ---
 

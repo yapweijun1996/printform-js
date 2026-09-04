@@ -2,6 +2,8 @@
 
 > 状态：**Current / Production Pilot**。本文只描述仓库当前实现；Production Ready 目标接口与硬门见 [v2 文档索引](STUDIO_V2_INDEX.zh-CN.md) 和 [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)。
 
+> 最后核对：2026-09-04。Protocol 版本仍为 `2.0.0`；E14 AI Designer UX redesign 不改变本文件的单 HTML、绑定、runtime、trust 或导出契约。
+
 ## 目标
 
 v2 文件是一份可直接打开、可复制、可手改、可离线打印的 HTML。Studio、WebMCP、第一方 MCP 和 Headless validator 都读取同一组区块；不存在隐藏项目文件。

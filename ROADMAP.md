@@ -1,14 +1,14 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-08-17（E13-SERVER Durable Backend Deployment & Recovery Acceptance）。
+> 最后核对：2026-09-04（E13-SERVER 已完成；E14 AI Designer IA/UX 已决策、尚未实现）。
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
 ---
 
-## 0. 当前阶段：Studio v2 Production Foundation（2026-08-17）
+## 0. 当前阶段：Production Pilot 收口与 E14 AI Designer UX（2026-09-04）
 
-状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库和浏览器 UI remote-store wiring 仍未认证。
+状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库、浏览器 UI remote-store wiring 和更广打印链仍未认证。当前下一项产品工作是 E14 AI Designer 信息架构与交互基础，而不是宣布 Production Ready。
 
 本阶段在现有 Protocol、CommandBus 与 PrintForm runtime 上做最小增量：FormSpec/component registry、Active Table Context、多页确定性诊断、Agent transaction gate、trusted export allowlist、Evidence Pack，以及 E13 durable transaction store/state machine/CAS/lease/recovery/server adapter 已进入代码和测试。仍不扩大为一般 Production Ready，因为当前服务只认证单 writer SQLite 部署，浏览器默认 localStorage 仍是 offline/single-session fallback，Firefox/WebKit/真实 Safari/打印机链也未认证。
 
@@ -21,7 +21,7 @@
 - trusted export 的脚本/事件处理器/危险 URL/外部资源 allowlist 与 content hash。
 - durable transaction store/server adapter：transaction/revision/lease/audit/evidence anchor 持久化；真实 SQL CAS、server clock lease、commit/evidence retry 幂等；发布门失败时 fail closed。
 
-E12 的独立运维任务 `OPS-NANOID`、`OPS-PLAYWRIGHT`、`OPS-WINDOWS-DOCTOR` 已有独立证据；退出条件已满足。E13-SERVER 的 bounded backend 与 acceptance 已完成；后续转向 HA/recovery hardening，不在本阶段增加 AI 功能。
+E12 的独立运维任务 `OPS-NANOID`、`OPS-PLAYWRIGHT`、`OPS-WINDOWS-DOCTOR` 已有独立证据；退出条件已满足。E13-SERVER 的 bounded backend 与 acceptance 已完成。E14 只调整 AI Designer 的信息呈现和交互，不改变 PrintForm 分页、Protocol、CommandBus、事务、证据或人工导出边界；E15 再处理 HA/recovery hardening。
 
 ### 0.1 E12 验证记录
 
@@ -52,22 +52,36 @@ E12 的单用户路径保留兼容，不做破坏式替换。
 | CAS / lease | 双独立 session 一胜一 `REVISION_CONFLICT`；server DB time lease expiry/takeover；clock skew 不影响结果 |
 | retry / recovery | lost response 与 reconnect 不重复 revision；commit retry `already_committed`；crash before/after CAS 重启可判定 |
 | evidence / audit | Evidence Pack hash/revision/transaction anchor 幂等；append-only event sequence 可重读 |
-| regression | E13-SERVER 8/8；全量 70 files / 378 tests；build:site、doctor 5/5、audit 0、validate:v2 3/3、Chromium 56/56 |
+| regression | E13-SERVER 8/8；全量 70 files / 378 tests；build:site、doctor 5/5、validate:v2 3/3、Chromium 56/56；audit 0 high 为历史记录，本次未重新完成网络审计 |
 | deployment boundary | 单 writer service + SQLite 文件；active-active/HA/remote UI adapter 未认证，保留 Production Candidate |
 
-### 0.4 推荐下一 Epic：E14 Durable Service Hardening（Target）
+### 0.4 E14：AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target）
+
+目标：把现有 AI Designer 从拥挤的 control dashboard 整理成 document-aware AI design conversation。Preview 仍是 Studio 的事实来源；conversation 只在 AI panel 内成为主要交互区域。
+
+固定层级：`Panel navigation → Current document context → Conversation → Composer`。
+
+| 优先级 | 目标 | 退出条件 |
+|---|---|---|
+| P0 | IA、Context Bar、Proposal/Change Card、可见 Apply mode、transaction-batch Undo、精简 header | ✅ 已完成：用户能看到当前文档/selection/scope/revision/status；每次 AI change 有 target、状态、validation 和可解释 card-level Undo；所有应用仍经过 preview/approval/hash gate；Chromium E2E 59/59 |
+| P1 | History/Changes drawer、Settings 集中化、动态 prompt、stream/error state、mobile full-screen、focus/tab accessibility | 不再 permanent 显示 technical audit/gateway/session management；关键键盘和移动端路径有 E2E 验证 |
+| P2 | before/after、preview highlight、resizable rail、视觉 polish、完整 UX 回归 | 不影响 preview 可用空间、打印行为和现有安全门 |
+
+明确不做：AI reasoning 展示、rendered DOM 直改、任意画布、绕过 Agent Contract 3.0.0、默认 partial commit、自动 Production export。
+
+### 0.5 E15：Durable Service Hardening（Target）
 
 不在本阶段实现，先记录为有边界的后续任务：
 
 | 任务 | 目标验收 |
 |---|---|
-| E14-01 数据库/迁移 | 外部 durable DB schema migration、备份/恢复演练、唯一约束与 CAS 在目标部署环境通过 |
-| E14-02 HA / fencing | active-active writer、leader lease、split-brain fencing、failover 后不重复 commit |
-| E14-03 remote client | Studio UI 可显式选择 server adapter；双浏览器/双设备 session 通过真实 remote transaction flow |
-| E14-04 recovery operations | abandoned transaction TTL、lease cleanup、crash/retry/runbook、告警与可观测性 |
-| E14-05 artifact registry | Evidence Pack 与 HTML artifact 的 durable blob/manifest/attestation registry 可独立恢复 |
+| E15-01 数据库/迁移 | 外部 durable DB schema migration、备份/恢复演练、唯一约束与 CAS 在目标部署环境通过 |
+| E15-02 HA / fencing | active-active writer、leader lease、split-brain fencing、failover 后不重复 commit |
+| E15-03 remote client | Studio UI 可显式选择 server adapter；双浏览器/双设备 session 通过真实 remote transaction flow |
+| E15-04 recovery operations | abandoned transaction TTL、lease cleanup、crash/retry/runbook、告警与可观测性 |
+| E15-05 artifact registry | Evidence Pack 与 HTML artifact 的 durable blob/manifest/attestation registry 可独立恢复 |
 
-E14 的退出条件是“多实例/多设备故障时仍无 silent overwrite、double commit、partial publish 或 ambiguous recovery”；在此之前，E13-SERVER 仅作为受控单 writer Production Candidate。
+E15 的退出条件是“多实例/多设备故障时仍无 silent overwrite、double commit、partial publish 或 ambiguous recovery”；在此之前，E13-SERVER 仅作为受控单 writer Production Candidate。
 
 ---
 
@@ -80,7 +94,9 @@ E14 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 | 已完成（2026-07-31） | E6/E7：P0-A 事务闭环 + P0-B 信任闭环的**代码硬门**（`f4ca539`、`bda0379`、`1e6cb3e`、`2de7b73` 等） | ✅ |
 | 已完成（2026-07-31） | 浏览器矩阵验收：两模板 × 4 目标 × 全边界场景 + 五语言，88/88 全过，结论存档于 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)，可用 `node scripts/browser-matrix.mjs` 复现 | ✅ |
 | 已完成（2026-07-31） | Purchase Order 跨引擎分页收敛：非行区 +16px 让 15 组合全部落到每页 14 行，复跑矩阵 22 个可比格子零分歧 | ✅ |
-| 长期 | E8 工程师工作流 → E9 分页引擎演进 → E10 发布治理 | ⬜ |
+| 当前 | E8 结构化工程师面板已完成主要范围；E9 性能预算已达成；E10 发布治理仍有 Release/template catalog 收尾 | 🔶 |
+| 当前 | E14 AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target） | 🔶 |
+| 下一阶段 | E15 Durable Service Hardening | ⬜ |
 
 里程碑对外状态（Pilot → Production Candidate → Production Ready → Template Scale）沿用工程路线图的发布顺序表。E13-SERVER 已把受控部署的服务端事务恢复/并发门跑通，但 Production Ready 仍由维护者显式宣布，不由一次跑批绿灯自动推导；当前承诺仍限定为单 writer service、Chromium reference runtime、人工审批和既定安全门。
 
@@ -137,6 +153,7 @@ E14 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 - 根目录五文档（DESIGN/SPEC/EPIC/ROADMAP/TASK）每次功能 commit 后由提交者顺手更新"最后核对"行；对不上以代码为准。
 - 配置文档继续用 `npm run docs` 从 `CONFIG_DESCRIPTORS` 生成，禁止手改生成物。
 - Studio v2 系列文档维持 Current/Target/Backlog 状态词纪律（[索引](docs/STUDIO_V2_INDEX.zh-CN.md)定义）。
+- AI Designer redesign 的 Current/Target 边界以 [DESIGN.md](DESIGN.md) §0.1、[SPEC.md](SPEC.md) §3.7 和本节 E14 为准；不要把现有 proposal card 当成已经完成的 Change Card。
 
 ---
 
@@ -148,4 +165,7 @@ E14 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 | SW 缓存导致"改了没生效"误判 | 已实现开发模式网络优先；部署版本号盖章缺失会构建失败 |
 | ~~`sw.js` 手写 `APP_SHELL` 清单随新增文件漂移~~ | ✅ **已根治（2026-07-31，`eebcae1`）**：改为构建时由 `scripts/app-shell.mjs` 走产物目录生成，新增模块无需登记。此前一天内漂移两次（`core/operation-schemas.js`、`ui/diff-view.js`），都是被 PWA 离线用例抓到；改造时还发现旧清单本就漏了 `core/runtime.js`，从没人察觉——这正是"该生成而非手写"的论据 |
 | v1/v2 双 Studio 长期并存的双倍维护 | v1 冻结纪律 + 文档明示"新需求一律进 v2" |
+| AI Designer sidebar 职责过载 | E14 固定四层 IA；History/Settings/Activity 按需打开；Preview 仍保持 workspace source of truth |
+| 原始 source editor draft 可能被状态刷新覆盖 | 在实现 draft dirty state 前，切换样例、结构化 apply、导入和离开页面都应视为潜在丢失风险；E14 需增加回归 E2E |
+| ~~1440px 桌面 topbar 的 Production export 可见性不足~~ | ✅ **已解决**：`.topbar` 重排为单条 56px 栏——`Production export` 拆分主按钮（白底蓝字，唯一 filled primary）+ `▾` 弹出 `Export Untrusted`；`Import HTML` 移入 `⋯ More` 弹出菜单（HTML Popover API，顶层渲染，Esc/外点关闭）；旁加 `#export-readiness` 就绪芯片（复用 `.status`，由 `renderQualityView` 驱动）。≥1081px 不再横向滚动；721–1080px 保留横向滚动兜底。`e2e/studio-v2-topbar.spec.js` 加了 1440px 无滚动 + 主动作可见 + 菜单开合断言 |
 | ~~无 LICENSE（P3 前对外分发受限）~~ | ✅ 已解除：2026-07-31 采用 [MIT](LICENSE)，`package.json` 同步 |

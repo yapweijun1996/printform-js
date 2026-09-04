@@ -12,6 +12,7 @@ import { createStudioActions } from "./studio-actions.js";
 import { initAgentPanel } from "./agent-panel.js";
 import { setupServiceWorkerUpgrade } from "./service-worker-upgrade.js";
 import { bindHorizontalWheel } from "./preview-wheel.js";
+import { bindInspectorResize } from "./inspector-resize.js";
 import { analyzeMigration } from "../core/migrations.js";
 import { parseProjectHtml, verifyImportedProject } from "../core/project-model.js";
 
@@ -61,16 +62,103 @@ function installBus(project, reason = "load") {
   installAgentGateway(bus, window, { isRealData: () => $("#real-data-mode").checked });
   webMcp = installWebMcpAdapter(bus, null, { isRealData: () => $("#real-data-mode").checked });
   renderWebMcpStatus(webMcp);
-  agentPanel?.onProjectChanged();
-  bus.addEventListener("change", (event) => { dirty = true; editor.setEditors(event.detail.project); renderQuality(bus.validation()); renderer.restoreCommitted(); refreshHistoryControls(); if (!$("#real-data-mode").checked) saveRecoveryDraft(event.detail.project, fingerprint); });
-  bus.addEventListener("review", () => renderQuality(bus.readiness()));
-  editor.setEditors(project); renderQuality(bus.readiness()); renderer.schedulePreview(); refreshHistoryControls();
+  agentPanel?.onProjectChanged(project);
+  bus.addEventListener("change", (event) => {
+    dirty = true;
+    editor.setEditors(event.detail.project);
+    renderQuality(bus.validation());
+    renderer.restoreCommitted();
+    refreshHistoryControls();
+    agentPanel?.updateDocumentContext({
+      documentTitle: event.detail.project.manifest?.title || "PrintForm Document",
+      documentId: event.detail.project.manifest?.documentId || "",
+      revision: bus.revision,
+      errorCount: bus.validation()?.errors?.length || 0,
+      warningCount: bus.validation()?.warnings?.length || 0,
+      stateMode: "committed"
+    });
+    if (!$("#real-data-mode").checked) saveRecoveryDraft(event.detail.project, fingerprint);
+  });
+  bus.addEventListener("review", () => {
+    renderQuality(bus.readiness());
+    agentPanel?.updateDocumentContext({
+      errorCount: bus.validation()?.errors?.length || 0,
+      warningCount: bus.validation()?.warnings?.length || 0
+    });
+  });
+  editor.setEditors(project);
+  renderQuality(bus.readiness());
+  renderer.schedulePreview();
+  refreshHistoryControls();
+  agentPanel?.updateDocumentContext({
+    documentTitle: project.manifest?.title || "PrintForm Document",
+    documentId: project.manifest?.documentId || "",
+    revision: bus.revision,
+    errorCount: bus.validation()?.errors?.length || 0,
+    warningCount: bus.validation()?.warnings?.length || 0,
+    stateMode: "committed",
+    selection: "Entire document"
+  });
   if (reason !== "initial") toast(t("toast.loaded", { title: project.manifest.title || "PrintForm" }));
 }
 
 function selectSample(key) {
   if (dirty && !window.confirm(t("confirm.discardSample"))) { $("#document-select").value = activeSampleKey; return; }
   activeSampleKey = key; const project = createSampleDocument(key); fingerprint = project.manifest.documentId; dirty = false; history.replaceState(null, "", `${location.pathname}?sample=${encodeURIComponent(key)}`); installBus(project, "sample");
+}
+
+// A topbar popover menu (⋯ More, Export ▾). The panel uses the native Popover
+// API so it renders in the top layer and escapes the topbar's overflow
+// clipping; we only position it (fixed, below and right-aligned to the trigger)
+// and mirror aria-expanded. Popover gives Esc + outside-click light-dismiss and
+// one-open-at-a-time for free. A no-Popover fallback is kept for completeness.
+function bindTopbarMenu(trigger, panel) {
+  if (!trigger || !panel) return;
+  const supported = typeof panel.showPopover === "function" && "popover" in HTMLElement.prototype;
+  const isOpen = () => (supported ? panel.matches(":popover-open") : !panel.hidden);
+  function place() {
+    const rect = trigger.getBoundingClientRect();
+    const width = panel.offsetWidth || 200;
+    let left = Math.round(rect.right - width);
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    panel.style.position = "fixed";
+    panel.style.top = `${Math.round(rect.bottom + 6)}px`;
+    panel.style.left = `${left}px`;
+  }
+  function onEnvChange() { if (isOpen()) close(); }
+  function open() {
+    if (supported) { if (!panel.matches(":popover-open")) panel.showPopover(); }
+    else panel.hidden = false;
+    place();
+    trigger.setAttribute("aria-expanded", "true");
+    (panel.querySelector('[role="menuitem"], button, [tabindex]') || panel).focus?.();
+    window.addEventListener("resize", onEnvChange, { passive: true });
+    window.addEventListener("scroll", onEnvChange, { passive: true, capture: true });
+  }
+  function close() {
+    if (supported) { if (panel.matches(":popover-open")) panel.hidePopover(); }
+    else panel.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    window.removeEventListener("resize", onEnvChange);
+    window.removeEventListener("scroll", onEnvChange, { capture: true });
+  }
+  if (supported) {
+    panel.addEventListener("toggle", (event) => { if (event.newState === "open") open(); else close(); });
+  } else {
+    trigger.removeAttribute("popovertarget");
+    panel.hidden = true;
+    trigger.addEventListener("click", () => (isOpen() ? close() : open()));
+    document.addEventListener("click", (event) => { if (isOpen() && !panel.contains(event.target) && event.target !== trigger && !trigger.contains(event.target)) close(); });
+  }
+  // Explicit Escape close + focus return (UA popover light-dismiss covers
+  // outside-click; Escape is handled here so focus reliably lands on the trigger).
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !isOpen()) return;
+    close();
+    trigger.focus();
+  });
+  // A menuitem activation closes the menu.
+  panel.addEventListener("click", (event) => { if (event.target.closest('[role="menuitem"]')) close(); });
 }
 
 function bindEditorToggle() {
@@ -114,6 +202,7 @@ function bindEditorToggle() {
 function bindTabs() {
   const tabs = Array.from(document.querySelectorAll(".inspector-tabs [role=tab]"));
   const panel = $(".inspector-panel");
+  const header = $(".inspector-header");
   const toggle = $("#inspector-toggle");
   const floating = $("#ai-floating-launcher");
   const close = $("#inspector-close");
@@ -136,7 +225,7 @@ function bindTabs() {
     }
     if (!next && restoreFocus) setTimeout(() => focusTarget?.focus(), 50);
   }
-  function select(tab) { tabs.forEach((item) => { const selected = item === tab; item.setAttribute("aria-selected", String(selected)); $(`#${item.getAttribute("aria-controls")}`).hidden = !selected; }); setOpen(true); }
+  function select(tab) { tabs.forEach((item) => { const selected = item === tab; item.setAttribute("aria-selected", String(selected)); $(`#${item.getAttribute("aria-controls")}`).hidden = !selected; }); header?.setAttribute("data-active-tab", tab.id); setOpen(true); }
   tabs.forEach((tab, index) => { tab.addEventListener("click", () => select(tab)); tab.addEventListener("keydown", (event) => { if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return; event.preventDefault(); const next = tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length]; next.focus(); select(next); }); });
   function openAiDesigner(source) {
     const next = !panel.classList.contains("is-open");
@@ -168,10 +257,12 @@ function bindTabs() {
     if (event.key !== "Tab" || window.innerWidth > 1080 || !panel.classList.contains("is-open")) return;
     const activePanel = panel.querySelector('[role="tabpanel"]:not([hidden])');
     const focusable = [
-      ...panel.querySelectorAll(".inspector-tabs [role=tab]:not([disabled])"),
-      ...(close && !close.disabled ? [close] : []),
+      // Header now carries the tab switcher, the AI action cluster and Close in
+      // DOM order; offsetParent filters out the AI cluster when it is hidden on
+      // the Quality/Agent tabs.
+      ...panel.querySelectorAll(".inspector-header button:not([disabled])"),
       ...(activePanel?.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex=\"-1\"])") || [])
-    ];
+    ].filter((el) => el.offsetParent !== null || el === document.activeElement);
     if (!focusable.length) return;
     const first = focusable[0]; const last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -187,9 +278,12 @@ function bindUi() {
   $("#apply-logo-button").addEventListener("click", actions.applyLogoSources); $("#apply-font-scale-button").addEventListener("click", actions.applyFontScale); $("#apply-brand-color-button").addEventListener("click", actions.applyBrandColor); $("#brand-color-input").addEventListener("input", (event) => { $("#brand-color-text").value = event.target.value; }); $("#apply-page-settings-button").addEventListener("click", actions.applyPageSettings); $("#apply-repeat-flags-button").addEventListener("click", actions.applyRepeatFlags); $("#apply-data-contract-button").addEventListener("click", actions.applyDataContract);
   $("#document-select").addEventListener("change", (event) => selectSample(event.target.value)); $("#diagnostics-button").addEventListener("click", () => actions.downloadDiagnostics(lastValidation, STUDIO_VERSION, AGENT_CONTRACT_VERSION)); $("#reset-trust-button").addEventListener("click", actions.resetTrust); $("#ui-locale-select").addEventListener("change", changeUiLocale);
   $("#real-data-mode").addEventListener("change", async (event) => { renderDataPolicy(event.target.checked); if (event.target.checked) clearRecoveryDraft(); await agentPanel.setRealData(event.target.checked); }); $("#overlay-toggle").addEventListener("change", (event) => { overlayEnabled = event.target.checked; renderer.toggleOverlay(overlayEnabled); });
-  window.addEventListener("printform:ui-locale", refreshLocalizedUi); window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } }); editorToggle = bindEditorToggle(); bindTabs();
+  window.addEventListener("printform:ui-locale", refreshLocalizedUi); window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } }); editorToggle = bindEditorToggle(); bindTabs(); bindInspectorResize();
   bindHorizontalWheel($(".actions"));
   bindHorizontalWheel($(".preview-viewport"));
+  bindTopbarMenu($("#more-menu-button"), $("#more-menu"));
+  bindTopbarMenu($("#export-menu-button"), $("#export-menu"));
+  $("#import-file-item")?.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $("#import-file").click(); } });
 }
 
 async function changeUiLocale(event) { const previous = currentUiLocale(); try { await setUiLocale(event.target.value); } catch { event.target.value = previous; toast(t("toast.languageFailed")); } }
@@ -200,6 +294,17 @@ await initUiI18n();
 editor = createEditorPanel({ getBus: () => bus, onApplyColumnWidths: (...args) => actions.applyColumnWidths(...args), onApplyDataContract: () => actions.applyDataContract() });
 renderer = createRenderController({ getBus: () => bus, getOverlayEnabled: () => overlayEnabled, toast, onCandidateState: () => {} });
 actions = createStudioActions({ getBus: () => bus, getFingerprint: () => fingerprint, setFingerprint: (value) => { fingerprint = value; }, getDirty: () => dirty, setDirty, getEditor, installBus, toast });
-agentPanel = initAgentPanel({ realData: $("#real-data-mode").checked, getGateway: () => window.PrintFormStudioAgent, getHistoryState: () => bus?.historyState?.() || {}, onHistoryAction: performHistoryAction, onCandidateState: (active) => { if (active) renderer.setCandidateState(true); else renderer.restoreCommitted(); }, onRealDataChange: (active) => renderDataPolicy(active) });
+agentPanel = initAgentPanel({
+  realData: $("#real-data-mode").checked,
+  getGateway: () => window.PrintFormStudioAgent,
+  getBaseProject: () => bus?.project,
+  getHistoryState: () => bus?.historyState?.() || {},
+  onHistoryAction: performHistoryAction,
+  onCandidateState: (active) => {
+    if (active) renderer.setCandidateState(true);
+    else renderer.restoreCommitted();
+  },
+  onRealDataChange: (active) => renderDataPolicy(active)
+});
 renderContractVersion(); bindUi(); renderer.listen(); $("#document-select").value = activeSampleKey; installBus(createSampleDocument(activeSampleKey), "initial"); setupRecovery(); setupServiceWorkerUpgrade({ isDirty: () => dirty, toast, translateMessage: t, onSaveDraft: () => actions.saveDraft() });
 if (!window.Agrun) toast("AI Designer runtime did not load; existing Studio tools remain available.");

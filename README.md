@@ -25,12 +25,13 @@ Studio v2 is a Production Pilot for ERP engineers. It builds inspectable, self-c
 |--------------|-----------|
 | **Build a Pilot single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
 | **Understand v2 status and roadmap** | [Studio v2 documentation index](docs/STUDIO_V2_INDEX.zh-CN.md) (authoritative Chinese) |
+| **Review architecture and task status** | [DESIGN.md](DESIGN.md) · [SPEC.md](SPEC.md) · [EPIC.md](EPIC.md) · [ROADMAP.md](ROADMAP.md) · [TASK.md](TASK.md) |
 | **Understand the v2 single-HTML contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
 | **Connect Codex or Claude Code** | [Agent setup](studio-v2/AGENT_SETUP.md) |
 | **Maintain the legacy v1 Studio** | [Studio v1 Design Doc](docs/STUDIO_DESIGN.zh-CN.md) (Chinese) |
 | **Bind a template to real data / connect an ERP backend** | [ERP Integration Guide](docs/ERP_INTEGRATION.zh-CN.md) - `{{ }}` placeholders, `PrintFormTemplate.render(data)`, ColdFusion example (Chinese) |
 
-Studio v2 is the intended production path and currently has **Production Pilot** maturity. It exports one self-contained `.html` with declarative JSON Pointer bindings, embedded runtimes and current validation records. Production Ready remains gated by the documented transaction, evidence, channel-security, attestation and content-integrity work. The original Studio remains a frozen legacy playground and is not migrated automatically.
+Studio v2 is the intended production path and currently has **Production Pilot** maturity. It exports one self-contained `.html` with declarative JSON Pointer bindings, embedded runtimes and current validation records. The current version lines are runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0 and Agent Contract 3.0.0. The latest AI Designer information-architecture decision is tracked as E14 Target: document context, structured change cards and on-demand history/settings are not fully implemented yet. Production Ready remains gated by the documented transaction, evidence, channel-security, attestation and content-integrity work. The original Studio remains a frozen legacy playground and is not migrated automatically.
 
 ### 💻 Development
 

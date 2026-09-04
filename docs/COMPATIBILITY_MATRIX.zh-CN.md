@@ -1,6 +1,6 @@
 # 版本与兼容矩阵
 
-> 最后核对：2026-08-17（对齐 Studio v2 Production Foundation 与 Agent Contract 3.0.0）。
+> 最后核对：2026-09-04（对齐 Studio 0.11.0、Protocol 2.0.0 与 Agent Contract 3.0.0）。
 >
 > 本仓库有**四条独立的版本线**。它们描述四种不同的东西、按四种不同的节奏变化，共用一个数字只会让其中三条被迫做无意义的跳版。
 
@@ -11,7 +11,7 @@
 | **PrintForm 引擎** | 1.0.0 | [src/version.js](../src/version.js) → `PrintForm.version` | `dist/printform.js` 这个零依赖分页脚本本身 | 改变既有 ERP DOM 的分页结果、移除 `data-*` 配置项、改掉 `*_processed` class 约定 |
 | **Studio v2** | 0.11.0 | [studio-v2/core/constants.js](../studio-v2/core/constants.js) `STUDIO_VERSION` | 编辑器应用本身（UI、面板、PWA），含 FormSpec、事务与 Evidence Pack 基础 | 工程师工作流出现不兼容的重大改动；**升到 1.0.0 专门保留给维护者显式宣布 Production Ready 的那一刻** |
 | **单 HTML 协议** | 2.0.0 | 同上 `PROTOCOL_VERSION` | 导出文件的结构契约（`pf-manifest`/`pf-schema`/`pf-template`… 各区块的 id 与语义） | 旧版导出文件无法再被本版 Studio 正确解析 |
-| **Agent Contract** | 3.0.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（26 个工具的入参/返回/错误码）；含 FormSpec、transaction、diagnostics、evidence 与 strict export checks | 删除工具、改变既有工具的入参形状或返回契约（本次 3.0.0 收紧 `apply_changes`，不再接受直接 `operations[]`） |
+| **Agent Contract** | 3.0.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（35 个工具的入参/返回/错误码）；含 FormSpec、transaction、diagnostics、evidence 与 strict export checks | 删除工具、改变既有工具的入参形状或返回契约（本次 3.0.0 收紧 `apply_changes`，不再接受直接 `operations[]`） |
 
 ## 为什么必须拆开
 

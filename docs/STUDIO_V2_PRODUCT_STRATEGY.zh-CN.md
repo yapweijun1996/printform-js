@@ -3,6 +3,8 @@
 > 状态：Production Pilot
 >
 > 本文同时记录 Current 定位与 Backlog 产品方向，不替代当前协议。
+>
+> 最后核对：2026-09-04。E14 AI Designer IA/UX 是已确认的 Target；当前代码仍以 `studio-v2/ui/agent-panel-view.js` 和 `studio-v2/ui/agent-panel.js` 的现有 panel 为准。
 
 ## 产品定位
 
@@ -37,7 +39,7 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 ## Current 用户流程
 
 1. 导入单 HTML 或选择 Sales Invoice／Purchase Order 样本。
-2. 用 Table columns、Print font scale、Page settings、Repeated areas、Brand color 等结构化面板，或结构化源码区直接编辑 manifest、schema、i18n、CSS、HTML 与样本数据（Data contract 面板尚未建成，仍需走原始 JSON）。
+2. 用 Table columns、Print font scale、Page settings、Repeated areas、Brand color、Data contract 等结构化面板，或 Advanced source editor 编辑 manifest、schema、i18n、CSS、HTML 与样本数据。
 3. Studio 在复用的可见预览 iframe 中对候选修改做**真实分页渲染**（不止 dry-run 静态校验），显示分页指标，按 `candidateHash` 缓存渲染报告。
 4. UI 或 Agent 调用共享命令总线修改 revision，乐观锁基于永不复用的单调 revision 编号。
 5. AI 对 default 与 long-text 场景调用 `capture_layout_evidence` 取得 Studio 自己签发的几何指纹 receipt（非 Agent 自述），再提交 `complete_layout_review`。
@@ -45,10 +47,20 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 
 这是受控试点流程；六项 P0 硬门的代码部分已全部完成（见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)），但 Production Ready 状态仍需维护者显式宣布。
 
-## Backlog 用户流程（尚未建成）
+## E14 AI Designer 目标流程（Target，尚未建成）
 
-1. Data contract 面板：友好的 JSON Schema + 样本数据编辑器，取代当前仍需直接编辑原始 JSON 的方式；范围较大（表单编辑器级别），需要单独的 UX/schema 范围讨论后才能动手。
-2. Raw HTML/CSS/JSON 编辑器移入 Advanced 模式（其余结构化面板已是默认入口，这一步是收尾整理，非阻塞）。
+1. 用户在 AI panel 中看到当前 document、selection、scope、revision 和 printable status。
+2. 用户提出设计请求；AI 先给出可读的 Proposal，列出 What、Where、Why 和 Safety。
+3. 候选修改在现有可见 preview iframe 中真实渲染并验证；Change Card 显示 applied/reverted、validation 和 Undo。
+4. Conversation 保持主区域；History、Changes、Settings、Activity 和 Gateway 按需打开。
+5. Auto-apply safe changes 仍必须通过现有 preview/approval/hash/transaction path；结构性修改需要 proposal first。
+
+## Backlog 产品方向
+
+- Raw HTML/CSS/JSON 编辑器进一步移入 Advanced 模式并保持稳定 round-trip。
+- 图片资源完整校验、ERP 接入片段生成和更细的连接状态展示。
+- before/after preview、preview 与 Change Card 双向 highlight、可 resize rail。
+- Quotation、Delivery Order、Credit Note 等新模板，以及版本化模板目录。
 
 ## 非目标
 

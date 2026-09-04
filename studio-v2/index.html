@@ -40,12 +40,27 @@
       <button id="editor-toggle" class="secondary editor-toggle" type="button" aria-controls="editor-panel" aria-expanded="false" aria-label="Show source editor" title="Show source editor">
         <span aria-hidden="true">☷</span><span id="editor-toggle-label" data-ui-i18n="editor.toggle.show">Show source</span>
       </button>
-      <label class="button secondary" for="import-file" data-ui-i18n="actions.import">Import HTML</label>
-      <input id="import-file" class="visually-hidden" type="file" accept="text/html,.html">
       <button id="validate-button" class="secondary" type="button" data-ui-i18n="actions.validate">Validate</button>
       <button id="print-button" class="secondary" type="button" data-ui-i18n="actions.print">Print preview</button>
-      <button id="export-untrusted-button" class="secondary" type="button" data-ui-i18n="actions.exportUntrusted">Export Untrusted</button>
-      <button id="export-button" type="button" data-ui-i18n="actions.exportProduction">Production export</button>
+      <div class="more-menu">
+        <button id="more-menu-button" class="secondary more-menu-button" type="button" popovertarget="more-menu" aria-haspopup="menu" aria-expanded="false" data-ui-i18n-aria-label="actions.moreLabel" data-ui-i18n-title="actions.moreLabel" aria-label="More actions" title="More actions">
+          <span aria-hidden="true">⋯</span><span data-ui-i18n="actions.more">More</span>
+        </button>
+        <div id="more-menu" class="topbar-menu" popover role="menu" aria-label="More actions" data-ui-i18n-aria-label="actions.moreLabel">
+          <label id="import-file-item" class="topbar-menu-item" role="menuitem" tabindex="0" for="import-file" data-ui-i18n="actions.import">Import HTML</label>
+          <input id="import-file" class="visually-hidden" type="file" accept="text/html,.html">
+        </div>
+      </div>
+      <span id="export-readiness" class="status blocked" role="status" aria-live="polite" aria-label="Production export blocked">⚠ Blocked</span>
+      <div class="export-split">
+        <button id="export-button" type="button" data-ui-i18n="actions.exportProduction">Production export</button>
+        <button id="export-menu-button" class="export-menu-button" type="button" popovertarget="export-menu" aria-haspopup="menu" aria-expanded="false" data-ui-i18n-aria-label="actions.exportMenu" data-ui-i18n-title="actions.exportMenu" aria-label="Export options" title="Export options">
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div id="export-menu" class="topbar-menu" popover role="menu" aria-label="Export options" data-ui-i18n-aria-label="actions.exportMenu">
+          <button id="export-untrusted-button" class="topbar-menu-item" type="button" role="menuitem" data-ui-i18n="actions.exportUntrusted">Export Untrusted</button>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -143,14 +158,19 @@
       <div class="preview-viewport"><iframe id="preview-frame" title="PrintForm isolated print preview" data-ui-i18n-title="preview.iframeTitle" sandbox="allow-scripts"></iframe></div>
     </section>
 
+    <div id="inspector-resize-handle" class="inspector-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize AI panel" data-ui-i18n-aria-label="inspector.resize" data-ui-i18n-title="inspector.resize" title="Drag to resize · double-click to reset" tabindex="0"></div>
     <aside id="inspector-panel" class="inspector-panel is-closed" aria-hidden="true" aria-label="Validation and agent status" data-ui-i18n-aria-label="inspector.aria">
-      <div class="inspector-header">
-        <div class="inspector-tabs" role="tablist" aria-label="Studio inspector tabs">
-          <button id="quality-tab" role="tab" aria-selected="false" aria-controls="quality-tabpanel" type="button">Quality</button>
-          <button id="agent-tab" role="tab" aria-selected="false" aria-controls="agent-tabpanel" type="button">Agent</button>
-          <button id="ai-designer-tab" role="tab" aria-selected="true" aria-controls="ai-designer-tabpanel" type="button">AI Designer</button>
+      <div class="inspector-header" data-active-tab="ai-designer-tab">
+        <div class="ai-panel-nav inspector-ai-slot" data-slot="brand"><!-- filled by initAgentPanel --></div>
+        <div class="inspector-tabs" role="tablist" aria-label="Studio inspector views" data-ui-i18n-aria-label="inspector.tablist">
+          <button id="ai-designer-tab" role="tab" aria-selected="true" aria-controls="ai-designer-tabpanel" type="button" data-ui-i18n="inspector.tab.designer">Designer</button>
+          <button id="quality-tab" role="tab" aria-selected="false" aria-controls="quality-tabpanel" type="button" data-ui-i18n="inspector.tab.quality">Quality</button>
+          <button id="agent-tab" role="tab" aria-selected="false" aria-controls="agent-tabpanel" type="button" data-ui-i18n="inspector.tab.agent">Agent</button>
         </div>
-        <button id="inspector-close" class="secondary inspector-close" type="button" data-ui-i18n="inspector.close" data-ui-i18n-aria-label="inspector.close" aria-label="Close">Close</button>
+        <div class="ai-nav-actions inspector-ai-slot" data-slot="actions"><!-- filled by initAgentPanel --></div>
+        <div class="inspector-close-slot">
+          <button id="inspector-close" class="secondary inspector-close" type="button" data-ui-i18n-aria-label="inspector.close" data-ui-i18n-title="inspector.close" aria-label="Close">✕</button>
+        </div>
       </div>
       <div id="quality-tabpanel" role="tabpanel" tabindex="0" aria-labelledby="quality-tab" hidden>
         <section><h2 data-ui-i18n="inspector.quality">Quality gate</h2><div id="quality-summary" class="quality-summary"></div><ol id="issue-list" class="issue-list"></ol></section>

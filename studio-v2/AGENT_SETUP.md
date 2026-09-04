@@ -99,7 +99,7 @@ The steps below exercise the **current Pilot contract**. Layout evidence is issu
 1. Open the Studio v2 PWA in the isolated profile. Use `?sample=purchase-order-red` for the Crimson purchase-order pilot or select it from **Standard sample**.
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
-4. Use `inspect_design_state` and `get_operation_catalog`, then use `preview_changes` with the current revision before `apply_changes`.
+4. Use `inspect_design_state` and `get_operation_catalog`, then use `preview_changes` with the current revision, `approve_transaction` with the returned candidate hash, and only then `apply_changes`.
 5. Exercise `default` and `long-text`. In synthetic-data mode the embedded AI review receives bounded, complete-page pixel rasters plus safe metrics; in real-data mode it receives complete-page geometry-only SVG snapshots. A broken scenario returns an unsigned safe observation for diagnosis, never a completion receipt. A human should still inspect the actual browser/system print preview rather than relying on agent evidence alone.
 6. Call `begin_layout_review` and `capture_layout_evidence` for required scenarios. Any major or critical finding blocks completion even if the caller labels it `fixed`; apply a revision-bound repair, capture fresh evidence, then call `complete_layout_review` with the new clean `evidenceIds`.
 7. Treat the resulting receipt as Studio-issued layout evidence. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.

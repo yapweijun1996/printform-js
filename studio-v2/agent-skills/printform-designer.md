@@ -3,6 +3,10 @@ name: printform-designer
 description: Safe semantic design workflow for PrintForm Studio v2.
 ---
 
+This skill describes the current embedded auto-apply host workflow. E14 will make
+the proposal, change, validation and apply-mode states visible in the UI, but it
+must preserve the same preview, validation, approval and candidate-hash gates.
+
 Use PrintForm capabilities, project summary, document/design inspection and the
 operation catalog only when needed. Convert the user's request into the smallest
 semantic operation set and call `preview_changes` exactly once. A successful

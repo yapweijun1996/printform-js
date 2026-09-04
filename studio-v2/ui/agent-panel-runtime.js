@@ -11,7 +11,21 @@ export function runtimeFailed(outcome) {
   return error ? Object.assign(new Error(error.message || t("aiChat.errors.providerTurn")), { code: error.code }) : null;
 }
 
-export function createAgentPanelRuntime({ state, vault, sessions, get, getGateway, profile, status, addMessage, renderProposal, renderSessions, onCandidateState, handleRuntimeEvent, openProviderSettings }) {
+export function createAgentPanelRuntime({
+  state,
+  vault,
+  sessions,
+  get,
+  getGateway,
+  profile,
+  status,
+  addMessage,
+  renderProposal,
+  renderSessions,
+  onCandidateState,
+  handleRuntimeEvent,
+  openProviderSettings
+}) {
   function requireGatewayToken(item) {
     if (!isCredentialFreeDefaultGatewayProfile(item)) return false;
     addMessage("system", t("aiChat.errors.gatewayTokenRequired"));
@@ -23,13 +37,16 @@ export function createAgentPanelRuntime({ state, vault, sessions, get, getGatewa
   async function controllerFor(record, existing = false) {
     const item = profile();
     if (!item) throw new Error(t("aiChat.errors.profileRequired"));
-    const requestedSteps = Number(get("#ai-max-steps").value);
+    const requestedSteps = Number(get("#ai-max-steps")?.value || 100);
     const maxSteps = Number.isInteger(requestedSteps) && requestedSteps >= 4 && requestedSteps <= 100 ? requestedSteps : 100;
-    handleRuntimeEvent({ type: "runtime_config", detail: {
-      provider: item.provider, model: item.model, maxSteps,
-      actionLimit: Math.min(maxSteps, TURN_ACTION_LIMIT), tokenLimit: TURN_TOKEN_LIMIT,
-      agrunCommit: AGRUN_VENDOR_PROVENANCE.commit, agrunSha256: AGRUN_VENDOR_PROVENANCE.sha256
-    } });
+    handleRuntimeEvent({
+      type: "runtime_config",
+      detail: {
+        provider: item.provider, model: item.model, maxSteps,
+        actionLimit: Math.min(maxSteps, TURN_ACTION_LIMIT), tokenLimit: TURN_TOKEN_LIMIT,
+        agrunCommit: AGRUN_VENDOR_PROVENANCE.commit, agrunSha256: AGRUN_VENDOR_PROVENANCE.sha256
+      }
+    });
     state.controller = await DesignerRuntimeController.create({
       Agrun: window.Agrun,
       gateway: getGateway(),
@@ -103,7 +120,7 @@ export function createAgentPanelRuntime({ state, vault, sessions, get, getGatewa
         return null;
       }
     }
-    if (state.proposal) {
+    if (state.proposal && state.proposalStatus !== "applied") {
       addMessage("system", t("aiChat.message.autoApplyStopped"));
       status("aiChat.status.applyFailed");
       return null;
@@ -182,7 +199,14 @@ export function createAgentPanelRuntime({ state, vault, sessions, get, getGatewa
       const outcome = await state.controller.run(prompt, item);
       const failed = runtimeFailed(outcome);
       if (failed) throw failed;
-      const applied = state.proposal ? await autoApplyPending(item) : null;
+      let applied = null;
+      if (state.proposal) {
+        if (state.applyMode === "preview") {
+          status("aiChat.card.pending");
+        } else {
+          applied = await autoApplyPending(item);
+        }
+      }
       const appliedChanged = applied?.changed || applied?.applied?.result?.diff?.changed;
       if (appliedChanged && !applied.review) await runLayoutReview(item, { announce: false });
       await sessions.touch(state.currentRecord.id);
@@ -211,8 +235,8 @@ export function createAgentPanelRuntime({ state, vault, sessions, get, getGatewa
       const result = await state.controller.applyApprovedProposal(proposalId, item);
       if (!state.proposal || state.proposal.proposalId === proposalId) renderProposal(null);
       if (state.proposal) status("aiChat.status.approval");
-      else if (result.review?.readiness) status(result.review.readiness.ok && result.review.readiness.result?.ready ? "aiChat.status.reviewReady" : "aiChat.status.reviewBlocked");
-      else if (result.review?.blocked) status("aiChat.status.reviewBlocked");
+      else if (result?.review?.readiness) status(result.review.readiness.ok && result.review.readiness.result?.ready ? "aiChat.status.reviewReady" : "aiChat.status.reviewBlocked");
+      else if (result?.review?.blocked) status("aiChat.status.reviewBlocked");
       else status("aiChat.status.applied");
     } catch (error) {
       addMessage("system", translateAgentError(error, "aiChat.errors.approvalResolution"));

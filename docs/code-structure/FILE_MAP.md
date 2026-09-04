@@ -50,7 +50,7 @@ src/
 - `AUTO_DOC_GENERATION_GUIDE.md`, `MAINTAINING_DOCS.md`: doc maintenance
 - `STUDIO_V2_INDEX.zh-CN.md`: authoritative v2 documentation entry and maturity matrix
 - `STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md`: ERP-engineer product positioning and metrics
-- `STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md`: Current Pilot limits and Target Agent Contract 2.0
+- `STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md`: Current Pilot limits, Agent Contract 3.0.0 and E14 UX trust constraints
 - `STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md`: P0–P3 implementation sequence and exit criteria
 - `STUDIO_DESIGN.zh-CN.md`: frozen Studio v1 design history
 - `ERP_INTEGRATION.zh-CN.md`: data-binding placeholder syntax + backend integration guide
@@ -93,11 +93,18 @@ studio-v2/
 ├── core/                       # Protocol, binding, validation, runtime, history, command bus
 ├── adapters/                   # WebMCP and browser command gateway
 ├── ui/                         # Editors, preview sandbox, files and draft recovery
+├── server/                     # Bounded SQLite durable transaction service (E13-SERVER)
 ├── samples/                    # Sales invoice pilot and boundary scenarios
 ├── styles/                     # Studio UI styles, each kept below 300 lines
 ├── sw.js                       # Offline shell and confirmed-update flow
 └── AGENT_SETUP.md              # CDP, Codex, Claude Code and Chrome DevTools MCP setup
 ```
+
+Current AI Designer entry points include `ui/agent-panel-view.js` (panel
+structure), `ui/agent-panel.js` (state/render binding), `ui/agent-panel-runtime.js`
+(streaming and auto-apply orchestration) and `ui/agent-settings-modal.js`
+(provider/vault settings). The E14 IA redesign is a Target change to this surface;
+it does not create a second transaction or rendering path.
 
 - `mcp/`: first-party stdio MCP bridge using a CDP origin allowlist.
 - `src/document-runtime-entry.js`: standalone document runtime bundle entry.

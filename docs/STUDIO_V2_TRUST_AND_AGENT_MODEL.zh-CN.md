@@ -2,7 +2,7 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-08-17 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply，旧的 2.1.0 叙述仅作为历史记录。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-09-04 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply/commit，旧的 2.1.0 叙述仅作为历史记录。
 
 > 本轮新增的 Production Foundation 还包括 FormSpec/component registry、Active Table Context、结构化 pagination diagnostics、strict trusted-export allowlist 与持久化 Evidence Pack。若本文下方的 2026-07-31 历史段落与此覆盖冲突，以本段和 `DESIGN.md`/`SPEC.md` 为准。
 
@@ -11,6 +11,18 @@
 单 HTML 是项目与交付物的唯一事实来源。Studio、UI、WebMCP 和第一方 CDP bridge 都只能修改隔离草稿；AI 不能代替工程师执行最终生产导出。
 
 `pf-attestation` 是防篡改验证记录，不是组织数字签名，也不证明业务数据本身正确。金额、税额、折扣与总计继续由 ERP 后端负责，模板只显示、格式化和校验一致性。
+
+## E14 UX 设计对信任模型的约束（Target）
+
+AI Designer 的视觉 redesign 不改变信任边界。UI 必须把 domain transaction state 映射成用户可理解的状态，而不是用聊天文字代替事实：
+
+- Proposal 表示候选计划，不表示已修改。
+- Preview/Validated 表示候选已渲染或验证，不表示已经 commit。
+- Change Card 只有在 commit 成功后才能显示 `Applied`；失败或被阻断时显示明确的 `Blocked`/`Failed`。
+- Undo 应关联 transaction batch；global Undo/Redo 仍作为 secondary control 保留。
+- Auto-apply 只能在现有 preview、approval、revision、candidate hash 和 transaction gate 内执行；不能创建绕过 gate 的 UI shortcut。
+- Context Bar 可以显示 document、selection 和 scope，但 real-data mode 不得因此把业务值写入日志、trace、recovery cache 或 Evidence Pack。
+- 当前 durable transaction 采用原子、fail-closed 语义。E14 第一版不把含糊的 partial success 直接提交给用户；若未来支持拆分，必须显式使用独立 transaction batch 和独立状态。
 
 ## Current：已实现
 
@@ -33,7 +45,7 @@
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。状态**仍暂记为 Production Pilot**：矩阵发现 Purchase Order 的分页页数随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页，功能无缺陷但打印张数不同），该差异是接受还是修复尚未决策；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：Windows 完整矩阵、真实 Safari/打印机链、HA 和 E14 AI Designer UX 尚未完成；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
 
 ## 数据隐私
 

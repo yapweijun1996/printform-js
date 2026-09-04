@@ -5,7 +5,7 @@ import MS from "../../studio-v2/ui/locales/ms.js";
 import JA from "../../studio-v2/ui/locales/ja.js";
 import VI from "../../studio-v2/ui/locales/vi.js";
 import { settingsModalMarkup } from "../../studio-v2/ui/agent-settings-view.js";
-import { panelMarkup } from "../../studio-v2/ui/agent-panel-view.js";
+import { panelMarkup, headerClusterMarkup } from "../../studio-v2/ui/agent-panel-view.js";
 import { translateAgentError } from "../../studio-v2/ui/agent-error-text.js";
 import { applyUiI18n, currentUiLocale, initUiI18n, setUiLocale, t } from "../../studio-v2/ui/ui-i18n.js";
 
@@ -82,6 +82,9 @@ describe("Studio UI i18n", () => {
 
   it("localizes the complete AI Chatbox shell, prompts, and accessibility attributes", async () => {
     document.body.insertAdjacentHTML("beforeend", panelMarkup());
+    // Brand + primary actions render into the shared inspector header at runtime.
+    const cluster = headerClusterMarkup();
+    document.body.insertAdjacentHTML("beforeend", cluster.brand + cluster.actions);
     const expected = {
       "en-MY": { title: "Design your print form", send: "Send", aria: "Start a new AI chat", placeholder: "Ask AI to redesign this print form…", prompt: "Make the Description column wider and keep the table within the page." },
       "zh-CN": { title: "设计你的打印表单", send: "发送", aria: "开始新的 AI 聊天", placeholder: "让 AI 重新设计这个打印表单…", prompt: "加宽 Description 列，并确保表格仍在页面范围内。" },
@@ -97,8 +100,8 @@ describe("Studio UI i18n", () => {
       expect(document.querySelector("#ai-new-session").getAttribute("aria-label")).toBe(copy.aria);
       expect(document.querySelector("#ai-proposal-card h3").textContent).toBe(t("aiChat.proposal.title"));
       expect(document.querySelector(".ai-auto-apply-note").textContent).toBe(t("aiChat.proposal.autoApply"));
-      expect(document.querySelector("#ai-undo-revision").textContent).toBe(t("aiChat.undo"));
-      expect(document.querySelector("#ai-redo-revision").textContent).toBe(t("aiChat.redo"));
+      expect(document.querySelector("#ai-undo-revision").getAttribute("aria-label")).toBe(t("aiChat.undo"));
+      expect(document.querySelector("#ai-redo-revision").getAttribute("aria-label")).toBe(t("aiChat.redo"));
       expect(document.querySelector("#ai-delete-session").title).toBe(t("aiChat.deleteTitle"));
       expect(t("aiChat.prompt.widen")).toBe(copy.prompt);
       expect(t("aiChat.prompt.redPurchaseOrder")).toBeTruthy();

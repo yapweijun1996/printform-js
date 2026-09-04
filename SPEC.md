@@ -2,15 +2,15 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-08-17（Production Verification）。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准。
+> 最后核对：2026-09-04。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
 
 ---
 
 ## 0. Studio v2 Production Foundation 规格（Current）
 
-### 0.0 Verification gate（2026-08-17）
+### 0.0 Verification gate（2026-09-04）
 
-受控发布候选的实证门为：E13-SERVER 后单测 **70 files / 378 tests**、`build:site` PASS、`check:agrun` PASS、三份 pilot `validate:v2` PASS、Chromium Playwright **56/56 PASS**、`npm audit --audit-level=high` 0 high、Windows `npm run doctor` 5/5 PASS、`git diff --check` PASS。当前认证范围只包括 Playwright Chromium revision 1234；Firefox/WebKit/真实 Safari/打印机链仍需各自认证，不作 pixel-identical 承诺。
+受控发布候选的当前实证门为：单测 **70 files / 378 tests**、`npm run doctor` **5 steps / 0 failed**、`build:site` PASS、三个 pilot `validate:v2` PASS、Chromium Playwright **56/56 PASS**。本次验证使用 Playwright 1.62.0 的 Chromium 项目；Firefox/WebKit/真实 Safari/打印机链仍需各自认证，不作 pixel-identical 承诺。`npm audit --audit-level=high` 的最后已记录结果为 0 high，但本次文档更新没有把网络审计命令的未完成执行误写成新的 PASS。
 
 Browser verification matrix:
 
@@ -74,7 +74,7 @@ artifact hash ↔ Evidence Pack hash ↔ committed revision
 
 E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆盖真实 SQLite 文件、双 session CAS race、server clock lease、lost-response retry、process crash/restart、network reconnect、Evidence anchor retry；`70/378` 全量单测与 Chromium 56/56 仍为独立回归门。
 
-部署边界：当前只认证一个 writer service 进程管理一个 SQLite 文件。多实例 active-active、外部数据库故障转移、跨设备浏览器 UI 远程 store adapter 和 durable artifact blob registry 是下一 Epic，不允许通过复制服务进程的方式假装已经支持。
+部署边界：当前只认证一个 writer service 进程管理一个 SQLite 文件。多实例 active-active、外部数据库故障转移、跨设备浏览器 UI 远程 store adapter 和 durable artifact blob registry 属于后续 E15，不允许通过复制服务进程的方式假装已经支持。
 
 ---
 
@@ -164,7 +164,7 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - 预览面板提供「Highlight issues」开关（默认开）：iframe 内 bridge 收到 `printform:rendered` 后用 `issues[].selector` 在当前文档实时定位并画红框；父页通过 `{ source: "printform-studio-v2-command", type: "toggle-overlay" }` 指令切换，指令同样只信任 `event.source === window.parent`，切换不触发重渲染。
 - 「Preview and apply」的应用前确认是并排 diff 面板（`ui/diff-view.js`），不是 `window.confirm`：按 `preview_changes` 返回的 `changedSections` 逐个渲染，JSON 段两侧都先 `stableStringify` 再逐行 LCS 对比（新增行绿、删除行红），CSS/HTML 段按原始字符串逐行对比；`trust` 变化单独一行说明（如 `trusted → untrusted`）。取消/关闭不调用 `apply_changes`；无实际变更时跳过面板直接提示。单侧 >1500 行的 section 跳过逐行高亮，只显示全文。
 
-### 3.5 布局验收证据（Agent Contract 2.0.0）
+### 3.5 布局验收证据（Agent Contract 3.0.0；能力沿自 2.0.0）
 
 - `capture_layout_evidence({ expectedRevision, scenario })`：Studio 把该场景渲染成**未提交候选**（复用可见预览 iframe，revision 不推进），渲染干净时签发 `{ evidenceId, revision, scenario, browser:{name,version}, layoutFingerprint, renderReportHash, metrics, createdAt }`。
 - `layoutFingerprint` = `sha256(stableStringify(pageGeometry))`，`pageGeometry` 是每页直接子元素的 class 加**页内相对**整数矩形（相对坐标是必须的：`getBoundingClientRect` 随滚动变化，绝对坐标会让同一布局哈希出不同值）。不含任何业务文本，因此真实数据模式下也可安全保留与嵌入导出。
@@ -178,14 +178,31 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - 导航请求忽略查询串匹配缓存，离线兜底 `index.html`；页面加载时已有 waiting worker 也会显示升级横幅。
 - UI 五语言（en-MY 默认，静态打包；其余动态加载，失败回退英文，不阻断启动）。
 
+### 3.7 嵌入式 AI Designer 当前 UI 契约（E14 P0 Current）
+
+当前实现提供可折叠的 AI Designer side panel，并已完成 E14 P0 架构重排：
+固定 4 层信息架构：`Panel navigation → Current document context → Conversation → Composer`。
+
+- **Layer 1: Panel navigation**：与 Inspector 视图切换器合并为**单条 header**（`.inspector-header`，三个 Inspector tab 共用）：AI identity + Gateway 状态圆点（green ready / amber busy / red error；`#ai-status` 保留为隐藏的 `role="status"` live region，同时驱动圆点与其 `title`）+ 分段式视图切换器（`Designer / Quality / Agent`，保留 `role="tab"` 语义）+ 图标动作簇（`＋ New` / `⟳ Review` / `☰ Sessions` / `⚙ Settings`，窄轨宽度下折叠为纯图标）+ `Close`。AI identity 与动作簇仅在 `Designer` tab 激活时显示；session 管理与删除仍收纳在抽屉；Provider 设置在 Settings modal。
+- **Layer 2: Current document context**：固定在 header 下方，展示当前活动文档标题（如 `Sales Invoice`）、版本号（如 `r0`）、Draft history（`#ai-undo-revision` / `#ai-redo-revision` 图标按钮）、状态模式（`Committed` 或 `Candidate preview (rX)`）、排版状态（`Printable` / `Blocked` / 警告数）、Apply mode 选择器（`Auto-apply safe changes` 默认 / `Preview before applying`）、活动选区（默认 `Entire document`）与设计范围选择器（`Scope: All sections / Layout / Table columns / Theme`）。
+- **Layer 3: Conversation**：包含 welcome state、建议提示词、对话流、Multimodal layout review card 与结构化 Proposal/Change/Validation cards。
+  - **Change Card**：结构化展示变更目标（Target）、实际变更内容（What，包含可测量的 Before → After 或目标值，不伪造不可测量的值）、安全标记（Safety，如安全语义主题变量或边界检查）；
+  - **Validation Card**：明确展示验证通过或阻断状态，附带页数与行数指标；
+  - **Card-level Batch Undo**：已应用提议卡片提供绑定的 `Undo change` 操作，直接撤销对应的事务版本，并在撤销后支持重做。
+  - Runtime trace（`#ai-trace-panel`，内存清洗元数据）作为 conversation 末尾的可折叠抽屉停靠。
+- **Layer 4: Composer**：仅含输入框 `#ai-prompt`、`#ai-send`、`#ai-stop`（快捷键提示落在 `#ai-prompt` 的 `title`）。Apply mode 两种模式均严格执行 `preview_changes → approve_transaction → apply_changes` 的不可变事务与哈希检查（选择器现位于 Layer 2）。
+- AI Designer 不得绕过公共 Agent Contract 3.0.0 的 transaction gate。Production export 仍需要当前 revision、render report、layout review 和工程师最终点击。
+
+Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持久化到 localStorage；双击复位，方向键微调）。以下能力为下一阶段 Target：P1 历史抽屉与搜索、移动端全屏模式增强、P2 preview element 与 change card 双向 highlight。详见 [工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+
 ---
 
 ## 4. 质量门（CI / 本地）
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（201 个，38 文件） | `npm test -- --run` | 必须全绿 |
+| 单元测试（378 个，70 文件） | `npm test -- --run` | 当前全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Playwright，25 条：首页 1、核心库直渲染 3、v1 结构模式 2、分页黄金样本 3、v2 深度场景 16） | `npm run test:e2e` | 本地/CI，三引擎（Chromium/Firefox/WebKit）；本地跑前确认 4174 端口无手动服务器占用（见 ROADMAP.md §2.1）；**改动 `studio-v2`/`studio`/`docs`/`img` 后必须先 `npm run build:site` 再跑，Playwright 默认 `webServer` 服务的是 `site-dist/` 构建快照而非实时源码**（见 ROADMAP.md §2.1） |
+| E2E（Playwright，56 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；当前 Chromium 项目 56/56 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含两个已签名试点导出 |
