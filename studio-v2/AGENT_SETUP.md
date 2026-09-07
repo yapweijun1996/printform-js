@@ -25,7 +25,7 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 - Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
 - Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
 - The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
-- WebMCP and CDP tools never return sample row values. In the current Pilot UI, engineers must enable real-data mode for the current session to disable draft recovery caching. The Production Ready target treats every unknown import as possible real ERP data by default.
+- Enabling real-data mode disables recovery drafts and changes Agent session/redaction behavior, but does not disable durable project snapshots in localStorage. Unknown imports do not automatically enable this mode. Do not interpret the checkbox as a complete no-persistence guarantee; PROD-13 in the [production plan](../docs/STUDIO_V2_PRODUCTION_PLAN.md) tracks the required classification/storage correction.
 
 ## Recommended Chrome DevTools MCP WebMCP route
 
@@ -116,7 +116,7 @@ OpenAI-compatible Custom LLM. Provider keys are stored only as PBKDF2-HMAC-
 SHA256 (600,000 iterations) + AES-256-GCM ciphertext in IndexedDB; the
 derived key and decrypted credential exist only while the vault is unlocked.
 
-The embedded action flow is:
+The default auto-apply flow is shown below. Ordinary chat in preview-first mode leaves the proposal pending human Apply. Review-generated repairs currently skip that mode check (PROD-02); scope enforcement and card-target Undo are also incomplete (PROD-01/04). All paths still use the existing transaction/hash checks.
 
 ```text
 inspect → operation catalog → preview_changes → host auto-apply (candidate hash + requireValid) → validate

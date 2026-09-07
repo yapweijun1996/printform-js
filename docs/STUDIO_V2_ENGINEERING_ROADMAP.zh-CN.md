@@ -1,8 +1,21 @@
 # PrintForm Studio v2 工程路线图
 
-> 本文全部属于 Target 或 Backlog；当前可用行为以[协议文档](PRINTFORM_V2_PROTOCOL.zh-CN.md)和 `get_capabilities` 为准。
+> This roadmap separates implemented history, pending requirements and proposals. Current behavior is defined by code, [SPEC](../SPEC.md) and the protocol; current acceptance criteria live in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
-> **2026-09-04 当前覆盖**：Production Foundation 与 E13-SERVER 已落地。当前版本线为 runtime `1.0.0`、Studio `0.11.0`、Protocol `2.0.0`、Agent Contract `3.0.0`；公共 Agent 写入必须走 `begin/preview → approve → apply → commit`。本页旧条目中的直接 `operations[]` apply、2.1.0/旧版本和未完成的 Data contract 均为历史状态。最新 AI Designer IA/UX 决策已进入 E14 Target，但尚未进入代码。
+> Last reviewed: 2026-09-07. E12/E13 are implemented; E14 UI exists but behavioral acceptance is Partial. Public writes remain preview → approve → apply with transaction/revision/hash checks. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilots and Windows Chromium 60/60. No code was changed or release declared by this documentation amendment.
+
+## Current priority and dependencies
+
+1. PROD-13 real-data classification/persistence and PROD-01/02/03: scope/selection enforcement, consistent apply policy and truthful state.
+2. PROD-04/07/08: candidate lifecycle, actionable Quality and draft/save/recovery acceptance.
+3. PROD-05/06: bound multi-table limits and explicit repeat-rule granularity; bounded investigation can run independently.
+4. PROD-09/11: proposed workspace and focused <=300-line JS refactors after state contracts are stable.
+5. PROD-10/12: adopted release profile, full applicable print/failure evidence and aligned three-pilot release coverage.
+6. E15: shared-service/HA expansion only when required by deployment scope.
+
+Within priority 1, use the [Agent boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) for M0-M5 delivery gates. Host policy and shared projections integrate before client activation; provider/storage checks, scope/apply/state acceptance and safe rollback remain required. All packages are Pending; the plan adds no deployed capability.
+
+A single-user Windows/Chromium first release and preview-first default are Proposed, not adopted changes. Existing broader acceptance goals remain until explicitly revised. Current default remains auto-apply.
 
 ## 原则
 
@@ -48,50 +61,40 @@
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
 - ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现的跨引擎分页差异已解决**：Purchase Order 的页数曾随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页）。根因是非行区块合计高度随 引擎×语言 波动 24.62px（约 0.59 行），使可用空间 14.59–15.18 行恰好跨在整数边界上。给非行区加 16px（`.pf-page-footer` padding-bottom 12→28px）把整段移到边界同一侧，全部 15 个 引擎×语言 组合收敛到每页 14 行，复跑矩阵 22 个可比格子零分歧。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。**仅剩 Windows 未验证**，GitHub Actions 无现成的 Windows+四浏览器方案，非阻塞待办。
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。Windows Chromium 60/60 was verified on 2026-09-07; full Windows/browser/print acceptance remains pending and its blocking scope depends on the declared release profile. No claim about unavailable CI configurations is made without verification.
 
 ## P1：工程师工作流
 
 - 默认提供 Branding、Page、Repeated areas、Table columns、Locale 和 Data contract 面板。
 - Raw HTML/CSS/JSON 移入 Advanced 模式，仍可手改并稳定 round-trip。
 - ✅ 已实现（2026-07-31）：`ui/diff-view.js` 并排 diff 面板取代 `window.confirm` 一次性文本对话框（逐行 LCS 高亮）。仍是模态而非常驻侧栏，"persistent drawer" 的呈现形式留待与其余 P1 面板一起重新设计。
-- ✅ 已实现（2026-07-31，`90a6c70`）：Table columns 面板——`core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组并解析真实 i18n 标签；另加一个本列表之外的 Print font scale 面板（`typography.js` 的 `currentFontBasePt()` 读回当前基础字号）。两者都遵循 `set_locale`/`set_asset_source` 的直接应用模式，经通用 `apply_changes` 工具传入单个 `set_column_widths`/`set_font_scale` operation（这两个操作类型本身没有专属 CommandBus 工具）。Locale 面板（打印语言选择器）在本项之前已存在。
-- ✅ 已实现（2026-07-31，`8f0718b`）：Page settings + Repeated areas 面板——`core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 从 `.printform` 根元素的 data-* 属性读回页面尺寸与七个 repeat-* 标记，只覆盖两个标准模板实际用到的字段（不是 `src/printform/config.js` 里更大的引擎级配置面）。这两类字段连操作类型都没有，直接复用完全通用的 `set_attribute`（每属性一条，打包进同一 `apply_changes`）。
+- ✅ 已实现（2026-07-31，`90a6c70`）：Table columns 面板——`core/column-inspection.js` 的 `inspectColumnGroups()` 从模板发现 `.prowheader`/`.prowitem` 列组并解析真实 i18n 标签；另加一个本列表之外的 Print font scale 面板（`typography.js` 的 `currentFontBasePt()` 读回当前基础字号）。两者都遵循 `set_locale`/`set_asset_source` 的直接应用模式，Current submission uses one `set_column_widths`/`set_font_scale` operation in preview_changes, then approves and applies that transaction（这两个操作类型本身没有专属 CommandBus 工具）。Locale 面板（打印语言选择器）在本项之前已存在。
+- ✅ 已实现（2026-07-31，`8f0718b`）：Page settings + Repeated areas 面板——`core/page-inspection.js` 的 `inspectPageSettings()`/`inspectRepeatFlags()` 从 `.printform` 根元素的 data-* 属性读回页面尺寸与七个 repeat-* 标记，只覆盖两个标准模板实际用到的字段（不是 `src/printform/config.js` 里更大的引擎级配置面）。这两类字段连操作类型都没有，直接复用完全通用的 `set_attribute`（每属性一条，batched into one preview/approve/apply transaction）。
 - ✅ 已实现（2026-07-31，`d2fe47a`）：Branding 品牌色面板——两个模板的品牌色散落十几处硬编码 hex，全部 token 化是更大的独立设计任务；范围收敛到 `.pf-brand` 标题色一处，新增 `core/branding.js` + `set_brand_color` 操作。
 - ✅ 已实现（2026-07-31，`3699991`）：Data contract 面板——中档范围，schema 树只读展示 + 表单编辑样本值与既有约束（required/min·maxLength/minimum·maximum/enum），复用既有 `replace_schema`/`replace_sample_data` 整段替换操作而非新增操作类型。**不做**增删字段（牵动模板绑定与 i18n 同步，需单独设计）与数组逐行编辑（表单对 45 行数据没有可用性，`items` 类字段仍走原始 JSON）。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
-- 草稿按源文件 fingerprint 保存、限时保留；未知导入默认关闭缓存。
+- Pending PROD-08/13: fingerprint-aware draft protection and safe unknown-import classification. Current recovery is one best-effort record; unknown imports do not disable durable storage.
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。
 - 连接状态区分 WebMCP registered、CDP discovered、Agent connected 与 last command。
 
 退出条件：✅ 工程师无需编辑大段原始 JSON/CSS，即可完成两个标准模板的常见品牌、页面、表格与 locale 修改——六个结构化面板（Table columns/Print font scale/Page settings/Repeated areas/Brand color/Data contract）已覆盖。上方图片校验、草稿 fingerprint、ERP 接入片段生成、连接状态细化仍是独立的 P1 增量项，非本退出条件的必要部分。
 
-## E14 / P0：AI Designer 信息架构与交互基础（P0 已完成，P1/P2 Target）
+## E14: implemented presentation, Partial behavioral acceptance
 
-现有 AI Designer 已完成 P0 4 层固定信息架构重排，提供实时状态绑定的 Current Document Context、结构化 Proposal/Change/Validation cards、可见且可预测的 Apply mode 选择器、强绑定的 Card-level Batch Undo/Redo，以及抽屉式会话管理。
-
-### 决策原则
-
-- **Conversation first**：AI panel 内 conversation 占主要空间；Preview 仍是整个 Studio 的事实来源。
-- **Controls on demand**：History、Settings、Gateway、Activity/Audit 和技术 trace 默认隐藏。
-- **Context always visible**：显示当前 document、selection、scope、revision、render status 和 candidate/committed 状态。
-- **History hidden until needed**：Conversation、Changes、Activity 三种数据分开建模，普通用户默认只看到 Conversation 和 Changes。
-
-### E14 目标分层
-
-| 优先级 | 范围 | 退出条件 |
+| Area | Current | Next acceptance |
 |---|---|---|
-| P0 | `Panel navigation → Context → Conversation → Composer`；Context Bar；Proposal/Change Card；可见 Apply mode；transaction-batch Undo；精简 header | ✅ 已完成：用户能理解 AI 看的是哪个文档和 scope；每个 change 有 target、状态、validation 和 Undo；应用继续满足 preview/approval/hash gate；72 files / 385 tests / 59 e2e 全部绿灯 |
-| P1 | History/Changes drawer、Settings 集中化、动态 quick prompts、stream/error state、mobile full-screen；~~focus restoration~~、~~tab semantics~~ ✅ 已落地（Panel navigation 与 Inspector 视图切换器合并为单条共用 header；分段式 `role="tab"` 切换器；header 动作按钮纳入 `<=1080` overlay 的 focus trap；`data-active-tab` 按 tab 作用域隐藏 AI 动作簇；Gateway 状态收敛为 header 圆点，`#ai-status` 保留为隐藏 live region） | session、gateway、audit 不再永久占据主界面；桌面、tablet、mobile 和键盘路径有自动化覆盖 |
-| P2 | before/after preview、preview 与 change card 双向 highlight、视觉层级 polish；~~可 resize rail~~ ✅ 已落地（左缘拖拽手柄，`--inspector-width` 320–900px，持久化 + 双击复位 + 方向键） | 增强能力不改变项目 SSOT、分页输出、事务或安全边界 |
+| Panel IA | Four layers, consolidated header and desktop export action | Preserve preview space and access to existing tools |
+| Context | Title/revision/candidate badges; Scope selector | PROD-01 enforced selection/scope and PROD-03 truthful rendering/readiness |
+| Cards/history | Structured changes and card-level Undo/Redo controls | PROD-04 candidate lifecycle and pending Changes/history search |
+| Apply mode | Auto/preview controls; default auto | PROD-02 all Review/chat/retry paths honor mode |
+| Responsive | Resizable rail, focus restoration/tab handling, mobile tests | Visible progress, full mobile/error workflows and proposed workspace |
 
-### E14 不变量
+The canonical project envelope remains the source of truth; preview DOM is derived evidence.
+Keep semantic operations, existing transaction/revision/hash checks, real-data privacy and human export.
+Do not describe selection labels as enforcement or automatic transaction approval as proof of human consent.
 
-- 不展示 AI hidden reasoning，只展示用户可验证的 What/Where/Why/Safety/Result。
-- Auto-apply safe changes 只能复用现有 candidate、validation、approval 和 transaction path；不能绕过公共 Agent Contract 3.0.0。
-- 当前事务模型是原子、fail-closed；第一版不默认支持含糊的 partial commit。被阻断的操作应留在 proposal 中，或拆成明确独立的 transaction batch。
-- 不让 AI 直接修改 rendered DOM，不将 selection label 当作没有底层映射的装饰文本。
-- 不改变人工 Production export、真实 ERP 数据默认 deny、real-data pixel evidence 禁止等既有规则。
+Acceptance details and source evidence are in PROD-01 through PROD-13; task status is in [TASK](../TASK.md).
+The Design/AI/Quality workspace and default preview-first are proposals, not current UI contracts.
 
 ## E15：Durable Service Hardening（Target）
 

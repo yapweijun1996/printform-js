@@ -15,18 +15,23 @@ who don't need the diary.
 
 ## [Unreleased]
 
-Current working-tree snapshot: runtime `1.0.0`, Studio `0.11.0`, Protocol
-`2.0.0`, and Agent Contract `3.0.0`. E13-SERVER provides the verified bounded
-single-writer SQLite transaction backend. E14 P0 implements the AI Designer
-information-architecture and interaction foundation: 4-layer IA (`Panel navigation
-→ Current document context → Conversation → Composer`), real state-connected
-Document Context, structured Proposal/Change/Validation cards with measurable
-target and before/after values, visible and predictable Apply mode (`Auto-apply
-safe changes` and `Preview before applying`), card-level batch Undo bound to
-the committed transaction revision, and simplified header with drawer-based session
-management. The latest local evidence is 72 test files / 385 tests, doctor 5/5,
-three pilot static validations, and Chromium E2E 59/59; broader browser, print-chain,
-HA, and current network-audit verification remain separate gates.
+Current working-tree versions: runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `3.0.0`.
+E13-SERVER provides a bounded single-writer SQLite backend; the browser UI still uses localStorage.
+E14 UI includes four layers, context badges, structured change cards, apply-mode controls,
+batch history controls, session/settings/trace surfaces and a resizable rail.
+
+### Documentation — 2026-09-07
+
+- Reconciled architecture, current behavior, epic/task status, roadmap, product strategy,
+  trust model and release checks against code.
+- Corrected blanket E14 completion claims: scope, Review apply policy, readiness display,
+  card-history semantics and real-data persistence remain incomplete.
+- Added the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) with requirement IDs,
+  dependencies, evidence limits, proposed layout and release-profile decisions.
+- Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilot validations,
+  bundle syntax and Windows Chromium 60/60 passed. Full application suites were not rerun
+  for this documentation amendment; no new full browser/print/HA/network-audit result is claimed.
+- No source, runtime-loaded Agent prompt, behavior, version, supported-platform promise or release change.
 
 ## [1.0.0] — 2026-07-31
 

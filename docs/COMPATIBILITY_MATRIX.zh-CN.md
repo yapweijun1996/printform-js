@@ -36,6 +36,14 @@ Studio 的 Agent 连接面板不硬编码版本号：`index.html` 里该元素�
 
 ## 组合兼容性
 
+### Target Agent output migration (2026-09-07)
+
+The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) narrows outputs and introduces scoped reference semantics. Treat this as a breaking Agent Contract change and plan a new major version; the exact release number is not assigned here. Current Agent Contract remains **3.0.0** and no constants, schemas, runtime guidance or bootstrap copies changed in this documentation-only task.
+
+First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. A local MCP catalog does not prove compatibility with the live page. Unsupported/mixed clients must fail safely without raw-output fallback; preserve human editing and existing file-format semantics. Engine, single-HTML protocol, Studio and MCP server implementation versions keep their independent ownership.
+
+### Current file compatibility
+
 - Studio v2 能打开**同 major** 的协议文件（2.x）；跨 major 只读打开，不提供自动迁移（见 `core/migrations.js`）。
 - 导出的单 HTML **不依赖** Studio、WebMCP 或 MCP——它内嵌两段 runtime，断网双击即可渲染。因此"用哪个版本的 Studio 导出"不影响该文件将来能否使用。
 - 引擎版本与协议版本无耦合：导出文件通过 `printformRuntimeHash` 锁定它内嵌的**那一份**引擎源码，换掉即被 attestation 检出（`PRINTFORM_RUNTIME_HASH_MISMATCH`）。

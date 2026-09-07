@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> 最后核对：2026-09-04。E12/E13/E14 数字保留为历史记录；当前工作树的最新门禁为 72 files / 385 tests、doctor 5/5、三个 pilot validate 通过、Chromium E2E 59/59。E14 P0 已全部完成。
+> Last reviewed: 2026-09-07. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilot validations, Windows Chromium 60/60. E14 is Partial. This amendment changes documentation only; dated completion entries below remain historical.
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -151,44 +151,74 @@
 
 | P2（评估，非实现）：`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构——按 grilling 定的顺序（缓存→trace→类重构再评估）走到第三步。**先看 P2 的退出条件本身**：100 行首屏 ≤2s、500 行完整分页 ≤5s、v1 无回归——这三项在缓存那一步（`4c50a35`）已经达成且有金标准分页断言 + 新回归护栏背书，退出条件不要求这批类存在。**再看现状**：`pagination-context.js` 已经有一个每次渲染新建的轻量 `pageContext` 纯对象（`initializePageContext`），被拆分到 formatter 的多个 prototype mixin 里共享读写，已经过 232 单测 + 三引擎 e2e 反复验证；把它和新造的 `PaginationSession`/`LayoutPlan`/`RenderResult` 重新包装成正式类，不修复任何已知 bug、不满足任何未达成的退出条件、也没有具体消费方提出这类结构化返回值的需求——唯一的价值是"更规整"，但代价是再次改动刚刚精心修复并验证过的分页热路径，且改动面横跨 formatter 全部文件。**结论：评估后判定暂不值得做，非放弃、非遗忘，是"无具体驱动力时不为假设中的未来需求设计"的主动决定**（本仓库工程纪律，见 CLAUDE 系统指令）；若未来出现具体驱动力（例如多个独立消费方需要检视分页中间态、或某个真实 bug 追根溯源到当前隐式 context 传递方式），再重新评估。同一决定连带跳过结构化 trace 事件——它在原计划里唯一的价值就是为这批类重构做准备，重构本身既已判定不做，trace 事件也一并延后，不单独实现。**顺带记录一个不在本次评估范围内、决定不牵连的独立小缺口**：`formatAllPrintForms()`（`src/printform.js:82-84`）单份表单渲染失败时只 `console.error` 记录并继续下一份，不把错误反映进返回值——Studio v2 的 `inspectRenderedDocument` 结构校验会间接兜底（渲染失败的表单不会产出预期的分页 DOM 形状，会被结构检查捕获），所以不是静默漏检风险，只是丢失了具体错误信息；范围小、风险低、与类重构决策无关，留作独立待办，不在本次动作中实现 | 无 commit（评估结论，非代码变更） | 无需新测试（未改动任何代码）；核对 `pagination-context.js`（55 行，`initializePageContext`/`refreshPageContextForRow`/`computeRepeatingHeightForPage`/`measureContentHeight` 四个方法）与 `src/printform.js:43-91`（`formatAllPrintForms` 的 try/catch 结构）确认上述现状描述准确 |
 
-## 🔄 进行中
+## Current execution status
 
-（无）
+- Documentation reconciliation: completed in this amendment; no application code, runtime-loaded Agent prompt, configuration or test changes. Documentation-linked version checks passed 4/4; full suites were not rerun.
+- Implementation work: none started in this documentation-only task.
+- Current evidence, detailed requirements and proposed layout: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 
-## ⬜ 待办
+## Corrected E14 acceptance
 
-**六项 P0 硬门的代码部分已全部完成**（#12–14、#16–19），浏览器矩阵验收也已跑满并全过。
+The previous blanket P0 completion label is superseded by this code-backed status.
+Retain original IDs for traceability; new PROD IDs identify specific closure work.
 
-### E14：AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target）
+| ID | Current result | Remaining acceptance |
+|---|---|---|
+| E14-UI-01 | Implemented four-layer IA, simplified header | Preserve through future workspace changes |
+| E14-UI-02 | Partial: title/revision/candidate context exists | PROD-01 scope/selection and PROD-03 readiness mapping |
+| E14-UI-03 | Partial: structured cards and global history controls exist | PROD-04 exact card-target/result checks and candidate lifecycle; PROD-07 navigation |
+| E14-UI-04 | Partial: mode controls and transaction-bound Undo exist | PROD-02 Review repair path must respect preview-first |
+| E14-UI-05 | Partial: Sessions drawer, Settings modal, folded trace exist | Independent Changes/history search is still pending |
+| E14-UI-06 | Partial: resizable rail, focus/tab behavior and desktop export tests exist | Visible progress and complete mobile/error workflows |
+| E14-UI-07 | Existing E14 tests pass; documentation corrected | Add missing behavior tests when implementing PROD fixes |
 
-本 Epic 来自 2026-09-04 的 Studio v2 UX review。它只改 AI Designer 的信息架构和交互呈现，不改变单 HTML SSOT、FormSpec、PrintForm 分页、CommandBus、Agent Contract 3.0.0、Evidence Pack 或人工 Production export。
+## Pending implementation and acceptance
 
-| ID | 范围 | 验收标准 | 依赖 / 回滚 | 状态 |
+All items below remain unimplemented or incompletely verified. Priority P0 denotes a proposed production-release gate, not an emergency or an external access blocker.
+Acceptance details and current code evidence are owned by the production plan.
+The [priority acceptance checklist](docs/STUDIO_V2_P0_ACCEPTANCE.md) defines 35 cases for PROD-13/01/02/03, including combined flows. All are Not run; implementation and verification owners are unassigned. Checklist preparation is complete, but all four PROD tasks remain Pending.
+The [data classification/destination policy](docs/STUDIO_V2_DATA_POLICY.md) is specified as Target for PROD-13: storage, outgoing context, credentials, explicit file saves, old records and async mode changes. Its document work is complete; safe-field enforcement, volatile export integration, cache/asset guards and behavioral verification remain pending.
+The [35-command field allowlist](docs/STUDIO_V2_AGENT_OUTPUT_FIELDS.md) now specifies Target output roots, nested fields and scoped references. Safe-field design is complete; schema enforcement/reference plumbing, client compatibility and all behavioral verification remain Pending. Public get_revision is metadata-only; undo/project, direct transaction results and unprojected history are the reviewed output gaps.
+The [boundary/migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) now defines ownership, admission/delivery checks, M0-M5 dependencies, breaking Agent compatibility migration and safe rollback. Plan documentation is Done; all packages remain Pending, individual owners unassigned and acceptance Not run. No code, contract version, runtime-loaded guidance or release state changed.
+
+| ID | Priority / epic | Action and acceptance | Dependencies | Status |
 |---|---|---|---|---|
-| E14-UI-01 | Panel IA 重排 | 固定层级为 `Panel navigation → Current document context → Conversation → Composer`；History/Settings/Activity/Gateway 按需打开；Preview 仍可见 | `agent-panel-view.js`、layout CSS；已完成 | ✅ 已完成 |
-| E14-UI-02 | Current Document Context | 显示真实 document、selection、scope、revision、render status 和 candidate/committed 状态；无 selection 时明确为 entire document | `agent-document-context.js` 与 app/CommandBus 真实状态绑定；已完成 | ✅ 已完成 |
-| E14-UI-03 | Proposal / Change / Validation cards | Proposal 显示 What/Where/Why/Safety；Change Card 显示 target、真实 before/after、validation、Applied/Reverted/Blocked 和 Undo | `agent-change-cards.js`，复用 transaction、candidate hash、RenderReport；已完成 | ✅ 已完成 |
-| E14-UI-04 | Apply mode 与 Undo | 明确显示 Preview before applying 或 Auto-apply safe changes；Auto-apply 仍经过 preview/approval/hash gate；AI batch Undo 与 transaction 对齐，global Undo/Redo 保留 | 可见 Apply mode 选择器，card-level batch undo；已完成 | ✅ 已完成 |
-| E14-UI-05 | Session/Settings/Activity | New chat、History drawer、Changes view、Settings modal 和 Activity log 责任分离；新 session 持久化后立即刷新并选中 | `agent-sessions.js`、settings modal、trace；已完成 | ✅ 已完成 |
-| E14-UI-06 | 状态、响应式与无障碍 | Idle/Generating/Applying/Validating/Done/Failed/Stopped 状态清楚；mobile full-screen；focus restore、tab semantics、keyboard navigation 和 1440px Production export visibility 有 E2E | 现有 responsive/focus tests，所有单文件 ≤300 行；已完成 | ✅ 已完成 |
-| E14-UI-07 | 回归与文档 | 新增 AI UX E2E 覆盖 conversation、proposal、change、undo、error、history、mobile 和真实 context；同步 DESIGN/SPEC/ROADMAP/相关 docs | 新增 `e2e/studio-v2-e14.spec.js`，59/59 E2E 全过；已完成 | ✅ 已完成 |
+| PROD-01 | P0 / E14 | Connect selection to FormSpec; reject out-of-scope edits in command path | Existing registry/gateway/operations | Pending |
+| PROD-02 | P0 / E14 | One apply policy for chat/Review/retries; preview-first never auto-commits; align runtime-loaded host prompt during implementation | Existing transaction gate; explicit scope eligibility | Pending |
+| PROD-03 | P0 / E14 | Shared render/readiness/candidate/save projections; no premature Printable state | CommandBus + render controller | Pending |
+| PROD-04 | P0 / E14 | Guard card-target Undo and check command results; verify cancel/Stop/replacement/late response/double Apply | PROD-02/03 | Pending investigation and fixes |
+| PROD-05 | P0 / E8/E9 | Define bound per-table/total limits; test two 400-row tables and exact limits | Binding policy; preserve row-conservation checks | Pending |
+| PROD-06 | P0 / E8/E9 | Resolve component repeatHeader versus global flag; prove multi-table semantics | FormSpec/template/formatter; compatibility decision | Pending |
+| PROD-07 | P0 / E14 | Quality blockers explain next action and locate page/component/field | PROD-01/03 + existing diagnostics | Pending |
+| PROD-08 | P0 / E14 | Preserve raw drafts; distinguish applied/recovery/saved/download-started; exercise failure paths | PROD-03; existing privacy policy | Pending investigation and fixes |
+| PROD-09 | P1 / E14 | Reviewable workspace prototype and task-based layout acceptance | PROD-01/03; proposed layout/defaults need adoption | Proposed |
+| PROD-10 | Release / E10 | Record exact platform/paper/locale/template scope; real print, accessibility and failure-path acceptance | Applicable P0 closures; release profile | Pending |
+| PROD-11 | P1 / E11 | Split pagination-render.js (389), app.js (310), agent-panel.js (301) by responsibility; <=300 lines | Focused regression coverage | Pending; no refactor in this amendment |
+| PROD-12 | Release / E10/E11 | Align three-pilot validation/CI/matrix evidence; publish versions, limits, rollback and diagnostics | PROD-10; existing build/doctor/CI | Pending |
+| PROD-13 | P0 / E14 | Classify unknown imports before persistence/AI; enforce real-data policy across durable snapshots, recovery and sessions | app installBus, durable store, gateway and session policy | Pending; code-confirmed gap |
+| DOC-2026-09-07 | Documentation / E11 | Align root and related docs; distinguish Current/Partial/Target/Proposed/Historical | Code review and earlier session evidence | Done; no commit created |
 
-### 宣布 Production Ready 前建议补的一步（非阻塞）
+Implementation rollback must preserve committed projects and durable records. Revert only the affected patch or disable the new path; never treat deleting user storage as the default recovery procedure.
 
-浏览器矩阵已在 **macOS 与 Linux（GitHub Actions Ubuntu runner）** 两个操作系统上跑过，均 88/88 全过、零分歧（Linux 结果见 A3、[docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。**仅剩 Windows 未验证**：GitHub Actions 没有现成的 Windows+四浏览器目标方案（`chrome`/`webkit` channel 在 `windows-latest` runner 上的可用性未知，需要单独调研），仍需另行安排；非阻塞。
+## Other pending work
 
-### 其他候选方向（均未开始、未确认范围）
+- E8: existing structured panels are available; Advanced workflow, image validation, ERP snippets and connection-state detail are not all complete.
+- E9: existing performance budgets pass; speculative PaginationSession/LayoutPlan classes remain deferred. Keep compatible formatter behavior.
+- E10: release attachments and versioned template catalog remain pending; no release/tag/push is authorized by this amendment.
+- E15: remote UI wiring, HA/fencing, failover, external database options, cleanup and artifact registry remain pending and depend on deployment scope.
 
-- **P1 工程师工作流**（EPIC E8）：**六个面板全部就绪**——Table columns（`90a6c70`）、Page settings + Repeated areas（`8f0718b`）、Branding 品牌色（`d2fe47a`）、Data contract（`3699991`，中档范围：查看+改样本值+改既有约束，不含增删字段/数组逐行编辑）与 Locale（原已存在的打印语言选择器），另加一个路线图原列表之外的 Print font scale 面板。P1 阶段的工程实施已无未开始项。
-- **P2 分页引擎演进**（EPIC E9）：**核心退出条件已达成**（行高预测量缓存，`4c50a35`，100 行/500 行性能预算均满足）。`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构与结构化 trace 事件经评估后判定暂不值得做（无具体驱动力，见上方评估记录），非待办、非阻塞。仅剩 `formatAllPrintForms()` 吞掉单表单渲染错误这一独立小缺口留作未来可选项。
-- **P3 发布治理**（EPIC E10）：GitHub Release 附两个已验证试点导出（发布材料备妥后由维护者执行 push/tag/release）、版本化模板目录。（LICENSE、SW precache manifest 自动生成、CHANGELOG、独立 SemVer + 兼容矩阵已完成；当前版本线 runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0）
+## Blockers and evidence boundaries
 
-## 🚧 阻塞
+- No external access blocker prevents the known local implementation work.
+- Production release is not complete: known scope/apply/status/privacy/history and multi-table criteria plus editing/recovery acceptance remain open.
+- Windows Chromium 60/60 is verified; a full Windows browser matrix and real printer/Safari certification are not.
+- Historical macOS/Linux 88/88 records remain valid as dated evidence, not a current Windows certificate.
+- The recommended narrower release profile and preview-first default are Proposed. Do not silently weaken existing broader requirements.
+- HA/remote UI are blockers for a promised shared-service deployment, not for every possible single-user release.
+- Runtime-loaded `studio-v2/agent-skills/printform-designer.md` is intentionally unchanged in this docs-only task; its auto-apply wording is tracked under PROD-02.
 
-（当前无阻塞。历史坑已解除：SW 开发缓存 → `53d4a52`；`build:assets` 未重建导致预览用旧 runtime → 已写入 ROADMAP 2.4 + PR 模板；vitest 下 Node 25 原生 `localStorage` 桩对象遮蔽 jsdom 实现 → 共享 setup polyfill；本机手动预览服务器与 Playwright `reuseExistingServer` 端口冲突会产生假失败 → 验证 e2e 前先确认 4174 端口没有手动服务器占用；新增 `studio-v2/` 下被 import 的文件必须同步 `sw.js` 的 `APP_SHELL`（已发生两次，PR 模板已加提醒）；jsdom 环境下手写脚本重建 window/performance 等全局对象会撞 `Performance.now()` brand-check 死循环，需要真实浏览器上下文验证时改用 Playwright 读取沙箱 iframe（CDP 能穿透 sandbox，页面自身 JS 不能）；**手动测试注入 CSS/属性时要用分页引擎处理后的 `_processed` class 名，不是模板原始 class**（本 session 在测试代码和手动验证脚本里各撞到一次）；**大候选文档（大行数+大字号）的真实渲染可能耗时数十秒**，候选渲染超时不能照搬"~1 秒"的乐观估计，30 秒宽松兜底只防真卡死，不是性能预算（该历史场景已由 P2/E9 的行高预测量缓存 `4c50a35` 解决，30 秒兜底本身作为防真卡死的保险仍保留不变）；**`npx playwright test` 直接跑时默认 `webServer` 服务的是 `site-dist/`（`build:site` 构建快照）而非 `studio-v2/`/`studio/`/`docs/`/`img/` 实时源码**——`npm run test:e2e`（CI 用的也是这条）有 `pretest:e2e` 钩子自动重建，不受影响；只有为了单独跑某条用例而直接执行 `npx playwright test` 才会踩这个坑，此时只跑 `build:assets` 不够，必须整跑一次 `npm run build:site`，否则 Playwright 测的是旧代码且不会有任何报错提示，只是行为对不上（已加入 PR 模板提醒范围内的"重新构建"提醒项）。）
+## Next action
 
-## 📌 下一步
-
-P0-A、P0-B 与 E13-SERVER 的当前代码硬门已完成。**注意不要把这读成无条件 Production Ready**：当前认证仍限定为单 writer SQLite service、Chromium reference runtime、人工审批和既定安全门。
-
-推荐下一阶段：**E14 P1/P2 体验增强或 E15 Durable Service Hardening**——E14 P0 现已将 candidate、validation、transaction、session 与 4 层 IA / Document Context / Change Card 完整交付。后续进入 **E15 Durable Service Hardening**：外部数据库/迁移策略、active-active leader/fencing、跨设备浏览器 remote-store wiring、长时间 abandoned cleanup、故障注入矩阵和 artifact blob registry。在 E15 完成前不扩大多用户发布承诺。
+Implement PROD-13 and PROD-01/02/03 first when coding is authorized, then close candidate/draft/quality and multi-table criteria before release certification.
+For direct `npx playwright test`, build `site-dist` first and avoid a conflicting server on port 4174; `npm run test:e2e` already runs its build hook.
+Service Worker shell entries are generated by the build; do not maintain a manual APP_SHELL list.

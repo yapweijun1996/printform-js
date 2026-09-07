@@ -2,15 +2,15 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-09-04。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
+> 最后核对：2026-09-07。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
 
 ---
 
 ## 0. Studio v2 Production Foundation 规格（Current）
 
-### 0.0 Verification gate（2026-09-04）
+### 0.0 Verification evidence (2026-09-07 review session)
 
-受控发布候选的当前实证门为：单测 **70 files / 378 tests**、`npm run doctor` **5 steps / 0 failed**、`build:site` PASS、三个 pilot `validate:v2` PASS、Chromium Playwright **56/56 PASS**。本次验证使用 Playwright 1.62.0 的 Chromium 项目；Firefox/WebKit/真实 Safari/打印机链仍需各自认证，不作 pixel-identical 承诺。`npm audit --audit-level=high` 的最后已记录结果为 0 high，但本次文档更新没有把网络审计命令的未完成执行误写成新的 PASS。
+Observed earlier in this session: **72 files / 385 tests**, doctor **5/5**, three pilot static validations, bundle syntax check and Windows Chromium **60/60**. This documentation-only amendment did not rerun full application suites. Static pilot results report `layout.verified: false`; no new full browser matrix, real printer/Safari certification or network audit is claimed. Evidence and open requirements: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 
 Browser verification matrix:
 
@@ -33,7 +33,7 @@ Browser verification matrix:
 
 ### 0.2 Transaction contract
 
-Agent 写路径固定为 `begin_transaction → preview_changes → validate → approve_transaction → apply_changes`。`apply_changes` 必须带 `transactionId` 和与 preview 相同的 `expectedCandidateHash`；缺 preview、审批、当前 revision、有效性或 content hash 时 fail closed。commit 前先持久化 `COMMITTING` intent，最终 revision 通过 durable compare-and-swap；旧 revision 永远不会被静默覆盖。事务记录包括 `transaction_id`、`form_id`、`base_revision`、`working_revision`、`owner`、`agent_id`、`status/state`、`patches/changes`、`validation_result`、`preview_hash`、`candidate_content_hash`、`approval`、`lease`、timestamps、`commit_result`、`evidence_pack_ref`。
+Agent 写路径固定为 `begin_transaction → preview_changes → validate → approve_transaction → apply_changes`。`apply_changes` 必须带 `transactionId` 和与 preview 相同的 `expectedCandidateHash`；Preview/approval/revision/content checks are enforced. Validity is required unless the caller explicitly sets `requireValid=false`; embedded AI approvals use true, while human draft helpers permit false. commit 前先持久化 `COMMITTING` intent，最终 revision 通过 durable compare-and-swap；旧 revision 永远不会被静默覆盖。事务记录包括 `transaction_id`、`form_id`、`base_revision`、`working_revision`、`owner`、`agent_id`、`status/state`、`patches/changes`、`validation_result`、`preview_hash`、`candidate_content_hash`、`approval`、`lease`、timestamps、`commit_result`、`evidence_pack_ref`。
 
 状态值（API `status` 使用兼容的小写值，`state` 提供大写显示名）为：`DRAFT`、`PREVIEWED`、`VALIDATED`、`APPROVED`、`COMMITTING`、`COMMITTED`、`ROLLED_BACK`、`EXPIRED`、`CONFLICTED`、`RECOVERY_REQUIRED`。非法迁移返回 `INVALID_TRANSACTION_STATE`；stale commit 返回 `REVISION_CONFLICT { expectedRevision, actualRevision }`。
 
@@ -72,7 +72,7 @@ artifact hash ↔ Evidence Pack hash ↔ committed revision
 
 网络/崩溃语义：提交前响应丢失时客户端先查询 transaction；已提交则 retry 返回 `already_committed`，正在提交则返回 `COMMIT_IN_PROGRESS`，不可确认时返回 recovery 状态并 fail closed。服务重启会恢复 `COMMITTING` / `RECOVERY_REQUIRED`；CAS 前故障判定 rollback，CAS 后 head 与 intent 匹配判定 committed，其他情况判定 conflicted/recovery-required。
 
-E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆盖真实 SQLite 文件、双 session CAS race、server clock lease、lost-response retry、process crash/restart、network reconnect、Evidence anchor retry；`70/378` 全量单测与 Chromium 56/56 仍为独立回归门。
+E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆盖真实 SQLite 文件、双 session CAS race、server clock lease、lost-response retry、process crash/restart、network reconnect、Evidence anchor retry; current regression evidence is recorded in the production plan, separately from historical server acceptance.
 
 部署边界：当前只认证一个 writer service 进程管理一个 SQLite 文件。多实例 active-active、外部数据库故障转移、跨设备浏览器 UI 远程 store adapter 和 durable artifact blob registry 属于后续 E15，不允许通过复制服务进程的方式假装已经支持。
 
@@ -147,7 +147,7 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
   - `set_column_widths({ tableSelector, widths })`：`tableSelector` 可以是逗号分隔的复合选择器（如 `.prowheader, .prowitem`），匹配到的每个 `<table>` 各行各列按位置套用 `widths`；数组长度必须等于该表列数；每个宽度值为 `"N%"`/`"Npx"`/`"Nmm"`/`"Npt"`，或 `""`/`"auto"` 表示该列不设固定宽度（用于 `table-layout:fixed` 下吸收剩余空间的描述类列）。PrintForm 模板常把表头行与重复数据行拆成两个独立 `<table>`（`.prowheader`/`.prowitem`），一次调用即可让两者列宽保持同步。
   - `set_font_scale({ basePt })`：整体平移 `core/typography.js` 的 7 级字号刻度（`--pf-font-minus-3`…`--pf-font-plus-3`，1pt 步进），`basePt` 范围 6–14pt；替换 themeCss 中已注入的旧刻度块，不会重复注入。
   - `set_brand_color({ hex })`：写入 `core/branding.js` 注入的 `--pf-brand-color` 变量（3 或 6 位 hex，正则 `^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$`），仅驱动两个标准模板里 `.pf-brand` 标题文字色一处——两个模板的品牌色其余十几处用法（表头背景、边框、汇总框等）仍是硬编码字面量，未纳入本工具，是刻意收窄的范围（见 EPIC.md E8）。替换 themeCss 中已注入的旧值，不会重复注入。
-- Page settings（页面尺寸 `data-papersize-width/height`）与 Repeated areas（七个 `data-repeat-*` 标记）**没有专属操作类型**，经由通用 `set_attribute` 逐属性调用、在同一次 `apply_changes` 里打包多条实现（studio-v2/core/page-inspection.js 只读回两个标准模板实际用到的字段）。
+- Page settings（页面尺寸 `data-papersize-width/height`）与 Repeated areas（七个 `data-repeat-*` 标记）**没有专属操作类型**，经由通用 `set_attribute` 逐属性组成 operations，在同一 transaction 的 preview/approve/apply 中提交（studio-v2/core/page-inspection.js 只读回两个标准模板实际用到的字段）。
 - 布局审查：`capture_layout_evidence`（按场景签发证据，见 §3.5）→ `begin_layout_review`（每 revision 最多 3 次，需先有 ready 渲染报告）→ `complete_layout_review`（提交 `evidenceIds`/findings/summary，major/critical open 阻断）；任何 mutation 使审查、渲染报告与已签发证据同时失效。
 - 生产导出 readiness = 静态验证 + 当前 revision 渲染报告 ready + 布局审查通过；最终下载永远需要工程师点击。
 - `preview_changes` 在浏览器环境下对候选项目做**真实分页渲染**（复用 UI 的可见预览 iframe，不止 schema/业务规则校验）：返回的 `validation` 携带真实 `issues[]`/`metrics`（含 `logicalPages` 等只有真实渲染才有的字段），并附带 `candidateHash`（`sha256(stableStringify(candidate))`）。`approve_transaction` 固定该候选，`apply_changes` 只接受同一 transaction/revision/hash 并复用已渲染报告；缺 preview/approval、候选内容变化或渲染失败均 fail closed。无浏览器上下文（单测、CLI 校验器）时仍能做静态 schema/业务规则 preview，但不会伪造真实 render evidence。
@@ -178,9 +178,9 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - 导航请求忽略查询串匹配缓存，离线兜底 `index.html`；页面加载时已有 waiting worker 也会显示升级横幅。
 - UI 五语言（en-MY 默认，静态打包；其余动态加载，失败回退英文，不阻断启动）。
 
-### 3.7 嵌入式 AI Designer 当前 UI 契约（E14 P0 Current）
+### 3.7 Embedded AI Designer: Current controls and known limits
 
-当前实现提供可折叠的 AI Designer side panel，并已完成 E14 P0 架构重排：
+Current implementation provides a collapsible AI Designer panel; visual IA exists, but E14 behavioral acceptance is Partial:
 固定 4 层信息架构：`Panel navigation → Current document context → Conversation → Composer`。
 
 - **Layer 1: Panel navigation**：与 Inspector 视图切换器合并为**单条 header**（`.inspector-header`，三个 Inspector tab 共用）：AI identity + Gateway 状态圆点（green ready / amber busy / red error；`#ai-status` 保留为隐藏的 `role="status"` live region，同时驱动圆点与其 `title`）+ 分段式视图切换器（`Designer / Quality / Agent`，保留 `role="tab"` 语义）+ 图标动作簇（`＋ New` / `⟳ Review` / `☰ Sessions` / `⚙ Settings`，窄轨宽度下折叠为纯图标）+ `Close`。AI identity 与动作簇仅在 `Designer` tab 激活时显示；session 管理与删除仍收纳在抽屉；Provider 设置在 Settings modal。
@@ -188,10 +188,22 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - **Layer 3: Conversation**：包含 welcome state、建议提示词、对话流、Multimodal layout review card 与结构化 Proposal/Change/Validation cards。
   - **Change Card**：结构化展示变更目标（Target）、实际变更内容（What，包含可测量的 Before → After 或目标值，不伪造不可测量的值）、安全标记（Safety，如安全语义主题变量或边界检查）；
   - **Validation Card**：明确展示验证通过或阻断状态，附带页数与行数指标；
-  - **Card-level Batch Undo**：已应用提议卡片提供绑定的 `Undo change` 操作，直接撤销对应的事务版本，并在撤销后支持重做。
+  - **Card-level Undo/Redo controls**: applied/reverted cards expose history actions. Current callbacks invoke global undo/redo without checking the card's applied revision or the command result before updating the badge; exact batch-target and failure semantics remain PROD-04.
   - Runtime trace（`#ai-trace-panel`，内存清洗元数据）作为 conversation 末尾的可折叠抽屉停靠。
 - **Layer 4: Composer**：仅含输入框 `#ai-prompt`、`#ai-send`、`#ai-stop`（快捷键提示落在 `#ai-prompt` 的 `title`）。Apply mode 两种模式均严格执行 `preview_changes → approve_transaction → apply_changes` 的不可变事务与哈希检查（选择器现位于 Layer 2）。
 - AI Designer 不得绕过公共 Agent Contract 3.0.0 的 transaction gate。Production export 仍需要当前 revision、render report、layout review 和工程师最终点击。
+
+Known Current limitations:
+
+- Scope changes only assign `state.activeScope`; selection is initialized as `Entire document`. No selected-component execution boundary is implemented (PROD-01).
+- Context stores `renderStatus` but chooses Printable/Blocked from error/warning counts. It is not the authoritative export-readiness indicator (PROD-03).
+- Ordinary chat respects preview-first; layout-review repair orchestration calls auto-apply without checking that mode (PROD-02). Approval/hash checks still run.
+- Current default is auto-apply. Catalog risk labels do not establish a shared risk-based auto-apply policy.
+- Human draft helpers and convenience transactions may use `requireValid=false`; Applied does not imply valid, saved or export-ready.
+- `countRows` and runtime `maxArrayLength` take the maximum nested array length, not total bound rows. Default limits are 500 rows / 100 logical pages (PROD-05).
+- `set_pagination_rule(repeatHeader)` accepts a component ID but writes the document root repeat flag (PROD-06).
+- Recovery cache is best-effort, one localStorage record with a seven-day expiry. Download fallback reports initiation, not confirmed disk persistence (PROD-08).
+- Real-data mode suppresses recovery cache and changes Agent session handling, but CommandBus still receives localStorage and persists full project snapshots. Import does not automatically classify unknown content as real; PROD-13 tracks this privacy gap.
 
 Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持久化到 localStorage；双击复位，方向键微调）。以下能力为下一阶段 Target：P1 历史抽屉与搜索、移动端全屏模式增强、P2 preview element 与 change card 双向 highlight。详见 [工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
@@ -201,8 +213,8 @@ Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（378 个，70 文件） | `npm test -- --run` | 当前全绿 |
+| 单元测试（385 个，72 文件） | `npm test -- --run` | 当前全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Playwright，56 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；当前 Chromium 项目 56/56 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
+| E2E（Chromium 60 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；2026-09-07 Windows Chromium 项目 60/60 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
-| 站点构建 | `npm run build:site` | 含两个已签名试点导出 |
+| 站点构建 | `npm run build:site` | 含三个带 attestation 的试点导出 |

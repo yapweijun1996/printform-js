@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> 最后核对：2026-09-04（E13-SERVER 已完成；AI Designer UX redesign 已决策、尚未实现）。
+> Last reviewed: 2026-09-07. E12/E13 foundation is implemented; E14 UI exists but behavioral acceptance is Partial. Current evidence and PROD requirements: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Dated counts below are historical.
 
 ## E12：Studio v2 Production Foundation（2026-08-17，已完成）
 
@@ -22,7 +22,7 @@ E12 退出证据：68 files / 361 unit tests、`build:site`、`check:agrun`、�
 
 ## E13：Durable Transaction / Concurrency / Recovery
 
-状态：✅ **E13-SERVER 受控部署验收通过；Production Candidate 94/100**。
+状态：✅ **E13-SERVER 受控部署验收通过；Production Candidate (historical assessment: 94/100)**。
 
 范围：在不替换 PrintForm.js、Protocol 或 FormSpec 的前提下，把 transaction、revision、lease、audit 和 Evidence Pack 从 local/offline contract 延伸到真实 SQLite writer service。localStorage 仍保留为 offline/single-session fallback；跨设备发布必须走 server adapter。
 
@@ -43,28 +43,30 @@ E12 退出证据：68 files / 361 unit tests、`build:site`、`check:agrun`、�
 
 本 Epic 不增加 AI 设计能力，不让 Agent 修改 rendered DOM，不把分页职责移入交易服务；E14 先处理已确认的 AI Designer IA/UX，E15 再解决 server HA/数据库迁移/故障演练和多用户发布边界。
 
-## E14：AI Designer Information Architecture & Interaction Foundation（P0 已完成，P1/P2 Target）
+## E14: AI Designer and production workflow (Partial)
 
-状态：🔶 **P0 已完成**。已实现已决策的 AI Designer 目标结构与核心状态流，P1/P2 待后续迭代。
+Current: four-layer IA, document title/revision/candidate context, structured proposal/change/validation cards, apply-mode controls, card-level Undo/Redo controls, session drawer, settings modal, collapsed trace, resizable rail and responsive/focus/tab handling.
 
-目标：把现有 AI Designer 从“承载聊天、配置、session、审计和历史的拥挤 sidebar”整理为 document-aware AI design conversation。Preview 仍是 Studio 的事实来源；AI panel 内 conversation 是主要 AI 交互区域。
+The earlier blanket "P0 completed" conclusion was too broad. Corrected acceptance:
 
-固定层级：`Panel navigation → Current document context → Conversation → Composer`。
+| Area | Status | Remaining work |
+|---|---|---|
+| Panel IA and cards | Implemented foundation | Preserve existing presentation and transaction-bound history |
+| Document context | Partial | PROD-01 component selection/scope enforcement; PROD-03 render/readiness state |
+| Apply mode | Partial | PROD-02 apply policy across chat, Review repairs and retries |
+| Candidate lifecycle | Partial | PROD-04 cancellation, stale response and duplicate-action verification |
+| Session/settings/activity | Partial | Existing drawer/modal/trace; independent Changes/history search remains pending |
+| Responsive/accessibility | Partial | Existing tests/rail/focus behavior; visible progress and full workflow acceptance remain pending |
+| Data protection and Quality | Partial | PROD-07/08 actionable issues and draft/save; PROD-13 real-data import/durable persistence |
+| New workspace layout | Proposed | PROD-09 central preview + Design/AI/Quality + on-demand structure/Advanced |
 
-P0 范围（✅ 全部完成并经 E2E/单元测试验证）：
+Dependencies: existing FormSpec, CommandBus transactions, renderer and trust/evidence gates. The project envelope remains canonical; preview DOM is visual evidence.
 
-- ✅ 重排 AI panel IA 为 4 层架构，减少 permanent navigation 和 management controls。
-- ✅ 增加 real Current Document Context，动态展示 document、selection、scope、revision、render status 与 candidate/committed 状态。
-- ✅ 将 proposal 呈现升级为结构化 Proposal、Change 与 Validation cards；显示 target、可测量的 before/after、safety 与 validation 指标。
-- ✅ 可见且可预测的 Apply mode（`Auto-apply safe changes` 与 `Preview before applying`）；保持所有现有 preview、validation、approval 和 transaction 门禁。
-- ✅ 将 Undo 与已提交的 transaction batch 关联，在卡片上直接提供上下文撤销/重做；global Undo/Redo 作为 secondary control 保留。
-- ✅ 精简 header，移除永久性 Gateway、Audit、Delete 堆叠，将 session 管理收纳至抽屉式区域。
+Related work: PROD-05/06 under E8/E9 address multi-table limits and repeat-rule semantics; PROD-10/12 under E10 cover release evidence; PROD-11 under E11 addresses oversized JS.
 
-P1 范围（Target）：History drawer、Changes view、Settings 集中化、动态 quick prompts、streaming/error states、mobile full-screen chat、focus restoration、tab semantics 和 keyboard accessibility。
+The recommended single-user Windows/Chromium release profile and preview-first default are Proposed, not implemented or adopted release commitments. E15 is a dependency only when the selected deployment promises shared-service capabilities.
 
-P2 范围（Target）：before/after preview、change card 与 preview element 双向 highlight、可 resize rail、视觉层级 polish 和完整 AI UX E2E。
-
-明确不在 E14：不重写分页器、不让 AI 修改 rendered DOM、不改变单 HTML 协议、不引入任意表达式、不取消人工 Production export、不默认允许 partial commit。
+Keep the pagination engine, protocol compatibility, semantic Agent boundary, real-data privacy and final human export. This amendment authorizes no implementation.
 
 ## E15：Durable Service Hardening（Target）
 
@@ -85,5 +87,5 @@ P2 范围（Target）：before/after preview、change card 与 preview element �
 | E9 | P2 分页引擎演进 | ✅ | 核心退出条件（100 行首屏 ≤2s、500 行完整分页 ≤5s、v1 无回归）已达成：行高预测量缓存（`4c50a35`，先用 spike 画像定位真因——72% 耗时在 `getBoundingClientRect`——再动手，不猜架构；金标准分页断言三引擎逐页行分布字节不差，新增"500 行+放大字号"回归护栏）。`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构与结构化 trace 事件经评估（无代码改动）判定暂不值得做——退出条件不要求这批类存在，现有轻量 `pageContext` 纯对象已过充分测试，且无具体消费方需求驱动，改动只会再次触碰刚验证过的热路径；非放弃，是主动的"无驱动力不为假设需求设计"决定，详见 TASK.md。硬约束（v1 ERP DOM 行为不变）全程未破 |
 | E10 | P3 发布治理 | 🔶 | LICENSE、SW precache manifest、CHANGELOG、独立 SemVer 和兼容矩阵已完成；当前版本线为 runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0。待办：GitHub Release 附试点导出、版本化模板目录 |
 | E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（`4a0c5e0`）、PR 模板（`c081a91`）、3 页分页黄金样本（`c081a91`，Playwright 共 21 测试）、`studio-v1.spec.js` 满载并行 flake 修复（`94f2c7e`）、`npm run doctor` 一键体检脚本（`07b3947`）。待办：文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |
-| E14 | AI Designer IA & Interaction Foundation | 🔶 | P0 已全部完成：4 层 IA、Current Document Context、结构化 Proposal/Change/Validation Cards、可见且可预测的 Apply Mode、Card-level Batch Undo、精简 Header。P1/P2 待后续推进。 |
+| E14 | AI Designer and production workflow | 🔶 | UI foundation implemented; PROD-01/02/03/04/07/08/13 pending; PROD-09 layout proposed. See corrected acceptance above. |
 | E15 | Durable Service Hardening | ⬜ | 原 E14 后续项：HA/fencing、外部数据库、remote UI store、recovery operations 和 artifact registry。 |

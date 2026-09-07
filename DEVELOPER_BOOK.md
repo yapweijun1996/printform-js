@@ -4,7 +4,7 @@
 - Serve the repo with `python3 -m http.server 8000` (or `python -m http.server 8000`) and review pages at `http://localhost:8000/`.
 - Or run the Vite dev server: `npm run dev`.
 - Build the single-file bundle (needed after editing sources): `npm run build`.
-- Use Chromium print preview as the source of truth; confirm widths stay below 750px.
+- Use browser print preview as visual evidence against the document's configured paper/content bounds. The canonical project envelope remains the source of truth; there is no universal 750px content limit.
 
 ## N-up (physical sheet packing)
 - Set `data-n-up="2"` on the `.printform` to pack 2 logical pages into one physical page wrapper.
@@ -56,3 +56,14 @@
 - Use a new `indexXXX.html` variant for smoke demos and document fresh flags in the `.printform` comment.
 - Collect Chromium print preview screenshots (first/last page) plus testing notes for every PR.
 - Use `data-div-page-break-before-class-append` when you need extra classes on generated page-break dividers.
+
+## Studio v2 current boundaries (2026-09-07)
+
+- Read [SPEC](SPEC.md) for implemented behavior and the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) for known gaps and proposals.
+- CommandBus owns committed state; the single visible iframe renders candidates and committed projects. Never persist edits by mutating preview DOM.
+- The browser UI uses localStorage transaction storage; the separate SQLite backend does not mean remote UI or HA is complete.
+- E14 UI exists, but Scope, cross-path apply policy, readiness, card-history and real-data persistence acceptance remain incomplete.
+- `npm run doctor` runs five steps: AGRUN integrity, unit/build:site, and three pilot static validations. It excludes E2E.
+- `npm run test:e2e` rebuilds the site through its pretest hook. Before direct `npx playwright test`, build `site-dist` and check port 4174 is not serving another root.
+- For docs-only work, check local links, status/requirement consistency, touched-file line counts and diff scope. Do not relabel historical application tests as new runs.
+- Runtime-loaded `studio-v2/agent-skills/printform-designer.md` affects AI behavior; change it with the host policy and its tests during authorized implementation.

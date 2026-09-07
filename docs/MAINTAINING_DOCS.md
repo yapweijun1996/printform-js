@@ -2,7 +2,7 @@
 
 > 如何保持 PrintForm.js 文档的更新和同步
 >
-> 最后核对：2026-09-04。Studio v2 的 Current/Target/Backlog 状态必须以代码、测试和下方 SSOT 分工为依据，不能只更新单个摘要页面。
+> 最后核对：2026-09-07。Studio v2 的 Current/Target/Backlog 状态必须以代码、测试和下方 SSOT 分工为依据，不能只更新单个摘要页面。
 
 ---
 
@@ -24,6 +24,8 @@
 | **EPIC.md** | Epic 状态与范围 | 手动 | 每次 Epic 状态变化 |
 | **ROADMAP.md** | 阶段顺序与维护策略 | 手动 | 每次优先级或阻塞变化 |
 | **TASK.md** | 可执行任务、验收和回滚 | 手动 | 每次任务开始或完成 |
+| **docs/STUDIO_V2_PRODUCTION_PLAN.md** | Latest evidence, PROD criteria, dependencies and proposals | Manual | Review or acceptance changes |
+| **docs/STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md** | Release checks for the declared environment | Manual | Release criteria/evidence changes |
 
 ### 可选文档
 
@@ -235,10 +237,7 @@ printform-js/
 
 ### Q: 文档太多了怎么办?
 
-**A:** 当前文档数量是合理的(9个)。如果觉得太多:
-- 核心文档不要删除(7个)
-- 可选文档可以移到 `docs/` 目录
-- 临时文档应该及时删除
+**A:** Assign one owner per fact. SPEC owns implemented behavior; the production plan owns current evidence and acceptance IDs; TASK owns execution status. Link summaries to those owners instead of copying long status histories.
 
 ### Q: 如何确保文档同步?
 
@@ -256,4 +255,17 @@ printform-js/
 
 ---
 
-**最后更新:** 2026-01-16
+## Documentation-only verification
+
+- Compare claims with code entry points and actual test results; preserve dated historical evidence.
+- Separate Current, Partial, Pending/Target, Proposed and Historical. A review recommendation does not change a product default or platform promise.
+- Keep product maturity, document trust and current export readiness distinct.
+- Never equate a visible control with enforced behavior; verify the state/command consumer.
+- Never treat clearing recovery cache as proof that all durable stores are disabled.
+- Report whether tests ran in this amendment or were carried forward from an unchanged-code review.
+- Validate local Markdown links, changed file scope, <=300-line documents and `git diff --check`.
+- Do not run generators or rebuild assets unless needed; documentation changes do not require application code changes.
+- Treat runtime-loaded `studio-v2/agent-skills/printform-designer.md` as executable prompt behavior. Track drift in PROD-02 and amend it with host-policy implementation/tests, not an editorial-only patch.
+- Do not mark a pending implementation Done when only its specification or task entry was updated.
+
+**最后更新:** 2026-09-07

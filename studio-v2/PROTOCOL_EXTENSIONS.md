@@ -1,6 +1,6 @@
 # PrintForm Studio v2 declarative extensions
 
-> Maturity: **Production Pilot**. Last checked: 2026-09-04. The locale, print i18n and image-slot sections describe Current behavior. Protocol remains `2.0.0`; the E14 AI Designer UX target changes presentation, not this document envelope or trust contract. The review section distinguishes the current Pilot gate from the Production Ready target.
+> Maturity: **Production Pilot**. Last checked: 2026-09-07. Locale, print i18n and asset sections describe Current behavior. Protocol remains `2.0.0`; E14 UI exists with pending behavioral acceptance. The [production plan](../docs/STUDIO_V2_PRODUCTION_PLAN.md) separates current gaps from proposed layout/defaults. No runtime or trust gate changes are implemented here.
 
 ## Studio interface language
 

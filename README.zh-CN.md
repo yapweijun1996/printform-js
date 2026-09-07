@@ -22,7 +22,7 @@
 
 Studio v2 当前是面向 ERP 工程师的 **Production Pilot**，不是无代码自由画布。请打开 [studio-v2/index.html](studio-v2/index.html)：它以单一 `.html` 为事实来源，提供声明式 JSON Pointer 数据绑定、内嵌 runtime、质量门、WebMCP 渐进增强和离线 PWA。工程师下载后仍可阅读和手改 HTML。
 
-先阅读 [Studio v2 文档索引](docs/STUDIO_V2_INDEX.zh-CN.md)了解 Current、Target 与 Backlog；当前文件契约见[单 HTML 协议](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md)，Codex／Claude Code 接入见 [Agent setup](studio-v2/AGENT_SETUP.md)。当前版本线为 runtime 1.0.0、Studio 0.11.0、Protocol 2.0.0、Agent Contract 3.0.0。AI Designer 的最新 IA/UX 目标已记录为 E14 Target，尚未全部实现。只有六项 P0 生产硬门和维护者发布确认完成后，v2 才可改称 Production Ready。
+Start with the [Studio v2 index](docs/STUDIO_V2_INDEX.zh-CN.md), [protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) and [Agent setup](studio-v2/AGENT_SETUP.md). Versions remain runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0. E14 UI and change cards exist; scope, apply-policy, state/persistence and release acceptance remain Partial. The [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) records current evidence and proposed changes. No Production Ready release is declared.
 
 原有 [studio/index.html](studio/index.html) 继续作为冻结的 v1 调试工具，不自动迁移旧模板：
 

@@ -1,14 +1,16 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> 最后核对：2026-09-04（E13-SERVER 已完成；E14 AI Designer IA/UX 已决策、尚未实现）。
+> Last reviewed: 2026-09-07. E14 visual foundation exists; behavioral correction precedes further UX expansion. Current criteria and evidence: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
 ---
 
-## 0. 当前阶段：Production Pilot 收口与 E14 AI Designer UX（2026-09-04）
+## 0. Current: Production Pilot behavioral and release acceptance
 
-状态：🔶 **YES, WITH CHANGES — remain Production Candidate，94/100**。E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库、浏览器 UI remote-store wiring 和更广打印链仍未认证。当前下一项产品工作是 E14 AI Designer 信息架构与交互基础，而不是宣布 Production Ready。
+The [Agent boundary migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) details the PROD-13/01/02/03 integration order: baseline and compatibility inventory, host/storage policy, shared command enforcement, client migration, combined acceptance, then authorized release. All implementation packages remain Pending; this does not change current versions or authorize rollout.
+
+状态：🔶 **Production Pilot / bounded Production Candidate**. Historical 94/100 scoring is not a current release decision. E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库、浏览器 UI remote-store wiring 和更广打印链仍未认证。当前下一项产品工作是 E14 AI Designer 信息架构与交互基础，而不是宣布 Production Ready。
 
 本阶段在现有 Protocol、CommandBus 与 PrintForm runtime 上做最小增量：FormSpec/component registry、Active Table Context、多页确定性诊断、Agent transaction gate、trusted export allowlist、Evidence Pack，以及 E13 durable transaction store/state machine/CAS/lease/recovery/server adapter 已进入代码和测试。仍不扩大为一般 Production Ready，因为当前服务只认证单 writer SQLite 部署，浏览器默认 localStorage 仍是 offline/single-session fallback，Firefox/WebKit/真实 Safari/打印机链也未认证。
 
@@ -21,7 +23,7 @@
 - trusted export 的脚本/事件处理器/危险 URL/外部资源 allowlist 与 content hash。
 - durable transaction store/server adapter：transaction/revision/lease/audit/evidence anchor 持久化；真实 SQL CAS、server clock lease、commit/evidence retry 幂等；发布门失败时 fail closed。
 
-E12 的独立运维任务 `OPS-NANOID`、`OPS-PLAYWRIGHT`、`OPS-WINDOWS-DOCTOR` 已有独立证据；退出条件已满足。E13-SERVER 的 bounded backend 与 acceptance 已完成。E14 只调整 AI Designer 的信息呈现和交互，不改变 PrintForm 分页、Protocol、CommandBus、事务、证据或人工导出边界；E15 再处理 HA/recovery hardening。
+E12 的独立运维任务 `OPS-NANOID`、`OPS-PLAYWRIGHT`、`OPS-WINDOWS-DOCTOR` 已有独立证据；退出条件已满足。E13-SERVER 的 bounded backend 与 acceptance 已完成。E14 now includes correcting scope enforcement, apply-policy consistency and state ownership through the existing domain boundaries. Existing transaction/evidence/privacy/export gates remain required. E15 handles shared-service expansion, not a universal prerequisite for a single-user release.
 
 ### 0.1 E12 验证记录
 
@@ -55,19 +57,22 @@ E12 的单用户路径保留兼容，不做破坏式替换。
 | regression | E13-SERVER 8/8；全量 70 files / 378 tests；build:site、doctor 5/5、validate:v2 3/3、Chromium 56/56；audit 0 high 为历史记录，本次未重新完成网络审计 |
 | deployment boundary | 单 writer service + SQLite 文件；active-active/HA/remote UI adapter 未认证，保留 Production Candidate |
 
-### 0.4 E14：AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target）
+### 0.4 E14 and production correction sequence
 
-目标：把现有 AI Designer 从拥挤的 control dashboard 整理成 document-aware AI design conversation。Preview 仍是 Studio 的事实来源；conversation 只在 AI panel 内成为主要交互区域。
-
-固定层级：`Panel navigation → Current document context → Conversation → Composer`。
-
-| 优先级 | 目标 | 退出条件 |
+| Order | Work | Dependency / exit |
 |---|---|---|
-| P0 | IA、Context Bar、Proposal/Change Card、可见 Apply mode、transaction-batch Undo、精简 header | ✅ 已完成：用户能看到当前文档/selection/scope/revision/status；每次 AI change 有 target、状态、validation 和可解释 card-level Undo；所有应用仍经过 preview/approval/hash gate；Chromium E2E 59/59 |
-| P1 | History/Changes drawer、Settings 集中化、动态 prompt、stream/error state、mobile full-screen、focus/tab accessibility | 不再 permanent 显示 technical audit/gateway/session management；关键键盘和移动端路径有 E2E 验证 |
-| P2 | before/after、preview highlight、resizable rail、视觉 polish、完整 UX 回归 | 不影响 preview 可用空间、打印行为和现有安全门 |
+| 1 | PROD-13 privacy, PROD-01 scope, PROD-02 apply policy, PROD-03 state | FormSpec/CommandBus/renderer; prove cross-path behavior |
+| 2 | PROD-04 candidate lifecycle, PROD-07 Quality, PROD-08 draft/save | Shared policy/state; no stale commit, silent overwrite or false save claim |
+| Parallel bounded work | PROD-05 total/per-table limits, PROD-06 repeat semantics | Binding/formatter investigation; explicit policy and compatibility tests |
+| 3 | PROD-09 workspace proposal, PROD-11 focused JS splits | Stable state/selection; user-flow and regression evidence |
+| 4 | PROD-10 certification, PROD-12 release coverage | Applicable fixes, selected release profile and real print evidence |
+| Conditional expansion | E15 remote UI / HA / recovery operations | Explicit shared-service deployment scope |
 
-明确不做：AI reasoning 展示、rendered DOM 直改、任意画布、绕过 Agent Contract 3.0.0、默认 partial commit、自动 Production export。
+E14 is **Partial**, not "P0 entirely done." Four-layer UI, cards, drawer/modal/trace, resizable rail, focus/tab handling and desktop export visibility are already implemented.
+
+Recommended first release: single-user Windows + named Chromium browser, local projects and self-contained export. This remains **Proposed**; existing broader platform goals remain until explicitly revised. Preview-first default and Design/AI/Quality layout are likewise proposals; current default/tabs are unchanged.
+
+Preserve one canonical project envelope, one pagination engine and revision-bound transactions. Preview is derived visual evidence. See the production plan for acceptance criteria and TASK for execution status.
 
 ### 0.5 E15：Durable Service Hardening（Target）
 
@@ -95,8 +100,8 @@ E15 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 | 已完成（2026-07-31） | 浏览器矩阵验收：两模板 × 4 目标 × 全边界场景 + 五语言，88/88 全过，结论存档于 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)，可用 `node scripts/browser-matrix.mjs` 复现 | ✅ |
 | 已完成（2026-07-31） | Purchase Order 跨引擎分页收敛：非行区 +16px 让 15 组合全部落到每页 14 行，复跑矩阵 22 个可比格子零分歧 | ✅ |
 | 当前 | E8 结构化工程师面板已完成主要范围；E9 性能预算已达成；E10 发布治理仍有 Release/template catalog 收尾 | 🔶 |
-| 当前 | E14 AI Designer IA & Interaction Foundation（P0 已完成，P1/P2 Target） | 🔶 |
-| 下一阶段 | E15 Durable Service Hardening | ⬜ |
+| 当前 | E14 behavioral acceptance corrections (Partial; PROD-01/02/03 first) | 🔶 |
+| Conditional shared-service expansion | E15 Durable Service Hardening | ⬜ Pending; scope-dependent |
 
 里程碑对外状态（Pilot → Production Candidate → Production Ready → Template Scale）沿用工程路线图的发布顺序表。E13-SERVER 已把受控部署的服务端事务恢复/并发门跑通，但 Production Ready 仍由维护者显式宣布，不由一次跑批绿灯自动推导；当前承诺仍限定为单 writer service、Chromium reference runtime、人工审批和既定安全门。
 
@@ -130,7 +135,7 @@ E15 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 
 ### 2.2 Debug 能力（降低排查成本）
 
-- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）、`npm run doctor`（一条命令跑单测+生产构建+两个试点 `validate:v2`，逐步实时输出 + 结尾一页 PASS/FAIL 汇总；刻意不含 e2e——那是 CI 每次 push 都跑的三引擎慢检查，doctor 是给"我这份工作树健不健康"的快速一问）。
+- Current 已有：核心 `data-debug=y` 调试面板、v2 诊断包下载、元素级 issues（selector + rect）、预览红框 overlay（`1dc2856`）、`npm run doctor`（一条命令跑AGRUN integrity + 单测/生产构建 + 三个试点 `validate:v2`，逐步实时输出 + 结尾一页 PASS/FAIL 汇总；刻意不含 e2e——那是 CI 每次 push 都跑的三引擎慢检查，doctor 是给"我这份工作树健不健康"的快速一问）。
 - ✅ 已评估（2026-07-31，见 TASK.md）：v2 结构化 trace 事件替代 console 依赖——原计划的唯一目的是给 P2 的 `PaginationSession` 类重构铺路，重构本身经评估判定暂不做，trace 事件随之一并延后，不单独实现。
 
 ### 2.3 仓库形态收编（减少认知负担）
@@ -153,7 +158,7 @@ E15 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 - 根目录五文档（DESIGN/SPEC/EPIC/ROADMAP/TASK）每次功能 commit 后由提交者顺手更新"最后核对"行；对不上以代码为准。
 - 配置文档继续用 `npm run docs` 从 `CONFIG_DESCRIPTORS` 生成，禁止手改生成物。
 - Studio v2 系列文档维持 Current/Target/Backlog 状态词纪律（[索引](docs/STUDIO_V2_INDEX.zh-CN.md)定义）。
-- AI Designer redesign 的 Current/Target 边界以 [DESIGN.md](DESIGN.md) §0.1、[SPEC.md](SPEC.md) §3.7 和本节 E14 为准；不要把现有 proposal card 当成已经完成的 Change Card。
+- AI Designer controls and limitations are specified in [SPEC.md](SPEC.md) §3.7; shared open criteria live in the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Cards already exist; their presence does not prove scope or apply-policy acceptance.
 
 ---
 
@@ -165,7 +170,7 @@ E15 的退出条件是“多实例/多设备故障时仍无 silent overwrite、d
 | SW 缓存导致"改了没生效"误判 | 已实现开发模式网络优先；部署版本号盖章缺失会构建失败 |
 | ~~`sw.js` 手写 `APP_SHELL` 清单随新增文件漂移~~ | ✅ **已根治（2026-07-31，`eebcae1`）**：改为构建时由 `scripts/app-shell.mjs` 走产物目录生成，新增模块无需登记。此前一天内漂移两次（`core/operation-schemas.js`、`ui/diff-view.js`），都是被 PWA 离线用例抓到；改造时还发现旧清单本就漏了 `core/runtime.js`，从没人察觉——这正是"该生成而非手写"的论据 |
 | v1/v2 双 Studio 长期并存的双倍维护 | v1 冻结纪律 + 文档明示"新需求一律进 v2" |
-| AI Designer sidebar 职责过载 | E14 固定四层 IA；History/Settings/Activity 按需打开；Preview 仍保持 workspace source of truth |
+| AI Designer sidebar 职责过载 | E14 固定四层 IA；History/Settings/Activity 按需打开；Preview remains derived visual evidence; the project envelope is canonical |
 | 原始 source editor draft 可能被状态刷新覆盖 | 在实现 draft dirty state 前，切换样例、结构化 apply、导入和离开页面都应视为潜在丢失风险；E14 需增加回归 E2E |
 | ~~1440px 桌面 topbar 的 Production export 可见性不足~~ | ✅ **已解决**：`.topbar` 重排为单条 56px 栏——`Production export` 拆分主按钮（白底蓝字，唯一 filled primary）+ `▾` 弹出 `Export Untrusted`；`Import HTML` 移入 `⋯ More` 弹出菜单（HTML Popover API，顶层渲染，Esc/外点关闭）；旁加 `#export-readiness` 就绪芯片（复用 `.status`，由 `renderQualityView` 驱动）。≥1081px 不再横向滚动；721–1080px 保留横向滚动兜底。`e2e/studio-v2-topbar.spec.js` 加了 1440px 无滚动 + 主动作可见 + 菜单开合断言 |
 | ~~无 LICENSE（P3 前对外分发受限）~~ | ✅ 已解除：2026-07-31 采用 [MIT](LICENSE)，`package.json` 同步 |

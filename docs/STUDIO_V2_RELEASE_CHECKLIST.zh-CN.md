@@ -1,8 +1,8 @@
 # PrintForm Studio v2 发布检查表
 
-> 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——六项硬门的代码部分已完成，但 Production Ready 状态本身仍需维护者显式宣布，不由代码完成或测试绿灯自动推导。
+> 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval.
 >
-> 最后核对：2026-09-04。当前工作树已复核：70 files / 378 unit tests、doctor 5/5、三个 pilot `validate:v2`、Chromium E2E 56/56；完整三引擎 CI 结果仍以浏览器矩阵和 CI artifact 为准。
+> Last reviewed: 2026-09-07. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilots and Windows Chromium 60/60. This docs-only patch did not rerun full application suites. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current gaps and criteria.
 
 ## Production Pilot 自动检查
 
@@ -11,7 +11,7 @@
 - `npm test -- --run`
 - `npm run build:site`
 - `npm run test:e2e`
-- `npm run test:e2e -- --project=chromium`（本机快速验证；2026-09-04 为 56/56）
+- `npm run test:e2e -- --project=chromium`（2026-09-07 Windows Chromium: 60/60）
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html`
@@ -40,6 +40,8 @@
 
 ## Production Ready 硬门
 
+Additional behavioral acceptance: execute the [priority acceptance checklist](STUDIO_V2_P0_ACCEPTANCE.md) for PROD-13/01/02/03. Its 35 cases remain Not run; historical foundation completion below does not close these requirements or the other open PROD release criteria.
+
 以下六项须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免。**代码部分已于 2026-07-31 全部完成**（不允许人工勾选绕过，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)确认标准）：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中真实分页渲染，`preview_changes`/`apply_changes` 返回绑定 `candidateHash` 的报告。
@@ -49,7 +51,7 @@
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、权威内容 hash 与由真实 evidence receipt 推导的浏览器凭证。
 6. ✅ 自动验证内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（浏览器矩阵、系统打印预览人工确认等）。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`node scripts/browser-matrix.mjs` / `.github/workflows/browser-matrix.yml`）两个操作系统上各跑满 88/88 全过、零跨引擎分歧，仅 Windows 尚未验证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（浏览器矩阵、系统打印预览人工确认等）。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`node scripts/browser-matrix.mjs` / `.github/workflows/browser-matrix.yml`）两个操作系统上各跑满 88/88 全过、零跨引擎分歧，Windows Chromium has current E2E evidence; the full Windows matrix and actual printer chain remain unverified. 硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 
@@ -58,12 +60,32 @@
 - 记录协议、Studio、runtime 版本及当前实际完成的浏览器矩阵。
 - 未知导入按真实 ERP 数据处理；不默认上传缓存、日志、截图或遥测。
 
-## E14 AI Designer UX 验收（Target，不是当前 Production Ready 硬门）
+## E14 / production workflow acceptance (open release criteria)
 
 - AI panel 固定为 `Panel navigation → Current document context → Conversation → Composer`。
-- Preview 仍是 workspace source of truth；AI conversation 不得遮挡或替代质量门和生产导出。
+- The project envelope is canonical; preview is derived visual evidence. AI conversation must not replace Quality or human export.
 - Context Bar 必须来自真实 document/selection/scope state，不能是静态装饰文本。
 - Proposal、Change、Validation 必须分开显示；`Applied` 只能表示 transaction commit 成功。
 - Auto-apply safe changes 必须继续经过 preview、validation、approval、revision 和 candidate hash gate。
 - History、Changes、Activity、Settings 和 Gateway 默认按需打开；技术 trace 不进入普通聊天记录。
 - mobile、focus restore、tab semantics、keyboard navigation 和 1440px Production export visibility 必须有回归验证。
+
+## Required closure checklist
+
+- [ ] Adopt and record the release profile: OS/browser/version, templates, paper, locale, size limits and persistence/deployment model (PROD-10). The single-user Windows/Chromium proposal does not silently remove broader existing goals.
+- [ ] Classify unknown imports before persistence/AI; prevent unauthorized real-data copies across durable snapshots, recovery and sessions (PROD-13).
+- [ ] Enforce actual component/operation scope, including stale selection and out-of-scope rejection (PROD-01).
+- [ ] Preview-first blocks every automatic AI commit, including Review repairs and retries (PROD-02).
+- [ ] Context, preview, Quality and export agree on current revision/render/readiness; saved and applied remain distinct (PROD-03).
+- [ ] Card Undo verifies the intended revision and actual command outcome; cancel/Stop/project switch/late response/double Apply preserve committed state and restore the correct preview (PROD-04).
+- [ ] Bound row counts and repeatHeader rules behave correctly for multiple tables (PROD-05/06).
+- [ ] Errors locate the owning page/component/field and explain the next action (PROD-07).
+- [ ] Raw edits, recovery failure, import/switch, picker cancellation and download fallback have verified outcomes; no silent data loss or false save claim (PROD-08).
+- [ ] Adopted layout passes real editing tasks, five locales, keyboard/focus and supported viewports; preserve existing resizable rail and export visibility (PROD-09/10).
+- [ ] Performance uses the existing Chromium reference budgets; actual print output is manually checked on declared targets (PROD-10).
+- [ ] All three pilots have aligned build/static/browser/release evidence; CI currently has explicit static checks for only two (PROD-12).
+- [ ] Record diagnostics, known limitations, rollback/recovery steps, exact artifacts and maintainer release approval.
+- [ ] For shared-service claims only: remote UI, server deployment, auth/isolation, backup/recovery and applicable HA/fencing acceptance (E15).
+
+Existing AI full-page review remains required by CommandBus readiness. Provider unavailability must be shown as incomplete review, not waived validation.
+Static `validate:v2` can report productionValid with `layout.verified: false`; it does not replace current browser evidence or Studio export readiness.

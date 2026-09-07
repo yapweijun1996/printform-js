@@ -2,7 +2,7 @@
 
 > 状态：**Current / Production Pilot**。本文只描述仓库当前实现；Production Ready 目标接口与硬门见 [v2 文档索引](STUDIO_V2_INDEX.zh-CN.md) 和 [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)。
 
-> 最后核对：2026-09-04。Protocol 版本仍为 `2.0.0`；E14 AI Designer UX redesign 不改变本文件的单 HTML、绑定、runtime、trust 或导出契约。
+> Last reviewed: 2026-09-07. Protocol remains `2.0.0`. The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) records implementation gaps separately from proposed UI/default changes; no envelope or runtime change is made by this amendment.
 
 ## 目标
 
@@ -17,9 +17,11 @@ v2 文件是一份可直接打开、可复制、可手改、可离线打印的 H
 | `pf-theme` | `style` | 限定在 `#pf-mount` 下的主题与打印 CSS |
 | `pf-template` | `template` | 未绑定、未分页的声明式 DOM |
 | `pf-sample-data` | `application/json` | 独立打开时使用的合成样本 |
-| `pf-attestation` | `application/json` | 最近一次验证的内容/runtime 哈希与摘要 |
+| `pf-attestation` | `application/json` | Optional during parsing; required for trusted import/validation |
+| `pf-i18n` | `application/json` | Optional print message catalogs; missing section defaults to an empty object |
+| `pf-form-spec` | `application/json` | Optional semantic component registry; legacy adapter supports older templates |
 
-每个权威区块必须恰好出现一次。`protocolVersion` 当前为 `2.0.0`。同一 major 的旧 minor 版本只能生成待审迁移；不同 major 只读拒绝。
+Required manifest/schema/theme/template/sample sections must occur exactly once. Optional i18n/FormSpec/attestation sections are cardinality-checked when present; absence uses the parser fallback. Standalone exports also embed executable `pf-document-runtime` and `pf-printform-runtime`, whose integrity is checked for trust. `protocolVersion` 当前为 `2.0.0`。同一 major 的旧 minor 版本只能生成待审迁移；不同 major 只读拒绝。
 
 ## 数据绑定
 
@@ -41,7 +43,7 @@ await PrintFormDocument.render(data, options)
 
 不调用 `render` 时，文件在 DOM ready 后读取 `pf-sample-data` 自动渲染。显式 `render(data)` 优先并可重复调用；每次都会重建未分页 DOM，再运行 PrintForm 分页。
 
-失败返回 `status: "blocked"`，不会保留部分成功状态。生产上限默认是 10 MB、500 行和100个逻辑页。
+Failure returns `status: "blocked"`. Default limits are 10 MB, 500 rows and 100 logical pages. Current row-limit calculation uses the maximum nested array length, not total bound rows across tables; PROD-05 tracks correction. A 1000-row E2E scenario does not increase this default.
 
 渲染结果（`printform:rendered` 事件 detail）除 `status`、`validation`、`metrics` 外还包含 `issues[]`（2026-07-31 起）：每个越界/对比度问题元素的 `{ code, pageIndex, selector, rect, text? }`，每类上限 20 条，供 Agent 与 Studio 无截图定位问题。
 
@@ -51,7 +53,7 @@ await PrintFormDocument.render(data, options)
 - 任意工程师脚本会把文件降级为 `Untrusted`；Studio 可在无同源、无网络 sandbox 预览，也可人工导出，但不能产生生产有效凭证。
 - `pf-attestation` 是防篡改记录，不是组织数字签名。validator 覆盖两段 runtime hash（document runtime + PrintForm 分页引擎本身，各自独立错误码）、CSP script hash 允许列表，以及由 Studio 签发的 evidence receipt 推导的真实浏览器证据（2026-07-31 起，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)《完整性与证明》）。
 
-review receipt 现由 Studio 自己测量渲染结果后签发（几何指纹，非像素截图），拒绝 Agent 自述证据标签；`preview_changes`/`apply_changes` 会真实分页候选项目（复用可见预览 iframe）。即便如此，当前文件与 Studio 仍只按 Production Pilot 验收——Production Ready 是对外承诺，由维护者显式宣布，还需完成浏览器矩阵等发布流程验收（已在 macOS/Linux 跑满，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)），不由代码硬门齐全自动推导。
+Review receipts are issued by Studio from measured geometry; synthetic sessions may additionally request bounded pixel evidence, while real-data mode rejects pixel capture，拒绝 Agent 自述证据标签；`preview_changes`/`apply_changes` 会真实分页候选项目（复用可见预览 iframe）。即便如此，当前文件与 Studio 仍只按 Production Pilot 验收——Production Ready 是对外承诺，由维护者显式宣布，还需完成浏览器矩阵等发布流程验收（已在 macOS/Linux 跑满，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)），不由代码硬门齐全自动推导。
 
 ## JSON Schema Profile
 

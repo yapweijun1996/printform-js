@@ -2,25 +2,27 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-09-04 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply/commit，旧的 2.1.0 叙述仅作为历史记录。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-09-07 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply/commit，旧的 2.1.0 叙述仅作为历史记录。
 
 > 本轮新增的 Production Foundation 还包括 FormSpec/component registry、Active Table Context、结构化 pagination diagnostics、strict trusted-export allowlist 与持久化 Evidence Pack。若本文下方的 2026-07-31 历史段落与此覆盖冲突，以本段和 `DESIGN.md`/`SPEC.md` 为准。
 
 ## 信任边界
 
+PROD-13 Target details: [data classification and destination rules](STUDIO_V2_DATA_POLICY.md). Artifact trust does not certify synthetic data. Unknown/Real document state is volatile under that target profile, with separate explicit file-save and credential-vault rules; current durable storage, output-projection and cache/asset coverage still need implementation/verification.
+
 单 HTML 是项目与交付物的唯一事实来源。Studio、UI、WebMCP 和第一方 CDP bridge 都只能修改隔离草稿；AI 不能代替工程师执行最终生产导出。
 
 `pf-attestation` 是防篡改验证记录，不是组织数字签名，也不证明业务数据本身正确。金额、税额、折扣与总计继续由 ERP 后端负责，模板只显示、格式化和校验一致性。
 
-## E14 UX 设计对信任模型的约束（Target）
+## E14: existing invariants and incomplete UI-policy acceptance
 
-AI Designer 的视觉 redesign 不改变信任边界。UI 必须把 domain transaction state 映射成用户可理解的状态，而不是用聊天文字代替事实：
+Current review: Scope is not an enforced boundary, context printability does not consume renderStatus, and Review repairs can auto-apply in preview-first mode. See PROD-01/02/03 in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md). Transaction gates still run; host approval must not be confused with a human click. UI 必须把 domain transaction state 映射成用户可理解的状态，而不是用聊天文字代替事实：
 
 - Proposal 表示候选计划，不表示已修改。
 - Preview/Validated 表示候选已渲染或验证，不表示已经 commit。
 - Change Card 只有在 commit 成功后才能显示 `Applied`；失败或被阻断时显示明确的 `Blocked`/`Failed`。
 - Undo 应关联 transaction batch；global Undo/Redo 仍作为 secondary control 保留。
-- Auto-apply 只能在现有 preview、approval、revision、candidate hash 和 transaction gate 内执行；不能创建绕过 gate 的 UI shortcut。
+- Auto-apply retains preview/approval/revision/hash gates. Shared user-mode/scope enforcement across all repair paths remains PROD-01/02; current default is auto-apply, not the proposed preview-first default.
 - Context Bar 可以显示 document、selection 和 scope，但 real-data mode 不得因此把业务值写入日志、trace、recovery cache 或 Evidence Pack。
 - 当前 durable transaction 采用原子、fail-closed 语义。E14 第一版不把含糊的 partial success 直接提交给用户；若未来支持拆分，必须显式使用独立 transaction batch 和独立状态。
 
@@ -45,17 +47,22 @@ AI Designer 的视觉 redesign 不改变信任边界。UI 必须把 domain trans
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：Windows 完整矩阵、真实 Safari/打印机链、HA 和 E14 AI Designer UX 尚未完成；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：Windows Chromium has current 60/60 E2E evidence, but the full matrix, actual print chain and E14 behavioral criteria remain incomplete; HA applies only to a release claiming that deployment model；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
 
 ## 数据隐私
 
-Current 默认策略（未知 HTML 或 JSON 一律视为可能含真实 ERP 数据）：
+### Current implementation and privacy gap
 
-- 默认不写入恢复缓存、日志、诊断包或 Agent 返回值。
-- Agent 默认只读取 schema、模板结构、布局指标和生成的边界数据。
-- 真实数据需要工程师逐会话明确授权，授权不跨刷新或新会话保留。
-- 授权真实数据时关闭草稿恢复缓存；导出项目不得偷偷包含额外缓存副本。
-- 不提供默认遥测；诊断资料由用户脱敏后主动导出。
+- The real-data checkbox starts unchecked; importing an unknown file does not automatically change it.
+- Gateway redaction/pixel rejection and Agent session mode depend on this selected flag.
+- Enabling real-data mode clears the recovery draft and changes AI session handling.
+- However, `app.js:installBus` always supplies localStorage to CommandBus; `DurableTransactionStore` persists complete project head/revision snapshots. Clearing recovery cache does not clear or disable that store.
+- Therefore the current UI does **not** implement a blanket no-persistence guarantee for real data. This code-confirmed gap is PROD-13, separate from the existing synthetic-only pixel guard.
+
+### Required privacy acceptance (Pending, PROD-13)
+
+Classify unknown imports as potentially real before persistence or AI access. Enforce the chosen data policy across durable head/revisions/transactions, recovery, sessions and evidence; preserve existing gateway redaction and pixel rejection.
+Use synthetic canaries to verify import, mode switching and reload. Document pre-existing stored copies and explicit cleanup options without silently deleting user records. No automatic telemetry/upload is introduced by this plan.
 
 ## Backlog（早期设想，已评估未采纳）：破坏性两阶段提交
 
@@ -108,7 +115,7 @@ revision 使用永不复用的单调编号——**这部分已实现**，undo �
 
 `complete_layout_review` 只接受 Studio 已签发的 `evidenceIds`、findings 和 summary，且必须覆盖 `default` 与 `long-text` 两个场景；旧式 `evidence`/`browser`/`scenarios` 自述字段一律 `EVIDENCE_RECEIPT_REQUIRED`（即便同时附了有效 receipt 也拒绝——留着旧路径等于没做这件事）。伪造 id 报 `EVIDENCE_UNKNOWN`，跨 revision 的 receipt 报 `EVIDENCE_STALE`。任何 mutation/undo 都会清空 receipt store，旧证据不能为新内容背书。
 
-Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否停止发言。技术上强制的是：没有有效证据就不能取得 Production Ready 凭证或请求生产导出。
+Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否停止发言。The enforced condition is current document export readiness, not product-level Production Ready certification. Missing valid evidence blocks trusted Studio export.
 
 ## Current：完整性与证明（2026-07-31 实现）
 
@@ -120,11 +127,13 @@ Agent 可以发现和修复问题，但 Studio 不能控制外部 Agent 是否�
 
 ## Trusted 与 Untrusted
 
-| 状态 | 允许行为 | 禁止行为 |
+| Runtime trust / readiness | Allowed behavior | Limit |
 |---|---|---|
-| Trusted Pilot | 沙箱预览、验证、人工导出 | 宣称已达到 Production Ready |
-| Trusted Production Ready | 通过全部硬门后由工程师确认导出 | AI 自动确认或绕过系统打印预览 |
-| Untrusted | 沙箱运行、人工检查、明确风险后导出 | 生成生产有效凭证 |
+| Trusted, review incomplete | Sandbox preview, validation, editing and draft export | Studio trusted production export is blocked |
+| Trusted, current readiness passed | Human-confirmed trusted export | Does not certify the entire product, every browser or business data correctness |
+| Untrusted | Isolated preview and explicit untrusted export | Agent mutations, print-preview action and trusted production export are blocked |
+
+Runtime trust values are `trusted` and `untrusted`; "Production Ready" is product maturity, not an additional stored trust state.
 
 六项 P0 硬门不得人工豁免。需要任意 JavaScript 的项目必须保持 `Untrusted`，不能通过修改 attestation 恢复 Trusted。
 

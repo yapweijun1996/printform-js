@@ -112,7 +112,7 @@ PrintForm.js 识别以下区块类型:
 
 Studio v2 是面向 ERP 工程师的 Production Pilot。当前版本线为：PrintForm runtime `1.0.0`、Studio `0.11.0`、Protocol `2.0.0`、Agent Contract `3.0.0`。它使用单一自包含 HTML 作为项目与交付物事实来源，提供 FormSpec、结构化面板、可见候选预览、事务化 Agent 写入、布局诊断、Evidence Pack、trusted/untrusted 导出和离线 PWA。
 
-AI Designer 当前已有聊天、session、proposal、provider settings、runtime trace、candidate preview、validation 和 Undo/Redo。最新已确认的 E14 目标是把它整理为 `Panel navigation → Current document context → Conversation → Composer`；document context、selection scope、结构化 Change Card、Changes drawer 和显式 Apply mode 尚未实现。完整边界见 [Studio v2 文档索引](docs/STUDIO_V2_INDEX.zh-CN.md)。
+AI Designer already provides the four-layer panel, document title/revision/candidate context, structured change cards, mode controls, batch history controls, sessions/settings/trace and resizable rail. E14 remains Partial: Scope is not enforced, Review repairs can ignore preview-first, context readiness and persistence/history semantics need correction. Proposed layout/default-mode changes are not current behavior. See the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) and [SPEC](SPEC.md).
 
 ---
 
@@ -199,5 +199,5 @@ data-n-up="2"
 
 ---
 
-**最后更新:** 2026-09-04
+**最后更新:** 2026-09-07
 **版本:** PrintForm runtime 1.0.0 · Studio v2 0.11.0 · Protocol 2.0.0 · Agent Contract 3.0.0

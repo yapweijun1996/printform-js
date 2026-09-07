@@ -1,10 +1,10 @@
 # PrintForm.js / Studio v2 深度生产差距审计
 
-> 审计日期：2026-09-04。范围：当前工作树的 PrintForm runtime、分页器、Studio v2、Protocol、JSON Pointer、导出、沙箱、WebMCP/MCP、测试、发布脚本及 AI Designer UX。
->
-> 当前结论：**YES, WITH CHANGES — remain Production Candidate**（单 writer SQLite server、受控 Chromium、A4-like portrait/landscape；active-active/HA 与更广打印链未认证）。这不是所有浏览器、打印机和多用户服务的 Production Ready 声明。当前 readiness：**94/100**。
+> Current review: 2026-09-07, baseline `fb1a641450c2266a712a7b644b32609bea7c0e73`. Product remains **Production Pilot / bounded Production Candidate**. This amendment is documentation-only.
 
-> **阶段复核（2026-09-04）**：58/100 是代码实施前 baseline；72/100 是 foundation 代码完成但运维门未关闭时的中间值；84/100 是 E12 运维门收口；89/100 是 E13 local durable foundation；94/100 是 E13-SERVER 受控部署验收后的平台评分。当前评分仍为 **94/100**：全量单测 70 files / 378 tests、doctor 5/5、三个 pilot 静态验证和 Chromium E2E 56/56 已复核。该分数只表示当前平台证据，不代表 AI Designer UX 已完成，也不代表无条件 Production Ready；active-active/HA、remote UI adapter、更广打印链和 E14 UX 仍有边界。
+> [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current evidence and PROD-01 through PROD-13 acceptance. Earlier session: 72 files / 385 tests, doctor 5/5, three static pilots and Windows Chromium 60/60 passed. E14 UI exists; scope, apply-policy and status semantics remain Partial.
+
+> Scores 58/72/84/89/94 are historical stage assessments, not an updated readiness score. Sections 3–8 and 10 preserve the earlier proposal/baseline and must not be read as current APIs or new pending duplicates.
 
 ## 0.1 E13 Durable Transaction / Concurrency / Recovery（当前）
 
@@ -18,19 +18,19 @@
 | Evidence anchor | artifact ↔ pack ↔ revision ↔ transaction ↔ FormSpec/preview/audit | **PASS** |
 | Production multi-device | SQLite server backend、process kill/restart、network lost response/retry、双独立 session acceptance | **PASS（受控单 writer）；failover/active-active REMAINING** |
 
-E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`takeover_transaction`、`recover_transaction`、`resolve_conflict`、`get_revision`、`get_audit_events`。E13-SERVER 新增 `studio-v2/server/sqlite-durable-backend.mjs` 与 bounded HTTP adapter；Agent 仍只能调用语义命令，不能获得 arbitrary database mutation；旧 `TransactionJournal` 保留为兼容镜像。全量为 **70 files / 378 tests**，E13 recovery 与 E13-SERVER 各 **8/8 PASS**。
+E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`takeover_transaction`、`recover_transaction`、`resolve_conflict`、`get_revision`、`get_audit_events`。E13-SERVER 新增 `studio-v2/server/sqlite-durable-backend.mjs` 与 bounded HTTP adapter；Agent 仍只能调用语义命令，不能获得 arbitrary database mutation；旧 `TransactionJournal` 保留为兼容镜像。Historical E13 acceptance recorded 70 files / 378 tests, including recovery/server suites at 8/8 each; current full-suite evidence is in the production plan.
 
 ## 0.2 Production Verification 收口（当前工作树）
 
 | 门 | 证据 | 结果 |
 |---|---|---|
-| 真实浏览器 | Playwright `1.62.0` / Chromium revision `1234`；`npm run test:e2e -- --project=chromium` | **56/56 PASS** |
+| 真实浏览器 | Windows Chromium; built site; `npx playwright test --project=chromium` on 2026-09-07 | **60/60 PASS** |
 | Active Table | Valuation → Variation → Materials → Certification；每个表都跨页，续页只重复当前表头 | **PASS** |
 | 数据规模 | 100 / 500 / 1000 行；重复运行 page count 与 page signature 一致，记录 render/pagination duration 与 browser error | **PASS** |
 | Paper modes | A4 @ 96dpi portrait (794×1122) / landscape (1122×794)；纸张边界、margin、重复表头、无 clipping | **PASS** |
 | Diagnostics | `ROW_TOO_TALL`、overflow、blank、active header、footer/page number、orphan/keep-together/signature/total split；每项含 page/component/size/reason | **PASS** |
 | Evidence Pack | approved revision、FormSpec/runtime/preview/export hash、page count、validation/security、Chromium receipt、截图/JSON attachment | **PASS** |
-| 安全与工具链 | nanoid 3.3.18；Windows doctor 5/5；70 files / 378 tests、build、AGRUN、3 pilot validate、diff check；audit 0 high 为历史记录 | **PASS（当前门已复核；audit 本轮未重跑）** |
+| 安全与工具链 | 72 files / 385 tests; doctor 5/5 including AGRUN/build/three pilots; bundle syntax passed | Existing suite PASS; no fresh network audit |
 
 本阶段还修复了真实回归：PTAC/PADDT continuation row 不应触发普通 `.prowheader` 缺失诊断；现在诊断只对普通 table rows 建立 active-table header 约束，并有单测护栏。Studio source editor/AI inspector 仍默认隐藏，既有 E2E 在需要时显式打开，不改变产品默认行为。
 
@@ -47,22 +47,23 @@ E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`tak
 
 本阶段没有把 AI 放入分页热路径，也没有另造并行项目格式；未完成项明确列在“剩余发布阻塞”中。
 
-## E14 AI Designer UX 现状（P0 已完成，P1/P2 Target）
+## E14 current findings: Partial
 
-当前已完成 E14 P0 交互重排与状态透明化。P1/P2 体验增强保留为后续 Target：
-
-| 差距 | 当前事实 | 决定 / 验收方向 |
+| Finding | Code evidence | Action |
 |---|---|---|
-| IA 过载 | 约 420px panel 已经完成 4 层架构收敛 | ✅ E14 P0 已完成：固定 `Panel navigation → Context → Conversation → Composer`；抽屉式 Sessions 管理；Settings/History/Activity 按需打开 |
-| 缺少 document context | 已建立实时 Document Context 区域 | ✅ E14 P0 已完成：动态连接 document、selection、scope、revision、render status 和 candidate/committed 状态 |
-| proposal 结果不够结构化 | 已替换为结构化 Proposal/Change/Validation cards | ✅ E14 P0 已完成：卡片清晰展示 Target、可测量的 Before/After、Safety、Validation metrics 与卡片级 Batch Undo |
-| apply policy 不够显式 | 已提供可见且可预测的 Apply mode 选择器 | ✅ E14 P0 已完成：显式展示 `Auto-apply safe changes` 与 `Preview before applying`；两者均通过既有 transaction gate |
-| 历史概念重叠 | 会话、历史与活动分离 | 🔶 P0 已将 Session 收纳至抽屉式区域、History 保留为二级控制、Trace 采用折叠；P1 将进一步拆分独立 History/Changes view |
-| 状态与编辑风险 | raw source draft 可能被状态刷新覆盖；桌面 topbar 的 Production export 需要继续做显式可见性检查 | 增加 draft dirty/overwrite guard、1440px export visibility E2E；P1/P2 规划项 |
+| Selection and scope are not enforced | `agent-panel.js` only writes activeScope; app assigns Entire document | PROD-01: stable component IDs and command-level scope checks |
+| Review ignores preview-first mode | `agent-panel-runtime.js:runLayoutReview` invokes autoApplyPending without a mode check | PROD-02: shared policy for chat/Review/retries |
+| Context printability is incomplete | `agent-document-context.js` ignores renderStatus when rendering badges | PROD-03: derive truthful state from render/readiness |
+| Candidate/history/draft/save acceptance | Card Undo calls global history without target/result checks; download is not a save receipt | PROD-04/08: correct history semantics and verify failure paths |
+| Real-data persistence gap | localStorage is always injected; durable store serializes full projects; import does not enable real-data mode | PROD-13: classify before persistence and enforce policy across stores |
+| Multi-table semantics differ from API expectations | Maximum array length; component repeat rule writes global root flag | PROD-05/06: explicit limits and repeat-rule granularity |
+| Quality/layout/release coverage is incomplete | Source-path navigation, two explicit CI pilot validations, incomplete full print matrix | PROD-07/09/10/12; PROD-11 tracks oversized JS |
 
-E14 不改变单 HTML SSOT、FormSpec、PrintForm 分页、CommandBus、Agent Contract 3.0.0、Evidence Pack、real-data 隐私或人工 Production export 约束。完整目标和任务拆分见 [DESIGN.md](../DESIGN.md) §0.1、[SPEC.md](../SPEC.md) §3.7 和 [工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) E14。
+Already implemented: four-layer IA, structured cards, apply-mode controls, card-level Undo/Redo controls, Sessions drawer, Settings modal, collapsed trace, resizable rail, focus/tab handling and desktop export visibility.
 
-> 口径说明：仓库既有文档所称的“六项 P0 代码硬门”主要是候选 hash、revision、layout receipt、preview channel 与 runtime attestation 的信任闭环；本审计额外按 AI+ERP 生产目标检查 FormSpec、active table、事务、内容 allowlist 和可复核 Evidence Pack，两者不是同一组门。
+Do not equate these controls with complete behavioral acceptance. The broader workspace/default-mode redesign is Proposed. Existing transaction, privacy, evidence and human-export requirements remain in force.
+
+The earlier six trust gates, E12 foundation gates and the current PROD acceptance list are different scopes; completion of one does not complete the others.
 
 ## 1. 当前架构与 SSOT
 
@@ -81,7 +82,7 @@ E14 不改变单 HTML SSOT、FormSpec、PrintForm 分页、CommandBus、Agent Co
 | PrintForm runtime | `src/printform.js` 调用 `PrintFormFormatter`；formatter 按 section 测量、分页、页脚、PTAC/PADDT、页码和 N-up | 单表、传统 ERP 模板的确定性核心较成熟；布局仍依赖真实浏览器测量 |
 | Studio project model | `studio-v2/core/project-model.js` 解析并序列化单 HTML；`canonicalProjectContent()` 对结构化区块和模板内容做 hash | **当前项目/交付物 SSOT 是单 HTML** |
 | 编辑模型 | `CommandBus` 对 project clone 应用安全 semantic operation；可选 FormSpec/component registry 是 Agent 的语义编辑面，legacy source editor 仍可替换整段 JSON/CSS/HTML；预览 DOM 是派生物 | 没有对 rendered DOM 直接编辑；旧模板仍保留 `templateHtml` 投影，未声明 FormSpec 的文件走 legacy adapter |
-| 数据绑定 | `data-pf-text/if/each/href/i18n` + JSON Pointer；文本使用 `textContent` | 声明式、安全边界清楚；未形成组件/字段注册表 |
+| 数据绑定 | `data-pf-text/if/each/href/i18n` + JSON Pointer；文本使用 `textContent` | Declarative binding; FormSpec/component registry exists; selected-component UI enforcement remains incomplete |
 | 质量门 | `validateProject()` + 浏览器 `inspectRenderedDocument()` + revision-bound evidence receipt | 已有 Pilot 级门禁；诊断字段还不足以成为 ERP 生产证书 |
 | 适配器 | UI、WebMCP、第一方 CDP bridge 共用 `CommandBus.execute()` | 方向正确；WebMCP 是适配层，不应成为领域模型 |
 
@@ -132,7 +133,7 @@ E14 不改变单 HTML SSOT、FormSpec、PrintForm 分页、CommandBus、Agent Co
 - 将 `pagination-render.js`（当前超过 300 行）继续按 page transition、row placement、diagnostics 拆分，但不能以结构重构替代功能门禁。
 - 1000 行、极端变量高度图片、复杂签名/附件、A3/landscape 与更多税务/ERP locale 样本。
 
-## 4. 目标架构
+## 4. Historical target architecture (not the current API)
 
 ```text
 FormSpec SSOT
@@ -168,7 +169,7 @@ Studio Agent API
 
 语义组件首先映射到已有结构：`DocumentHeader→.pheader`、`DocumentMeta→.pdocinfo`、`DataTable→.prowheader + .prowitem`、`PageFooter→.pfooter*`、`SignatureBlock/TotalBlock→带 component id 的 keep-together section`。`templateHtml` 可作为编译产物和 legacy 输入，但必须能从 spec 重建并验证 hash。
 
-## 5. 最小事务模型
+## 5. Historical minimum transaction proposal
 
 ```text
 BEGIN EDIT → PATCH* → VALIDATE → PREVIEW → EVIDENCE/REVIEW → APPROVE → COMMIT
@@ -182,7 +183,7 @@ BEGIN EDIT → PATCH* → VALIDATE → PREVIEW → EVIDENCE/REVIEW → APPROVE �
 3. commit 后保存 immutable revision diff 与 evidence/artifact hashes；rollback 是生成新 revision，不复用旧 revision number。
 4. UI 的 memory undo 保留作便利功能；生产审计需要 IndexedDB/服务端可恢复的 transaction journal。
 
-## 6. 安全的 Agent API 方向
+## 6. Historical Agent API proposals
 
 保留现有 `get_capabilities`、`preview_changes`、`validate_project`、review tools 作为兼容层；新增 semantic domain tools：
 
@@ -190,7 +191,7 @@ BEGIN EDIT → PATCH* → VALIDATE → PREVIEW → EVIDENCE/REVIEW → APPROVE �
 
 不得提供 `execute_javascript`、`set_inner_html`、arbitrary CSS execution 或任意 DOM mutation。raw template/theme operation 只留给 Advanced/legacy migration，并且不能直接获得 production commit 权限。WebMCP/MCP/local API 只做 transport、schema 和 auth adapter，安全 invariant 必须在 domain service 内重复执行。
 
-## 7. 确定性 Validator 与 Evidence Pack
+## 7. Historical validator/evidence proposal
 
 每个 issue 至少应为：
 
@@ -211,7 +212,7 @@ P0 checks：水平/垂直/纸张边界、row-too-tall、missing JSON Pointer、d
 
 Evidence Pack 应包含 `formRevision`、protocol/schema/runtime versions、documentType、pageCount、previewHash、artifactHash、runtimeHash、browser/OS/paper/DPI、每项 PASS/FAIL、diagnostics 与 attestation。mandatory FAIL 时 `commit_revision`/`export_artifact` 必须不可用。
 
-## 8. 优先级、任务与验收标准
+## 8. Historical foundation priorities (superseded by PROD tasks)
 
 ### P0
 
@@ -229,27 +230,27 @@ P0 完成定义：每项均有单测、真实 Chromium E2E、至少一个失败�
 - P1：semantic Agent API、revision diff/rollback、component library、3 pilot 全矩阵、依赖升级、Windows doctor 修复、A4/A3/portrait/landscape certification。
 - P2：视觉设计辅助、模板库、advanced canvas（只有当 semantic workflow 不能覆盖实际需求时才评估）。
 
-## 9. 测试矩阵
+## 9. Current evidence and remaining certification
 
-| 场景 | 当前证据 | 生产缺口/退出条件 |
+| Area | Verified scope | Remaining scope |
 |---|---|---|
-| 单表分页/header/footer | `e2e/core-pagination.spec.js`、golden samples；新增 deterministic diagnostics | 真实 Chromium 运行仍需 OPS-PLAYWRIGHT；继续补 footer/page-number 精确断言 |
-| PTAC/PADDT/N-up | golden E2E + segments/math 单测 | 保持回归；补变量高度与组合 footer/signature |
-| 1/45/100/500 行 | Studio E2E 与历史 matrix | 加 1000 行、两个/多个 table 总量、极长单行 |
-| Progress Claim | sample unit/round-trip/static validate、FormSpec legacy adapter 已有 | 纳入 CI/browser matrix；补 totals、variations、signatures、多表 |
-| 安全导出 | hash/CSP/自包含 E2E、dangerous element/CSS/URL allowlist negative suite | 增加 CI artifact evidence 与 server-side attestation |
-| Agent workflow | command-bus/agent/layout-review/production-foundation 单测；direct apply 已 fail closed；server-side durable transaction/CAS/recovery 已由 E13-SERVER 验收 | active-active/HA、remote UI store wiring、长期 cleanup |
-| 浏览器 | Chromium revision 1234，56/56；历史 2 模板×88 cells，3 引擎记录 | 补 Edge/Safari.app/Windows/打印 PDF；Firefox/WebKit/真实 Safari/打印机链仍未纳入当前发布门 |
+| Pagination | Chromium core/golden/Active Table, PTAC/PADDT/N-up, 100/500/1000 rows | Multi-table limit policy; declared printer/font/paper combinations |
+| Pilots | Three built/static-validated pilots; Progress Claim Chromium coverage | CI explicit static validation still lists two; full browser-matrix script covers Invoice/PO |
+| Agent | Existing transaction/candidate/evidence/E14 E2E passes | Scope, cross-path preview-first, status and failure cases in PROD-01/02/03/04/08 |
+| Runtime integrity | AGRUN/build/static hashes and existing negative tests pass | Fresh dependency audit and exact release artifact acceptance |
+| Browser/print | Windows Chromium 60/60 on 2026-09-07; historical macOS/Linux 88/88 | Full Windows matrix, actual Safari/printer chain and selected release profile |
+| Durable service | Existing SQLite single-writer recovery/CAS tests | Remote UI, HA/fencing/failover only for applicable shared-service scope |
 
-当前本地证据：全量单测 **70 files / 378 tests PASS**；E13-SERVER **8/8 PASS**；`npm run build:site`、`npm run check:agrun`、三份 pilot `validate:v2`、`git diff --check` PASS；真实 Chromium E2E **56/56 PASS**；`nanoid` lockfile 为 `3.3.18`；Windows `npm run doctor` 为 5/5 PASS。`npm audit --audit-level=high` 的 0 high 是最后已记录的历史结果，本轮未将未完成的网络命令当作新的 PASS。服务器证据 manifest 写入 `test-results/e13-server/server-acceptance.json`，CI 上传 `test-results/`。静态 `validate:v2` 仍不证明分页/字体/overflow，本次由真实 Chromium E2E 补上该证据。
+No new full matrix, live-provider reliability certification, real print or HA test is claimed.
+Static `validate:v2` reports `layout.verified: false`; it does not certify browser output.
 
-### 本阶段之后的剩余发布阻塞
+### Release blockers
 
-1. **E15 active-active/HA gate**：当前 SQLite 验收限定一个 writer service；仍需 leader/fencing 或外部 DB CAS、故障转移、备份恢复和多实例 kill-point 演练。
-2. Studio UI 默认仍使用 localStorage/offline adapter；需要显式 remote-store wiring 后，再用两个真实浏览器/设备上下文验收端到端远程事务。
-3. 更广认证仍未在本阶段完成：Firefox/WebKit、真实 Safari、真实打印机/PDF driver、Windows browser matrix；当前只承诺 Chromium reference runtime。
+1. Correct scope/apply/status and multi-table semantics; verify candidate/draft/save/Quality criteria in the production plan.
+2. Adopt the actual supported release profile and close its browser/print/recovery evidence. A proposed single-user profile has not silently replaced broader requirements.
+3. For shared-service deployments, complete applicable E15 remote UI, recovery and concurrency acceptance. HA is not an automatic prerequisite for an explicitly single-user release.
 
-## 10. 迁移策略
+## 10. Historical foundation migration strategy
 
 1. **冻结现有 PrintForm engine contract**：先加入 Table A/B、row-too-tall、security negative tests，不改 PTAC/PADDT 算法。
 2. **Protocol additive migration**：`spec` 可选；旧单 HTML 由 `legacyTemplate` adapter 读取，新的 semantic template 同时生成 HTML projection。
@@ -266,9 +267,9 @@ P0 完成定义：每项均有单测、真实 Chromium E2E、至少一个失败�
 - 不承诺所有浏览器/打印机 pixel-identical；Certified、Best Effort、Preview Only 分层。
 - 不因引入 FormSpec 就废弃可离线打开的 self-contained HTML；`spec` 必须与单 HTML envelope 共存并可验证。
 
-## 12. 最终评分与决定
+## 12. Historical stage scoring and current decision
 
-> 本轮综合复核分数为 **94/100**。真实 SQLite server、SQL CAS、server clock lease、幂等提交、process restart/network retry、Evidence registry、真实 Chromium、依赖安全和 Windows doctor 均有证据；扣分主要来自 active-active/HA、remote UI wiring 与更广浏览器/打印链认证。
+> Historical E13-SERVER stage score: **94/100**; not recomputed or used as the current release gate. 真实 SQLite server、SQL CAS、server clock lease、幂等提交、process restart/network retry、Evidence registry、真实 Chromium、依赖安全和 Windows doctor 均有证据；扣分主要来自 active-active/HA、remote UI wiring 与更广浏览器/打印链认证。
 
 | 维度 | 分数 | 说明 |
 |---|---:|---|
@@ -279,4 +280,4 @@ P0 完成定义：每项均有单测、真实 Chromium E2E、至少一个失败�
 | 导出内容安全 | 90 | strict allowlist、CSP/runtime/artifact hash、Evidence Pack、publish fail-closed |
 | 发布与认证 | 88 | Chromium reference + 56/56、server acceptance 8/8、doctor PASS、历史 audit 记录、Evidence registry PASS；Firefox/WebKit/Safari/打印链与 HA 未认证 |
 
-**最终答案：YES, WITH CHANGES — remain Production Candidate。** 现有架构可以继续推进受控 AI-assisted ERP printing；不需要重写 PrintForm.js，也不应让 AI 负责分页。当前可证明的是单 writer SQLite server、独立 HTTP sessions、真实 SQL CAS、server-time lease、restart/network retry 和 Evidence registry；扩大到 active-active、多实例、真实 remote UI browser flow 前，必须完成 E15 HA/fencing、远程 adapter 和更广打印链认证，并保留 human approval、Evidence Pack 和 fail-closed security gates。E14 先处理 AI Designer 的信息架构和交互透明度，不改变这些安全边界。
+**Current decision: remain Production Pilot / bounded Production Candidate.** Continue on the existing architecture. Close PROD-13 and PROD-01/02/03 first, then editing/multi-table and release acceptance. Use explicit requirements and observed evidence, not the historical score, to decide release readiness. E15 remains conditional on shared-service scope.

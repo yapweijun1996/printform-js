@@ -4,7 +4,7 @@
 >
 > 本文同时记录 Current 定位与 Backlog 产品方向，不替代当前协议。
 >
-> 最后核对：2026-09-04。E14 AI Designer IA/UX 是已确认的 Target；当前代码仍以 `studio-v2/ui/agent-panel-view.js` 和 `studio-v2/ui/agent-panel.js` 的现有 panel 为准。
+> Last reviewed: 2026-09-07. E14 presentation exists; behavioral acceptance is Partial. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) distinguishes current gaps from proposed layout, default mode and release scope.
 
 ## 产品定位
 
@@ -38,7 +38,7 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 
 ## Current 用户流程
 
-1. 导入单 HTML 或选择 Sales Invoice／Purchase Order 样本。
+1. Import a single HTML or select a Sales Invoice, Purchase Order or Progress Claim sample.
 2. 用 Table columns、Print font scale、Page settings、Repeated areas、Brand color、Data contract 等结构化面板，或 Advanced source editor 编辑 manifest、schema、i18n、CSS、HTML 与样本数据。
 3. Studio 在复用的可见预览 iframe 中对候选修改做**真实分页渲染**（不止 dry-run 静态校验），显示分页指标，按 `candidateHash` 缓存渲染报告。
 4. UI 或 Agent 调用共享命令总线修改 revision，乐观锁基于永不复用的单调 revision 编号。
@@ -47,19 +47,21 @@ Studio v2 因此优先建设确定性渲染、语义 diff、证据与 fail-close
 
 这是受控试点流程；六项 P0 硬门的代码部分已全部完成（见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)），但 Production Ready 状态仍需维护者显式宣布。
 
-## E14 AI Designer 目标流程（Target，尚未建成）
+## E14: Current foundation and required corrections
 
-1. 用户在 AI panel 中看到当前 document、selection、scope、revision 和 printable status。
-2. 用户提出设计请求；AI 先给出可读的 Proposal，列出 What、Where、Why 和 Safety。
-3. 候选修改在现有可见 preview iframe 中真实渲染并验证；Change Card 显示 applied/reverted、validation 和 Undo。
-4. Conversation 保持主区域；History、Changes、Settings、Activity 和 Gateway 按需打开。
-5. Auto-apply safe changes 仍必须通过现有 preview/approval/hash/transaction path；结构性修改需要 proposal first。
+- Current: four-layer panel, cards, mode controls, batch history, session/settings/trace and resizable rail.
+- Partial: selected-component context, enforced Scope, truthful readiness display and preview-first behavior during Review repairs.
+- Required corrections: PROD-13 real-data classification/persistence, PROD-04 card-target history and PROD-01/02/03, followed by candidate, Quality and draft/save acceptance.
+- Proposed workspace: full-width actions, dominant preview, one Design/AI/Quality panel, on-demand structure tree and Advanced source.
+- Proposed default: preview-first, with explicit operation/range eligibility if auto-apply is enabled. Current default remains auto.
+- Proposed first production profile: single engineer, Windows + a named Chromium browser, local files, declared template/paper/locale/data limits.
+- These proposals are not adopted deployment promises. Existing broader platform goals remain until explicitly revised; E15 is required only for applicable shared-service scope.
 
 ## Backlog 产品方向
 
 - Raw HTML/CSS/JSON 编辑器进一步移入 Advanced 模式并保持稳定 round-trip。
 - 图片资源完整校验、ERP 接入片段生成和更细的连接状态展示。
-- before/after preview、preview 与 Change Card 双向 highlight、可 resize rail。
+- before/after preview and bidirectional component/change-card highlight; resizable rail already exists.
 - Quotation、Delivery Order、Credit Note 等新模板，以及版本化模板目录。
 
 ## 非目标
@@ -101,7 +103,7 @@ Quotation、Delivery Order、Credit Note 等进入 Backlog。只有三个试点�
 | 阶段 | 产品承诺 |
 |---|---|
 | Production Pilot | 可用于受控工程试点；必须人工检查系统打印预览 |
-| Production Ready | 六项 P0 硬门全部由自动测试和真实浏览器证据证明 |
+| Production Ready | Applicable PROD behavior criteria and existing trust gates closed; selected environment/real-print acceptance recorded; maintainer release approval |
 | Template Scale | P1 工程体验稳定后，才扩展模板目录与迁移治理 |
 
 Protocol、PrintForm runtime、Studio 与 Agent Contract 四条线各自采用独立 SemVer（2026-07-31 落地）；组合关系与升 major 的判据见[兼容矩阵](COMPATIBILITY_MATRIX.zh-CN.md)。

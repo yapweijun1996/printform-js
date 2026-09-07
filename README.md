@@ -31,7 +31,7 @@ Studio v2 is a Production Pilot for ERP engineers. It builds inspectable, self-c
 | **Maintain the legacy v1 Studio** | [Studio v1 Design Doc](docs/STUDIO_DESIGN.zh-CN.md) (Chinese) |
 | **Bind a template to real data / connect an ERP backend** | [ERP Integration Guide](docs/ERP_INTEGRATION.zh-CN.md) - `{{ }}` placeholders, `PrintFormTemplate.render(data)`, ColdFusion example (Chinese) |
 
-Studio v2 is the intended production path and currently has **Production Pilot** maturity. It exports one self-contained `.html` with declarative JSON Pointer bindings, embedded runtimes and current validation records. The current version lines are runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0 and Agent Contract 3.0.0. The latest AI Designer information-architecture decision is tracked as E14 Target: document context, structured change cards and on-demand history/settings are not fully implemented yet. Production Ready remains gated by the documented transaction, evidence, channel-security, attestation and content-integrity work. The original Studio remains a frozen legacy playground and is not migrated automatically.
+Studio v2 is the intended production path and remains **Production Pilot**. It exports a self-contained HTML with declarative bindings, embedded runtimes and validation records. Versions: runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0. E14's four-layer panel, change cards, mode controls, history and resizable rail exist; scope enforcement, Review apply policy, state/persistence accuracy and release acceptance remain incomplete. See the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) for current evidence, pending requirements and proposed layout. Production Ready has not been declared. Studio v1 remains frozen and independent.
 
 ### 💻 Development
 
@@ -280,8 +280,6 @@ If you modify the source (`src/` directory), rebuild:
 npm run build
 ```
 Output is in `dist/printform.js` (and root `*.html` + `README.md`/`README.zh-CN.md` are copied to `dist/` for `npm run preview`).
----
-
 ## FAQ
 
 **Q: Why is my content cut off?**
@@ -292,8 +290,6 @@ A: The logic prefers consistency. For special cases, hide the header via CSS usi
 
 **Q: Margins are wrong when printing?**
 A: Physical margins are controlled by the browser and printer driver. In the print dialog, enable "Background graphics" and set margins to "None" or "Minimum" (PDF viewers at non-100% zoom may show 1px jitter; pin footers via `@media print` absolute positioning if you need visual lock).
-
----
 
 ## Directory Structure
 

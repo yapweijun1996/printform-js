@@ -94,7 +94,7 @@ studio-v2/
 ├── adapters/                   # WebMCP and browser command gateway
 ├── ui/                         # Editors, preview sandbox, files and draft recovery
 ├── server/                     # Bounded SQLite durable transaction service (E13-SERVER)
-├── samples/                    # Sales invoice pilot and boundary scenarios
+├── samples/                    # Invoice, purchase order and progress claim pilots
 ├── styles/                     # Studio UI styles, each kept below 300 lines
 ├── sw.js                       # Offline shell and confirmed-update flow
 └── AGENT_SETUP.md              # CDP, Codex, Claude Code and Chrome DevTools MCP setup
@@ -103,8 +103,10 @@ studio-v2/
 Current AI Designer entry points include `ui/agent-panel-view.js` (panel
 structure), `ui/agent-panel.js` (state/render binding), `ui/agent-panel-runtime.js`
 (streaming and auto-apply orchestration) and `ui/agent-settings-modal.js`
-(provider/vault settings). The E14 IA redesign is a Target change to this surface;
-it does not create a second transaction or rendering path.
+(provider/vault settings). E14's visual foundation and resizable rail are Current;
+scope/apply-policy/readiness, card-history and privacy behavior remain Partial.
+The [production plan](../STUDIO_V2_PRODUCTION_PLAN.md) owns closure criteria;
+no second transaction or rendering path is proposed.
 
 - `mcp/`: first-party stdio MCP bridge using a CDP origin allowlist.
 - `src/document-runtime-entry.js`: standalone document runtime bundle entry.
