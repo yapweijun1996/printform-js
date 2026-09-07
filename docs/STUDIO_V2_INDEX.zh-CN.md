@@ -6,7 +6,7 @@
 >
 > Documentation authority follows responsibility, not language: SPEC owns Current behavior; the English production plan owns latest evidence/criteria; TASK owns execution status. README and Agent setup summarize and link to these sources.
 
-> **2026-09-07 review**: Production Foundation and E13-SERVER are implemented. E14 has a working four-layer UI, cards, mode controls and history, but scope/selection, readiness display and Review repair policy remain Partial. Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `3.0.0`; 35 public tools. Public writes require approved transactions. Latest evidence and open criteria: [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
+> **2026-09-07 review**: PROD-13/01/02/03 foundation work is implemented with targeted evidence, but M2 remains Partial after approval-provenance and missing-policy fail-open findings. Full P0 acceptance and release matrix remain open. Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Latest evidence and open criteria: [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## 状态词
 
@@ -26,8 +26,8 @@
 | Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-07 evidence, PROD requirement IDs, dependencies and proposed layout |
 | Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | PROD-13/01/02/03: 35 observable cases, evidence rules and combined flows; all Not run |
 | Data classification and destinations | [Data policy](STUDIO_V2_DATA_POLICY.md) | PROD-13 Target: data classes, storage/sending rules, lifetime, transitions and mapping to eight acceptance cases |
-| Agent output fields | [35-command table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md), [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) | Target closed allowlists, exclusions, safe references, errors and compatibility; implementation Pending |
-| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | Target ownership, M0-M5 order, breaking compatibility migration, delivery failure and rollback; not implemented |
+| Agent output fields | [35-command table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md), [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) | Implemented closed projections for the public gateway; browser/provider and full acceptance evidence remain Partial |
+| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0/M1/M3 foundations implemented; M2 Partial; M4/M5 acceptance, release evidence and external client migration remain open |
 | 判断产品适用性 | [产品策略](STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md) | 用户、非目标、指标、模板策略 |
 | 理解当前单 HTML | [协议 v2](PRINTFORM_V2_PROTOCOL.zh-CN.md) | Current 文件结构、绑定与 runtime API |
 | 理解 AI 与安全边界 | [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) | 六项 P0 信任闭环硬门（Current，代码已完成）与已评估未采纳的历史设想（Backlog） |
@@ -48,8 +48,8 @@
 | 自包含单 HTML | Current | 协议、样本、主题与两段 runtime 可封装在同一文件 |
 | 声明式数据绑定 | Current | 使用 JSON Pointer；不执行表达式或业务公式 |
 | Studio 静态 PWA | Current | 可部署到 GitHub Pages，并缓存最后成功的应用壳 |
-| UI/WebMCP/CDP 命令面 | Current | 共用同一 `CommandBus.execute`；Agent Contract **3.0.0**，35 个工具，含 FormSpec、事务、诊断、证据与安全导出查询 |
-| 嵌入式 AI Designer | Partial | Four-layer panel, cards, mode controls, batch history, session/settings/trace and resizable rail exist. Scope is not enforced; context readiness and Review apply policy need PROD-01/02/03. Human export remains required. |
+| UI/WebMCP/CDP 命令面 | Current/Partial | 共用同一 `CommandBus.execute`；Agent Contract **4.0.0**，35 个工具，含闭字段投影、会话引用、FormSpec、事务、诊断、证据与安全导出查询 |
+| 嵌入式 AI Designer | Partial | Four-layer panel, cards, mode controls, batch history, session/settings/trace and resizable rail exist. Structured scope and shared Review/apply guards are implemented; full PROD-01/02/03 acceptance remains open. Human export remains required. |
 | 五语言打印内容与 Studio UI | Current | `en-MY`、`zh-CN`、`ms-MY`、`ja-JP`、`vi-VN` |
 | 人工生产导出确认 | Current | AI/MCP 不能代替最终点击 |
 | 单调 revision（undo 不复用） | Current | 2026-07-31 落地；过期写入稳定返回 `REVISION_CONFLICT` |
@@ -74,18 +74,20 @@
 
 ### Partial behavior and pending work
 
-- Selection is initialized as Entire document; Scope only updates UI state (PROD-01).
-- The context badge uses validation counts rather than render/readiness lifecycle (PROD-03).
-- Review-generated repairs do not consistently honor preview-first (PROD-02); transaction gates still run.
+- Selection starts as Entire document; the UI now maps available table choices to stable FormSpec IDs and the domain guard enforces the structured scope. Full component selection and browser evidence remain Partial (PROD-01).
+- The context badge now maps render lifecycle and committed readiness to visible states; stale/delayed/error browser evidence remains open (PROD-03).
+- Review-generated repairs now consult the shared apply mode and auto-eligibility guard; delayed/retry/cross-entry evidence remains open (PROD-02).
+- The panel verifies an approval token, but the page-global and bound-session gateways also expose `executeHuman`; trusted human provenance is not established against arbitrary same-origin script/raw CDP execution (PROD-02/02-03).
 - Candidate cancellation, raw draft protection and save outcomes need additional acceptance (PROD-04/08).
-- Card Undo currently invokes global history without card-target/result checks (PROD-04). Real-data mode does not disable durable project snapshots or classify imports automatically (PROD-13).
+- Card Undo currently invokes global history without card-target/result checks (PROD-04). Unknown/Real host classification now disables durable project snapshots and recovery writes before CommandBus installation; browser transition/reload evidence remains open (PROD-13).
+- Main-app/server missing policy is restrictive, while standalone gateway/WebMCP fallback currently selects Synthetic and can retain an old policy when the current getter is empty; this cross-adapter inconsistency must fail closed before PROD-13 closure.
 - Independent Changes/history search, component highlighting, richer visible progress and mobile workflows remain pending.
 - New Design/AI/Quality workspace and preview-first default are Proposed; current tabs/defaults are unchanged.
 - See the production plan for multi-table limits, repeat-rule semantics, Quality navigation and release tasks.
 
 ## 成熟度规则
 
-Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。Earlier in the 2026-09-07 session: 72 files / 385 tests, doctor 5/5, three static pilot validations and Windows Chromium E2E 60/60 passed. No full application suites were rerun for this documentation-only patch. Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；旧的历史验收数字保留作过程记录，不代表所有发布门已关闭：
+Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。本轮文档审查新鲜执行 80 个测试文件 / 428 个测试并全部通过；doctor 5/5、三项静态 pilot validation 和 Windows Chromium E2E 68/68 是较早 amendment snapshot 的沿用证据，必须在并行实现稳定后重跑。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中执行真实分页渲染，`apply_changes` 命中同一 `candidateHash` 直接复用报告提交。
 2. ✅ revision 永不复用；写操作用 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性两阶段提交，评估后判定当前机制已达成同等安全目标）。
@@ -94,7 +96,7 @@ Production Pilot 可以用于受控试点，但工程师必须检查浏览器系
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、内容 hash 与由 evidence receipt 推导的真实浏览器凭证。
 6. ✅ 自动检查内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**但这不等于 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全自动推导。路线图 P0-B 退出条件还包含发布流程验收——两模板 × 四浏览器目标 × 全边界场景，已在 macOS 与 Linux（GitHub Actions Ubuntu runner）两个操作系统上各跑满 88/88 全过、零跨引擎分歧（见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)），Windows Chromium is now covered by 60/60 E2E; the full Windows matrix and real print chain remain unverified. The known PROD behavioral criteria must also close before release; existing hard gates cannot be waived by a checkbox. 自定义脚本仍可作为 `Untrusted` 草稿人工导出，但不能获得生产有效凭证。
+**但这不等于 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全自动推导。路线图 P0-B 退出条件还包含发布流程验收——两模板 × 四浏览器目标 × 全边界场景，已在 macOS 与 Linux（GitHub Actions Ubuntu runner）两个操作系统上各跑满 88/88 全过、零跨引擎分歧（见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）；Windows Chromium 68/68 是较早 amendment snapshot 的覆盖记录，当前并行实现完成后仍须重跑。完整 Windows matrix、real print chain 及已知 PROD 行为标准仍未关闭；现有硬门不能被 checkbox 豁免。自定义脚本仍可作为 `Untrusted` 草稿人工导出，但不能获得生产有效凭证。
 
 ## 稳定边界
 

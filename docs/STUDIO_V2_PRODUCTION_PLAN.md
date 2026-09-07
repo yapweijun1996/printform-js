@@ -1,16 +1,16 @@
 # Studio v2 Production Plan
 
-Last reviewed: 2026-09-07. Source baseline: `fb1a641450c2266a712a7b644b32609bea7c0e73`.
-This is a documentation-only review; none of the pending behavior below was implemented.
+Last reviewed: 2026-09-07. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+This records the implementation in the current worktree and the evidence still required before release. No deployment, publish or real-provider test was performed.
 
 ## Authority and status
 
 - Code and observable execution define Current behavior; [SPEC](../SPEC.md) describes it.
 - This document owns the latest review evidence, requirement IDs and acceptance criteria.
 - The [priority acceptance checklist](STUDIO_V2_P0_ACCEPTANCE.md) expands PROD-13/01/02/03 into 35 observable cases; all are Not run.
-- The [data policy](STUDIO_V2_DATA_POLICY.md) owns PROD-13 Target classification, storage/sending destinations and transition rules; implementation remains Pending.
-- The [Agent output field table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) covers all 35 public commands with closed nested shapes and compatibility rules; this is Target documentation only.
-- The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) owns Target enforcement placement, M0-M5 integration gates, client compatibility and failure/rollback handling; all packages remain Pending.
+- The [data policy](STUDIO_V2_DATA_POLICY.md) owns PROD-13 classification, storage/sending destinations and transition rules; the host enforcement foundation is implemented and combined acceptance remains Partial.
+- The [Agent output field table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) covers all 35 public commands with closed nested shapes and compatibility rules; the public gateway projection is implemented, with full command evidence still open.
+- The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) owns enforcement placement, M0-M5 integration gates, client compatibility and failure/rollback handling; M0/M1/M3 foundations are implemented, M2 is Partial, and M4/M5 remain open.
 - [TASK](../TASK.md) owns execution status; [EPIC](../EPIC.md) owns epic scope.
 - [ROADMAP](../ROADMAP.md) and the [engineering roadmap](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) own sequencing.
 - Current = implemented; Partial = some acceptance criteria remain unmet; Pending = not implemented.
@@ -21,19 +21,23 @@ This is a documentation-only review; none of the pending behavior below was impl
 
 ## Current evidence
 
-The following checks ran earlier in this review session on Windows, before this documentation amendment.
-Application code has not changed since those runs. The full suites were not rerun for the documentation patch.
-For this amendment, the documentation-dependent `tests/version.test.js` suite passed 4/4;
-local document links, touched-file <=300-line limits, Markdown-only scope and diff whitespace were checked.
+This evidence was collected from amendment snapshots after the authorized PROD-13/01/02/03
+foundation changes. The worktree is still being changed by another Agent, so only the 80/428 unit run
+is fresh for this documentation review; build, doctor and Chromium results are carried forward and must
+be rerun after implementation settles. No deployment, publish, real business data connection or real-provider test was performed.
+The 35-case P0 checklist remains Not run; these results are implementation and regression evidence,
+not release approval.
 
 | Check | Observed result | Limit |
 |---|---|---|
-| `npm test -- --run` | 72 files / 385 tests passed | Only existing assertions are covered |
-| `npm run doctor` | 5 steps / 0 failed | AGRUN integrity, unit/build:site and three pilot validations; no E2E |
-| `npx playwright test --project=chromium` after doctor built the site | 60/60 passed | Windows Chromium; not the full browser/OS/print matrix |
+| `npm test -- --run` | **Fresh review run:** 80 files / 428 tests passed | Existing coverage plus targeted boundary, embedded/WebMCP/CDP entry parity, catalog equality, CDP target replacement/reconnect, policy/session, compatibility, delayed-response, restrictive server-policy, commit-outcome and 35-command matrix tests; not the complete 35-case P0 record |
+| `npm run build:site` | **Carried forward:** passed with the then-current 80/428 suite, Vite bundle and site artifact | Rerun after concurrent implementation completes; local build only, no deployment |
+| `npm run doctor` | **Carried forward:** 5 steps / 0 failed | Rerun after concurrent implementation completes; no full browser matrix |
+| `npx playwright test --project=chromium --workers=1` | **Carried forward:** 68/68 passed | Rerun after concurrent implementation completes; local Windows Chromium only, not the full browser/OS/print matrix |
 | `npm run check` | Passed | Syntax of the built PrintForm bundle |
-| Pilot `validate:v2` | Sales Invoice, Purchase Order, Progress Claim passed | Static result has `layout.verified: false`; not browser evidence |
-| Public tool inventory | 35 contracts | Runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0 |
+| Pilot `validate:v2` | Sales Invoice, Purchase Order and Progress Claim passed | Static result has `layout.verified: false`; browser evidence is separate |
+| Public tool inventory | 35 contracts | Runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0 |
+| Touched-file syntax, line-limit and whitespace checks | Passed after the final prompt cleanup | Does not replace behavior or release acceptance |
 
 Historical macOS/Linux 88/88 results remain in the [browser matrix](BROWSER_MATRIX.zh-CN.md).
 No new full Windows matrix, real printer/Safari certification, live-provider reliability evaluation,
@@ -68,28 +72,28 @@ These existing controls must not be described as entirely absent or as proof tha
 
 | ID | Evidence and current behavior | Consequence |
 |---|---|---|
-| PROD-01 | `ui/agent-panel.js` only assigns `state.activeScope`; `ui/app.js` sets selection to `Entire document`; no execution consumer of activeScope was found | Scope is not an enforced edit boundary; component selection is incomplete |
-| PROD-02 | `send()` checks applyMode, but `runLayoutReview()` calls `autoApplyPending()` without that check | Review-generated repairs can auto-apply while preview-first is selected; transaction checks still run |
-| PROD-03 | `ui/agent-document-context.js` stores renderStatus but renders its badge from error/warning counts; app supplies validation rather than full readiness | The context badge can imply printability before current render/review completion |
-| PROD-04 | Candidate tokens/cleanup exist. Card Undo/Redo calls global history; callbacks do not compare the card revision or inspect the command outcome before relabeling the card | Exact card-target Undo and truthful failure status are incomplete; cancel/stop/late-response scenarios still need verification |
+| PROD-01 | `agent-scope.js` and transaction preview enforce the host scope at the domain entry; `agent-scope-options.js` maps UI table choices to stable FormSpec IDs and rejects ambiguous/global table effects; `agent-entry-parity.test.js` observes the same rejection through embedded, WebMCP and CDP | Scope enforcement and table selection foundation exist; full component selection and cross-document browser evidence remain incomplete |
+| PROD-02 | `agent-boundary.js` applies one shared decision to chat and Review; Preview mode checks `humanApproval`, Auto mode accepts only the low-risk allowlist, and `agent-commit-resolution.js` resolves duplicate/lost Apply outcomes by transaction identity. However, `installAgentGateway()` exposes `executeHuman` on the page-global gateway and bound session objects; callers with arbitrary page/CDP execution can invoke the privileged path without passing through the UI approval-token check in `DesignerRuntimeController.applyProposal()` | First-party MCP/WebMCP catalogs do not expose this method, but trusted human-approval provenance is not established against arbitrary page/CDP execution. Keep PROD-02 Partial and close 02-03 with a private UI-owned capability or an explicitly narrower threat claim |
+| PROD-03 | `agent-document-context.js` maps waiting/rendering/candidate/failed states and document validation to visible printability; `CommandBus.readiness().productionValid` remains authoritative for export controls | Browser evidence must confirm stale and delayed render states cannot show Printable or enable export |
+| PROD-04 | Candidate tokens/cleanup exist. Stop marks the turn cancelled and drops late provider output; recovery-required cards do not offer Apply/Discard. Card Undo/Redo still calls global history without card-target/result checks | Exact card-target Undo and truthful history failure status remain incomplete |
 | PROD-05 | `core/acceptance.js:countRows` and `core/runtime.js:maxArrayLength` use the maximum nested array length; two 400-row arrays report 400 | The row-limit metric does not represent aggregate bound table rows |
 | PROD-06 | `core/operations.js:applyPaginationRule` accepts componentId but repeatHeader writes root `data-repeat-rowheader` | Component-shaped API changes a document-wide flag |
 | PROD-07 | `ui/status-view.js` routes issue paths to source textareas and shows the first 30 issues; full page/component navigation is absent | Users cannot reliably move from every reported issue to the owning visual component |
-| PROD-08 | `app.js` refreshes editors on committed changes; recovery is best-effort; downloadHtml has no completion receipt, yet export clears dirty/recovery state | Raw draft overwrite and persistence failure paths need verification; download initiation is not proof of a saved file |
+| PROD-08 | `app.js` refreshes editors on committed changes; recovery is policy-gated and explicit discard is the only cleanup path; browser download still has no disk-completion receipt | Persistence failure, remaining delayed callbacks and download truthfulness still need verification |
 | PROD-09 | Source editor is collapsible; current tabs are Designer/Quality/Agent; topbar reserves right-rail space | Proposed workspace reorganization is not current layout |
 | PROD-10 | Chromium automation exists; full target release matrix and real print acceptance are incomplete | Green tests do not establish the final supported deployment promise |
-| PROD-11 | `pagination-render.js` 389 lines, `ui/app.js` 310, `ui/agent-panel.js` 301 | These JS files exceed the repository's 300-line rule; no source refactor was done here |
+| PROD-11 | This implementation split `ui/app.js`, `ui/agent-panel.js` and new boundary/projector modules; the touched files are within the 300-line rule, while the pre-existing `pagination-render.js` remains 389 lines | No new touched-file violation; the pre-existing renderer remains a separate refactor item |
 | PROD-12 | Build/doctor generate and validate three pilots; `.github/workflows/ci.yml` explicitly static-validates only two; browser-matrix script covers Invoice/PO | Release evidence coverage differs between entry points |
-| PROD-13 | `app.js:installBus` always injects localStorage; durable store writes full project snapshots. Real-data toggle clears recovery/session state, not durable storage. Import does not automatically enable the unchecked real-data checkbox | Real-data mode is not an end-to-end no-persistence guarantee; unknown imports can remain in synthetic mode |
+| PROD-13 | The main app classifies before CommandBus/storage setup, and the server defaults to Unknown. Restrictive policies use volatile transactions, memory sessions, no recovery writes and restricted asset/provider media paths. However, standalone `installAgentGateway()` and `installWebMcpAdapter()` still create a Synthetic fallback when no host policy getter is supplied; `defaultPolicyForOptions()` also defaults missing policy to Synthetic. In addition, `isPolicyCurrent()` treats a missing current policy as current, while gateway context construction substitutes the old active policy when the getter returns empty | This contradicts the documented rule “missing policy is Unknown” and leaves adapter/no-active-document transitions fail-open. Keep PROD-13 Partial; require Unknown fallback and stale rejection for missing-policy transitions before M4 closure |
 
-PROD-01/02/03/05/06/13 and PROD-04 card-history behavior are code-confirmed gaps. PROD-04/08 also include failure scenarios
+PROD-01/02/03/13 have implementation foundations but still carry acceptance gaps. PROD-04/08/10/12 and the P0 matrix also include failure scenarios
 that still need reproduction. Do not claim all listed scenarios have already failed in production.
 
 ## Product decisions and proposed layout
 
 Preserved requirements: one HTML envelope, one pagination engine, semantic Agent operations,
 revision-bound approved transactions, real-data privacy, evidence checks and final human export.
-No change to Protocol 2.0.0 or Agent Contract 3.0.0 is implemented by this plan.
+Protocol remains 2.0.0; Agent Contract 4.0.0 is the intentional breaking change for closed projections, opaque references and boundary checks. No deployment or provider authorization is implied.
 
 Recommended first release profile: a single engineer on Windows + a named Chromium browser,
 local projects and self-contained HTML export, with declared paper/locale/template/data limits.
@@ -117,15 +121,27 @@ An operation's catalog risk label alone is not proof that a batch matches user i
 Map preview selection to stable FormSpec component IDs. Carry allowed targets/operations through
 the request and enforce the boundary in the command/domain path, not only in model instructions.
 Test edits inside/outside scope, whole-document operations, stale selection and imported legacy templates.
-Until complete, describe Scope as a UI choice without enforcement; do not promise selected-only editing.
+The current implementation enforces document/layout/theme/table/component scope at the command boundary;
+do not claim the full selection matrix is complete until the acceptance cases are observed.
 
 ### PROD-02: apply policy
 
 Use one policy decision for chat proposals, review repairs and retries. In preview-first mode no AI
 path may advance the committed revision before human Apply. Test Review with a generated repair,
 repeated repairs and cancellation. Preserve transaction ID/revision/hash/validation checks.
-The embedded `studio-v2/agent-skills/printform-designer.md` is a runtime-loaded prompt and still
-describes an auto-apply host. Align it with the policy during authorized implementation, not this docs-only amendment.
+The embedded `studio-v2/agent-skills/printform-designer.md` is a runtime-loaded prompt and now
+describes Preview approval plus explicit Auto eligibility. The complete delayed-response and
+client-entry-point matrix remains required.
+
+Amendment-review finding: the normal panel path verifies its approval token before calling the
+privileged gateway, and the registered MCP/WebMCP tool catalogs expose only `execute`. The same
+gateway object nevertheless publishes `executeHuman` on `window.PrintFormStudioAgent`, and bound
+session objects retain that method. Therefore “human approval” is currently a host convention, not
+an authorization boundary against arbitrary same-origin script or raw CDP execution. The smallest
+complete correction is to keep the privileged capability inside the UI closure (or use an
+unforgeable, single-candidate capability) and add a negative 02-03 test proving every Agent surface
+can neither discover nor invoke it. If arbitrary page/CDP execution is intentionally out of scope,
+state that limitation wherever human approval is claimed.
 
 ### PROD-03: state ownership
 
@@ -172,6 +188,14 @@ Real-data mode must prevent unauthorized persistent copies; explicitly handle pr
 without silent deletion or an assertion that clearing one cache clears every store.
 Current pixel rejection/redaction must remain. Test fresh import, mode switching, reload and storage inspection.
 
+Amendment-review finding: the main app and server have restrictive defaults, but the adapter-level
+fallback is inconsistent. A gateway or WebMCP install without a host policy currently creates a
+Synthetic policy, and a temporarily missing current policy can be treated as unchanged. This is a
+fail-open default at the integration boundary. Change the adapter contract so missing policy means
+Unknown, and make an absent current policy invalidate queued Agent work. Preserve an explicit legacy
+compatibility path only when the host deliberately opts into it; do not infer Synthetic from the
+absence of configuration.
+
 ### PROD-09 through PROD-12: UX, maintainability and release
 
 Validate the proposed layout with import/edit/review/apply/undo/save/reopen/export tasks before claiming UX completion.
@@ -202,4 +226,12 @@ HA/fencing/remote UI remain pending E15 work, not universal prerequisites for an
 An implemented task needs its targeted behavior evidence, preserved regressions and synchronized status in TASK.
 Historical E14 completion labels do not override the current partial findings.
 Production Ready requires closed applicable criteria, recorded environment/print acceptance and maintainer release approval.
-This documentation amendment neither changes application behavior nor declares a production release.
+This implementation session changes application behavior within the authorized worktree; it does not deploy, publish or declare a production release.
+
+## SCMC amendment review
+
+- Simple: **WARN**. The shared boundary is compact, but two implicit privilege defaults make its behavior harder to reason about.
+- Clear: **WARN**. Documentation previously described human approval and missing-policy behavior more strongly than the callable surface supports.
+- Modular: **PASS**. Policy, projection, transaction and UI responsibilities are separated into focused modules.
+- Consistent: **FAIL**. Main-app/server Unknown defaults conflict with gateway/WebMCP Synthetic fallbacks, and the UI-only approval claim conflicts with a page-global privileged method.
+- Overall: **FAIL until the two boundary findings above are resolved or explicitly narrowed by an approved threat model**. The fresh 80/428 unit run proves covered behavior, not approval provenance or fail-closed missing-policy behavior.

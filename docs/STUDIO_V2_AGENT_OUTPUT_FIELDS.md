@@ -1,7 +1,7 @@
 # Studio v2 Agent Output Field Allowlist
 
-Prepared: 2026-09-07. Baseline: `fb1a641450c2266a712a7b644b32609bea7c0e73` plus documentation worktree.
-Status: **Target contract; not implemented or behaviorally verified**. PROD-13 remains Pending.
+Prepared: 2026-09-07. Baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+Status: **Implemented public projection foundation; full 35-command behavioral acceptance Partial**. PROD-13 remains open until combined evidence is recorded.
 Scope: the 35 names in [TOOL_CONTRACTS](../studio-v2/core/tool-contracts.js); mappings use the current
 [dispatcher](../studio-v2/core/command-bus-dispatch.js) and its result producers, not tool descriptions alone.
 
@@ -31,7 +31,8 @@ Scope: the 35 names in [TOOL_CONTRACTS](../studio-v2/core/tool-contracts.js); ma
 | Review status | layoutReviewStatus uses reviewedRevision, whereas current sanitizeReview selects revision | Preserve the actual reviewedRevision meaning; never fabricate a current revision from a missing field |
 | Global sanitizer | Starts with structuredClone(result) and selectively changes recognized fields | Build per-command projections; reject an unregistered command/output variant |
 
-These are source-level observations; no live data disclosure test or implementation is claimed.
+These observations guided the current closed projection implementation; live data disclosure and full
+35-command acceptance evidence remain open.
 
 ## Complete public command mapping
 
@@ -60,7 +61,7 @@ Static means exact repository-owned constants/schema projections, never document
 | 18 | `get_audit_events` | events: Audit[] | Exclude arbitrary details, payloads, raw identities and free-text reasons |
 | 19 | `preview_changes` | revision: R; transactionId: Ref; diff: Diff; validation: Validation; candidateHash: H/null | No candidate/project or operation values; null hash retains current static-only meaning |
 | 20 | `approve_transaction` | Transaction at result root | No approval token; actor reference is not evidence of human approval |
-| 21 | `apply_changes` | revision: R; diff: Diff; validation: Validation; candidateHash: H/null; transaction: Transaction | Preserve no-op outcome and exact committed revision; no candidate report |
+| 21 | `apply_changes` | revision: R; already_committed: boolean; committed_revision?: R; diff: Diff; validation: Validation; candidateHash: H/null; transaction: Transaction | Preserve no-op outcome and exact committed revision; duplicate Apply returns the same committed revision without a second CAS; no candidate report |
 | 22 | `rollback_transaction` | Transaction at result root | Do not return project/changes as a rollback preview |
 | 23 | `compare_revision` | fromRevision/toRevision: R; diff: Diff | No raw before/after content; current diff operationCount counts changed sections |
 | 24 | `get_transaction_history` | revision: R; entries: Journal[]; transactions: Transaction[]; auditEvents: Audit[] | Project all three arrays; do not pass through stored pack/event objects |
@@ -93,8 +94,9 @@ catalog registration/access policy is a separate compatibility decision. Any oth
 7. Where input syntax requires a JSON Pointer or selector, use a syntactically valid opaque surrogate resolved only by the host; never forward it to DOM lookup directly.
 8. Resolve only designated target-reference fields, not arbitrary prompt/operation text. Missing/ambiguous mappings yield a safe actionable error, never whole-document fallback.
 
-This is a Target Agent-facing projection. Dropping fields and changing identifier semantics can break existing clients even if JSON field names remain unchanged.
-Before implementation release, review embedded Agent actions, WebMCP/CDP consumers, tool schemas/examples, version tests and runtime prompts together.
+This is the implemented Agent-facing projection contract. Dropping fields and changing identifier semantics
+can break existing clients even if JSON field names remain unchanged. Before release, review embedded Agent
+actions, WebMCP/CDP consumers, tool schemas/examples, version tests and runtime prompts together.
 Use a versioned migration if required. Do not keep a raw-output compatibility path for Real/Unknown data; unsupported clients must receive a clear safe error.
 Fixed catalog examples stay synthetic and static; they are examples, not valid live opaque references. Live targets must be obtained by inspection.
 
@@ -112,8 +114,9 @@ Fixed catalog examples stay synthetic and static; they are examples, not valid l
 
 ## SCMC review
 
-- Scope/evidence: public command roots and actual producers; constraints: docs only, privacy, transaction integrity and backward compatibility.
+- Scope/evidence: public command roots and actual producers; constraints: closed projections, privacy, transaction integrity and backward compatibility.
 - Simple: PASS; reuse nested shapes instead of 35 independent policies. Clear: PASS; root/wrapped variants and omissions are explicit.
 - Modular: PASS; domain results remain internal, Agent projection has one owner. Consistent: PASS; all 35 catalog entries have exactly one row.
-- Findings: no material documentation design issue; safe schemas, reference plumbing and client migration remain implementation work.
-- Overall: PASS for design only. The implementation/migration sequence is documented; M0 consumer/variant inventory and every implementation package remain Pending.
+- Findings: no material documentation design issue; safe schemas, reference plumbing and client migration
+  are implemented as a foundation, while client and full-matrix evidence remain open.
+- Overall: PASS for contract and implementation foundation only. M4 acceptance and M5 release evidence remain Pending.

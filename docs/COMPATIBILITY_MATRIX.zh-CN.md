@@ -1,6 +1,6 @@
 # 版本与兼容矩阵
 
-> 最后核对：2026-09-04（对齐 Studio 0.11.0、Protocol 2.0.0 与 Agent Contract 3.0.0）。
+> 最后核对：2026-09-07（对齐 Studio 0.11.0、Protocol 2.0.0 与 Agent Contract 4.0.0）。
 >
 > 本仓库有**四条独立的版本线**。它们描述四种不同的东西、按四种不同的节奏变化，共用一个数字只会让其中三条被迫做无意义的跳版。
 
@@ -11,11 +11,11 @@
 | **PrintForm 引擎** | 1.0.0 | [src/version.js](../src/version.js) → `PrintForm.version` | `dist/printform.js` 这个零依赖分页脚本本身 | 改变既有 ERP DOM 的分页结果、移除 `data-*` 配置项、改掉 `*_processed` class 约定 |
 | **Studio v2** | 0.11.0 | [studio-v2/core/constants.js](../studio-v2/core/constants.js) `STUDIO_VERSION` | 编辑器应用本身（UI、面板、PWA），含 FormSpec、事务与 Evidence Pack 基础 | 工程师工作流出现不兼容的重大改动；**升到 1.0.0 专门保留给维护者显式宣布 Production Ready 的那一刻** |
 | **单 HTML 协议** | 2.0.0 | 同上 `PROTOCOL_VERSION` | 导出文件的结构契约（`pf-manifest`/`pf-schema`/`pf-template`… 各区块的 id 与语义） | 旧版导出文件无法再被本版 Studio 正确解析 |
-| **Agent Contract** | 3.0.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（35 个工具的入参/返回/错误码）；含 FormSpec、transaction、diagnostics、evidence 与 strict export checks | 删除工具、改变既有工具的入参形状或返回契约（本次 3.0.0 收紧 `apply_changes`，不再接受直接 `operations[]`） |
+| **Agent Contract** | 4.0.0 | 同上 `AGENT_CONTRACT_VERSION` | `CommandBus` 暴露给 Agent 的命令面（35 个工具的入参/返回/错误码）；含 FormSpec、transaction、diagnostics、evidence、闭字段投影与会话引用 | 删除工具、改变既有工具的入参形状或返回契约（本次 4.0.0 收紧输出字段并加入数据策略/作用域门禁） |
 
 ## 为什么必须拆开
 
-一次真实的例子：Agent Contract 从 1.2.0 升到 2.0.0（`complete_layout_review` 改用 `evidenceIds`）时，**导出文件的结构一个字节都没变**；本次 3.0.0 同样保持 Protocol 2.0.0，只收紧 Agent 写路径并增加 Studio 侧的 FormSpec/transaction/evidence 能力。若四条线共用一个版本号，协议会被迫跟随不必要地跳版。
+一次真实的例子：Agent Contract 从 1.2.0 升到 2.0.0（`complete_layout_review` 改用 `evidenceIds`）时，**导出文件的结构一个字节都没变**；3.0.0 收紧了 Agent 写路径；本次 4.0.0 继续保持 Protocol 2.0.0，收紧输出投影并加入 Studio 侧的数据策略/作用域边界。若四条线共用一个版本号，协议会被迫跟随不必要地跳版。
 
 反过来同理：Studio 加一个工程师面板（如本轮的 Table columns / Brand color）不该让分页引擎跳版，因为引擎的字节没有变化，用户手上那份 `dist/printform.js` 的行为完全一致。
 
@@ -38,7 +38,7 @@ Studio 的 Agent 连接面板不硬编码版本号：`index.html` 里该元素�
 
 ### Target Agent output migration (2026-09-07)
 
-The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) narrows outputs and introduces scoped reference semantics. Treat this as a breaking Agent Contract change and plan a new major version; the exact release number is not assigned here. Current Agent Contract remains **3.0.0** and no constants, schemas, runtime guidance or bootstrap copies changed in this documentation-only task.
+The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) narrows outputs and introduces scoped reference semantics. This implementation ships that breaking boundary as Agent Contract **4.0.0**. First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. Unsupported or mixed clients fail safely without raw-output fallback; preserve human editing and existing file-format semantics.
 
 First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. A local MCP catalog does not prove compatibility with the live page. Unsupported/mixed clients must fail safely without raw-output fallback; preserve human editing and existing file-format semantics. Engine, single-HTML protocol, Studio and MCP server implementation versions keep their independent ownership.
 

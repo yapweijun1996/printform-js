@@ -25,7 +25,7 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 - Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
 - Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
 - The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
-- Enabling real-data mode disables recovery drafts and changes Agent session/redaction behavior, but does not disable durable project snapshots in localStorage. Unknown imports do not automatically enable this mode. Do not interpret the checkbox as a complete no-persistence guarantee; PROD-13 in the [production plan](../docs/STUDIO_V2_PRODUCTION_PLAN.md) tracks the required classification/storage correction.
+- Enabling real-data mode disables durable project snapshots, recovery drafts and persistent chat stores for the active document context. Unknown imports are classified restrictively before CommandBus/storage installation. Existing records are not silently deleted; browser transition, reload and delayed-write evidence remain under PROD-13 in the [production plan](../docs/STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## Recommended Chrome DevTools MCP WebMCP route
 
@@ -106,7 +106,7 @@ The steps below exercise the **current Pilot contract**. Layout evidence is issu
 
 Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. The embedded loop permits at most three passes and two approved repairs; repeated repairs are rejected. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
 
-Agent Contract 3.0 exposes a semantic FormSpec/component registry and requires `preview_changes` → `approve_transaction` → `apply_changes` with an exact transaction ID and candidate hash. `apply_changes` no longer accepts `operations[]`; raw source preview remains a Studio-internal command and is not an Agent tool. The embedded AI Designer follows the same transaction path. Use `get_transaction`, `get_revision`, `get_audit_events`, `get_transaction_history` and `get_evidence_pack` for durable audit/recovery state. Lease recovery uses `renew_lease`, `release_lease`, `takeover_transaction` and `recover_transaction`; releasing a lease expires the uncommitted record, and takeover creates a fresh transaction. Stale or conflicted drafts must be explicitly resolved before a new preview. End users can Undo or Redo committed revisions. `request_export` is readiness-only: AI never receives Production Export UI permission.
+Agent Contract 4.0 exposes a semantic FormSpec/component registry and requires `preview_changes` → `approve_transaction` → `apply_changes` with an exact transaction ID and candidate hash. Agent results use closed projections and session-scoped opaque references; `apply_changes` no longer accepts `operations[]`; raw source preview remains a Studio-internal command and is not an Agent tool. The embedded AI Designer follows the same transaction path. Use `get_transaction`, `get_revision`, `get_audit_events`, `get_transaction_history` and `get_evidence_pack` for durable audit/recovery state. Lease recovery uses `renew_lease`, `release_lease`, `takeover_transaction` and `recover_transaction`; releasing a lease expires the uncommitted record, and takeover creates a fresh transaction. Stale or conflicted drafts must be explicitly resolved before a new preview. End users can Undo or Redo committed revisions. `request_export` is readiness-only: AI never receives Production Export UI permission.
 
 ## Embedded AI Designer and BYOK
 
@@ -116,7 +116,13 @@ OpenAI-compatible Custom LLM. Provider keys are stored only as PBKDF2-HMAC-
 SHA256 (600,000 iterations) + AES-256-GCM ciphertext in IndexedDB; the
 derived key and decrypted credential exist only while the vault is unlocked.
 
-The default auto-apply flow is shown below. Ordinary chat in preview-first mode leaves the proposal pending human Apply. Review-generated repairs currently skip that mode check (PROD-02); scope enforcement and card-target Undo are also incomplete (PROD-01/04). All paths still use the existing transaction/hash checks.
+The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
+
+Security boundary: the supported MCP/WebMCP catalogs expose only normal Agent `execute` calls. The
+page-global gateway currently also contains the UI's privileged `executeHuman` method, so arbitrary
+same-origin script or raw CDP access is outside the proven human-approval boundary. Do not grant a
+model unrestricted page/CDP execution and then treat Preview mode as proof of human provenance;
+PROD-02/02-03 tracks moving that capability behind a private UI-owned boundary or narrowing the claim.
 
 ```text
 inspect → operation catalog → preview_changes → host auto-apply (candidate hash + requireValid) → validate

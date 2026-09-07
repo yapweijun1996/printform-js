@@ -2,13 +2,13 @@
 
 > 状态：Production Pilot
 >
-> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-09-07 当前契约为 Agent Contract 3.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply/commit，旧的 2.1.0 叙述仅作为历史记录。
+> Current 描述当前代码；Target 定义尚未实现的 Production Ready 信任闭环。**2026-09-07 当前契约为 Agent Contract 4.0.0**：公共 Agent 写入必须走事务化 preview/approve/apply/commit，并通过闭字段投影、作用域、数据策略和版本门禁；旧的 2.1.0/3.0.0 叙述仅作为历史记录。
 
 > 本轮新增的 Production Foundation 还包括 FormSpec/component registry、Active Table Context、结构化 pagination diagnostics、strict trusted-export allowlist 与持久化 Evidence Pack。若本文下方的 2026-07-31 历史段落与此覆盖冲突，以本段和 `DESIGN.md`/`SPEC.md` 为准。
 
 ## 信任边界
 
-PROD-13 Target details: [data classification and destination rules](STUDIO_V2_DATA_POLICY.md). Artifact trust does not certify synthetic data. Unknown/Real document state is volatile under that target profile, with separate explicit file-save and credential-vault rules; current durable storage, output-projection and cache/asset coverage still need implementation/verification.
+PROD-13 details: [data classification and destination rules](STUDIO_V2_DATA_POLICY.md). Artifact trust does not certify synthetic data. Unknown/Real document state is now volatile in the host policy path, with separate explicit file-save and credential-vault rules; full P0 acceptance and browser/provider evidence remain open.
 
 单 HTML 是项目与交付物的唯一事实来源。Studio、UI、WebMCP 和第一方 CDP bridge 都只能修改隔离草稿；AI 不能代替工程师执行最终生产导出。
 
@@ -16,13 +16,13 @@ PROD-13 Target details: [data classification and destination rules](STUDIO_V2_DA
 
 ## E14: existing invariants and incomplete UI-policy acceptance
 
-Current review: Scope is not an enforced boundary, context printability does not consume renderStatus, and Review repairs can auto-apply in preview-first mode. See PROD-01/02/03 in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md). Transaction gates still run; host approval must not be confused with a human click. UI 必须把 domain transaction state 映射成用户可理解的状态，而不是用聊天文字代替事实：
+Current review: shared scope and apply-policy guards now enforce the bounded foundation, while context printability and composed Review/late-response acceptance still require evidence. See PROD-01/02/03 in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md). Transaction gates still run; host approval must not be confused with a human click. UI 必须把 domain transaction state 映射成用户可理解的状态，而不是用聊天文字代替事实：
 
 - Proposal 表示候选计划，不表示已修改。
 - Preview/Validated 表示候选已渲染或验证，不表示已经 commit。
 - Change Card 只有在 commit 成功后才能显示 `Applied`；失败或被阻断时显示明确的 `Blocked`/`Failed`。
 - Undo 应关联 transaction batch；global Undo/Redo 仍作为 secondary control 保留。
-- Auto-apply retains preview/approval/revision/hash gates. Shared user-mode/scope enforcement across all repair paths remains PROD-01/02; current default is auto-apply, not the proposed preview-first default.
+- Auto-apply retains preview/approval/revision/hash gates and is limited to the explicit low-risk operation set; Preview mode and layout repairs remain pending until human Apply. Current product default remains auto-apply; no default change is declared.
 - Context Bar 可以显示 document、selection 和 scope，但 real-data mode 不得因此把业务值写入日志、trace、recovery cache 或 Evidence Pack。
 - 当前 durable transaction 采用原子、fail-closed 语义。E14 第一版不把含糊的 partial success 直接提交给用户；若未来支持拆分，必须显式使用独立 transaction batch 和独立状态。
 
@@ -47,22 +47,23 @@ Current review: Scope is not an enforced boundary, context printability does not
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：Windows Chromium has current 60/60 E2E evidence, but the full matrix, actual print chain and E14 behavioral criteria remain incomplete; HA applies only to a release claiming that deployment model；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：Windows Chromium 68/68 是较早 amendment snapshot 的证据，当前并行实现完成后须重跑；完整矩阵、真实打印链、approval provenance、missing-policy fail-closed 行为和 E14 验收仍未完成。HA 仅适用于声明该部署模型的 release；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
 
 ## 数据隐私
 
-### Current implementation and privacy gap
+### Current implementation and remaining privacy evidence
 
 - The real-data checkbox starts unchecked; importing an unknown file does not automatically change it.
-- Gateway redaction/pixel rejection and Agent session mode depend on this selected flag.
-- Enabling real-data mode clears the recovery draft and changes AI session handling.
-- However, `app.js:installBus` always supplies localStorage to CommandBus; `DurableTransactionStore` persists complete project head/revision snapshots. Clearing recovery cache does not clear or disable that store.
-- Therefore the current UI does **not** implement a blanket no-persistence guarantee for real data. This code-confirmed gap is PROD-13, separate from the existing synthetic-only pixel guard.
+- Gateway redaction/pixel rejection, Agent sessions, CommandBus storage, recovery writes, asset fetches and render/provider media mode now consume the host-owned policy.
+- Unknown/real installation constructs a volatile transaction store, memory-only sessions and rejects new recovery writes; existing records are not silently deleted or replayed.
+- The service worker only caches the generated app shell, and restrictive export/preview paths reject fetchable imported assets before network access.
+- Standalone page-gateway/WebMCP installation still treats missing policy as Synthetic, and a temporarily absent current policy can reuse the old context. This conflicts with the host/server Unknown default and must fail closed before PROD-13 acceptance.
+- Remaining evidence is the complete P0 matrix, browser reload/mode-race coverage and a final inspection of actual captured Provider request bodies using only canary fixtures.
 
-### Required privacy acceptance (Pending, PROD-13)
+### Required privacy acceptance (Partial, PROD-13)
 
-Classify unknown imports as potentially real before persistence or AI access. Enforce the chosen data policy across durable head/revisions/transactions, recovery, sessions and evidence; preserve existing gateway redaction and pixel rejection.
-Use synthetic canaries to verify import, mode switching and reload. Document pre-existing stored copies and explicit cleanup options without silently deleting user records. No automatic telemetry/upload is introduced by this plan.
+Classify unknown imports as potentially real before persistence or AI access. The host policy now covers durable head/revisions/transactions, recovery, sessions, evidence, asset requests and provider media; gateway redaction and pixel rejection remain fail-closed.
+Use synthetic canaries to verify import, mode switching and reload. Document pre-existing stored copies and explicit cleanup options without silently deleting user records. No automatic telemetry/upload is introduced by this plan. Full acceptance remains open until the combined/browser evidence is recorded.
 
 ## Backlog（早期设想，已评估未采纳）：破坏性两阶段提交
 
@@ -139,8 +140,8 @@ Runtime trust values are `trusted` and `untrusted`; "Production Ready" is produc
 
 ## 契约升级
 
-Agent Contract 3.0.0 已于 2026-08-17 切换（`core/constants.js`）。2.1.0 的 operation catalog/design inspection 与 layout review 能力继续保留；3.0.0 收紧公共 Agent 写路径，增加 FormSpec、transaction、diagnostics、revision/evidence 查询工具。`complete_layout_review` 仍要求 `evidenceIds`，拒绝旧式自述字段。
+Agent Contract 4.0.0 已于 2026-09-07 切换（`core/constants.js`）。2.1.0/3.0.0 的 operation catalog、design inspection、事务与 layout review 能力继续保留；4.0.0 收紧公共 Agent 输出为闭字段投影，使用会话内不透明引用，并加入数据策略、作用域、Apply 及客户端版本门禁。`complete_layout_review` 仍要求 `evidenceIds`，拒绝旧式自述字段。
 
-其余读取路径保持兼容；公共 Agent 的写路径则以 3.0.0 的 fail-closed transaction contract 为准。Studio 内部 raw source/editor 命令不是 Agent 工具，也不构成对外写入兼容承诺。
+其余读取路径只有在 4.0.0 投影下才对外发布；不兼容或混用客户端安全拒绝，绝不恢复原始对象作为兼容方案。Studio 内部 raw source/editor 命令不是 Agent 工具，也不构成对外写入兼容承诺。
 
 WebMCP、第一方 CDP bridge 与 UI 共享同一 `CommandBus.execute`，天然同步切换。当前能力以 `get_capabilities` 返回的 `contractVersion` 与 `capabilities` 为准（`candidateHash`、`candidateRealRender`、`layoutEvidenceReceipts`）。

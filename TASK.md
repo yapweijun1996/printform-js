@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> Last reviewed: 2026-09-07. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilot validations, Windows Chromium 60/60. E14 is Partial. This amendment changes documentation only; dated completion entries below remain historical.
+> Last reviewed: 2026-09-07. Fresh documentation-review evidence: 80 test files / 428 tests. `npm run doctor` 5/5 and serial Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and must be rerun after the concurrently changing implementation settles. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. E14 is Partial. This worktree contains the authorized PROD-13/01/02/03 foundation implementation; approval provenance, missing-policy defaults, full acceptance and release evidence remain open.
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
@@ -153,8 +153,9 @@
 
 ## Current execution status
 
-- Documentation reconciliation: completed in this amendment; no application code, runtime-loaded Agent prompt, configuration or test changes. Documentation-linked version checks passed 4/4; full suites were not rerun.
-- Implementation work: none started in this documentation-only task.
+- PROD-13/01/02/03 foundation: implemented across host classification, restrictive storage/resource policy, gateway scope/apply checks, closed output projections, opaque references, lifecycle state and provider payload gating.
+- M0/M1/M3 foundations are implemented and version-aligned. M2 is Partial because the privileged page-global `executeHuman` path does not prove approval provenance and no-policy gateway/WebMCP fallback remains Synthetic; M4 targeted/composed acceptance and M5 release evidence remain open. The P0 checklist still records all 35 cases as Not run until case-specific evidence is attached.
+- Verification: the fresh 80/428 run passed, including controlled embedded/WebMCP/CDP entry parity, catalog equality, CDP target replacement/reconnect and catalog-mismatch rejection; targeted scope/reference/policy/compatibility tests, the 35-command public matrix, restrictive server-policy tests and duplicate/lost-response/recovery commit-boundary tests. Doctor 5/5 and serial Windows Chromium 68/68 are carried-forward evidence, not fresh results after the active concurrent implementation. No deployment, publish, real business data connection or real-provider test was performed.
 - Current evidence, detailed requirements and proposed layout: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## Corrected E14 acceptance
@@ -176,27 +177,27 @@ Retain original IDs for traceability; new PROD IDs identify specific closure wor
 
 All items below remain unimplemented or incompletely verified. Priority P0 denotes a proposed production-release gate, not an emergency or an external access blocker.
 Acceptance details and current code evidence are owned by the production plan.
-The [priority acceptance checklist](docs/STUDIO_V2_P0_ACCEPTANCE.md) defines 35 cases for PROD-13/01/02/03, including combined flows. All are Not run; implementation and verification owners are unassigned. Checklist preparation is complete, but all four PROD tasks remain Pending.
-The [data classification/destination policy](docs/STUDIO_V2_DATA_POLICY.md) is specified as Target for PROD-13: storage, outgoing context, credentials, explicit file saves, old records and async mode changes. Its document work is complete; safe-field enforcement, volatile export integration, cache/asset guards and behavioral verification remain pending.
-The [35-command field allowlist](docs/STUDIO_V2_AGENT_OUTPUT_FIELDS.md) now specifies Target output roots, nested fields and scoped references. Safe-field design is complete; schema enforcement/reference plumbing, client compatibility and all behavioral verification remain Pending. Public get_revision is metadata-only; undo/project, direct transaction results and unprojected history are the reviewed output gaps.
-The [boundary/migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) now defines ownership, admission/delivery checks, M0-M5 dependencies, breaking Agent compatibility migration and safe rollback. Plan documentation is Done; all packages remain Pending, individual owners unassigned and acceptance Not run. No code, contract version, runtime-loaded guidance or release state changed.
+The [priority acceptance checklist](docs/STUDIO_V2_P0_ACCEPTANCE.md) defines 35 cases for PROD-13/01/02/03, including combined flows. The current code has targeted evidence, but the full checklist remains Not run and no Production Ready claim is made.
+The [data classification/destination policy](docs/STUDIO_V2_DATA_POLICY.md) is now enforced for the host foundation: Unknown/Real are restrictive across durable state, recovery, sessions, asset requests, evidence pixels and provider media. Chromium canaries now cover Real-mode storage exclusion across reload, delayed Provider responses after a mode and document switch, an explicit Untrusted export, and a legacy recovery record that remains dormant until restrictive explicit Restore; WebMCP parity and the server adapter's pre-SQLite Unknown/Real rejection are covered by tests. Complete sink inventory, all entry points and server-side provider/remote-store integration remain open.
+The [35-command field allowlist](docs/STUDIO_V2_AGENT_OUTPUT_FIELDS.md) now has gateway projection/reference plumbing and Agent Contract 4.0.0 version gating. Public get_revision is metadata-only; undo/project, direct transaction results and history are projected separately. The uniform 35-command matrix passes; per-command payload evidence and client-migration verification remain open.
+The [boundary/migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) records M0/M1/M3 foundations, the reopened M2 boundary findings and M4/M5 evidence work. No deployment, publish, push, real business data connection or real Provider test was performed.
 
 | ID | Priority / epic | Action and acceptance | Dependencies | Status |
 |---|---|---|---|---|
-| PROD-01 | P0 / E14 | Connect selection to FormSpec; reject out-of-scope edits in command path | Existing registry/gateway/operations | Pending |
-| PROD-02 | P0 / E14 | One apply policy for chat/Review/retries; preview-first never auto-commits; align runtime-loaded host prompt during implementation | Existing transaction gate; explicit scope eligibility | Pending |
-| PROD-03 | P0 / E14 | Shared render/readiness/candidate/save projections; no premature Printable state | CommandBus + render controller | Pending |
-| PROD-04 | P0 / E14 | Guard card-target Undo and check command results; verify cancel/Stop/replacement/late response/double Apply | PROD-02/03 | Pending investigation and fixes |
+| PROD-01 | P0 / E14 | Connect selection to FormSpec; reject out-of-scope edits in command path | Existing registry/gateway/operations | Partial: domain scope guard and stable table selection implemented; full selection matrix remains |
+| PROD-02 | P0 / E14 | One apply policy for chat/Review/retries; preview-first never auto-commits; align runtime-loaded host prompt during implementation | Existing transaction gate; explicit scope eligibility | Partial: shared mode/allowlist and commit-outcome resolution exist; page-global/bound-session `executeHuman` leaves trusted approval provenance unproven against arbitrary same-origin script/raw CDP |
+| PROD-03 | P0 / E14 | Shared render/readiness/candidate/save projections; no premature Printable state | CommandBus + render controller | Partial: state mapping implemented; browser evidence remains |
+| PROD-04 | P0 / E14 | Guard card-target Undo and check command results; verify cancel/Stop/replacement/late response/double Apply | PROD-02/03 | Partial: Stop/late-result discard and recovery-card state are guarded; card-target Undo/result checks remain |
 | PROD-05 | P0 / E8/E9 | Define bound per-table/total limits; test two 400-row tables and exact limits | Binding policy; preserve row-conservation checks | Pending |
 | PROD-06 | P0 / E8/E9 | Resolve component repeatHeader versus global flag; prove multi-table semantics | FormSpec/template/formatter; compatibility decision | Pending |
 | PROD-07 | P0 / E14 | Quality blockers explain next action and locate page/component/field | PROD-01/03 + existing diagnostics | Pending |
 | PROD-08 | P0 / E14 | Preserve raw drafts; distinguish applied/recovery/saved/download-started; exercise failure paths | PROD-03; existing privacy policy | Pending investigation and fixes |
 | PROD-09 | P1 / E14 | Reviewable workspace prototype and task-based layout acceptance | PROD-01/03; proposed layout/defaults need adoption | Proposed |
 | PROD-10 | Release / E10 | Record exact platform/paper/locale/template scope; real print, accessibility and failure-path acceptance | Applicable P0 closures; release profile | Pending |
-| PROD-11 | P1 / E11 | Split pagination-render.js (389), app.js (310), agent-panel.js (301) by responsibility; <=300 lines | Focused regression coverage | Pending; no refactor in this amendment |
+| PROD-11 | P1 / E11 | Keep responsibilities separated and touched files <=300 lines | Focused regression coverage | Partial: current touched files are <=300; pre-existing pagination-render.js remains 389 lines |
 | PROD-12 | Release / E10/E11 | Align three-pilot validation/CI/matrix evidence; publish versions, limits, rollback and diagnostics | PROD-10; existing build/doctor/CI | Pending |
-| PROD-13 | P0 / E14 | Classify unknown imports before persistence/AI; enforce real-data policy across durable snapshots, recovery and sessions | app installBus, durable store, gateway and session policy | Pending; code-confirmed gap |
-| DOC-2026-09-07 | Documentation / E11 | Align root and related docs; distinguish Current/Partial/Target/Proposed/Historical | Code review and earlier session evidence | Done; no commit created |
+| PROD-13 | P0 / E14 | Classify unknown imports before persistence/AI; enforce real-data policy across durable snapshots, recovery and sessions | app installBus, durable store, gateway and session policy | Partial: main-app/server restrictive foundation exists; standalone gateway/WebMCP missing-policy fallback is Synthetic and stale checks can retain the old policy when current policy is absent |
+| DOC-2026-09-07 | Documentation / E11 | Align root and related docs; distinguish Current/Partial/Target/Proposed/Historical; record amendment-review boundary findings | Code review and fresh 80/428 test evidence | Done; no code, test or configuration files amended |
 
 Implementation rollback must preserve committed projects and durable records. Revert only the affected patch or disable the new path; never treat deleting user storage as the default recovery procedure.
 
@@ -210,15 +211,15 @@ Implementation rollback must preserve committed projects and durable records. Re
 ## Blockers and evidence boundaries
 
 - No external access blocker prevents the known local implementation work.
-- Production release is not complete: known scope/apply/status/privacy/history and multi-table criteria plus editing/recovery acceptance remain open.
-- Windows Chromium 60/60 is verified; a full Windows browser matrix and real printer/Safari certification are not.
+- Production release is not complete: approval provenance, missing-policy fail-closed behavior, scope/status/privacy/history, multi-table criteria and editing/recovery acceptance remain open.
+- Windows Chromium 68/68 is carried-forward evidence for an earlier amendment snapshot; rerun it after concurrent implementation completes. A full Windows browser matrix and real printer/Safari certification are not available.
 - Historical macOS/Linux 88/88 records remain valid as dated evidence, not a current Windows certificate.
 - The recommended narrower release profile and preview-first default are Proposed. Do not silently weaken existing broader requirements.
 - HA/remote UI are blockers for a promised shared-service deployment, not for every possible single-user release.
-- Runtime-loaded `studio-v2/agent-skills/printform-designer.md` is intentionally unchanged in this docs-only task; its auto-apply wording is tracked under PROD-02.
+- Runtime-loaded `studio-v2/agent-skills/printform-designer.md` now describes preview-first plus explicit Auto eligibility; full client/runtime acceptance remains under PROD-02.
 
 ## Next action
 
-Implement PROD-13 and PROD-01/02/03 first when coding is authorized, then close candidate/draft/quality and multi-table criteria before release certification.
+First close the M2 approval-provenance and missing-policy fail-closed findings without changing the documented transaction/data invariants. Then continue M4 targeted/combined acceptance for PROD-13/01/02/03, including browser-level WebMCP/CDP reconnect, explicit-save separation and the complete server destination inventory before M5 rollback/release evidence. Do not deploy or publish without separate authorization.
 For direct `npx playwright test`, build `site-dist` first and avoid a conflicting server on port 4174; `npm run test:e2e` already runs its build hook.
 Service Worker shell entries are generated by the build; do not maintain a manual APP_SHELL list.

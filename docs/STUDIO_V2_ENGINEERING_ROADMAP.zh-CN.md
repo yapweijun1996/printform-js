@@ -2,7 +2,7 @@
 
 > This roadmap separates implemented history, pending requirements and proposals. Current behavior is defined by code, [SPEC](../SPEC.md) and the protocol; current acceptance criteria live in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
-> Last reviewed: 2026-09-07. E12/E13 are implemented; E14 UI exists but behavioral acceptance is Partial. Public writes remain preview → approve → apply with transaction/revision/hash checks. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilots and Windows Chromium 60/60. No code was changed or release declared by this documentation amendment.
+> Last reviewed: 2026-09-07. E12/E13 are implemented; E14 UI and the authorized PROD-13/01/02/03 foundation exist, but behavioral acceptance is Partial. Public writes remain preview → approve → apply with transaction/revision/hash checks; approval provenance and missing-policy adapter defaults remain open. Fresh evidence: 80 files / 428 tests. Doctor 5/5, three static pilots and Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and require a final rerun. No release is declared.
 
 ## Current priority and dependencies
 
@@ -13,7 +13,7 @@
 5. PROD-10/12: adopted release profile, full applicable print/failure evidence and aligned three-pilot release coverage.
 6. E15: shared-service/HA expansion only when required by deployment scope.
 
-Within priority 1, use the [Agent boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) for M0-M5 delivery gates. Host policy and shared projections integrate before client activation; provider/storage checks, scope/apply/state acceptance and safe rollback remain required. All packages are Pending; the plan adds no deployed capability.
+Within priority 1, use the [Agent boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) for M0-M5 delivery gates. Host policy and shared projections integrate before client activation; provider/storage checks, scope/apply/state acceptance and safe rollback remain required. M0/M1/M3 foundation work is implemented; M2 is Partial because approval provenance and missing-policy fail-closed behavior remain open. M4/M5 remain Pending and the plan adds no deployed capability.
 
 A single-user Windows/Chromium first release and preview-first default are Proposed, not adopted changes. Existing broader acceptance goals remain until explicitly revised. Current default remains auto-apply.
 
@@ -35,7 +35,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 4. ✅ 已升级（2026-08-17）：`preview_changes` 生成 candidate hash 并绑定 transaction；`approve_transaction` 固定 approved preview，`apply_changes` 必须携带 transaction ID、当前 revision 和同一 candidate hash，且候选内容被外部改变时 fail closed。
 5. ✅ 已实现：命中 candidateHash 时复用已渲染 report；公共 Agent 若跳过 preview 或缺审批则直接拒绝，不再退化成直接 apply。Studio 内部编辑路径不属于 Agent contract。
 6. 任一验证、分页、完整性或容量错误使整组提交回滚。
-7. ✅ 已升级（2026-08-17）：Agent Contract 3.0.0 在保留读取兼容的前提下收紧公共 Agent 写路径，并加入 FormSpec、transaction journal、revision/evidence 查询与 strict export checks。**本节早期的直接 `operations[]` 写入仅保留为历史记录。**
+7. ✅ 已升级（2026-08-17）：Agent Contract 3.0.0 在保留读取兼容的前提下收紧公共 Agent 写路径，并加入 FormSpec、transaction journal、revision/evidence 查询与 strict export checks。**本节早期的直接 `operations[]` 写入仅保留为历史记录。** 2026-09-07 的 Agent Contract 4.0.0 再收紧为闭字段投影、opaque references、数据策略与 scope/apply 门禁。
 
 退出条件：
 
@@ -61,7 +61,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
 - ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现的跨引擎分页差异已解决**：Purchase Order 的页数曾随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页）。根因是非行区块合计高度随 引擎×语言 波动 24.62px（约 0.59 行），使可用空间 14.59–15.18 行恰好跨在整数边界上。给非行区加 16px（`.pf-page-footer` padding-bottom 12→28px）把整段移到边界同一侧，全部 15 个 引擎×语言 组合收敛到每页 14 行，复跑矩阵 22 个可比格子零分歧。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。Windows Chromium 60/60 was verified on 2026-09-07; full Windows/browser/print acceptance remains pending and its blocking scope depends on the declared release profile. No claim about unavailable CI configurations is made without verification.
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。Windows Chromium 68/68 was verified on 2026-09-07; full Windows/browser/print acceptance remains pending and its blocking scope depends on the declared release profile. No claim about unavailable CI configurations is made without verification.
 
 ## P1：工程师工作流
 
@@ -73,7 +73,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 - ✅ 已实现（2026-07-31，`d2fe47a`）：Branding 品牌色面板——两个模板的品牌色散落十几处硬编码 hex，全部 token 化是更大的独立设计任务；范围收敛到 `.pf-brand` 标题色一处，新增 `core/branding.js` + `set_brand_color` 操作。
 - ✅ 已实现（2026-07-31，`3699991`）：Data contract 面板——中档范围，schema 树只读展示 + 表单编辑样本值与既有约束（required/min·maxLength/minimum·maximum/enum），复用既有 `replace_schema`/`replace_sample_data` 整段替换操作而非新增操作类型。**不做**增删字段（牵动模板绑定与 i18n 同步，需单独设计）与数组逐行编辑（表单对 45 行数据没有可用性，`items` 类字段仍走原始 JSON）。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
-- Pending PROD-08/13: fingerprint-aware draft protection and safe unknown-import classification. Current recovery is one best-effort record; unknown imports do not disable durable storage.
+- Pending PROD-08/13: fingerprint-aware draft protection and combined browser evidence. Unknown/Real classification now disables durable storage and recovery writes before installation; existing records are not silently deleted.
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。
 - 连接状态区分 WebMCP registered、CDP discovered、Agent connected 与 last command。
 
@@ -113,7 +113,7 @@ E15 的前置依赖是 E13-SERVER 当前已验证的单 writer SQLite service、
 
 ## P3：发布治理
 
-- ✅ 已升级（2026-08-17）：四条线继续独立 SemVer（引擎 1.0.0 / Studio 0.11.0 / 协议 2.0.0 / 契约 3.0.0）；FormSpec、transaction 与 Evidence Pack 属于 Studio/Agent additive envelope，单 HTML Protocol 保持 2.0.0 兼容。
+- ✅ 已升级（2026-09-07）：四条线继续独立 SemVer（引擎 1.0.0 / Studio 0.11.0 / 协议 2.0.0 / 契约 4.0.0）；闭字段投影、opaque references、数据策略与 scope/apply 门禁属于 Agent boundary，单 HTML Protocol 保持 2.0.0 兼容。
 - 发布兼容矩阵、runtime checksums 与迁移说明。（✅ LICENSE 已于 2026-07-31 采用 MIT；✅ [CHANGELOG.md](../CHANGELOG.md) 使用 Keep a Changelog 格式，并已补充当前 `[Unreleased]` 快照；四条独立 SemVer 线已有当前版本）
 - GitHub Release 附两个经过验证的自包含单 HTML 试点文件。
 - ✅ 已实现（2026-07-31）：构建过程生成 Service Worker precache manifest（`scripts/app-shell.mjs` 走产物目录），避免手工列表漂移。此前手写清单已漂移两次（新增模块忘记登记 → 离线时该模块 404），并且对比发现旧清单还漏了 `core/runtime.js`。
@@ -124,7 +124,7 @@ E15 的前置依赖是 E13-SERVER 当前已验证的单 writer SQLite service、
 
 | 里程碑 | 内容 | 对外状态 |
 |---|---|---|
-| 2.1 Trust A | P0-A 事务闭环（✅ 已完成，Agent Contract 3.0.0） | Production Pilot |
+| 2.1 Trust A | P0-A 事务闭环（✅ 已完成，历史契约 3.0.0） | Production Pilot |
 | 2.2 Trust B | P0-B 信任闭环、两个模板全矩阵 | Production Ready 候选 |
 | 2.3 Workflow | P1 工程师结构化体验（主要面板已完成） | Production Candidate |
 | 2.4 AI Experience | E14 AI Designer IA & Interaction Foundation | Production Candidate |
@@ -135,7 +135,7 @@ E15 的前置依赖是 E13-SERVER 当前已验证的单 writer SQLite service、
 
 ## 兼容策略
 
-- Agent Contract 3.0.0 保留 2.1.0 的 operation catalog、design inspection 与 layout review/evidence 能力，并加入 FormSpec、显式 transaction、持久化 journal、strict export allowlist 与 Evidence Pack。真实 ERP 像素仍被 gateway 拒绝，自动生产导出仍不在范围内，不改变 Protocol 2.0.0 或生产导出的人工确认边界。
+- Agent Contract 4.0.0 保留 3.0.0 的 operation catalog、design inspection 与 layout review/evidence 能力，并增加闭字段 projection、opaque references、policy/scope/apply guards 与客户端版本门禁。真实 ERP 像素仍被 gateway 拒绝，自动生产导出仍不在范围内，不改变 Protocol 2.0.0 或生产导出的人工确认边界。
 - Protocol 同一 major 的迁移必须生成 diff 并另存为新 HTML；跨 major 只读。
 - v1 Studio 不消费 v2 项目，也不自动迁移。
 - 移动端只做查看与数据渲染回归；桌面四浏览器承担打印功能保证。

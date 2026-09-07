@@ -6,7 +6,7 @@
 >
 > 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。**Linux 复现**：2026-07-31，GitHub Actions Ubuntu runner（`.github/workflows/browser-matrix.yml`，`workflow_dispatch`），构建对齐 `af64b25`，见下方「Linux 复现」一节。
 
-> Documentation review: 2026-09-07. Historical macOS/Linux matrix results remain 88/88. Earlier in this review session, Windows Chromium E2E passed 60/60; the full four-target Windows matrix was not rerun. This is Windows Chromium coverage, not certification of every Windows browser or print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
+> Documentation review: 2026-09-07. Historical macOS/Linux matrix results remain 88/88. Windows Chromium E2E passed 68/68 on an earlier amendment snapshot; rerun after concurrent implementation settles. The full four-target Windows matrix was not run. This is dated Chromium coverage, not certification of every Windows browser or print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## 结论
 

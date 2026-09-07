@@ -2,7 +2,7 @@
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval.
 >
-> Last reviewed: 2026-09-07. Earlier session evidence: 72 files / 385 tests, doctor 5/5, three static pilots and Windows Chromium 60/60. This docs-only patch did not rerun full application suites. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current gaps and criteria.
+> Last reviewed: 2026-09-07. Fresh documentation-review evidence: 80 files / 428 tests. Doctor 5/5, three static pilots and Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and must be rerun after concurrent implementation settles. Approval provenance and missing-policy fail-closed behavior are open release findings. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current gaps and criteria.
 
 ## Production Pilot 自动检查
 
@@ -11,7 +11,7 @@
 - `npm test -- --run`
 - `npm run build:site`
 - `npm run test:e2e`
-- `npm run test:e2e -- --project=chromium`（2026-09-07 Windows Chromium: 60/60）
+- `npm run test:e2e -- --project=chromium`（2026-09-07 Windows Chromium: 68/68）
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html`

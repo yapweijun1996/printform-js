@@ -1,8 +1,8 @@
 # Studio v2 Priority Acceptance Checklist
 
-Prepared: 2026-09-07. Source baseline: `fb1a641450c2266a712a7b644b32609bea7c0e73` plus the reviewed documentation worktree.
-Scope: PROD-13, PROD-01, PROD-02 and PROD-03. Documentation only; every case below is **Not run**.
-These are Target acceptance criteria, not Current capabilities or permission to implement them.
+Prepared: 2026-09-07. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+Scope: PROD-13, PROD-01, PROD-02 and PROD-03. The implementation foundation is present, but every case below remains **Not run** until a case-specific evidence record is added.
+These are release acceptance criteria, not a Production Ready declaration or permission to deploy.
 
 ## Authority and execution rules
 
@@ -32,35 +32,59 @@ These are Target acceptance criteria, not Current capabilities or permission to 
 
 ## PROD-13: real-data classification and persistence
 
-Current evidence: [app.js](../studio-v2/ui/app.js) injects localStorage in installBus;
-[durable store](../studio-v2/core/durable-transaction-store.js) initializes full project snapshots;
-[studio actions](../studio-v2/ui/studio-actions.js) imports without first classifying data.
+Current implementation evidence: [app.js](../studio-v2/ui/app.js) classifies before CommandBus construction; restrictive policy creates a volatile store, memory-only sessions and blocks recovery writes. Recovery startup reads only safe metadata; full legacy records require an explicit Restore action and are reclassified before installation. [gateway.js](../studio-v2/adapters/gateway.js) and the [output projectors](../studio-v2/core/agent-output-projectors.js) enforce policy, references and closed results; [studio actions](../studio-v2/ui/studio-actions.js) classifies imports and keeps recovery cleanup explicit.
 Owner boundary: host data policy before project installation, then storage adapters and Agent/evidence gateways.
-Dependency: implement the [data classification and destination rules](STUDIO_V2_DATA_POLICY.md), including the complete sink inventory, safe projections and transitions. Its acceptance mapping expands 13-01..13-08 without adding new case IDs.
-Cases 13-02/04/06/07/08 use the [35-command output allowlist](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and its nested shapes. Check direct-root transactions and undo project exclusion; public get_revision is already metadata-only. No additional case has been executed.
+Dependency: complete the [data classification and destination rules](STUDIO_V2_DATA_POLICY.md) evidence mapping, including browser reload, delayed callbacks, all sinks and transitions. Its acceptance mapping expands 13-01..13-08 without adding new case IDs.
+Cases 13-02/04/06/07/08 use the [35-command output allowlist](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and its nested shapes. Targeted unit evidence exists for projection, scope, policy, direct-root transactions and undo project exclusion; no case is marked Pass until the full observable record is captured.
 The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) sequences this work without adding case IDs. Include composed runtime outputs, adapter errors/version mismatch, final provider sends and post-commit delivery failures in the mapped cases; source or documentation checks alone do not satisfy them.
 
 The target is no unauthorized persistent copies or automatic disclosure. An explicit user file save is a separate destination;
 it must not silently enable recovery, chat or transaction persistence. Volatile sessions must be labeled as non-durable.
 
-- [ ] **13-01 Unknown import.** Import an unclassified canary document. Before installation, classify it as potentially real; no automatic payload-bearing durable/recovery/session write or raw Agent exposure occurs. A trusted artifact signature does not certify synthetic data.
+- [ ] **13-01 Unknown import and missing-policy default.** Import an unclassified canary document. Before installation, classify it as potentially real; no automatic payload-bearing durable/recovery/session write or raw Agent exposure occurs. Install the page gateway and WebMCP adapter without a policy getter and verify they also fail closed as Unknown. A trusted artifact signature or missing configuration does not certify synthetic data.
 - [ ] **13-02 Persistent sinks.** In real-data mode, preview, edit, approve, apply and review. Inspect writes and persisted records in every inventoried sink; no new unauthorized canary copy occurs. Allowed safe metadata must match the documented destination policy.
 - [ ] **13-03 Fresh reload.** Close/reload a fresh real-data session. No hidden project/chat restore comes from forbidden persistence; the UI explains the lack of automatic recovery. Explicitly saved files remain separate user-owned artifacts.
-- [ ] **13-04 In-flight mode change.** Start a delayed AI/review request in synthetic mode, then select real-data mode. Old callbacks cannot use the old policy to persist or expose document values/pixels. Recheck policy at use time or cancel the request.
+- [ ] **13-04 In-flight mode/document/no-policy change.** Start a delayed AI/review request in synthetic mode, then select real-data mode, replace the document, and separately make the host getter report no active policy. Old callbacks cannot use the old policy to persist or expose document values/pixels. Missing current policy rejects the old context instead of falling back to its previous Synthetic policy.
 - [ ] **13-05 Existing records.** Seed old synthetic canary records, then switch classification to real. Stop new forbidden writes and automatic replay; show that old copies may remain. Do not silently delete records or claim historical copies have been erased. Any explicit cleanup identifies the exact affected project records.
 - [ ] **13-06 Outbound evidence.** In real-data mode, request summaries, diagnostics, audit/recovery results and pixel evidence through each Agent entry point. Raw business values are absent from automatic outputs; pixel capture is rejected; permitted geometry is redacted. Caller-supplied synthetic flags cannot override host classification.
 - [ ] **13-07 Explicit save and user prompts.** An intentional file save writes only the chosen artifact and does not enable other persistence. Separately verify the existing disclosure that user-entered prompt text is sent to the chosen provider; never describe real-data mode as anonymizing arbitrary user text. Use synthetic text for this test.
 - [ ] **13-08 Control and failure paths.** A declared synthetic fixture retains supported recovery/session behavior. With storage denied/quota exceeded, no alternate forbidden sink is used; the UI states the actual persistence result. Importing a different unclassified document does not inherit synthetic classification.
 
 Pass evidence: import/write ordering, destination inventory, canary scan, controlled outgoing payloads and reload traces.
-For an enabled server adapter, run the same destination rules against its persisted project/transaction/evidence records.
-Until that adapter is covered, do not claim server-mode privacy acceptance.
+For an enabled server adapter, run the same destination rules against its persisted project/transaction/evidence records. The current boundary test proves Unknown and Real reject the document HTTP route before SQLite initialization and do not create a database file; Synthetic persistence remains a separate positive control. This does not close the complete server deployment/privacy record.
+
+### Current targeted M4 evidence (not P0 case closure)
+
+`e2e/studio-v2-production-boundary.spec.js` passes seven Chromium cases in the current worktree:
+
+- An imported Unknown canary remains volatile after switching to Real, including localStorage, sessionStorage, IndexedDB database names and Cache Storage URLs; reload starts without hidden recovery and without the canary.
+- A controlled runtime captures the final Real-mode Provider input. The payload contains geometry SVG parts only; pixel evidence is rejected by the gateway.
+- Direct document mutations remain blocked until explicit human approval, and transaction previews do not create browser durable records.
+- A controlled delayed Provider result is rejected with `STALE_POLICY_CONTEXT` after the browser switches from synthetic to Real mode; the stale canary is absent from the returned outcome.
+- A controlled delayed Provider result is rejected with `STALE_POLICY_CONTEXT` after the browser switches documents; the wrong-document canary is absent from the returned outcome.
+- An explicit Real-mode Untrusted file export produces a browser download without adding localStorage, sessionStorage, IndexedDB or Cache Storage entries.
+- Unknown and Real server policies reject the document HTTP route before SQLite initialization; no database file is created, while the explicit Synthetic server acceptance remains covered by E13-SERVER tests.
+
+These observations strengthen the evidence for 13-02, 13-03, 13-04, 13-06 and 13-07 but do not mark them Pass: delayed callback variants across commit boundaries, every Agent entry point, and the complete destination inventory remain unverified.
+
+`tests/studio-v2/agent-entry-parity.test.js` passes three controlled synthetic cases:
+
+- Embedded gateway, WebMCP and CDP return the same `SCOPE_VIOLATION` for an out-of-scope operation and the same `HUMAN_APPROVAL_REQUIRED` for a direct mutation in Preview mode; revision and transactions remain unchanged.
+- CDP can use the page gateway's opaque transaction reference, while WebMCP cannot reuse that reference from its distinct Agent session; no raw transaction ID is exposed.
+- Three delayed previews started through the three paths all return `STALE_POLICY_CONTEXT` after a Synthetic-to-Real switch; the started draft traces remain draft-only, with no preview result or commit.
+
+This is controlled adapter/domain evidence for 01-07, 02-01/02-02, 13-04/13-06 and X-02. It does not close the browser transport, reconnect/page-replacement, complete sink inventory or any P0 case; all 35 case records remain **Not run**.
+
+The first-party CDP admission evidence now includes five compatibility tests and two controlled local HTTP/WebSocket transport tests. The client compares the complete live `get_capabilities.result.tools` catalog, rechecks it after target replacement/reconnect, and rejects a replaced page with a changed catalog before issuing a business command. WebMCP evidence verifies that registered tools equal the gateway catalog and that old registrations are aborted before a replacement registration. These are controlled transport/lifecycle records, not a browser WebMCP implementation or a P0 Pass.
+
+The controlled Chromium recovery case seeds a synthetic canary as an old Real-classified record. Reload shows the recovery banner without installing the canary; an explicit Restore installs it under the restrictive Real policy, creates no new `printform:` durable key, and leaves the old record intact. This is evidence for the recovery ordering and no-automatic-replay rule, not a complete 13-05 existing-record inventory.
 
 ## PROD-01: enforced operation and component scope
 
-Current evidence: [agent panel](../studio-v2/ui/agent-panel.js) only stores activeScope;
-[scope view](../studio-v2/ui/agent-panel-view.js) offers all/layout/table/theme categories;
-app.js supplies the selection label Entire document.
+Current evidence: [agent panel](../studio-v2/ui/agent-panel.js) stores a structured activeScope;
+[scope options](../studio-v2/core/agent-scope-options.js) derives stable FormSpec table IDs;
+the shared [scope guard](../studio-v2/core/agent-scope.js) rejects ambiguous selectors and document-wide
+repeatHeader mutations outside document scope. Full component selection and cross-entry browser evidence remain open.
 Owner boundary: host selection maps to stable FormSpec IDs; the shared command/domain path enforces effective effects.
 Dependency: define the operation-category allowlist and the component target set as separate dimensions.
 
@@ -81,8 +105,14 @@ Pass evidence: selected IDs, host scope, effective source diffs, rejected mixed 
 
 ## PROD-02: one Apply policy for every AI path
 
-Current evidence: [panel runtime](../studio-v2/ui/agent-panel-runtime.js) checks applyMode in send,
-but runLayoutReview invokes autoApplyPending without that check. Transaction approval is not itself proof of a human click.
+Current evidence: [panel runtime](../studio-v2/ui/agent-panel-runtime.js) checks applyMode and the
+low-risk operation allowlist for chat and Review auto-apply. Preview mode routes Apply through the
+gateway's privileged `executeHuman` method after the panel verifies its approval token. That method
+is also present on the page-global gateway and bound session objects, so its provenance is not yet
+protected from arbitrary same-origin script or raw CDP execution. [Commit-boundary tests](../tests/studio-v2/commit-boundary.test.js) cover
+duplicate Apply, lost Apply responses and recovery-required state; [runtime-consume tests](../tests/studio-v2/agent-runtime-consume.test.js)
+cover Stop discarding a delayed provider result. Delayed responses across every entry point and the
+complete retry matrix remain open.
 Owner boundary: host Apply policy and transaction approval/commit boundary; UI projects the resulting decision.
 Dependencies: PROD-01 scope eligibility and existing candidate/revision/transaction validation.
 
@@ -92,7 +122,7 @@ Preview mode requires explicit human approval of the exact candidate, regardless
 
 - [ ] **02-01 Chat preview.** In preview mode, generate a valid chat edit and wait for all callbacks. A pending candidate is visible; committed revision/hash remain unchanged until human Apply. Successful Apply commits exactly once and reports the real result.
 - [ ] **02-02 Review repair.** In preview mode, make Review produce a repair. Review stops at pending approval, with no automatic commit. After Apply, a further repair requires its own candidate approval; the first approval cannot authorize later repairs.
-- [ ] **02-03 Approval bypass.** From each Agent entry point, attempt approve/apply directly or claim that the user approved. In preview mode, the missing trusted human approval cannot be supplied by the model. Tampered hash, expired transaction and stale revision remain rejected.
+- [ ] **02-03 Approval bypass and provenance.** From each registered Agent entry point, attempt approve/apply directly or claim that the user approved. Also inspect page-global and bound-session gateway objects and attempt to invoke any privileged approval method through same-origin script/raw CDP. In preview mode, missing trusted human approval cannot be supplied by the model or an untrusted caller. Tampered approval capability, hash, expired transaction and stale revision remain rejected. If arbitrary page/CDP execution remains explicitly out of scope, record that limitation and avoid an unqualified human-approval security claim.
 - [ ] **02-04 Mode changes.** Start in auto and switch to preview while a response is delayed. The resulting proposal remains pending. Switching preview to auto does not retroactively approve an existing pending candidate without a new explicit action; capture the applied policy at commit time.
 - [ ] **02-05 Cancel and retry.** Stop/discard before Apply, then deliver late responses and retry callbacks. Nothing commits; the card does not say Applied. Distinguish cancellation before commit from a confirmed completed commit; Stop must not falsely claim to reverse completed work.
 - [ ] **02-06 Duplicate Apply/unknown outcome.** Double-click Apply and simulate a lost commit response. Resolve using the existing transaction identity and durable state; at most one revision commits. If the outcome is still unknown, show recovery required instead of success or automatic resubmission.
@@ -100,6 +130,12 @@ Preview mode requires explicit human approval of the exact candidate, regardless
 - [ ] **02-08 Host/prompt/export agreement.** Inspect runtime-loaded prompts and verify UI pending/applying/applied states follow actual policy/results. Neither AI approval nor a passing review initiates a production download; final human export confirmation remains required.
 
 Pass evidence: controlled chat and Review repairs, host approval provenance, transaction results, duplicate/lost-response traces and revision history.
+
+Targeted M4 evidence is not case closure: the current unit tests prove that a duplicate Apply returns
+the existing committed revision without a second CAS, a lost response queries the same transaction,
+an unresolved recovery state is retained without automatic resubmission, and Stop prevents a delayed
+provider result from creating a proposal. They do not prove approval provenance against the exposed
+`executeHuman` method. The full 02-01..02-08 evidence record remains Not run.
 
 ## PROD-03: truthful render, readiness and save state
 
@@ -152,10 +188,10 @@ Rollback must retain user projects and durable records. Disable the affected AI 
 
 ## SCMC review
 
-- Scope: four P0 acceptance contracts; evidence: linked code and the production plan; constraints: docs only, existing trust/transaction/privacy invariants.
+- Scope: four P0 acceptance contracts; evidence: linked code, targeted tests and the production plan; constraints: no deployment/provider authorization, existing trust/transaction/privacy invariants.
 - Simple: PASS. Cases extend existing workflows and add no new service or protocol.
 - Clear: PASS. Each case has a trigger, observable expected result and evidence requirement; all remain Not run.
 - Modular: PASS. Host policy, command enforcement, storage, rendering and save outcome ownership are explicit.
 - Consistent: PASS. Existing PROD IDs/status ownership and current-versus-target distinctions are retained.
 - Findings: no material SCMC issue in the checklist; scope mappings and auto eligibility still need concrete implementation specifications.
-- Overall: PASS for checklist design only. Data-destination and safe-output field rules are specified as Target; runtime enforcement and client compatibility remain pending and coding requires authorization.
+- Overall: PASS for checklist design and evidence governance only. Host policy, closed projections, scope/apply gates and first-party CDP version checks are implemented foundations; all 35 case records remain Not run and M4/M5 evidence is still required.

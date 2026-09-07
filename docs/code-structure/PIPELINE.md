@@ -108,8 +108,9 @@ single-HTML project
 `apply_changes` accepts only an approved transaction with the expected revision
 and candidate hash; it does not provide a direct `operations[]` write path.
 `ui/agent-panel-runtime.js` may orchestrate the current embedded auto-apply
-workflow, but it still uses the same transaction gate. Review repairs currently
-skip the preview-first mode check; Scope is not enforced in the execution path.
-PROD-01/02/03 correct policy/state behavior through the existing owners. See the
+workflow, and it uses the same transaction gate. Review repairs now consult the
+shared preview-first/auto-eligibility decision; the domain scope guard rejects
+out-of-scope or ambiguous operations. Full PROD-01/02/03 acceptance remains open.
+See the
 [production plan](../STUDIO_V2_PRODUCTION_PLAN.md); preview DOM remains derived output.
 

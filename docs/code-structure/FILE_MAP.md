@@ -50,7 +50,7 @@ src/
 - `AUTO_DOC_GENERATION_GUIDE.md`, `MAINTAINING_DOCS.md`: doc maintenance
 - `STUDIO_V2_INDEX.zh-CN.md`: authoritative v2 documentation entry and maturity matrix
 - `STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md`: ERP-engineer product positioning and metrics
-- `STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md`: Current Pilot limits, Agent Contract 3.0.0 and E14 UX trust constraints
+- `STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md`: Current Pilot limits, Agent Contract 4.0.0 and E14 UX trust constraints
 - `STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md`: P0–P3 implementation sequence and exit criteria
 - `STUDIO_DESIGN.zh-CN.md`: frozen Studio v1 design history
 - `ERP_INTEGRATION.zh-CN.md`: data-binding placeholder syntax + backend integration guide
@@ -104,7 +104,8 @@ Current AI Designer entry points include `ui/agent-panel-view.js` (panel
 structure), `ui/agent-panel.js` (state/render binding), `ui/agent-panel-runtime.js`
 (streaming and auto-apply orchestration) and `ui/agent-settings-modal.js`
 (provider/vault settings). E14's visual foundation and resizable rail are Current;
-scope/apply-policy/readiness, card-history and privacy behavior remain Partial.
+domain scope/apply-policy/readiness and privacy gates are Current, while full
+selection coverage, card-history semantics and combined acceptance remain Partial.
 The [production plan](../STUDIO_V2_PRODUCTION_PLAN.md) owns closure criteria;
 no second transaction or rendering path is proposed.
 

@@ -1,7 +1,7 @@
 # Studio v2 Data Classification and Destination Rules
 
-Prepared: 2026-09-07. Baseline: `fb1a641450c2266a712a7b644b32609bea7c0e73` plus reviewed documentation changes.
-Status: **Target design for PROD-13; implementation Pending; acceptance Not run**.
+Prepared: 2026-09-07. Baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+Status: **Implemented foundation for PROD-13; combined acceptance Partial and not yet release-complete**.
 This document specifies application behavior, not a claim about provider retention or an authorization to send data now.
 Classification labels and rule IDs below are design vocabulary, not newly implemented API fields.
 
@@ -10,7 +10,7 @@ Classification labels and rule IDs below are design vocabulary, not newly implem
 The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns requirements and release status;
 the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) owns observable cases; [TASK](../TASK.md) owns execution status.
 This document owns PROD-13 classification, destination permissions, lifetime and transition rules.
-The [35-command output table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) define the Target per-command projections and local reference rules; implementation remains Pending.
+The [35-command output table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) define the per-command projections and local reference rules; the public gateway implementation now enforces the foundation, with full matrix evidence still open.
 
 Use one host-owned classification per document context. Unknown and real documents receive the same restrictive treatment.
 Separate document data from application preferences and provider credentials. Decide permission at the destination boundary
@@ -21,16 +21,17 @@ Retain existing single-HTML, semantic editing, hash/approval and final human pro
 
 | Source | Current observation | Consequence for this design |
 |---|---|---|
-| [app.js](../studio-v2/ui/app.js), [durable store](../studio-v2/core/durable-transaction-store.js) | installBus always injects localStorage; constructor can write the initial full project | Classification must precede construction, including initial import |
+| [app.js](../studio-v2/ui/app.js), [durable store](../studio-v2/core/durable-transaction-store.js) | installBus classifies before constructing the bus; restrictive policies use a volatile store and do not hydrate localStorage | Full browser reload/mode-race evidence remains required |
+| [gateway.js](../studio-v2/adapters/gateway.js), [webmcp.js](../studio-v2/adapters/webmcp.js), [agent context](../studio-v2/core/agent-context.js) | Main-app installs receive an explicit policy, but standalone gateway/WebMCP fallback currently selects Synthetic when no policy getter is supplied; a missing current policy is treated as unchanged or replaced with the prior active policy | This contradicts DP-C05/DP-L04 and the migration rule “missing policy is Unknown”; adapter initialization and no-active-document transitions remain fail-open |
 | [draft-cache.js](../studio-v2/ui/draft-cache.js) | Full recovery project/fingerprint stored; seven-day age checked on read | Read-time expiry is not scheduled deletion or a privacy guarantee |
-| [agent-sessions.js](../studio-v2/ui/agent-sessions.js) | Synthetic sessions use IndexedDB; real mode uses memory; toggling clears memory references, not old IndexedDB records | Existing records and delayed writes require explicit handling |
-| [agent-sanitize.js](../studio-v2/core/agent-sanitize.js) | Known fields are sanitized, but the result starts as a clone; some path/selector/ID fields are preserved | All command results and user-controlled identifiers need a destination-specific review |
+| [agent-sessions.js](../studio-v2/ui/agent-sessions.js) | Synthetic sessions use namespaced IndexedDB; Unknown/Real sessions use memory-only stores; mode changes do not delete old databases | Existing records and delayed writes remain disclosed, not silently erased |
+| [gateway](../studio-v2/adapters/gateway.js), [agent-output-projectors](../studio-v2/core/agent-output-projectors.js) | Public responses are rebuilt from command-specific closed projections; unsafe IDs/paths/selectors use context references | All 35 command cases still need combined acceptance evidence |
 | [command dispatch](../studio-v2/core/command-bus-dispatch.js) | Public get_revision returns only revision/projectHash/transactionId/committedAt; undo_revision includes project; FormSpec/component and audit commands expose domain results | Corrected after tracing getRevision() without arguments; inspect undo/project and nested event payloads; no blanket safe-result claim |
 | [layout-snapshot.js](../studio-v2/ui/layout-snapshot.js), [gateway](../studio-v2/adapters/gateway.js) | Geometry-only SVG exists; real-data pixel requests are rejected | Preserve pixel rejection; geometry still requires a bounded approved projection |
 | [agent-vault.js](../studio-v2/ui/agent-vault.js) | Encrypted profiles in IndexedDB; provider/model/endpoint and other profile metadata also stored outside ciphertext | Do not describe every profile field as encrypted; endpoints/IDs must contain no secrets |
 | [agent-provider.js](../studio-v2/ui/agent-provider.js), [runtime](../studio-v2/ui/agent-runtime.js) | User prompt and optional parts go to selected provider through the runtime; global memory is disabled | Local memory-only mode does not imply zero external transmission |
-| [sw.js](../studio-v2/sw.js), [assets.js](../studio-v2/core/assets.js) | Service worker caches successful same-origin GETs beyond shell entries; asset handling may fetch/HEAD URLs | Cache and asset fetch are additional destinations; credentials omitted does not hide URL content |
-| [SQLite adapter](../studio-v2/server/sqlite-durable-backend.mjs) | Separate durable backend uses SQLite WAL/FULL | Browser policy does not automatically cover database files, WAL, backups or server logs |
+| [sw.js](../studio-v2/sw.js), [assets.js](../studio-v2/core/assets.js) | Service worker caches only generated shell entries; restrictive asset/export paths reject fetchable imported URLs before fetch/HEAD | Browser/network evidence must confirm no stale worker or delayed request bypass |
+| [SQLite adapter](../studio-v2/server/sqlite-durable-backend.mjs), [HTTP server](../studio-v2/server/transaction-http-server.mjs) | Separate durable backend uses SQLite WAL/FULL; the server now defaults to Unknown and refuses restrictive document routes before opening SQLite | Browser policy does not automatically cover database files, WAL, backups or server logs; the explicit Synthetic server path still needs its deployment sink inventory |
 
 These observations establish review targets, not proof that every described leak scenario has occurred.
 Provider/backend operational retention and browser-managed disk behavior were not tested in this documentation task.
@@ -78,7 +79,7 @@ Real/Unknown restrictions apply to new application-owned writes, including tempo
 |---|---|---|---|
 | DP-S01 Active project, candidate, revision/transaction state in memory | Allowed for editing | Allowed; local transaction/hash controls remain, but no crash durability promise | Host/CommandBus; release references on document/session disposal |
 | DP-S02 localStorage durable head/revisions/transactions/evidence | Allowed under existing local single-session contract | No document-associated writes, including initial snapshots and patches; use a supported volatile path or block that operation | Durable adapter; bounded history is not time-based erasure |
-| DP-S03 localStorage recovery draft/fingerprint | Allowed; existing seven-day read-time expiry remains | No new writes or automatic restore of unclassified/real records | Recovery owner; no claim of expiry while the app is closed |
+| DP-S03 localStorage recovery draft/fingerprint | Allowed; existing seven-day read-time expiry remains; startup may inspect metadata only and full recovery needs an explicit user action | No new writes or automatic restore of unclassified/real records; an explicit restore is reclassified before installation and stays volatile | Recovery owner; no claim of expiry while the app is closed |
 | DP-S04 IndexedDB session index and runtime chat/tool history | Allowed for explicitly synthetic conversations | Memory-only; no titles, prompts, responses, tool arguments or session labels persisted | Session manager; mode switch does not erase old databases |
 | DP-S05 Cache Storage / service worker | Only approved static resources and verified shipped fixtures; not arbitrary document GETs | Same static-only rule; no document, remote asset, provider or authenticated response caching by the app | Service worker; tighten current generic same-origin GET behavior |
 | DP-S06 UI preferences | Locale/panel sizing may persist | Same; no document identifiers, filenames, content or prompts | Existing preference owners; privacy mode does not require wiping harmless settings |
@@ -147,7 +148,7 @@ These limits belong in product wording without weakening the application's own w
 
 ## Implementation responsibilities and dependencies
 
-1. Host import/classification: resolve policy before installing project/session/store; maintain policy identity across async work.
+1. Host import/classification: resolve policy before installing project/session/store; maintain policy identity across async work. The server adapter already defaults to Unknown, but page-gateway/WebMCP fallback must be aligned so missing policy never means Synthetic. A no-active-document state must invalidate old async work rather than reuse the prior policy.
 2. Existing storage adapters: enforce DP-S rules at initialization and each write; select supported volatile behavior, never pretend it is durable.
 3. Shared Agent boundary: define per-command safe projections, including get_revision, FormSpec/components and audit/recovery; keep opaque-ID reverse mappings local.
 4. Provider/asset transport: verify final payload, recipient and current policy; distinguish user text, automatic context and images.
@@ -155,7 +156,7 @@ These limits belong in product wording without weakening the application's own w
 
 Reuse existing owners. No new service or public protocol field is mandated by this document.
 The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) expands this ownership into admission/delivery ordering, M0-M5 dependencies, client migration and rollback. Policy must apply before domain/storage side effects, not only when sanitizing the final result.
-The linked output table specifies Target safe fields. Implementation still needs closed-schema enforcement and host/reference plumbing; any public contract change needs compatibility/version review.
+The linked output table now has closed-schema enforcement and host/reference plumbing in the current gateway. Full 35-command behavioral evidence and M4 acceptance remain open; any public contract change needs compatibility/version review.
 Encrypted real-data databases, multi-user retention and automated confidential-data detection are outside this local restrictive profile.
 If shared real-data service is selected later, document access, persistence, retention, backups and recovery before enabling its writes.
 
@@ -165,10 +166,10 @@ All cases remain Not run; these rows refine the existing eight PROD-13 cases and
 
 | Existing case | Rule coverage | Required additional evidence |
 |---|---|---|
-| 13-01 | DP-C01/02/05/07, DP-L01 | Canary import before durable constructor or URL request; no trust-based synthetic classification |
+| 13-01 | DP-C01/02/05/07, DP-L01 | Canary import before durable constructor or URL request; no trust-based or missing-configuration Synthetic classification; gateway/WebMCP installs without policy fail closed as Unknown |
 | 13-02 | DP-C02/03/04, DP-S01..10 | Writes inspected across localStorage, session IndexedDB, Cache Storage and enabled server; decoded envelopes/patches/evidence checked |
 | 13-03 | DP-S01/03/04, DP-L04 | Reload does not silently restore volatile content; explicit saved artifact remains separately available |
-| 13-04 | DP-C05, DP-L02/04/08 | Delayed provider/image/session/cache callbacks cannot use prior policy or wrong document |
+| 13-04 | DP-C05, DP-L02/04/08 | Delayed provider/image/session/cache callbacks cannot use prior policy, wrong document or a temporarily missing current policy; the old policy must not be substituted |
 | 13-05 | DP-L03/05/06 | Exact old-record inventory, ambiguous/blocked cleanup result and no cross-project/vault deletion |
 | 13-06 | DP-T01/02/03/05/07 | All 35 command projections: get_revision metadata-only control, undo project exclusion, direct/wrapped transactions, IDs/paths/URLs, FormSpec and audit canaries; no forbidden egress or asset/cache side effects |
 | 13-07 | DP-S07/08, DP-T04/06 | Intentional prompt/save destination; no implicit persistence, secret export or old-session forwarding |
@@ -176,14 +177,14 @@ All cases remain Not run; these rows refine the existing eight PROD-13 cases and
 
 Use controlled provider/resource transports and synthetic canaries; inspect decoded content, temporary writes and final persisted state.
 Do not contact a live provider with private data to prove redaction. Check application/adapter outcomes and actual browser storage separately.
-Document completion is not privacy acceptance. PROD-13 remains Pending until mapped cases and relevant regressions have evidence.
+Document completion is not privacy acceptance. PROD-13 remains Partial until the fail-open adapter defaults are corrected and mapped cases have evidence.
 
 ## SCMC review
 
 - Scope: PROD-13 data/destination contract; evidence: linked current sources; constraints: documentation only, existing trust and transaction invariants.
-- Simple: PASS. Three document classifications with one restrictive Unknown/Real policy; credentials/preferences are separate data kinds.
-- Clear: PASS. Destination, trigger, lifetime and mode-change behavior are explicit; Current observations are separate from Target rules.
+- Simple: WARN. Three classifications remain understandable, but implicit Synthetic fallback adds an avoidable second default.
+- Clear: WARN. The policy says missing means Unknown while adapter code currently does the opposite.
 - Modular: PASS. Host classifies; storage/transport enforce; UI reports results. No new service is introduced.
-- Consistent: PASS. Existing requirement IDs and eight acceptance cases are preserved; intentional save is not an opt-in to hidden persistence.
-- Findings: no material SCMC issue in this design. Output fields/reference rules are now specified as Target; enforcement, volatile export integration and cache restrictions remain Pending.
-- Overall: PASS for documentation design only. Boundary/migration planning is documented; highest-value next action is M0 owner/consumer inventory preparation before implementation authorization.
+- Consistent: FAIL. Main-app/server Unknown defaults and gateway/WebMCP Synthetic defaults implement conflicting answers to the same missing-policy state.
+- Findings: align every adapter to fail closed as Unknown and reject queued work when the current policy is absent; then run 13-01/13-04 before broader M4 acceptance.
+- Overall: FAIL for the current cross-adapter implementation, while the documented policy design remains valid. The highest-value next action is correcting and testing the missing-policy boundary before any M5 release decision.

@@ -6,15 +6,15 @@
 
 ## 0. Current architecture and maturity
 
-Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `3.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence.
+Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence.
 
-The 2026-09-07 review session passed 72 test files / 385 tests, doctor 5/5, three static pilot validations, bundle syntax check and Windows Chromium E2E 60/60. This documentation amendment does not rerun or expand that application evidence. Full Windows/browser/real-print certification and a current network audit remain unverified.
+The 2026-09-07 documentation review freshly passes 80 test files / 428 tests. Doctor 5/5, three static pilot validations, bundle checks and Windows Chromium E2E 68/68 are carried forward from an earlier amendment snapshot and require a final rerun after concurrent implementation settles. Approval provenance and missing-policy adapter defaults remain open; full Windows/browser/real-print certification and a current network audit remain unverified.
 
 ### 0.1 E14: implemented UI, incomplete behavioral acceptance
 
 Current: four-layer AI panel (`Navigation → Document context → Conversation → Composer`), title/revision/candidate badges, structured change cards, apply-mode controls, card-level Undo/Redo controls, session drawer, settings modal, collapsed trace, resizable rail, focus/tab handling and desktop export visibility.
 
-Partial: selection/scope, context readiness and Review apply policy remain PROD-01/02/03. Card Undo invokes global history without card-target/result checks (PROD-04). Real-data mode does not disable durable project persistence or automatically classify imports (PROD-13). These are current gaps, not completed behavior.
+Partial: selection-to-FormSpec UI coverage and composed Review/late-response acceptance remain PROD-01/02/03; domain scope/apply/readiness gates are implemented. Card Undo invokes global history without card-target/result checks (PROD-04). Unknown/Real policy now disables durable transaction snapshots, recovery writes, persistent sessions, external asset fetches, pixel evidence and provider media; reload and combined acceptance remain open (PROD-13). These are acceptance gaps, not permission to claim Production Ready.
 
 The project envelope is canonical, CommandBus owns committed state, and preview DOM is derived visual evidence. Neither chat messages nor preview DOM create another project source of truth.
 
@@ -32,7 +32,7 @@ Preview-first as the default and Windows/Chromium single-user production as the 
 
 E14 remains Partial. Session/Settings/Trace controls already exist; independent Changes/history search, bidirectional component highlight and fuller mobile workflows remain pending. E15 covers shared-service/HA expansion and is not a universal dependency for a release explicitly limited to one user.
 
-Target Agent enforcement and migration are specified in the [boundary plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md): reuse the existing gateway for closed projections and host references, retain canonical results inside the domain, and enforce policy separately at storage/provider sinks. The plan preserves transaction outcomes on delivery failure and requires a breaking Agent contract migration; none is implemented. No runtime, protocol, privacy or export gate changes are authorized by this documentation update.
+Agent enforcement and migration are specified in the [boundary plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md): the existing gateway now owns closed projections and host references, canonical results remain inside the domain, and policy is enforced separately at storage/provider sinks. The implementation foundation preserves transaction outcomes on delivery failure and uses Agent Contract 4.0.0 for the breaking projection/reference migration. Full acceptance and release evidence remain open; no deployment is authorized.
 
 ## 0.2 2026-08-17 Studio v2 Production Foundation（Current）
 
@@ -226,7 +226,7 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 2. **Current renderer owner**: `app.js:installBus()` injects `ui/render-controller.js:renderCandidate` into CommandBus. The controller owns pending requests, tokens and the visible `#preview-frame`; `ui/preview.js` builds the sandbox bridge.
 3. **一层跨 iframe reload 存活的请求 token**（`runtime.js` 内部 `generation` 计数器在"整个 iframe 重载"这一级别的对应物）：无论请求来自人类编辑防抖（`schedulePreview`）还是 Agent 的 `preview_changes`/`apply_changes`，发起渲染前先领取一个单调递增 token，`ui/preview.js` 的 `buildPreviewBridge()` 把 token 原样写进两个 postMessage 回执（`rendered`/`error`）；父页 `listenForPreview` 回调按 token 先查 `pending`，命中就是候选请求的回执，未命中再退回既有的按 `revision` 匹配的已提交状态路径。这同时天然满足了 TASK.md 原 #15（"拒绝非本次预览的消息"）的需求——**#15 已并入本项，不再单独存在**。
 4. **`preview_changes`**：CommandBus 根据已允许的 semantic operations 生成 candidate，并在 UI 浏览器环境中等待可见预览 iframe 的真实渲染回执；用 `sha256(stableStringify(candidate))`（`core/json.js` 已有）计算 `candidateHash`，按 hash 缓存真实 RenderReport。返回的 validation 携带真实 `issues[]`/`metrics`；无 DOM 环境时只做静态 schema/业务规则校验，并明确不伪造浏览器 evidence。
-5. **`apply_changes`**：公共 Agent Contract 3.0.0 只接受已批准 transaction 的 `transactionId`、当前 revision 和同一 candidate hash，不再接受直接传入 `operations[]` 的写路径。命中缓存时复用已渲染 report；候选内容、revision、批准状态或 hash 任一不匹配都 fail closed。Studio 内部的结构化控件和 source editor 可以使用内部命令，但不构成公共 Agent API。
+5. **`apply_changes`**：公共 Agent Contract 4.0.0 只接受已批准 transaction 的 `transactionId`、当前 revision 和同一 candidate hash，不再接受直接传入 `operations[]` 的写路径。Agent 返回通过闭字段投影和会话内不透明引用发布；候选内容、revision、批准状态或 hash 任一不匹配都 fail closed。Studio 内部的结构化控件和 source editor 可以使用内部命令，但不构成公共 Agent API。
 
 **Historical presentation description (superseded by the current controller behavior below)**：候选渲染期间 `#candidate-preview-banner`（`.banner` 复用既有 `#update-banner`/`#restore-banner` 样式）显示"正在预览 AI 提议的改动（未提交）"提示；`pending` 清空时（成功/失败/超时）自动隐藏。下一次真正的 commit（人类编辑或 Agent apply）发生时，`schedulePreview()` 既有的防抖流程会自动把 iframe 刷新回真实已提交状态，不需要额外的"回滚"代码路径；`installBus()` 切换项目（导入/切样本/重置信任）时会拒绝并清空所有仍在等待的候选渲染，避免悬挂 Promise。
 

@@ -10,7 +10,7 @@
 
 ### 0.0 Verification evidence (2026-09-07 review session)
 
-Observed earlier in this session: **72 files / 385 tests**, doctor **5/5**, three pilot static validations, bundle syntax check and Windows Chromium **60/60**. This documentation-only amendment did not rerun full application suites. Static pilot results report `layout.verified: false`; no new full browser matrix, real printer/Safari certification or network audit is claimed. Evidence and open requirements: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
+Fresh documentation-review evidence: **80 files / 428 tests**. Doctor **5/5**, three pilot static validations, bundle checks and Windows Chromium **68/68** are carried forward from an earlier amendment snapshot and must be rerun after the concurrently changing implementation settles. The worktree includes the PROD-13/01/02/03 foundation and targeted boundary tests. Static pilot results report `layout.verified: false`; no real printer/Safari certification, deployment or real-provider test is claimed.
 
 Browser verification matrix:
 
@@ -134,11 +134,11 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - 「重置信任」= 剥离可执行内容 + 重置 flag；validateProject 独立重扫内容（`EXECUTABLE_MARKUP_PRESENT`）。
 - CSP：trusted 导出用双 runtime sha256 hash；untrusted / 预览用 `unsafe-inline` 变体；`manifest.assets.allowExternalHttps` 在所有变体中同步打开 `img-src/font-src https:`。
 
-### 3.3 命令契约（Agent Contract 3.0.0）
+### 3.3 命令契约（Agent Contract 4.0.0）
 
 - 35 个工具见 [studio-v2/core/tool-contracts.js](studio-v2/core/tool-contracts.js)；全部经 `CommandBus.execute` 返回统一 `{ok, result|error{code,…}}`（含网关层 JSON 解析失败 `INVALID_INPUT_JSON`）。Agent 面只发布 semantic operation allowlist；raw source preview 保留为 Studio 内部命令。新增的 transaction/recovery tools 只操作 domain service，不暴露数据库。
 - `get_capabilities` 除 `candidateHash`、`candidateRealRender`、`layoutEvidenceReceipts` 外返回 `persistentAudit`、`durableTransactions`、`atomicRevisionCas` 与 `leaseRecovery`。其中 localStorage 可为 durable audit，但 `atomicRevisionCas=false`；只有注入 backend `compareAndSwap` 才能作为多 session 发布条件。`candidateHash` 是契约形状（`preview_changes`/`apply_changes` 响应恒定携带该字段，值可能为 `null`）；渲染器能力仍按当前会话真实注入状态 fail closed。
-- **3.0.0 当前写入不变量**是 `begin/preview → approve → apply`：`apply_changes` 必须带已批准的 `transactionId`、当前 revision 和同一 candidate hash；不再接受直接传 `operations[]`。`complete_layout_review` 仍要求 `evidenceIds`（见 §3.5）。
+- **4.0.0 当前写入不变量**是 `begin/preview → approve → apply`：`apply_changes` 必须带已批准的 `transactionId`、当前 revision 和同一 candidate hash；不再接受直接传 `operations[]`。返回值由每条命令的闭字段投影构造，敏感 ID/路径只以会话内引用出现；`complete_layout_review` 仍要求 `evidenceIds`（见 §3.5）。
 - 写命令必须带 `expectedRevision`；revision 单调递增、undo 不复用；过期写入返回 `REVISION_CONFLICT`。
 - 无实际变化的写命令（locale / asset / **sample scenario** 重复选择）不产生新 revision，不清空已通过的布局审查。
 - `set_manifest_value` 的 JSON 路径拒绝原型成员段（`INVALID_OPERATION_PATH`）。
@@ -164,7 +164,7 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 - 预览面板提供「Highlight issues」开关（默认开）：iframe 内 bridge 收到 `printform:rendered` 后用 `issues[].selector` 在当前文档实时定位并画红框；父页通过 `{ source: "printform-studio-v2-command", type: "toggle-overlay" }` 指令切换，指令同样只信任 `event.source === window.parent`，切换不触发重渲染。
 - 「Preview and apply」的应用前确认是并排 diff 面板（`ui/diff-view.js`），不是 `window.confirm`：按 `preview_changes` 返回的 `changedSections` 逐个渲染，JSON 段两侧都先 `stableStringify` 再逐行 LCS 对比（新增行绿、删除行红），CSS/HTML 段按原始字符串逐行对比；`trust` 变化单独一行说明（如 `trusted → untrusted`）。取消/关闭不调用 `apply_changes`；无实际变更时跳过面板直接提示。单侧 >1500 行的 section 跳过逐行高亮，只显示全文。
 
-### 3.5 布局验收证据（Agent Contract 3.0.0；能力沿自 2.0.0）
+### 3.5 布局验收证据（Agent Contract 4.0.0；能力沿自 2.0.0）
 
 - `capture_layout_evidence({ expectedRevision, scenario })`：Studio 把该场景渲染成**未提交候选**（复用可见预览 iframe，revision 不推进），渲染干净时签发 `{ evidenceId, revision, scenario, browser:{name,version}, layoutFingerprint, renderReportHash, metrics, createdAt }`。
 - `layoutFingerprint` = `sha256(stableStringify(pageGeometry))`，`pageGeometry` 是每页直接子元素的 class 加**页内相对**整数矩形（相对坐标是必须的：`getBoundingClientRect` 随滚动变化，绝对坐标会让同一布局哈希出不同值）。不含任何业务文本，因此真实数据模式下也可安全保留与嵌入导出。
@@ -191,19 +191,21 @@ Current implementation provides a collapsible AI Designer panel; visual IA exist
   - **Card-level Undo/Redo controls**: applied/reverted cards expose history actions. Current callbacks invoke global undo/redo without checking the card's applied revision or the command result before updating the badge; exact batch-target and failure semantics remain PROD-04.
   - Runtime trace（`#ai-trace-panel`，内存清洗元数据）作为 conversation 末尾的可折叠抽屉停靠。
 - **Layer 4: Composer**：仅含输入框 `#ai-prompt`、`#ai-send`、`#ai-stop`（快捷键提示落在 `#ai-prompt` 的 `title`）。Apply mode 两种模式均严格执行 `preview_changes → approve_transaction → apply_changes` 的不可变事务与哈希检查（选择器现位于 Layer 2）。
-- AI Designer 不得绕过公共 Agent Contract 3.0.0 的 transaction gate。Production export 仍需要当前 revision、render report、layout review 和工程师最终点击。
+- AI Designer 不得绕过公共 Agent Contract 4.0.0 的 transaction gate。Production export 仍需要当前 revision、render report、layout review 和工程师最终点击。
 
 Known Current limitations:
 
-- Scope changes only assign `state.activeScope`; selection is initialized as `Entire document`. No selected-component execution boundary is implemented (PROD-01).
-- Context stores `renderStatus` but chooses Printable/Blocked from error/warning counts. It is not the authoritative export-readiness indicator (PROD-03).
-- Ordinary chat respects preview-first; layout-review repair orchestration calls auto-apply without checking that mode (PROD-02). Approval/hash checks still run.
-- Current default is auto-apply. Catalog risk labels do not establish a shared risk-based auto-apply policy.
+- Scope selection is carried into the Agent context and enforced at the command/domain boundary for document, layout, theme, table and component-shaped targets. The UI currently exposes document/layout/theme and FormSpec-derived table scopes; arbitrary component selection and the complete selection matrix remain acceptance work (PROD-01).
+- Context consumes render state and document validation while keeping export-only review gates separate: waiting/rendering/candidate are non-final, document errors show Blocked, and `CommandBus.readiness().productionValid` remains authoritative for export controls (PROD-03).
+- Ordinary chat and layout-review repairs share the same apply-mode decision: Preview mode leaves the candidate pending, while Auto mode can advance only an explicit low-risk allowlist. Approval, revision and candidate-hash checks still run (PROD-02).
+- Current default is auto-apply. The shared allowlist is enforced, while a broader risk taxonomy and the complete retry/late-response matrix remain acceptance work.
+- The panel verifies its candidate approval token before using the privileged path, and registered MCP/WebMCP tools do not expose that path. `installAgentGateway()` nevertheless publishes `executeHuman` on the page-global gateway and bound session objects. Human approval is therefore not an authorization boundary against arbitrary same-origin script or raw CDP execution; PROD-02/02-03 remains open.
 - Human draft helpers and convenience transactions may use `requireValid=false`; Applied does not imply valid, saved or export-ready.
 - `countRows` and runtime `maxArrayLength` take the maximum nested array length, not total bound rows. Default limits are 500 rows / 100 logical pages (PROD-05).
 - `set_pagination_rule(repeatHeader)` accepts a component ID but writes the document root repeat flag (PROD-06).
 - Recovery cache is best-effort, one localStorage record with a seven-day expiry. Download fallback reports initiation, not confirmed disk persistence (PROD-08).
-- Real-data mode suppresses recovery cache and changes Agent session handling, but CommandBus still receives localStorage and persists full project snapshots. Import does not automatically classify unknown content as real; PROD-13 tracks this privacy gap.
+- Unknown/Real mode suppresses durable transaction storage, recovery writes, persistent sessions, external asset fetches, pixel evidence and provider document/media context; imported documents are classified as Unknown before CommandBus setup. The server adapter also defaults to Unknown and rejects restrictive document routes before SQLite initialization. Synthetic-only localStorage and server durability remain explicit positive controls, and explicit user save/export does not authorize automatic chat or recovery persistence (PROD-13 acceptance remains open).
+- Standalone page-gateway and WebMCP installation without a host policy getter currently falls back to Synthetic, and a missing current policy can be treated as unchanged. This differs from the main-app/server Unknown default and keeps the missing-policy/no-active-document boundary open under PROD-13.
 
 Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持久化到 localStorage；双击复位，方向键微调）。以下能力为下一阶段 Target：P1 历史抽屉与搜索、移动端全屏模式增强、P2 preview element 与 change card 双向 highlight。详见 [工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
@@ -213,8 +215,8 @@ Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（385 个，72 文件） | `npm test -- --run` | 当前全绿 |
+| 单元测试（428 个，80 文件） | `npm test -- --run` | 当前全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Chromium 60 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；2026-09-07 Windows Chromium 项目 60/60 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
+| E2E（Chromium 68 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；2026-09-07 Windows Chromium 项目 68/68 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含三个带 attestation 的试点导出 |

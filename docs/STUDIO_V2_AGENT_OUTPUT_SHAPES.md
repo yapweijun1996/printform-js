@@ -1,6 +1,6 @@
 # Studio v2 Agent Output Nested Shapes
 
-Prepared: 2026-09-07. Status: **Target; not implemented or tested**. Companion to the
+Prepared: 2026-09-07. Baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Status: **Implemented as the public projection contract; targeted tests pass and full matrix acceptance remains open**. Companion to the
 [35-command field table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and [data policy](STUDIO_V2_DATA_POLICY.md).
 These are closed objects: only named fields are permitted, recursively. Shape names are not runtime types yet.
 
@@ -37,6 +37,7 @@ Error.code uses a registered generic output-validation code during implementatio
 | Issue | code: known code; severity: error/warning or the producer's registered severity; path/selector?: Ref; pageIndex?: valid page index; keyword?: known validator keyword; rect?: Rect. No message/text/value/url/HTML. Unknown codes map to a generic diagnostic while retaining severity |
 | Validation | valid, productionValid: boolean; errors/warnings/issues: Issue[] when produced; metrics?: Metrics; reviewReceipt?: ReviewStatus. Error presence and current provenance remain authoritative; removing prose cannot make validation pass |
 | Diff | changed: boolean; changedSections: subset of manifest/schema/i18n/themeCss/templateHtml/sampleData/trust; operationCount: Count. Current operationCount is changed-section count, not the number of submitted operations |
+| ApplyResult | revision: R; already_committed: boolean; committed_revision?: R; diff: Diff; validation: Validation; candidateHash: H/null; transaction: Transaction. A duplicate Apply is an idempotent observation of the existing commit and must not create a second revision |
 | Page | width, height: positive measured numbers |
 | Typography | basePt: valid numeric print size from existing typography rules |
 | Branding | primaryColor: canonical validated color or null when absent; no CSS expression, variable, URL or arbitrary string |
