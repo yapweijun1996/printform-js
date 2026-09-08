@@ -51,9 +51,11 @@ describe("explicit file side-effect admission", () => {
     const f = fixture();
     const failure = new DOMException("Synthetic write failure", "NotAllowedError");
     f.writable[step].mockRejectedValue(failure);
-    await expect(saveHtmlWithPicker("SYNTHETIC-FILE-CANARY", "fixture.html", "Fixture", f)).rejects.toBe(failure);
+    const pending = saveHtmlWithPicker("SYNTHETIC-FILE-CANARY", "fixture.html", "Fixture", f);
+    if (step === "write") await expect(pending).rejects.toBe(failure);
+    else await expect(pending).rejects.toMatchObject({ code: "FILE_WRITE_UNCONFIRMED", cause: failure });
     expect(f.writable[step]).toHaveBeenCalledOnce();
-    expect(f.writable.abort).toHaveBeenCalledOnce();
+    expect(f.writable.abort).toHaveBeenCalledTimes(step === "write" ? 1 : 0);
   });
 
   it("stops an asset sequence after a policy change without requesting the next URL", async () => {

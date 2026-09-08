@@ -23,12 +23,15 @@ export async function saveHtmlWithPicker(html, suggestedName, description = "Sel
   });
   assertCurrent();
   const writable = await handle.createWritable();
+  let closing = false;
   try {
     assertCurrent();
     await writable.write(html);
     assertCurrent();
+    closing = true;
     await writable.close();
   } catch (error) {
+    if (closing) throw Object.assign(new Error("File write completion could not be confirmed", { cause: error }), { code: "FILE_WRITE_UNCONFIRMED" });
     try { await writable.abort?.(); } catch { /* Preserve the original failure; never retry the write. */ }
     throw error;
   }

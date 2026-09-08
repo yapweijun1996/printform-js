@@ -73,10 +73,11 @@ export function createFileExport({ getBus, getDataPolicy, setDirty, setSaveState
       // Feedback failure cannot undo or reclassify a confirmed file write/download request.
       if (confirmed) return { ...confirmed, feedbackFailed: true };
       const cancelled = error?.name === "AbortError";
+      const unconfirmed = error?.code === "FILE_WRITE_UNCONFIRMED";
       const stale = ["STALE_FILE_CONTEXT", "STALE_POLICY_CONTEXT", "FILE_CONTEXT_UNAVAILABLE"].includes(error?.code);
-      if (sameContext()) setSaveState(stale ? "unsaved" : cancelled ? "cancelled" : saveAttempted ? "failed" : "unsaved");
-      toast(t(cancelled ? "toast.exportCancelled" : "toast.exportFailed", { message: error.message }));
-      return { ok: false, reason: stale ? "stale" : cancelled ? "cancelled" : "failed", error };
+      if (sameContext()) setSaveState(stale ? "unsaved" : unconfirmed ? "unconfirmed" : cancelled ? "cancelled" : saveAttempted ? "failed" : "unsaved");
+      toast(t(unconfirmed ? "toast.saveUnconfirmed" : cancelled ? "toast.exportCancelled" : "toast.exportFailed", { message: error.message }));
+      return { ok: false, reason: stale ? "stale" : unconfirmed ? "unconfirmed" : cancelled ? "cancelled" : "failed", error };
     }
   };
 }
