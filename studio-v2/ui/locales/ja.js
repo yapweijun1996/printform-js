@@ -1,5 +1,10 @@
 import EN from "./en.js";
 export default { ...EN,
+  "confirm.syntheticClassification": "現在の文書全体（値、ラベル、画像、URLを含む）が合成データのみであることを確認してください。新しい保存コンテキストを作成し、以前のチャットやトランザクションは再生しません。",
+  "aiChat.mode.unknownData": "未分類の文書：このチャットはメモリ内にのみ保存されます。",
+  "aiChat.session.recipientChanged": "プロバイダーの送信先または認証情報が変更されました。次の要求は新しいチャットとして開始し、以前の履歴は自動送信しません。保存済みチャットは削除していません。",
+  "actions.saveStateUnconfirmed": "保存完了を確認できません",
+  "toast.saveUnconfirmed": "保存が完了したか確認できません。再度保存する前に、選択したファイルを確認してください。",
   "aiChat.errors.terminalActionRequired": "プロバイダーがPrintForm操作を実行しませんでした。デザイン要求を再試行してください。",
   "skip.preview": "プレビューへ移動", "actions.aria": "ファイルと検証の操作", "actions.import": "HTMLをインポート", "actions.validate": "検証", "actions.print": "印刷プレビュー",
   "actions.exportUntrusted": "Untrustedでエクスポート", "actions.exportProduction": "本番エクスポート", "ui.language": "Studioの言語",

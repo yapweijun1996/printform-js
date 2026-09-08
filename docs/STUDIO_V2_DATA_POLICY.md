@@ -162,22 +162,22 @@ If shared real-data service is selected later, document access, persistence, ret
 
 ## Acceptance mapping and evidence
 
-PROD-13 records: 13-01/02/03/05/06 retain their bounded Pass evidence; 13-04/08 are Fail; 13-07 remains Not run for complete acceptance. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) explains the reopened findings. These mappings do not add case IDs.
+PROD-13 records: 13-01/02/03/04/05/06/07/08 now have case-specific Pass evidence. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the historical findings and current evidence boundary. These mappings do not add case IDs.
 
 | Existing case | Rule coverage | Required additional evidence |
 |---|---|---|
 | 13-01 | DP-C01/02/05/07, DP-L01 | **Pass:** `e2e/studio-v2-p0-prod13.spec.js` imports a canary before installation, inspects decoded browser sinks and verifies missing-policy page/WebMCP adapters fail closed; no trust-based Synthetic classification |
 | 13-02 | DP-C02/03/04, DP-S01..10 | **Pass:** `e2e/studio-v2-p0-prod13-persistent-sinks.spec.js` performs Real-mode edit/preview/approve/apply and geometry review, then decodes localStorage, session IndexedDB and Cache Storage; `tests/studio-v2/server-policy.test.js` proves restrictive server routes reject before SQLite initialization |
 | 13-03 | DP-S01/03/04, DP-L04 | **Pass:** `e2e/studio-v2-p0-prod13-fresh-reload.spec.js` proves Real canary content is not restored after reload; explicit Untrusted download starts separately and does not change application storage |
-| 13-04 | DP-C05, DP-L02/04/08 | **Fail pending complete reverification:** review-time delayed index write was corrected; new index/runtime/panel lifecycle controls pass. Retain original failure evidence and complete all mapped transitions before closure |
+| 13-04 | DP-C05, DP-L02/04/08 | **Pass for the mapped case:** review-time delayed index write was corrected; serial three-engine mode/document/no-policy Provider and index/runtime/panel lifecycle controls reject stale work and inspect actual storage. Retain original failure evidence as Historical; broader P0 acceptance remains open |
 | 13-05 | DP-L03/05/06 | **Pass:** `e2e/studio-v2-p0-prod13-existing-records.spec.js` decodes old durable, transaction/audit, recovery, IndexedDB session, Cache Storage and sessionStorage records plus an unrelated project; Real adds no destination and explicit discard removes only the named recovery record |
 | 13-06 | DP-T01/02/03/05/07 | **Pass:** `e2e/studio-v2-p0-prod13-outbound.spec.js` checks summaries, diagnostics, audit/recovery/history, Evidence Pack, geometry and pixels through embedded/WebMCP in all three engines and first-party CDP in Chromium; no canary or unknown field leaves the closed projection |
-| 13-07 | DP-S07/08, DP-T04/06 | Intentional prompt/save destination; no implicit persistence, secret export or old-session forwarding |
-| 13-08 | DP-C06, DP-L03/07, DP-S05/06 | **Fail pending complete reverification:** imported provenance and permissive defaults were corrected. Three-engine classification and storage-denial controls pass; full asynchronous runtime-store/recovery composition remains under review |
+| 13-07 | DP-S07/08, DP-T04/06 | **Pass for the mapped case:** controlled file save and final Provider-body evidence show only the selected artifact and user-entered prompt crossing their explicitly chosen destinations; no implicit persistence, secret export or old-session forwarding |
+| 13-08 | DP-C06, DP-L03/07, DP-S05/06 | **Pass for the mapped case:** imported provenance and permissive defaults were corrected. Serial three-engine classification, storage-denial, volatile-fallback, asynchronous runtime-store and recovery-support controls pass; broader destination acceptance remains open |
 
 Use controlled provider/resource transports and synthetic canaries; inspect decoded content, temporary writes and final persisted state. The current browser helper reads every IndexedDB object store and decodes cached response bodies, but it does not yet constitute a complete inventory of browser, server, provider or operating-system sinks.
 Do not contact a live provider with private data to prove redaction. Check application/adapter outcomes and actual browser storage separately.
-Document completion is not privacy acceptance. PROD-13 needs the reopened failures, 13-07 and all applicable application-controlled sink/transition evidence closed; operating-system and external-provider retention limits must be disclosed, not represented as application-enforced guarantees.
+Document completion is not privacy acceptance. PROD-13 still needs the remaining application-controlled sink/transition evidence closed; operating-system and external-provider retention limits must be disclosed, not represented as application-enforced guarantees.
 
 ## SCMC review
 
@@ -185,6 +185,6 @@ Document completion is not privacy acceptance. PROD-13 needs the reopened failur
 - Simple: PASS for the policy design: one host-owned classification and restrictive missing-policy behavior remain required.
 - Clear: PASS for the corrected Current/Target distinction; current implementation exceptions are identified above.
 - Modular: PASS. Host classifies; storage/transport enforce; UI reports results. No new service is introduced.
-- Consistent: FAIL for implementation conformance: host provenance and session defaults/lifecycle do not yet follow the same rules.
-- Findings: High, Consistent: R1/R2/R3 in the [direction review](STUDIO_V2_DIRECTION_REVIEW.md). Correct the existing host/session owners and verify actual write/send boundaries; do not weaken DP-C or DP-L to match current code.
-- Overall: policy direction retained; implementation conformance FAIL. Repair and verify lifecycle enforcement before broader M4 case closure.
+- Consistent: PASS for the verified 13-04/07/08 paths; remaining unverified destinations must continue to follow the same rules.
+- Findings: Historical High/Consistent R1/R2/R3 are corrected in the existing host/session owners. Actual write/send boundaries are verified for the mapped cases; do not weaken DP-C or DP-L to match any remaining code gap.
+- Overall: policy direction retained; implementation conformance Partial. Lifecycle/save case paths 13-04/07/08 are verified; complete remaining destinations and broader M4 acceptance before closure.

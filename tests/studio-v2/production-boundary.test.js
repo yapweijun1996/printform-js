@@ -234,10 +234,11 @@ describe("Studio v2 production boundary", () => {
 
   it("blocks pixel Provider parts for restrictive policy and permits redacted geometry", () => {
     const profile = { provider: "openai", model: "test", apiKey: "canary-key", apiVariant: "responses" };
-    const pixel = { type: "image", url: "data:image/png;base64,AAAA", mimeType: "image/png", filename: "layout.png" };
-    const geometry = { type: "image", url: "data:image/svg+xml;base64,PHN2Zy8+", mimeType: "image/svg+xml", filename: "layout.svg" };
+    const pixel = { type: "image", url: "data:image/png;base64,AAAA", mimeType: "image/png", filename: "layout.png", source: "sandbox-pixel", syntheticData: true, redacted: false };
+    const geometry = { type: "image", url: "data:image/svg+xml;base64,PHN2Zy8+", mimeType: "image/svg+xml", filename: "layout.svg", source: "geometry-only", redacted: true };
     expect(() => buildProviderInput(profile, "review", [pixel], { dataPolicy: classifyRealDocument() })).toThrowError(/Pixel evidence/);
     expect(buildProviderInput(profile, "review", [geometry], { dataPolicy: classifyRealDocument() }).parts).toHaveLength(1);
+    expect(() => buildProviderInput(profile, "review", [{ ...geometry, source: undefined }], { dataPolicy: classifyRealDocument() })).toThrowError(/provenance/);
     expect(() => buildProviderInput(profile, "review", [{ ...geometry, secret: "BUSINESS CANARY" }])).toThrowError(/unknown field/);
   });
 

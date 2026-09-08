@@ -1,5 +1,15 @@
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
+const RECIPIENT_FIELDS = ["id", "provider", "model", "endpoint", "apiVariant", "apiKey", "authMode"];
+// This identity stays in memory; never persist or include credential fields in diagnostics.
+export function captureProviderRecipient(profile) {
+  return profile ? Object.fromEntries(RECIPIENT_FIELDS.map((key) => [key, profile[key] ?? ""])) : null;
+}
+export function isProviderRecipientCurrent(expected, profile) {
+  if (!expected || !profile) return !expected && !profile;
+  return RECIPIENT_FIELDS.every((key) => expected[key] === (profile[key] ?? ""));
+}
+
 /**
  * Intentionally public browser credential for the owner-operated Gateway.
  * It ships in source/build and is extractable by every Studio user. The
@@ -99,7 +109,7 @@ export function buildRuntimeBudget(profile) {
   };
 }
 
-const PROVIDER_PART_KEYS = new Set(["type", "url", "mimeType", "filename"]);
+const PROVIDER_PART_KEYS = new Set(["type", "url", "mimeType", "filename", "source", "syntheticData", "redacted"]);
 const IMAGE_MIME_PATTERN = /^image\/(?:png|jpeg|webp|svg\+xml)$/i;
 const DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpeg|webp|svg\+xml);base64,[a-z0-9+/=]+$/i;
 
@@ -119,7 +129,10 @@ export function projectProviderParts(parts = [], { dataPolicy = null } = {}) {
     if (!IMAGE_MIME_PATTERN.test(mimeType)) throw providerPayloadError("Provider media evidence has an unsupported image type.");
     const filename = String(part.filename || "evidence").replace(/[^a-z0-9._-]/gi, "_").slice(0, 120);
     const pixelPart = mimeType !== "image/svg+xml" || /\.(?:png|jpe?g|webp)$/i.test(filename);
-    if (dataPolicy?.allowPixelEvidence === false && pixelPart) throw providerPayloadError("Pixel evidence is blocked by the current data policy.");
+    const validPixelProvenance = pixelPart && part.source === "sandbox-pixel" && part.syntheticData === true && part.redacted === false;
+    const validGeometryProvenance = !pixelPart && mimeType === "image/svg+xml" && part.source === "geometry-only" && part.redacted === true;
+    if (dataPolicy && !validGeometryProvenance && !validPixelProvenance) throw providerPayloadError("Provider media evidence provenance is invalid.");
+    if (dataPolicy?.allowPixelEvidence === false && !validGeometryProvenance) throw providerPayloadError("Pixel evidence is blocked by the current data policy.");
     return { type: "image", url: part.url, mimeType, filename };
   });
 }

@@ -3,7 +3,7 @@ import { OPERATION_DEFINITIONS } from "./operation-schemas.js";
 import { stateName } from "./transaction-state.js";
 import {
   compact, projectIssue, projectMetrics, projectValidation, projectionError,
-  requireObject, safeBoolean, safeCode, safeCount, safeHash, safeNumber,
+  requireArray, requireObject, safeBoolean, safeCode, safeCount, safeHash, safeNumber,
   safeRevision, safeScenario, safeTime,
 } from "./agent-output-primitives.js";
 
@@ -12,6 +12,7 @@ const STATUSES = new Set(["draft", "previewed", "validated", "approved", "commit
 const AUDIT_TYPES = new Set(["transaction_started", "lease_acquired", "lease_renewed", "lease_takeover", "preview_created", "approved", "commit_started", "revision_committed", "rolled_back", "recovery_required", "conflict_detected", "lease_released", "recovered", "evidence_anchored", "during_evidence_write", "lease_expired"]);
 const JOURNAL_TYPES = new Set(["BEGIN_EDIT", "LEASE_ACQUIRED", "LEASE_RENEWED", "PREVIEW", "APPROVE", "COMMIT_STARTED", "COMMIT", "REVISION_COMMIT", "ROLLBACK", "CONFLICT", "INTERRUPTED", "LEASE_RELEASED", "RECOVERED", "LEASE_EXPIRED", "LEASE_TAKEOVER", "UNDO", "REDO", "EVIDENCE_PACK", "EVIDENCE_ANCHORED"]);
 const REASONS = new Set(["initial", "explicit_rollback", "conflict_resolution", "undo", "redo", "transaction commit"]);
+const REPEATED_AREA_KEYS = ["header", "docinfo", "rowheader", "ptacRowheader", "footer", "footerLogo", "footerPagenum"];
 
 function ref(context, kind, value) {
   return value == null ? null : context.references.referenceFor(kind, value);
@@ -47,23 +48,26 @@ function projectFormDocument(document) {
 export function projectFormSpec(spec, context) {
   requireObject(spec, "FormSpec");
   if (spec.version !== FORM_SPEC_VERSION || !["canonical", "legacy-adapter"].includes(spec.mode)) throw projectionError("Unsupported FormSpec version");
-  const sections = Array.isArray(spec.sections) ? spec.sections.map((section) => ({
-    id: ref(context, "section", section.id),
-    componentIds: Array.isArray(section.componentIds) ? section.componentIds.map((id) => ref(context, "component", id)) : [],
-  })) : [];
+  const sections = requireArray(spec.sections, "FormSpec sections").map((section) => {
+    requireObject(section, "FormSpec section");
+    return {
+      id: ref(context, "section", section.id),
+      componentIds: requireArray(section.componentIds, "FormSpec section componentIds").map((id) => ref(context, "component", id)),
+    };
+  });
   const pagination = spec.pagination && {
     repeatDocumentHeader: safeBoolean(spec.pagination.repeatDocumentHeader, false),
     repeatTableHeader: safeBoolean(spec.pagination.repeatTableHeader, false),
     footer: safeBoolean(spec.pagination.footer, false),
     pageNumbers: safeBoolean(spec.pagination.pageNumbers, false),
-    keepTogether: Array.isArray(spec.pagination.keepTogether) ? spec.pagination.keepTogether.map((id) => ref(context, "component", id)) : [],
+      keepTogether: requireArray(spec.pagination.keepTogether, "FormSpec pagination keepTogether").map((id) => ref(context, "component", id)),
   };
   return compact({
     version: FORM_SPEC_VERSION,
     mode: spec.mode,
     document: projectFormDocument(spec.document),
     sections,
-    components: Array.isArray(spec.components) ? spec.components.map((component) => projectComponent(component, context)) : [],
+    components: requireArray(spec.components, "FormSpec components").map((component) => projectComponent(component, context)),
     pagination,
   });
 }
@@ -72,7 +76,9 @@ export function projectInspection(result, context) {
   requireObject(result, "inspection");
   return {
     blocks: safeCount(result.blocks, true),
-    bindings: Array.isArray(result.bindings) ? result.bindings.map((binding) => compact({
+    bindings: requireArray(result.bindings, "inspection bindings").map((binding) => {
+      requireObject(binding, "inspection binding");
+      return compact({
       tag: /^[a-z][a-z0-9-]{0,30}$/.test(String(binding.tag || "")) ? String(binding.tag).toLowerCase() : undefined,
       id: ref(context, "element", binding.id),
       className: ref(context, "class", binding.className),
@@ -82,7 +88,8 @@ export function projectInspection(result, context) {
       href: ref(context, "path", binding.href),
       i18nKey: ref(context, "i18n", binding.i18nKey),
       assetSlot: ref(context, "slot", binding.assetSlot),
-    })) : [],
+      });
+    }),
   };
 }
 
@@ -93,12 +100,25 @@ function width(value) {
 
 export function projectDesignState(result, context, supportedOperations) {
   requireObject(result, "design state");
-  const tables = Array.isArray(result.tables) ? result.tables.map((table) => ({
+  const tables = requireArray(result.tables, "design tables").map((table) => {
+    requireObject(table, "design table");
+    return {
     tableSelector: ref(context, "table", table.tableSelector),
-    columns: Array.isArray(table.columns) ? table.columns.map((column, index) => ({ label: `Column ${index + 1}`, width: width(column.width) })) : [],
-  })) : [];
-  const repeatedAreas = result.repeatedAreas && Object.fromEntries(Object.entries(result.repeatedAreas).filter(([, value]) => typeof value === "boolean"));
-  const assets = Array.isArray(result.assets) ? result.assets.map((asset) => ({ slot: ref(context, "slot", asset.slot), configured: safeBoolean(asset.configured) })) : [];
+    columns: requireArray(table.columns, "design table columns").map((column, index) => {
+      requireObject(column, "design column");
+      return { label: `Column ${index + 1}`, width: width(column.width) };
+    }),
+    };
+  });
+  const repeatedAreas = result.repeatedAreas && typeof result.repeatedAreas === "object"
+    ? Object.fromEntries(REPEATED_AREA_KEYS
+      .filter((key) => typeof result.repeatedAreas[key] === "boolean")
+      .map((key) => [key, result.repeatedAreas[key]]))
+    : undefined;
+  const assets = requireArray(result.assets, "design assets").map((asset) => {
+    requireObject(asset, "design asset");
+    return { slot: ref(context, "slot", asset.slot), configured: safeBoolean(asset.configured) };
+  });
   const page = result.page && { width: safeNumber(result.page.width, { positive: true }), height: safeNumber(result.page.height, { positive: true }) };
   if (page && (page.width === undefined || page.height === undefined)) throw projectionError("Invalid page dimensions");
   const basePt = safeNumber(result.typography?.basePt, { positive: true });

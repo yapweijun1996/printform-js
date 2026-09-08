@@ -28,13 +28,22 @@ export function prepareVisualReviewEvidence(captures, baselines) {
   let imageChars = 0;
   const imageModes = new Map();
   const parts = evidence.flatMap((item) => {
-    const candidates = [item.pixelSnapshot, item.snapshot].filter((snapshot) => snapshot?.dataUrl);
+    const candidates = [item.pixelSnapshot, item.snapshot].filter((snapshot) => {
+      if (!snapshot?.dataUrl) return false;
+      return snapshot.source === "sandbox-pixel"
+        ? snapshot.syntheticData === true && snapshot.redacted === false
+        : snapshot.source === "geometry-only" && snapshot.redacted === true;
+    });
     const snapshot = candidates.find((candidate) => imageChars + candidate.dataUrl.length <= MAX_MULTIMODAL_IMAGE_CHARS);
     if (!snapshot) return [];
     imageChars += snapshot.dataUrl.length;
     const mode = snapshot.source === "sandbox-pixel" ? "pixels" : "geometry";
     imageModes.set(item.scenario, mode);
-    return [{ type: "image", url: snapshot.dataUrl, mimeType: snapshot.mimeType, filename: `layout-${item.scenario}.${mode === "pixels" ? "png" : "svg"}` }];
+    return [{
+      type: "image", url: snapshot.dataUrl, mimeType: snapshot.mimeType,
+      filename: `layout-${item.scenario}.${mode === "pixels" ? "png" : "svg"}`,
+      source: snapshot.source, syntheticData: snapshot.syntheticData === true, redacted: snapshot.redacted === true,
+    }];
   });
   const context = evidence.map(({ evidenceId, receiptIssued, scenario, revision, snapshotHash, pixelSnapshotHash, visualMode, layoutFingerprint, coverage, metrics, visualRegression, issues, validation }) => ({
     evidenceId, receiptIssued, scenario, revision, snapshotHash, pixelSnapshotHash,

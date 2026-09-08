@@ -3,7 +3,7 @@ import { gatewayBadgeKey, gatewayOptionLabel, gatewayProfileFromForm, gatewaySta
 import { populateProviderForm } from "./agent-settings-form.js";
 import { agentErrorKey, translateAgentError } from "./agent-error-text.js";
 
-export function bindAgentPanelVault({ $, vault, state, status, t }) {
+export function bindAgentPanelVault({ $, vault, state, status, t, onRecipientChange = () => {} }) {
   function profile() {
     return state.profileId === DEFAULT_PROVIDER_PRESET.id
       ? publicDefaultProviderProfile(state.publicGatewayKey)
@@ -32,6 +32,7 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
 
   function loadProfile(id) {
     state.profileId = id;
+    onRecipientChange();
     const item = vault.getProfile(id) || (id === DEFAULT_PROVIDER_PRESET.id ? publicDefaultProviderProfile(state.publicGatewayKey) : null);
     if (!item) return;
     populateProviderForm($, item);
@@ -42,6 +43,7 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
       await vault.unlock($("#ai-vault-passphrase").value);
       $("#ai-vault-passphrase").value = "";
       state.profileId = DEFAULT_PROVIDER_PRESET.id;
+      onRecipientChange();
       populateProviderForm($, publicDefaultProviderProfile(state.publicGatewayKey));
       renderProfiles();
       status("aiSettings.runtime.unlocked");
@@ -59,6 +61,7 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
       if (draft.isDefaultGateway) {
         state.publicGatewayKey = draft.gatewayKey;
         state.profileId = DEFAULT_PROVIDER_PRESET.id;
+        onRecipientChange();
         populateProviderForm($, draft.profile);
         renderProfiles();
         status(gatewayStatusKey(Boolean(draft.gatewayKey)));
@@ -66,6 +69,7 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
       }
       await vault.saveProfile(draft.item);
       state.profileId = draft.item.id;
+      onRecipientChange();
       renderProfiles();
       status("aiSettings.runtime.profileSaved");
       return true;
@@ -78,9 +82,8 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
   async function clearVault() {
     if (!window.confirm(t("aiSettings.runtime.clearConfirm"))) return;
     try {
-      state.controller?.stop();
-      state.controller = null;
       state.profileId = DEFAULT_PROVIDER_PRESET.id;
+      onRecipientChange();
       await vault.clear();
       $("#ai-api-key").value = "";
       $("#ai-input-price").value = "";
@@ -96,16 +99,16 @@ export function bindAgentPanelVault({ $, vault, state, status, t }) {
 
   $("#ai-unlock-vault")?.addEventListener("click", unlock);
   $("#ai-clear-vault")?.addEventListener("click", clearVault);
-  $("#ai-lock-vault")?.addEventListener("click", () => {
-    state.controller?.stop();
-    state.controller = null;
+  function lock() {
     vault.lock();
     state.profileId = DEFAULT_PROVIDER_PRESET.id;
+    onRecipientChange();
     populateProviderForm($, publicDefaultProviderProfile(state.publicGatewayKey));
     renderProfiles();
     status(gatewayStatusKey(Boolean(state.publicGatewayKey)));
-  });
+  }
+  $("#ai-lock-vault")?.addEventListener("click", lock);
   $("#ai-profile-select")?.addEventListener("change", (event) => loadProfile(event.target.value));
 
-  return { profile, renderProfiles, loadProfile, unlock, saveProfile, clearVault };
+  return { profile, renderProfiles, loadProfile, unlock, lock, saveProfile, clearVault };
 }

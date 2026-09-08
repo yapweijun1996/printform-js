@@ -33,4 +33,18 @@ describe("Current-document policy ownership", () => {
     expect(state.dataPolicy.classification).toBe("real");
     expect(sessions.setDataPolicy).not.toHaveBeenCalled();
   });
+
+  it("resets the Agent scope when a new project replaces the current document", async () => {
+    const state = { dataPolicy: classifySyntheticDocument("SYNTHETIC-PANEL"), realData: false, records: [], sessionPersistenceAnnounced: false };
+    const sessions = { setDataPolicy: vi.fn(), list: vi.fn(async () => []) };
+    const runtime = { invalidateSession: vi.fn(), refreshSessions: vi.fn(async () => {}) };
+    const docContext = { update: vi.fn() };
+    const onScopeChange = vi.fn();
+    const controls = createAgentPanelPolicyControls({ state, sessions, runtime, renderSessions: vi.fn(), docContext, addMessage: vi.fn(), onScopeChange });
+
+    controls.onProjectChanged(createSalesInvoiceProject(), state.dataPolicy, "import");
+
+    expect(onScopeChange).toHaveBeenCalledWith({ kind: "document" });
+    expect(docContext.update).toHaveBeenCalledWith(expect.objectContaining({ scope: "all", selection: "Entire document" }));
+  });
 });

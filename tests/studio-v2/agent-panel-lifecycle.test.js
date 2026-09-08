@@ -10,10 +10,11 @@ function harness() {
   const sessions = { list: vi.fn(async () => []), create: vi.fn(async () => ({ id: "SYNTHETIC-CHAT-B" })) };
   const renderProposal = vi.fn();
   const addMessage = vi.fn();
+  let recipient = { id: "SYNTHETIC-PROFILE", provider: "custom", model: "model-a", endpoint: "https://provider-a.test/v1", apiKey: "SYNTHETIC-KEY-A" };
   const owner = createPanelSessions({ state, sessions, get: () => null, getGateway: () => ({}),
-    profile: () => ({ id: "SYNTHETIC-PROFILE" }), status: vi.fn(), addMessage,
+    profile: () => recipient, status: vi.fn(), addMessage,
     renderProposal, renderSessions: vi.fn(), onCandidateState: vi.fn(), handleRuntimeEvent: vi.fn() });
-  return { state, sessions, owner, renderProposal, addMessage };
+  return { state, sessions, owner, renderProposal, addMessage, changeRecipient(key) { recipient = { ...recipient, [key]: "SYNTHETIC-RECIPIENT-B" }; } };
 }
 
 describe("panel session lifecycle admission", () => {
@@ -79,5 +80,25 @@ describe("panel session lifecycle admission", () => {
     current = classifyRealDocument("SYNTHETIC-A");
     await result;
     expect(createRuntime).not.toHaveBeenCalled();
+  });
+
+  it.each(["provider", "model", "endpoint", "apiKey"])("starts a fresh conversation and rejects old callbacks after %s changes", async (key) => {
+    const f = harness();
+    const oldRecord = f.state.currentRecord;
+    const stop = vi.fn();
+    f.state.controller = { stop };
+    const context = f.owner.captureContext();
+    f.changeRecipient(key);
+    expect(context.isCurrent()).toBe(false);
+    f.owner.onRecipientChange();
+    expect(stop).toHaveBeenCalledOnce();
+    expect(f.state.currentRecord).toBeNull();
+    expect(f.state.controller).toBeNull();
+    expect(f.state.records).toEqual([]);
+    expect(oldRecord.id).toBe("SYNTHETIC-CHAT-A");
+    expect(f.sessions.create).not.toHaveBeenCalled();
+    expect(f.addMessage).toHaveBeenCalledOnce();
+    f.owner.onRecipientChange();
+    expect(f.addMessage).toHaveBeenCalledOnce();
   });
 });

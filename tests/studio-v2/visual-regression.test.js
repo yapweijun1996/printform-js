@@ -16,14 +16,14 @@ describe("synthetic visual regression metadata", () => {
   });
 
   it("does not invent pixel metadata for geometry-only evidence", () => {
-    const result = prepareVisualReviewEvidence([{ evidence: { evidenceId: "g", scenario: "long-text", revision: 0, visualMode: "geometry", snapshot: { dataUrl: "data:image/svg+xml;base64,AAAA", mimeType: "image/svg+xml" } } }], new Map());
+    const result = prepareVisualReviewEvidence([{ evidence: { evidenceId: "g", scenario: "long-text", revision: 0, visualMode: "geometry", snapshot: { source: "geometry-only", redacted: true, dataUrl: "data:image/svg+xml;base64,AAAA", mimeType: "image/svg+xml" } } }], new Map());
     expect(result.context[0].visualRegression).toEqual({ available: false, changed: false });
     expect(result.parts[0].filename).toBe("layout-long-text.svg");
   });
 
   it("caps total image payload and falls back from pixels to geometry per scenario", () => {
     const large = (size) => `data:image/png;base64,${"A".repeat(size)}`;
-    const geometry = { dataUrl: "data:image/svg+xml;base64,AAAA", mimeType: "image/svg+xml", source: "geometry-only" };
+    const geometry = { dataUrl: "data:image/svg+xml;base64,AAAA", mimeType: "image/svg+xml", source: "geometry-only", redacted: true };
     const result = prepareVisualReviewEvidence([
       { evidence: { evidenceId: "a", scenario: "default", visualMode: "pixels", pixelSnapshot: { ...pixel, dataUrl: large(4_500_000) }, snapshot: geometry } },
       { evidence: { evidenceId: "b", scenario: "long-text", visualMode: "pixels", pixelSnapshot: { ...pixel, dataUrl: large(4_500_000) }, snapshot: geometry } }
@@ -31,5 +31,7 @@ describe("synthetic visual regression metadata", () => {
     expect(result.parts.map((part) => part.mimeType)).toEqual(["image/png", "image/svg+xml"]);
     expect(result.context.map((item) => item.imageMode)).toEqual(["pixels", "geometry"]);
     expect(result.parts.reduce((total, part) => total + part.url.length, 0)).toBeLessThanOrEqual(8_000_000);
+    expect(result.parts[0]).toMatchObject({ source: "sandbox-pixel", syntheticData: true, redacted: false });
+    expect(result.parts[1]).toMatchObject({ source: "geometry-only", syntheticData: false, redacted: true });
   });
 });

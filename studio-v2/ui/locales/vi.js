@@ -1,5 +1,10 @@
 import EN from "./en.js";
 export default { ...EN,
+  "confirm.syntheticClassification": "Xác nhận toàn bộ tài liệu hiện tại, bao gồm giá trị, nhãn, hình ảnh và URL, chỉ chứa dữ liệu tổng hợp. Một ngữ cảnh lưu trữ mới sẽ được tạo; các cuộc trò chuyện và giao dịch trước đó sẽ không được phát lại.",
+  "aiChat.mode.unknownData": "Tài liệu chưa được phân loại: cuộc trò chuyện này chỉ được giữ trong bộ nhớ.",
+  "aiChat.session.recipientChanged": "Đích nhận của nhà cung cấp hoặc thông tin xác thực đã thay đổi. Yêu cầu tiếp theo bắt đầu cuộc trò chuyện mới, không tự động chuyển tiếp lịch sử trước đó. Các cuộc trò chuyện đã lưu không bị xóa.",
+  "actions.saveStateUnconfirmed": "Chưa xác nhận lưu hoàn tất",
+  "toast.saveUnconfirmed": "Không thể xác nhận việc lưu đã hoàn tất. Hãy kiểm tra tệp đã chọn trước khi lưu lại.",
   "aiChat.errors.terminalActionRequired": "Nhà cung cấp chưa thực hiện tác vụ PrintForm. Hãy thử lại yêu cầu thiết kế.",
   "skip.preview": "Chuyển đến bản xem trước", "actions.aria": "Thao tác tệp và xác thực", "actions.import": "Nhập HTML", "actions.validate": "Xác thực", "actions.print": "Xem trước bản in",
   "actions.exportUntrusted": "Xuất Untrusted", "actions.exportProduction": "Xuất bản sản xuất", "ui.language": "Ngôn ngữ Studio",

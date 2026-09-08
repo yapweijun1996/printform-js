@@ -84,9 +84,10 @@ export function bindAgentSettingsModal({ get, onSave }) {
   closeButton.addEventListener("click", () => close());
   get("#ai-settings-cancel").addEventListener("click", () => close());
   get("#ai-save-profile").addEventListener("click", async (event) => {
-    event.currentTarget.disabled = true;
+    const saveButton = event.currentTarget;
+    saveButton.disabled = true;
     const saved = await onSave();
-    event.currentTarget.disabled = false;
+    saveButton.disabled = false;
     if (saved) close();
   });
   modal.addEventListener("click", (event) => { if (event.target === modal) close(); });

@@ -41,7 +41,10 @@ describe("redacted multimodal layout evidence", () => {
   it("strips a pixel snapshot if a real-data result reaches the sanitizer", () => {
     const secretPixels = "data:image/png;base64,REAL_DATA_PIXEL_BYTES";
     const result = sanitizeAgentResult("capture_layout_evidence", {
-      evidence: { visualMode: "pixels", pixelSnapshotHash: "a".repeat(64), pixelSnapshot: { source: "sandbox-pixel", syntheticData: true, redacted: false, mimeType: "image/png", dataUrl: secretPixels } }
+      revision: 0,
+      scenario: "default",
+      evidence: { visualMode: "pixels", pixelSnapshotHash: "a".repeat(64), pixelSnapshot: { source: "sandbox-pixel", syntheticData: true, redacted: false, mimeType: "image/png", dataUrl: secretPixels } },
+      requiredScenarios: ["default", "long-text"], capturedScenarios: ["default"]
     }, { realData: true });
     expect(JSON.stringify(result)).not.toContain(secretPixels);
     expect(result.evidence).not.toHaveProperty("pixelSnapshot");

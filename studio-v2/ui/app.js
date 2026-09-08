@@ -63,7 +63,7 @@ function installBus(project, reason = "load", policy = dataPolicy) {
   };
   installAgentGateway(bus, window, gatewayOptions);
   webMcp = installWebMcpAdapter(bus, null, { ...gatewayOptions, isRealData: () => dataPolicy.classification === "real" });
-  renderWebMcpStatus(webMcp); agentPanel?.onProjectChanged(project, dataPolicy);
+  renderWebMcpStatus(webMcp); agentPanel?.onProjectChanged(project, dataPolicy, reason);
   bus.addEventListener("change", (event) => {
     dirty = true; editor.setEditors(event.detail.project); renderQuality(bus.validation()); renderer.restoreCommitted(); refreshHistoryControls();
     agentPanel?.updateDocumentContext({ documentTitle: event.detail.project.manifest?.title || "PrintForm Document", documentId: event.detail.project.manifest?.documentId || "", revision: bus.revision, errorCount: bus.validation()?.errors?.length || 0, warningCount: bus.validation()?.warnings?.length || 0, stateMode: "committed", renderStatus: "waiting" });

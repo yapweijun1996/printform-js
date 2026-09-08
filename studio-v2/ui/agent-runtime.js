@@ -23,7 +23,7 @@ export class DesignerRuntimeController {
     return new DesignerRuntimeController({ ...options, agentSkills });
   }
 
-  constructor({ Agrun, gateway, sessionManager, sessionId, profile, maxSteps = 100, existing = false, realData = false, dataPolicy = null, getDataPolicy = null, agentSkills = [], onProposal = () => {}, onEvent = () => {}, onCandidateState = () => {} }) {
+  constructor({ Agrun, gateway, sessionManager, sessionId, profile, maxSteps = 100, existing = false, realData = false, dataPolicy = null, getDataPolicy = null, assertCurrentContext = null, agentSkills = [], onProposal = () => {}, onEvent = () => {}, onCandidateState = () => {} }) {
     if (!Agrun) throw Object.assign(new Error("agrun runtime is unavailable"), { code: "AGRUN_UNAVAILABLE" });
     this.gateway = bindAgentSession(gateway, sessionId);
     this.sessionManager = sessionManager;
@@ -33,6 +33,7 @@ export class DesignerRuntimeController {
     this.realData = Boolean(realData);
     this.dataPolicy = dataPolicy;
     this.getDataPolicy = getDataPolicy;
+    this.assertCurrentContext = assertCurrentContext;
     this.onEvent = onEvent;
     this.onProposal = onProposal;
     this.onCandidateState = onCandidateState;
@@ -81,6 +82,7 @@ export class DesignerRuntimeController {
   emit(event) { this.onEvent(event); }
   currentDataPolicy() { return this.getDataPolicy ? this.getDataPolicy() : this.dataPolicy; }
   assertCurrentPolicy() {
+    this.assertCurrentContext?.();
     const current = this.currentDataPolicy();
     if (this.dataPolicy && (!current || !isPolicyCurrent(this.dataPolicy, current))) {
       throw Object.assign(new Error("The Agent policy changed while this request was running"), { code: "STALE_POLICY_CONTEXT" });

@@ -51,7 +51,12 @@ export async function executeAgentCommand(bus, name, input, options = {}) {
       : (bus.dataPolicy?.classification === "unknown"
       ? bus.dataPolicy
       : classifyImportedDocument(bus.project.manifest?.documentId)));
-  const context = options.context || makeContext({ ...options, legacy: options.legacy ?? directLegacy, dataPolicy: suppliedPolicy || fallbackPolicy }, Boolean(options.humanApproval));
+  let context;
+  try {
+    context = options.context || makeContext({ ...options, legacy: options.legacy ?? directLegacy, dataPolicy: suppliedPolicy || fallbackPolicy }, Boolean(options.humanApproval));
+  } catch (error) {
+    return safeFailure(error.code || "SCOPE_VIOLATION");
+  }
   if (context.dataPolicy?.classification !== "synthetic" && name === "capture_layout_evidence" && input?.visualMode === "pixels") return safeFailure("PIXEL_EVIDENCE_SYNTHETIC_ONLY");
   if (bus.project.trust === "untrusted" && MUTATIONS.has(name)) return safeFailure("UNTRUSTED_READ_ONLY");
   const rawSurfaceError = rejectRawAgentSurface(name, input);

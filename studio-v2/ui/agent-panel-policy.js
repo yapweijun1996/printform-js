@@ -1,7 +1,7 @@
 import { classifyImportedDocument, classifyRealDocument } from "../core/data-policy.js";
 import { getAgentScopeOptions } from "../core/agent-scope-options.js";
 
-export function createAgentPanelPolicyControls({ state, sessions, runtime, renderSessions, docContext, addMessage, onDataPolicyChange = null, onRealDataChange = null, t }) {
+export function createAgentPanelPolicyControls({ state, sessions, runtime, renderSessions, docContext, addMessage, onDataPolicyChange = null, onRealDataChange = null, onScopeChange = () => {}, t }) {
   async function setDataPolicy(policy) {
     const next = policy || classifyImportedDocument();
     if (onDataPolicyChange) return onDataPolicyChange(next);
@@ -22,7 +22,7 @@ export function createAgentPanelPolicyControls({ state, sessions, runtime, rende
     return setDataPolicy(next);
   }
 
-  function onProjectChanged(nextProject = null, nextPolicy = null) {
+  function onProjectChanged(nextProject = null, nextPolicy = null, reason = "load") {
     runtime.invalidateSession();
     state.records = [];
     if (nextPolicy) {
@@ -36,10 +36,13 @@ export function createAgentPanelPolicyControls({ state, sessions, runtime, rende
       if (error.code !== "STALE_POLICY_CONTEXT") addMessage("system", t("aiChat.status.sessionPersistenceUnavailable"));
     });
     if (nextProject) {
+      const resetScope = reason !== "policy";
+      if (resetScope) onScopeChange({ kind: "document" });
       docContext.update({
         documentTitle: nextProject.manifest?.title || "PrintForm Document",
         documentId: nextProject.manifest?.documentId || "",
         revision: nextProject.revision || 0,
+        ...(resetScope ? { scope: "all", selection: "Entire document" } : {}),
         scopeOptions: getAgentScopeOptions(nextProject)
       });
     }

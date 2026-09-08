@@ -2,7 +2,7 @@
 
 > Current review: 2026-09-08, baseline `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Product remains **Production Pilot / bounded Production Candidate**. This record distinguishes the current authorized implementation work from historical audit findings.
 
-> The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns criteria; the [direction review](STUDIO_V2_DIRECTION_REVIEW.md) records the latest source/probe findings. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Prior 86/454, 190/222 and 54/54 aggregate passes are historical, not certification of the latest worktree. M1 lifecycle is reopened; implementation conformance remains FAIL and maturity remains Production Pilot.
+> The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns criteria; the [direction review](STUDIO_V2_DIRECTION_REVIEW.md) records the latest source/probe findings. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Prior 86/454, 190/222 and 54/54 aggregate passes are historical; the latest serial lifecycle/explicit-save runs provide case-specific evidence for 13-04/07/08 but do not certify release. M1 implementation acceptance is Partial and maturity remains Production Pilot.
 
 > Scores 58/72/84/89/94 are historical stage assessments, not an updated readiness score. Sections 3–8 and 10 preserve the earlier proposal/baseline and must not be read as current APIs or new pending duplicates.
 
@@ -55,7 +55,7 @@ E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`tak
 | Review apply policy foundation is implemented but not fully accepted | `agent-panel-runtime.js` applies mode and low-risk eligibility checks to chat and Review | PROD-02: delayed, retry and cross-entry matrix |
 | Context printability foundation is implemented but not fully accepted | `agent-document-context.js` maps render lifecycle and committed readiness to visible states | PROD-03: verify stale/delayed/error browser paths |
 | Candidate/history/draft/save acceptance | Card Undo/Redo now bind to the applied revision and retain the card on rejected results; visible save state distinguishes download-started from saved | PROD-04/08: complete browser lifecycle, disk-receipt and failure-path evidence |
-| Real-data persistence acceptance | Initial restrictive paths exist, but imported provenance and delayed session-store admission violate the lifecycle; 13-04/08 are Fail | PROD-13: repair the known defects, inspect actual sinks and rerun the affected controls before further closure |
+| Real-data persistence acceptance | Initial restrictive paths exist; imported provenance and delayed session-store admission have been corrected and 13-04/07/08 now have case-specific Pass evidence | PROD-13: complete remaining destinations, overwrite/recovery and broader P0 evidence before further closure |
 | Multi-table semantics differ from API expectations | Maximum array length; component repeat rule writes global root flag | PROD-05/06: explicit limits and repeat-rule granularity |
 | Quality/layout/release coverage is incomplete | Source-path navigation, two explicit CI pilot validations, incomplete full print matrix | PROD-07/09/10/12; PROD-11 tracks oversized JS |
 

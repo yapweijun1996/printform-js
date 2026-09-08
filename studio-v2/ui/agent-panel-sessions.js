@@ -4,15 +4,19 @@ import { translateAgentError } from "./agent-error-text.js";
 import { TURN_ACTION_LIMIT, TURN_TOKEN_LIMIT } from "./agent-budget.js";
 import { AGRUN_VENDOR_PROVENANCE } from "../vendor/agrun.provenance.js";
 import { t } from "./ui-i18n.js";
+import { captureProviderRecipient, isProviderRecipientCurrent } from "./agent-provider.js";
 
 export function createPanelSessions({ state, sessions, get, getGateway, profile, status, addMessage, renderProposal, renderSessions, onCandidateState, handleRuntimeEvent }) {
   let opening = null;
+  let recipient = captureProviderRecipient(profile());
 
   function captureContext(includeRecord = true) {
     const policy = state.dataPolicy;
     const epoch = state.sessionEpoch || 0;
     const record = state.currentRecord;
-    const isCurrent = () => policy === state.dataPolicy && epoch === (state.sessionEpoch || 0) && (!includeRecord || record === state.currentRecord);
+    const destination = captureProviderRecipient(profile());
+    const isCurrent = () => policy === state.dataPolicy && epoch === (state.sessionEpoch || 0)
+      && (!includeRecord || record === state.currentRecord) && isProviderRecipientCurrent(destination, profile());
     return { isCurrent, assertCurrent() { if (!isCurrent()) throw policyError("STALE_POLICY_CONTEXT"); } };
   }
 
@@ -33,6 +37,16 @@ export function createPanelSessions({ state, sessions, get, getGateway, profile,
     state.currentRecord = null;
     state.sessionNeedsCreate = true;
     state.log.replaceChildren();
+  }
+
+  function onRecipientChange() {
+    const next = profile();
+    if (isProviderRecipientCurrent(recipient, next)) return;
+    recipient = captureProviderRecipient(next);
+    invalidateSession();
+    state.records = [];
+    renderSessions();
+    addMessage("system", t("aiChat.session.recipientChanged"));
   }
 
   function reportSessionPersistence() {
@@ -105,6 +119,7 @@ export function createPanelSessions({ state, sessions, get, getGateway, profile,
   }
 
   async function ensureController() {
+    onRecipientChange();
     const record = state.currentRecord || await newSession();
     if (record !== state.currentRecord) throw policyError("STALE_POLICY_CONTEXT");
     const context = captureContext();
@@ -128,5 +143,5 @@ export function createPanelSessions({ state, sessions, get, getGateway, profile,
     catch (error) { if (context.isCurrent()) addMessage("system", translateAgentError(error, "aiChat.errors.openSession")); }
   }
 
-  return { captureContext, stopTurn, invalidateSession, controllerFor, ensureController, reportSessionPersistence, refreshSessions, newSession, openSession };
+  return { captureContext, stopTurn, invalidateSession, onRecipientChange, controllerFor, ensureController, reportSessionPersistence, refreshSessions, newSession, openSession };
 }

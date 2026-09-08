@@ -10,8 +10,8 @@ The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy directi
 - This document owns the latest review evidence, requirement IDs and acceptance criteria.
 - The [priority acceptance checklist](STUDIO_V2_P0_ACCEPTANCE.md) expands PROD-13/01/02/03 into 35 observable cases; the case register remains open until each record has its own evidence, even though the public command catalog now has dedicated all-35 dispatch coverage.
 - The [data policy](STUDIO_V2_DATA_POLICY.md) owns classification, destinations and transitions; review-time M1 violations have bounded corrections, but complete lifecycle acceptance remains Partial.
-- The [Agent output field table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) covers all 35 public commands with closed nested shapes and compatibility rules; the public gateway projection and a six-test all-35 dispatch matrix are implemented, while P0 case evidence remains open.
-- The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) owns M0-M5 gates; M0 inventory exists, M1 lifecycle is reopened, M2/M3 acceptance is Partial and M4/M5 remain incomplete.
+- The [Agent output field table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) covers all 35 public commands with closed nested shapes and compatibility rules; the public gateway projection, seven-test all-35 dispatch matrix and focused high-risk shape tests are implemented, while P0 case evidence remains open.
+- The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) owns M0-M5 gates; M0 inventory exists, M1 lifecycle case acceptance is partially closed, M2/M3 acceptance is Partial and M4/M5 remain incomplete.
 - [TASK](../TASK.md) owns execution status; [EPIC](../EPIC.md) owns epic scope.
 - [ROADMAP](../ROADMAP.md) and the [engineering roadmap](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md) own sequencing.
 - Current = implemented; Partial = some acceptance criteria remain unmet; Pending = not implemented.
@@ -27,7 +27,7 @@ It covers prior authorized foundation changes, not the complete current worktree
 used source inspection and isolated in-memory probes, not a new full regression run. The build path
 retains serial testing; test totals are not substitutes for case-specific side-effect evidence.
 No deployment, publish, real business data connection or real-provider test was performed. The 35-case P0
-register now contains 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Earlier passed sequences remain evidence only for their recorded scope,
+register now contains 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Earlier passed sequences remain evidence only for their recorded scope,
 not release approval.
 
 | Check | Observed result | Limit |
@@ -42,6 +42,11 @@ not release approval.
 | Pilot `validate:v2` | Sales Invoice, Purchase Order and Progress Claim passed | Static result has `layout.verified: false`; browser evidence is separate |
 | Public tool inventory | 35 contracts | Runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0 |
 | Touched-file syntax, line-limit and whitespace checks | Current resumed Studio v2 files are within 300 lines. The pre-existing modified `studio/studio.js` (1491 lines) remains a violation, not an authorized exception; the formatter is not modified in this worktree | Does not replace behavior or release acceptance |
+| Earlier resumed serial unit run | **95 files / 497 tests passed** | Historical supporting evidence; it does not close the 35 P0 cases |
+| Latest resumed serial unit run | **97 files / 504 tests passed** | Full unit evidence is current for this worktree; it does not close the 35 P0 cases |
+| Current `npm run doctor` | **5/5 high-level checks passed**; the serial unit/build path and all three static pilot validators completed | Local health evidence only; it does not close the 35 P0 cases or authorize release |
+| Current bounded browser controls | **36/36 composed**, **24/24 explicit-save**, and **6/6 recipient replacement** passed serially across Chromium, Firefox and WebKit | Supporting evidence only; full external-client, scope/apply/state, overwrite/recovery and all-35 acceptance remain open |
+| Latest output/provider browser smoke | **27/27 serially passed** across Chromium, Firefox and WebKit; final Provider request bodies were inspected | Supporting evidence only; no live Provider, full external-client admission or all-35 acceptance |
 
 Historical macOS/Linux 88/88 results remain in the [browser matrix](BROWSER_MATRIX.zh-CN.md); current Windows Playwright engine smoke is recorded separately there.
 No new full Windows matrix, real printer/Safari certification, live-provider reliability evaluation,
@@ -76,19 +81,19 @@ These existing controls must not be described as entirely absent or as proof tha
 
 | ID | Evidence and current behavior | Consequence |
 |---|---|---|
-| PROD-01 | `agent-scope.js` and transaction preview enforce the host scope at the domain entry; `agent-scope-options.js` maps UI table choices to stable FormSpec IDs and rejects ambiguous/global table effects; `agent-entry-parity.test.js` observes the same rejection through embedded, WebMCP and CDP | Scope enforcement and table selection foundation exist; full component selection and cross-document browser evidence remain incomplete |
+| PROD-01 | `agent-scope.js` and transaction preview enforce the host scope at the domain entry; malformed or incomplete host scopes fail closed instead of becoming document scope; `agent-scope-options.js` maps UI table choices to stable FormSpec IDs and rejects ambiguous/global table effects; project replacement resets the active UI scope while policy-only switching preserves it; `agent-entry-parity.test.js` observes the same rejection through embedded, WebMCP and CDP | Scope enforcement and table selection foundation exist; full component selection and cross-document browser evidence remain incomplete |
 | PROD-02 | `agent-boundary.js` applies one shared decision to chat and Review; Preview mode checks `humanApproval`, Auto mode accepts only the low-risk allowlist, and `agent-commit-resolution.js` resolves duplicate/lost Apply outcomes by transaction identity. `installAgentGateway()` now keeps `executeHuman` only on the app-local UI session factory; the page-global gateway and ordinary bound sessions expose only `execute`, and the panel still verifies its proposal token before using the private session | The concrete public page/CDP bypass is closed by code plus gateway/Chromium negative checks. Keep PROD-02 Partial until the complete 02-01..02-08 evidence is recorded; arbitrary browser debugging is not claimed to be sandboxed |
 | PROD-03 | `agent-document-context.js` maps waiting/rendering/candidate/failed states and document validation to visible printability; `render-controller.js` invalidates pending UI mutations and rejects stale render results; `CommandBus.readiness().productionValid` remains authoritative for export controls | Targeted browser evidence is green for locale/scenario transitions and iframe lifecycle; full state-composition and save/recovery acceptance remains open |
 | PROD-04 | Candidate tokens/cleanup exist. Stop marks the turn cancelled and drops late provider output; recovery-required cards do not offer Apply/Discard. Applied-card Undo/Redo now binds to the applied revision, passes an expected revision and keeps the card unchanged on a rejected result | Full browser lifecycle evidence and pending Changes/history search remain incomplete |
 | PROD-05 | `core/acceptance.js:countRows` and `core/runtime.js:maxArrayLength` use the maximum nested array length; two 400-row arrays report 400 | The row-limit metric does not represent aggregate bound table rows |
 | PROD-06 | `core/operations.js:applyPaginationRule` accepts componentId but repeatHeader writes root `data-repeat-rowheader` | Component-shaped API changes a document-wide flag |
 | PROD-07 | `ui/status-view.js` routes issue paths to source textareas and shows the first 30 issues; full page/component navigation is absent | Users cannot reliably move from every reported issue to the owning visual component |
-| PROD-08 | `app.js` refreshes editors on committed changes; recovery is policy-gated and explicit discard is the only cleanup path; save state distinguishes saved, unsaved, cancelled, failed and download-started, and save races retain dirty state | Targeted quota/denied-storage and explicit-download evidence passes; browser download still has no disk-completion receipt and full overwrite/recovery evidence remains open |
+| PROD-08 | `app.js` refreshes editors on committed changes; recovery is policy-gated and explicit discard is the only cleanup path; save state distinguishes saved, unsaved, cancelled, failed and download-started, and save races retain dirty state | Bounded quota/denied-storage, explicit-download, uncertain-close and policy-race controls pass 24/24 serially; browser download still has no disk-completion receipt and full overwrite/recovery evidence remains open |
 | PROD-09 | Source editor is collapsible; current tabs are Designer/Quality/Agent; topbar reserves right-rail space | Proposed workspace reorganization is not current layout |
 | PROD-10 | Chromium automation exists; full target release matrix and real print acceptance are incomplete | Green tests do not establish the final supported deployment promise |
 | PROD-11 | This implementation split `ui/app.js`, `ui/agent-panel.js` and new boundary/projector modules; new v2 touched files remain within the 300-line rule. The legacy `studio/studio.js` and pre-existing `pagination-render.js` remain oversized files with only bounded compatibility edits in this worktree | No new v2 module violation; legacy file decomposition remains a separate refactor item |
 | PROD-12 | Build/doctor generate and validate three pilots; `.github/workflows/ci.yml` explicitly static-validates only two; browser-matrix script covers Invoice/PO | Release evidence coverage differs between entry points |
-| PROD-13 | Unknown import, restrictive adapters, closed projections and static-only caching exist. Resumed host/session fixes address R1-R3; current controls cover classification confirmation, delayed store admission, session CAS and actual panel/Provider isolation | Partial: complete 13-04/08 reverification and remaining M1 destinations before wider M4 closure. Register remains 5 Pass, 2 Fail, 28 Not run; preserve raw-output rejection, old records and explicit-file-only authorization |
+| PROD-13 | Unknown import, restrictive adapters, closed projections and static-only caching exist. Resumed host/session fixes address R1-R3; current controls cover classification confirmation, delayed store admission, session CAS, recipient replacement, explicit save and actual panel/Provider isolation | Partial: 13-04/07/08 now have case-specific Pass evidence; remaining M1 destinations and broader M4 closure remain. Register is 8 Pass, 0 Fail, 27 Not run; preserve raw-output rejection, old records and explicit-file-only authorization |
 
 PROD-01/02/03/13 have implementation foundations but still carry acceptance gaps. PROD-04/08/10/12 and the P0 matrix also include failure scenarios
 that still need reproduction. Do not claim all listed scenarios have already failed in production.
@@ -231,7 +236,7 @@ This implementation session changes application behavior within the authorized w
 ## SCMC amendment review
 
 - Simple: **PASS**. Retain existing host, gateway and domain/store owners; no new service or product mode is needed.
-- Clear: **FAIL (High)**. A memory-only classification/status can coexist with a delayed persistent write; current outcome reporting needs actual sink evidence.
+- Clear: **PASS for mapped lifecycle cases; remaining scope open**. Actual sink evidence now verifies the memory-only classification/status and delayed-write boundaries for 13-04/07/08; the complete destination inventory still requires evidence.
 - Modular: **WARN (Medium)**. Host sample state, panel controls and session defaults independently influence classification; centralize that decision without rewriting canonical transactions.
-- Consistent: **FAIL (High)**. Imported provenance and session defaults/lifecycle violate the retained data policy.
-- Overall: **FAIL for current implementation conformance; no rollback or release authorization**. See [direction review](STUDIO_V2_DIRECTION_REVIEW.md). Resume with the bounded M1 fixes, preserve canonical/revision/CAS/lease/hash/evidence semantics, and rerun the affected lifecycle and composed checks before changing case status.
+- Consistent: **PASS for the corrected mapped paths; remaining acceptance open**. Imported provenance, session defaults/lifecycle and explicit-save boundaries now follow the retained data policy in their recorded cases.
+- Overall: **Partial for current implementation conformance; no rollback or release authorization**. See [direction review](STUDIO_V2_DIRECTION_REVIEW.md). Continue with remaining destination, scope/apply/state and client acceptance while preserving canonical/revision/CAS/lease/hash/evidence semantics.

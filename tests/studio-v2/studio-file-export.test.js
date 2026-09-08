@@ -3,7 +3,7 @@ vi.mock("../../studio-v2/core/exporter.js", () => ({ createStandaloneHtml: vi.fn
 vi.mock("../../studio-v2/ui/file-io.js", () => ({ downloadHtml: vi.fn(), saveHtmlWithPicker: vi.fn() }));
 import { createStandaloneHtml } from "../../studio-v2/core/exporter.js";
 import { downloadHtml, saveHtmlWithPicker } from "../../studio-v2/ui/file-io.js";
-import { createFileExport } from "../../studio-v2/ui/studio-file-export.js";
+import { createFileExport, createPrintPreview } from "../../studio-v2/ui/studio-file-export.js";
 import { classifyRealDocument, nextDataPolicy } from "../../studio-v2/core/data-policy.js";
 
 function fixture() {
@@ -81,5 +81,18 @@ describe("file export policy and confirmed outcomes", () => {
     expect(await f.exportFile(false, { confirmExport: false })).toMatchObject({ ok: true, mode: "download-started", saved: false });
     expect(f.setSaveState).toHaveBeenLastCalledWith("download-started");
     expect(f.setDirty).not.toHaveBeenCalled();
+  });
+
+  it("does not install an old print-preview artifact after policy changes", async () => {
+    const bus = { revision: 0, project: { trust: "trusted", manifest: { documentId: "SYNTHETIC-PRINT" } } };
+    let policy = classifyRealDocument(bus.project.manifest.documentId);
+    const popup = { close: vi.fn(), location: "", opener: {} };
+    window.open.mockReturnValue(popup);
+    createStandaloneHtml.mockImplementation(async () => { policy = nextDataPolicy(policy, "unknown"); return { html: "SYNTHETIC-PRINT-CANARY" }; });
+    const preview = createPrintPreview({ getBus: () => bus, getDataPolicy: () => policy, toast: vi.fn() });
+    await preview();
+    expect(popup.opener).toBeNull();
+    expect(popup.location).toBe("");
+    expect(popup.close).toHaveBeenCalledOnce();
   });
 });

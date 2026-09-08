@@ -10,7 +10,7 @@
 
 ### 0.0 Verification evidence and known implementation limits (2026-09-08)
 
-Pre-review evidence: 86 files / 454 unit tests, generated assets/site, 190/222 combined browser tests with 32 expected skips, 54/54 targeted tests and earlier three-engine 13-01..06 sequences. The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) reopens 13-04 and records 13-08 as Fail; current P0 status is 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. These runs do not validate the latest session edits. No release, real Provider test or system-print certification is claimed.
+Pre-review evidence: 86 files / 454 unit tests, generated assets/site, 190/222 combined browser tests with 32 expected skips, 54/54 targeted tests and earlier three-engine 13-01..06 sequences. The latest serial lifecycle and explicit-save runs close 13-04, 13-07 and 13-08 for their mapped cases; current P0 status is 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Earlier aggregate runs remain historical and no release, real Provider test or system-print certification is claimed.
 
 Browser verification matrix:
 
@@ -188,7 +188,7 @@ Current implementation provides a collapsible AI Designer panel; visual IA exist
 - **Layer 3: Conversation**：包含 welcome state、建议提示词、对话流、Multimodal layout review card 与结构化 Proposal/Change/Validation cards。
   - **Change Card**：结构化展示变更目标（Target）、实际变更内容（What，包含可测量的 Before → After 或目标值，不伪造不可测量的值）、安全标记（Safety，如安全语义主题变量或边界检查）；
   - **Validation Card**：明确展示验证通过或阻断状态，附带页数与行数指标；
-  - **Card-level Undo/Redo controls**: applied/reverted cards expose history actions. Current callbacks invoke global undo/redo without checking the card's applied revision or the command result before updating the badge; exact batch-target and failure semantics remain PROD-04.
+  - **Card-level Undo/Redo controls**: applied/reverted cards use their recorded revision as expectedRevision and check the command result before updating the badge. Complete batch-target and failure acceptance remains PROD-04.
   - Runtime trace（`#ai-trace-panel`，内存清洗元数据）作为 conversation 末尾的可折叠抽屉停靠。
 - **Layer 4: Composer**：仅含输入框 `#ai-prompt`、`#ai-send`、`#ai-stop`（快捷键提示落在 `#ai-prompt` 的 `title`）。Apply mode 两种模式均严格执行 `preview_changes → approve_transaction → apply_changes` 的不可变事务与哈希检查（选择器现位于 Layer 2）。
 - AI Designer 不得绕过公共 Agent Contract 4.0.0 的 transaction gate。Production export 仍需要当前 revision、render report、layout review 和工程师最终点击。

@@ -1,7 +1,7 @@
 # Studio v2 Priority Acceptance Checklist
 
 Prepared: 2026-09-08. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
-Scope: PROD-13, PROD-01, PROD-02 and PROD-03; 35 cases: **5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run**. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) reopens lifecycle acceptance; retained browser results prove only their recorded sequences, not the latest worktree or all transitions.
+Scope: PROD-13, PROD-01, PROD-02 and PROD-03; 35 cases: **8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run**. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the lifecycle policy; the latest case-specific browser evidence closes the previously reopened lifecycle cases and explicit-save/prompt case, but does not close the remaining 27 cases.
 These are release acceptance criteria, not a Production Ready declaration or permission to deploy.
 
 ## Authority and execution rules
@@ -44,11 +44,11 @@ it must not silently enable recovery, chat or transaction persistence. Volatile 
 - [x] **13-01 Unknown import and missing-policy default — Pass.** Import an unclassified canary document. Before installation, classify it as potentially real; no automatic payload-bearing durable/recovery/session write or raw Agent exposure occurs. Install the page gateway and WebMCP adapter without a policy getter and verify they also fail closed as Unknown. A trusted artifact signature or missing configuration does not certify synthetic data.
 - [x] **13-02 Persistent sinks — Pass.** In real-data mode, preview, edit, approve, apply and review. Inspect writes and persisted records in every inventoried sink; no new unauthorized canary copy occurs. Allowed safe metadata matches the documented destination policy.
 - [x] **13-03 Fresh reload — Pass.** Close/reload a fresh real-data session. No hidden project/chat restore comes from forbidden persistence; the UI explains the lack of automatic recovery. Explicitly saved files remain separate user-owned artifacts.
-- [ ] **13-04 In-flight mode/document/no-policy change — Fail (reopened).** Start delayed controlled AI requests in synthetic mode, then select real-data mode, replace the document, and separately make the host getter report no active policy. Old callbacks cannot use the old policy to persist or expose document values/pixels. Missing current policy rejects the old context instead of falling back to its previous Synthetic policy.
+- [x] **13-04 In-flight mode/document/no-policy change — Pass.** Start delayed controlled AI requests in synthetic mode, then select real-data mode, replace the document, and separately make the host getter report no active policy. Old callbacks cannot use the old policy to persist or expose document values/pixels. Missing current policy rejects the old context instead of falling back to its previous Synthetic policy.
 - [x] **13-05 Existing records — Pass.** Seed old synthetic canary records, then switch classification to real. Stop new forbidden writes and automatic replay; show that old copies may remain. Do not silently delete records or claim historical copies have been erased. Any explicit cleanup identifies the exact affected project records.
 - [x] **13-06 Outbound evidence — Pass.** In real-data mode, request summaries, diagnostics, audit/recovery results and pixel evidence through each Agent entry point. Raw business values are absent from automatic outputs; pixel capture is rejected; permitted geometry is redacted. Caller-supplied synthetic flags cannot override host classification.
-- [ ] **13-07 Explicit save and user prompts.** An intentional file save writes only the chosen artifact and does not enable other persistence. Separately verify the existing disclosure that user-entered prompt text is sent to the chosen provider; never describe real-data mode as anonymizing arbitrary user text. Use synthetic text for this test.
-- [ ] **13-08 Control and failure paths — Fail.** A declared synthetic fixture retains supported recovery/session behavior. With storage denied/quota exceeded, no alternate forbidden sink is used; the UI states the actual persistence result. Importing a different unclassified document does not inherit synthetic classification.
+- [x] **13-07 Explicit save and user prompts — Pass.** An intentional file save writes only the chosen artifact and does not enable other persistence. Separately verify the existing disclosure that user-entered prompt text is sent to the chosen provider; never describe real-data mode as anonymizing arbitrary user text. Use synthetic text for this test.
+- [x] **13-08 Control and failure paths — Pass.** A declared synthetic fixture retains supported recovery/session behavior. With storage denied/quota exceeded, no alternate forbidden sink is used; the UI states the actual persistence result. Importing a different unclassified document does not inherit synthetic classification.
 
 Pass evidence: import/write ordering, destination inventory, canary scan, controlled outgoing payloads and reload traces.
 For an enabled server adapter, run the same destination rules against its persisted project/transaction/evidence records. The current boundary test proves Unknown and Real reject the document HTTP route before SQLite initialization and do not create a database file; Synthetic persistence remains a separate positive control. This does not close the complete server deployment/privacy record.
@@ -56,8 +56,9 @@ For an enabled server adapter, run the same destination rules against its persis
 ### Current targeted M4 evidence (not P0 case closure)
 
 Resumed correction evidence is recorded in [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md).
-R1-R3 and R5-R7 have code fixes and bounded passing controls; 13-04/08 retain Fail pending complete mapped
-reverification. Do not read the historical failure descriptions below as proof those exact defects still reproduce.
+R1-R3 and R5-R7 have code fixes and case-specific passing controls; 13-04/07/08 now have complete mapped
+reverification in the latest serial browser runs. Do not read the historical failure descriptions below as proof
+those exact defects still reproduce.
 
 `e2e/studio-v2-production-boundary.spec.js` passes eight Chromium cases in the current worktree. The explicit export, decoded Cache Storage, session-policy and final Provider wire cases are in `e2e/studio-v2-production-export.spec.js`, `e2e/studio-v2-service-worker.spec.js`, `e2e/studio-v2-session-policy.spec.js`, and `e2e/studio-v2-provider-wire.spec.js`; those files add four targeted Chromium cases to the boundary set:
 
@@ -103,15 +104,13 @@ Pre-review evidence: the full Windows Playwright run passed 190/222 with 32 expe
 - Expected/actual: the export filename ended in `-untrusted.html` and did not change application storage; after reload the session returned to Synthetic revision 0 with no recovery banner, no canary and no hidden Real-data restoration. Actual result matched in all three engines.
 - References: `e2e/studio-v2-p0-prod13-fresh-reload.spec.js` (3/3 browser engines).
 
-### Case-specific evidence: PROD-13 13-04 — Fail (reopened)
+### Case-specific evidence: PROD-13 13-04 — Pass
 
 - Date: 2026-09-08; source: current uncommitted worktree; environment: Windows Playwright Chromium, Firefox and WebKit, one worker.
 - Steps: run controlled delayed Provider responses while switching Synthetic to Real and while replacing the selected document; separately run a delayed response whose host policy getter changes from Synthetic to no current policy; inspect the final runtime outcome and canary exposure.
-- Expected/actual: mode-switch, document-switch and missing-policy callbacks all return `STALE_POLICY_CONTEXT`; the final result is null and delayed canaries are absent. A missing current policy is rejected rather than replaced with the previous Synthetic policy. Actual result matched in all three engines; no live provider or private data was used.
-- References: `e2e/studio-v2-production-boundary.spec.js`, `e2e/studio-v2-p0-prod13-policy-race.spec.js` (combined 9/9 relevant browser cases across three engines); `tests/studio-v2/agent-workflow.test.js` (missing-current-policy unit case).
-- Reopening evidence (2026-09-08 direction review): a Node probe imported the actual session manager, delayed a fake IndexedDB open, switched Synthetic to Real, then released the open. The fake sink observed one label write under Real; expected zero. No real database was used. Earlier Provider-delivery passes remain valid only for their narrower sequences.
-- Closure requires current-policy checks at storage admission and after awaits, followed by delayed index/runtime-store and document/session/policy replacement browser cases; do not infer storage safety from a rejected final Provider result.
-- Resumed update: index/runtime admission guards, active-write cancellation and panel callback invalidation are implemented. Unit controls and three-engine runtime-open/panel tests pass; complete mapped case review is still required.
+- Expected/actual: mode-switch, document-switch and missing-policy callbacks all return `STALE_POLICY_CONTEXT`; the final result is null and delayed canaries are absent. Delayed IndexedDB index/runtime writes are rejected for mode, document and generation changes; the existing session remains intact and no stale record is admitted. Actual result matched in all three engines; no live provider or private data was used.
+- References: `e2e/studio-v2-production-boundary.spec.js` (24/24 in the latest serial run), `e2e/studio-v2-p0-prod13-policy-race.spec.js`, `e2e/studio-v2-session-store.spec.js`, `e2e/studio-v2-panel-session-lifecycle.spec.js` and `e2e/studio-v2-provider-wire.spec.js` (30/30 combined in the latest serial run); `tests/studio-v2/agent-workflow.test.js` and session lifecycle/database tests.
+- Historical reopening evidence: the 2026-09-08 Node probe observed one delayed fake IndexedDB write under Real before the correction. The current admission guards, active-write cancellation and panel callback invalidation are the corrective implementation; the old observation remains traceability, not a current failure.
 
 ### Case-specific evidence: PROD-13 13-05 — Pass
 
@@ -129,7 +128,8 @@ Pre-review evidence: the full Windows Playwright run passed 190/222 with 32 expe
 - Expected/actual: every successful and rejected response omitted the canary and unknown business fields; geometry returned the `geometry-only` redacted snapshot; pixel capture returned `PIXEL_EVIDENCE_SYNTHETIC_ONLY` despite the caller flag. The three entry paths returned equivalent safe outcomes. Actual result matched in all three engines, with CDP transport coverage in Chromium.
 - References: `e2e/studio-v2-p0-prod13-outbound.spec.js` (3/3 browser engines); `tests/studio-v2/agent-entry-parity.test.js` and `tests/studio-v2/public-command-matrix.test.js` (supporting closed projection and all-35 Real-policy canary evidence).
 
-The earlier observations support only the recorded paths. 13-04 is reopened by the delayed session-write failure; explicit-save/prompt separation, additional commit boundaries and complete application-controlled destination coverage remain open.
+The earlier observations support only the recorded paths. 13-04/07/08 now have case-specific Pass evidence;
+additional commit boundaries and complete application-controlled destination coverage remain open.
 
 `tests/studio-v2/agent-entry-parity.test.js` passes four controlled cases: three Synthetic parity cases and one Real-data diagnostic/redaction case:
 
@@ -138,18 +138,25 @@ The earlier observations support only the recorded paths. 13-04 is reopened by t
 - Three delayed previews started through the three paths all return `STALE_POLICY_CONTEXT` after a Synthetic-to-Real switch; the started draft traces remain draft-only, with no preview result or commit.
 - Real-data summary, validation, transaction, audit, history, Evidence Pack and geometry-evidence requests hide a canary consistently through embedded, WebMCP and CDP; geometry remains redacted, while a caller-supplied `synthetic: true` does not bypass the Real-mode pixel rejection.
 
-This is controlled adapter/domain evidence for 01-07, 02-01/02-02, 13-04/13-06 and X-02. The dedicated 13-06 browser case now closes the three mapped entry paths; CDP target replacement/reconnect, complete sink inventory and the remaining P0 cases are still open. Current register: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run.
+This is controlled adapter/domain evidence for 01-07, 02-01/02-02, 13-04/13-06 and X-02. The dedicated 13-06 browser case now closes the three mapped entry paths; CDP target replacement/reconnect, complete sink inventory and the remaining P0 cases are still open. Current register: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run.
 
 The first-party CDP admission evidence now includes five compatibility tests and two controlled local HTTP/WebSocket transport tests. The client compares the complete live `get_capabilities.result.tools` catalog, rechecks it after target replacement/reconnect, and rejects a replaced page with a changed catalog before issuing a business command. WebMCP evidence verifies that registered tools equal the gateway catalog and that old registrations are aborted before a replacement registration. These are controlled transport/lifecycle records, not a browser WebMCP implementation or a P0 Pass.
 
 Supporting 13-05 evidence: `e2e/studio-v2-recovery-boundary.spec.js` and `e2e/studio-v2-session-policy.spec.js` pass 6/6 across Chromium, Firefox and WebKit. The dedicated existing-record case adds exact cross-store/project mapping, no-new-destination checks and scoped explicit cleanup; credential-vault contents remain a separate preference/secret destination and were not treated as document records.
 
-### Case-specific evidence: PROD-13 13-08 — Fail
+### Case-specific evidence: PROD-13 13-07 — Pass
 
-- Date: 2026-09-08; evidence: read-only source review plus isolated Node probes using synthetic values and in-memory replacements, not a full browser case rerun.
-- Actual: invoking the exact host policy-toggle function with an imported document and the retained sample key returned Synthetic with durable storage enabled. An unconfigured session manager also returned Synthetic. Both violate the restrictive missing/uncertain-origin rules.
-- The isolated Chromium storage-denial subcase passed before this review; it does not cover import followed by mode loosening, delayed writes or asynchronous runtime-store failure. Fix and rerun these controls before changing this record to Pass.
-- Resumed update: omitted policy now means Unknown, imported sample provenance is cleared, and loosening requires current-document confirmation/new storage context. Three-engine confirmation and storage-denial controls pass; expanded runtime-write failure/recovery acceptance remains under review.
+- Date: 2026-09-08; source: current uncommitted worktree; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; all fixtures and canaries synthetic.
+- Steps: switch a canary document to Real mode; use a controlled `showSaveFilePicker` and inspect the selected filename, written HTML and confirmed close; compare decoded localStorage, sessionStorage, IndexedDB and Cache Storage before and after the save; inspect the privacy disclosure; submit a synthetic user prompt through a controlled Provider transport and capture the final request body.
+- Expected/actual: only the chosen file substitute received the exported artifact; application storage was unchanged; the save state reported confirmed completion; the disclosure identified user-entered prompt text as Provider-bound; the final body contained the prompt and no credential or old recipient context. Actual result matched in all three engines.
+- References: `e2e/studio-v2-p0-prod13-controls.spec.js` (13-07 case, 3/3 engines), `e2e/studio-v2-file-save-policy.spec.js` (24/24 serial controls), `e2e/studio-v2-provider-wire.spec.js` and `e2e/studio-v2-recipient-policy.spec.js`. The test does not claim control over operating-system file history or Provider retention.
+
+### Case-specific evidence: PROD-13 13-08 — Pass
+
+- Date: 2026-09-08; source: current uncommitted worktree; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; all fixtures and canaries synthetic.
+- Expected/actual: synthetic session and recovery controls remain available when storage is permitted; denied/quota storage falls back to memory-only, reports persistence unavailability, leaves the current synthetic edit usable, and does not write the failed or volatile canaries to another inspected sink. Importing a different unclassified document resets the policy to Unknown and does not inherit Synthetic persistence or capabilities. Actual result matched in all three engines.
+- References: `e2e/studio-v2-p0-prod13-controls.spec.js` (13-08 case in the 30/30 serial run), `e2e/studio-v2-production-boundary.spec.js` (24/24 serial run), `e2e/studio-v2-session-store.spec.js` (asynchronous runtime-write failure and delayed policy controls), `e2e/studio-v2-p0-prod13-existing-records.spec.js` and `e2e/studio-v2-recovery-boundary.spec.js` (existing-record/recovery supporting evidence).
+- Historical defect evidence: the earlier retained sample provenance and permissive default-policy observations were corrected by host-owned import classification, Unknown session defaults and current-document confirmation before loosening. They remain traceability, not current failures.
 
 ## PROD-01: enforced operation and component scope
 
@@ -254,7 +261,7 @@ Pass evidence: state-transition observations tied to document/revision/candidate
 
 Reuse existing fixtures and test harnesses; do not replace domain tests with UI snapshots or certify live-provider behavior from mocks.
 Each requirement needs named implementation and verification owners before execution; both are currently unassigned.
-Current register: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Documentation completion alone closes none of the four PROD requirements.
+Current register: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Documentation completion alone closes none of the four PROD requirements.
 For every Pass, attach evidence; for every Fail, record the observed result and linked fix task. Required cases cannot be waived by a green aggregate suite.
 Run relevant existing regressions after implementation and record the exact supported environment; wider browser/print release work remains PROD-10/12.
 Rollback must retain user projects and durable records. Disable the affected AI path or revert the bounded change; never use blanket storage deletion.
@@ -263,8 +270,8 @@ Rollback must retain user projects and durable records. Disable the affected AI 
 
 - Scope: four P0 acceptance contracts; evidence: linked code, targeted tests and the production plan; constraints: no deployment/provider authorization, existing trust/transaction/privacy invariants.
 - Simple: PASS. Cases extend existing workflows and add no new service or protocol.
-- Clear: PASS for the corrected register: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run; earlier narrow evidence is retained without claiming complete lifecycle coverage.
+- Clear: PASS for the corrected register: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run; earlier failure evidence is retained without claiming complete lifecycle coverage.
 - Modular: PASS. Host policy, command enforcement, storage, rendering and save outcome ownership are explicit.
 - Consistent: PASS. Existing PROD IDs/status ownership and current-versus-target distinctions are retained.
 - Findings: no material SCMC issue in the checklist; scope mappings and auto eligibility still need concrete implementation specifications.
-- Overall: PASS for this corrected checklist, not for the implementation. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) rates implementation conformance FAIL until the known classification/session gaps are fixed and verified; M4/M5 remain open.
+- Overall: PASS for this corrected checklist, not for the implementation. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) rates implementation conformance Partial until the remaining destination, scope/apply/state and P0 cases are closed and verified. M4/M5 remain open.

@@ -1,5 +1,10 @@
 import EN from "./en.js";
 export default { ...EN,
+  "confirm.syntheticClassification": "Sahkan bahawa keseluruhan dokumen semasa, termasuk nilai, label, imej dan URL, hanya mengandungi data sintetik. Konteks penyimpanan baharu akan diwujudkan; sembang dan transaksi terdahulu tidak akan dimainkan semula.",
+  "aiChat.mode.unknownData": "Dokumen belum dikelaskan: sembang ini disimpan dalam memori sahaja.",
+  "aiChat.session.recipientChanged": "Destinasi pembekal atau kelayakan telah berubah. Permintaan seterusnya memulakan sembang baharu tanpa menghantar sejarah terdahulu secara automatik. Sembang yang disimpan tidak dipadamkan.",
+  "actions.saveStateUnconfirmed": "Penyelesaian simpanan belum disahkan",
+  "toast.saveUnconfirmed": "Penyelesaian simpanan tidak dapat disahkan. Semak fail yang dipilih sebelum menyimpan semula.",
   "aiChat.errors.terminalActionRequired": "Pembekal tidak menjalankan tindakan PrintForm. Cuba semula permintaan reka bentuk.",
   "skip.preview": "Langkau ke pratonton", "actions.aria": "Tindakan fail dan pengesahan", "actions.import": "Import HTML", "actions.validate": "Sahkan", "actions.print": "Pratonton cetak",
   "actions.exportUntrusted": "Eksport Untrusted", "actions.exportProduction": "Eksport produksi", "ui.language": "Bahasa Studio",

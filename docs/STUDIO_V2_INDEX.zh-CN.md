@@ -6,7 +6,7 @@
 >
 > Documentation authority follows responsibility, not language: SPEC owns Current behavior; the English production plan owns latest evidence/criteria; TASK owns execution status. README and Agent setup summarize and link to these sources.
 
-> **2026-09-08 direction correction**: implementation Partial; coding resumed; M1 correction in progress. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) confirms classification/session defects and retains the policy direction. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. Prior aggregate passes are not current lifecycle acceptance.
+> **2026-09-08 direction correction**: implementation Partial; coding resumed; M1 bounded corrections are implemented, with 13-04/07/08 now case-specific Passes while complete P0 acceptance remains open. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. These results are not release approval.
 
 ## 状态词
 
@@ -24,10 +24,10 @@
 | 目的 | 文档 | 权威范围 |
 |---|---|---|
 | Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-08 evidence, PROD requirement IDs, dependencies and proposed layout |
-| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | 35 cases: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run |
+| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | 35 cases: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run |
 | Data classification and destinations | [Data policy](STUDIO_V2_DATA_POLICY.md) | PROD-13 Target: data classes, storage/sending rules, lifetime, transitions and mapping to eight acceptance cases |
 | Agent output fields | [35-command table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md), [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) | Implemented closed projections for the public gateway; browser/provider and full acceptance evidence remain Partial |
-| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0 inventory retained; M1 reopened; M2/M3 acceptance Partial; M4/M5 incomplete |
+| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0 inventory retained; M1 case acceptance partially closed; M2/M3 acceptance Partial; M4/M5 incomplete |
 | Embedded harness replacement | [PI Agent Harness plan](STUDIO_V2_PI_HARNESS_MIGRATION.md) | Selected Target: browser-first, frontend-only BYOK; no Node.js/server runtime. PI-00 through PI-05 are Not started; Current remains AGRUN. |
 | 判断产品适用性 | [产品策略](STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md) | 用户、非目标、指标、模板策略 |
 | 理解当前单 HTML | [协议 v2](PRINTFORM_V2_PROTOCOL.zh-CN.md) | Current 文件结构、绑定与 runtime API |
@@ -88,7 +88,7 @@
 
 ## 成熟度规则
 
-Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。本轮实现验收串行执行 86 个测试文件 / 454 个测试并全部通过；三项静态 pilot validation、先前完整 Windows Playwright E2E 的 190/222 通过（32 个预期跳过、0 失败）、当前 targeted boundary/candidate/apply-policy/PROD-13 集合 54/54，以及 PROD-13 13-01 至 13-06 用例各自的三引擎 3/3 通过均已留证。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
+Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。当前恢复编码后的串行单测为 97 个文件 / 504 个测试通过；三项静态 pilot validation、先前完整 Windows Playwright E2E 的 190/222 通过（32 个预期跳过、0 失败）、当前 bounded 36/36 组合浏览器控制、24/24 显式保存控制和 6/6 接收方替换控制均已留证。`npm run doctor` 当前为 5/5；此前长运行事务测试超时的 4/5 结果保留为历史证据。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中执行真实分页渲染，`apply_changes` 命中同一 `candidateHash` 直接复用报告提交。
 2. ✅ revision 永不复用；写操作用 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性两阶段提交，评估后判定当前机制已达成同等安全目标）。

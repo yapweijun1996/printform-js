@@ -17,6 +17,11 @@ export function requireObject(value, name) {
   return value;
 }
 
+export function requireArray(value, name) {
+  if (!Array.isArray(value)) throw projectionError(`${name} is not a valid array`);
+  return value;
+}
+
 export function compact(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
@@ -105,12 +110,16 @@ export function projectValidation(validation, context, required = false) {
     if (!required && validation == null) return undefined;
     throw projectionError("Invalid validation in Agent output");
   }
+  const issues = (value, name) => {
+    if (value === undefined) return [];
+    return requireArray(value, name).map((item) => projectIssue(item, context)).filter(Boolean);
+  };
   const result = compact({
     valid: safeBoolean(validation.valid),
     productionValid: safeBoolean(validation.productionValid),
-    errors: Array.isArray(validation.errors) ? validation.errors.map((item) => projectIssue(item, context)).filter(Boolean) : [],
-    warnings: Array.isArray(validation.warnings) ? validation.warnings.map((item) => projectIssue(item, context)).filter(Boolean) : [],
-    issues: Array.isArray(validation.issues) ? validation.issues.map((item) => projectIssue(item, context)).filter(Boolean) : [],
+    errors: issues(validation.errors, "validation errors"),
+    warnings: issues(validation.warnings, "validation warnings"),
+    issues: issues(validation.issues, "validation issues"),
     metrics: projectMetrics(validation.metrics),
   });
   if (validation.reviewReceipt) result.reviewReceipt = projectReviewStatus(validation.reviewReceipt, context);
@@ -129,10 +138,11 @@ export function projectDiff(diff) {
 
 export function projectReviewStatus(review, context) {
   if (!review || typeof review !== "object") return { status: "required", reviewedRevision: null };
-  const status = ["required", "stale", "pass"].includes(review.status) ? review.status : "required";
+  const statuses = new Set(["required", "stale", "pass"]);
+  if (!statuses.has(review.status)) throw projectionError("Invalid review status in Agent output");
   return compact({
-    status,
-    reviewedRevision: safeRevision(review.reviewedRevision ?? review.revision, false) ?? null,
+    status: review.status,
+    reviewedRevision: safeRevision(review.reviewedRevision, false) ?? null,
     browsers: Array.isArray(review.browsers) ? review.browsers.map(projectBrowser).filter(Boolean) : undefined,
     reviewedAt: safeTime(review.reviewedAt, false),
   });
@@ -161,7 +171,10 @@ export function projectPixels(snapshot, context) {
   return compact({ source: "sandbox-pixel", syntheticData: true, redacted: false, mimeType: snapshot.mimeType, dataUrl: snapshot.dataUrl, width: safeNumber(snapshot.width, { positive: true }), height: safeNumber(snapshot.height, { positive: true }), pageCount: safeCount(snapshot.pageCount) });
 }
 
-export function projectCoverage(coverage) {
-  if (!coverage || typeof coverage !== "object") return undefined;
+export function projectCoverage(coverage, required = false) {
+  if (!coverage || typeof coverage !== "object") {
+    if (!required && coverage == null) return undefined;
+    throw projectionError("Invalid coverage in Agent output");
+  }
   return compact({ capturedPages: safeCount(coverage.capturedPages), totalPages: safeCount(coverage.totalPages), complete: safeBoolean(coverage.complete) });
 }

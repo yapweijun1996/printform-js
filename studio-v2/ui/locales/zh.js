@@ -1,5 +1,10 @@
 import EN from "./en.js";
 export default { ...EN,
+  "confirm.syntheticClassification": "请确认当前整份文档（包括数值、标签、图片和网址）仅包含合成数据。将建立新的持久化上下文，不会回放以前的聊天或事务。",
+  "aiChat.mode.unknownData": "文档尚未分类：此聊天仅保存在内存中。",
+  "aiChat.session.recipientChanged": "提供商接收方或凭证已更改。下一次请求将开始新聊天，不会自动转发以前的历史。已有的已保存聊天未被删除。",
+  "actions.saveStateUnconfirmed": "保存完成情况未确认",
+  "toast.saveUnconfirmed": "无法确认保存是否完成。再次保存前，请先检查所选文件。",
   "aiChat.errors.terminalActionRequired": "提供商没有执行 PrintForm 操作；请重试设计请求。",
   "skip.preview": "跳至预览", "actions.aria": "文件与验证操作", "actions.import": "导入 HTML", "actions.validate": "验证", "actions.print": "打印预览",
   "actions.exportUntrusted": "导出 Untrusted", "actions.exportProduction": "生产导出", "ui.language": "Studio 界面语言",

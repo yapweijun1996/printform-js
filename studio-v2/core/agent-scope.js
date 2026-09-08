@@ -6,15 +6,21 @@ const LAYOUT_OPERATIONS = new Set(["set_brand_color", "set_font_scale", "set_col
 const TABLE_OPERATIONS = new Set(["set_column_widths", "update_component", "bind_field", "set_pagination_rule"]);
 const COMPONENT_OPERATIONS = new Set(["update_component", "bind_field", "set_pagination_rule"]);
 
-export function normalizeScope(scope = {}) {
-  const kind = SCOPE_KINDS.has(scope?.kind) ? scope.kind : "document";
-  return Object.freeze({
+export function normalizeScope(scope) {
+  if (scope === undefined) scope = { kind: "document" };
+  if (!scope || typeof scope !== "object" || Array.isArray(scope)) throw scopeFailure();
+  const kind = scope.kind;
+  if (!SCOPE_KINDS.has(kind)) throw scopeFailure();
+  const normalized = {
     kind,
     id: scope?.id == null ? null : String(scope.id),
     tableId: scope?.tableId == null ? null : String(scope.tableId),
     tableSelector: scope?.tableSelector == null ? null : String(scope.tableSelector),
     componentId: scope?.componentId == null ? null : String(scope.componentId),
-  });
+  };
+  if (kind === "table" && !normalized.tableId && !normalized.tableSelector) throw scopeFailure();
+  if (kind === "component" && !normalized.componentId) throw scopeFailure();
+  return Object.freeze(normalized);
 }
 
 function scopeFailure() {
@@ -64,7 +70,7 @@ function assertTarget(scope, operation, project) {
   if (type === "set_pagination_rule" && operation.rule === "repeatHeader" && scope.kind !== "document") throw scopeFailure();
 }
 
-export function assertOperationsInScope(project, operations, scope = {}) {
+export function assertOperationsInScope(project, operations, scope = { kind: "document" }) {
   const normalized = normalizeScope(scope);
   if (!Array.isArray(operations)) throw Object.assign(new Error("Operations must be an array"), { code: "INVALID_OPERATION_SET" });
   operations.forEach((operation) => assertTarget(normalized, operation || {}, project));

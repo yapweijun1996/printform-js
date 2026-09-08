@@ -127,11 +127,11 @@ No endpoint, API key, session prompt, imported schema default or user metadata m
 
 ## Acceptance additions within existing cases
 
-- 13-06: inject unexpected fields at every nesting level; safe projection excludes canaries, while malformed required fields fail safely.
-- 13-06: test all 35 result roots, direct and wrapped transactions, reviewStatus.reviewedRevision, null component/evidence and no-op responses.
-- 13-04/X-02: restrict classification while pixel/review output is delayed; reject stale pixel references as well as image bytes.
+- 13-06: inject unexpected fields at every nesting level; safe projection excludes canaries, while malformed required fields fail safely. The focused output tests also prove wrong-type required arrays fail closed.
+- 13-06: test all 35 result roots, direct and wrapped transactions, reviewStatus.reviewedRevision, null component/evidence and no-op responses. The bounded output suite now covers direct-root transaction/history/FormSpec/business-label variants; the mapped P0 record is case-specific and does not close the broader 35-command output acceptance.
+- 13-04/X-02: restrict classification while pixel/review output is delayed; reject stale pixel references as well as image bytes. Review media now carries local-only provenance into the Provider builder; it is checked against policy and stripped before transport.
 - 13-02/07: verify safe outputs do not authorize forbidden persistence; user prompt disclosure remains independent of tool-output redaction.
 - 13-08: output failure after a committed mutation preserves outcome recovery and prevents blind retries; unknown audit types/oversized reports cannot silently become complete results.
 - 13-06/X-03: forged, expired, cross-document and cross-provider references cannot resolve or broaden scope; legitimate transaction recovery remains possible.
 
-All are Target assertions, Not run. The controlled three-engine Provider wire case is evidence for one composed safe-result path only; source inspection, aggregate command dispatch and documentation checks do not prove runtime privacy or compatibility for every command.
+The output-boundary assertions above have focused unit evidence, while the mapped 13-06 P0 record remains limited to its documented case and the broader 35-command acceptance remains open. The controlled three-engine Provider wire case is evidence for one composed safe-result path only; source inspection, aggregate command dispatch and documentation checks do not prove runtime privacy or compatibility for every command.

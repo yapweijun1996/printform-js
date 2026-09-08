@@ -1,4 +1,3 @@
-import { createStandaloneHtml } from "../core/exporter.js";
 import { parseProjectHtml, verifyImportedProject } from "../core/project-model.js";
 import { analyzeMigration } from "../core/migrations.js";
 import { sanitizeExecutableContent } from "../core/operations.js";
@@ -6,7 +5,7 @@ import { sanitizeValidation } from "../core/agent-sanitize.js";
 import { classifyImportedDocument } from "../core/data-policy.js";
 import { renderDiffSections } from "./diff-view.js";
 import { readHtmlFile } from "./file-io.js";
-import { createFileExport } from "./studio-file-export.js";
+import { createFileExport, createPrintPreview } from "./studio-file-export.js";
 import { stableStringify } from "../core/json.js";
 import { t } from "./ui-i18n.js";
 
@@ -101,7 +100,7 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, se
 
   function saveDraft() { return exportDocument(false, { confirmExport: false }); }
 
-  async function openPrintPreview() { const bus = getBus(); if (bus.project.trust === "untrusted" || (bus.project.customScripts || []).length) return toast(t("error.printUntrusted", {}, "Print preview is disabled for untrusted documents.")); const target = window.open("", "_blank"); if (!target) return toast(t("toast.popupBlocked")); target.opener = null; try { const result = await createStandaloneHtml(bus.project, { requireTrusted: false, networkDisabled: true, dataPolicy: getDataPolicy() }); const url = URL.createObjectURL(new Blob([result.html], { type: "text/html" })); target.location = url; setTimeout(() => URL.revokeObjectURL(url), 60000); } catch (error) { target.close(); toast(error.message); } }
+  const openPrintPreview = createPrintPreview({ getBus, getDataPolicy, toast });
 
   function downloadDiagnostics(lastValidation, studio, contract) { const bus = getBus(); const payload = { generatedAt: new Date().toISOString(), studio, agentContract: contract, protocol: bus.project.manifest.protocolVersion, revision: bus.revision, trust: bus.project.trust, validation: sanitizeValidation(lastValidation), userAgent: navigator.userAgent }; const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })); const link = document.createElement("a"); link.href = url; link.download = "printform-diagnostics.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 2000); }
 

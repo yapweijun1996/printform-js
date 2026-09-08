@@ -3,19 +3,24 @@ import { assertPolicyCurrent, isPolicyCurrent, policyError } from "../core/data-
 import { downloadHtml, saveHtmlWithPicker } from "./file-io.js";
 import { t } from "./ui-i18n.js";
 
+function captureFileContext(getBus, getDataPolicy) {
+  const bus = getBus();
+  const policy = getDataPolicy();
+  const revision = bus?.revision;
+  const documentId = bus?.project?.manifest?.documentId;
+  const sameContext = () => getBus() === bus && getBus()?.project?.manifest?.documentId === documentId && isPolicyCurrent(policy, getDataPolicy());
+  const currentSnapshot = () => sameContext() && bus.revision === revision;
+  const assertCurrent = () => {
+    if (!bus || !policy || !getDataPolicy()) throw policyError("FILE_CONTEXT_UNAVAILABLE");
+    assertPolicyCurrent(policy, getDataPolicy());
+    if (!currentSnapshot()) throw policyError("STALE_FILE_CONTEXT");
+  };
+  return { bus, policy, revision, documentId, sameContext, currentSnapshot, assertCurrent };
+}
+
 export function createFileExport({ getBus, getDataPolicy, setDirty, setSaveState, toast }) {
   return async function exportDocument(trusted, { confirmExport = true } = {}) {
-    const bus = getBus();
-    const policy = getDataPolicy();
-    const revision = bus?.revision;
-    const documentId = bus?.project?.manifest?.documentId;
-    const sameContext = () => getBus() === bus && getBus()?.project?.manifest?.documentId === documentId && isPolicyCurrent(policy, getDataPolicy());
-    const currentSnapshot = () => sameContext() && bus.revision === revision;
-    const assertCurrent = () => {
-      if (!bus || !policy || !getDataPolicy()) throw policyError("FILE_CONTEXT_UNAVAILABLE");
-      assertPolicyCurrent(policy, getDataPolicy());
-      if (!currentSnapshot()) throw policyError("STALE_FILE_CONTEXT");
-    };
+    const { bus, policy, revision, documentId, sameContext, currentSnapshot, assertCurrent } = captureFileContext(getBus, getDataPolicy);
     let blank = null;
     let saveAttempted = false;
     let confirmed = null;
@@ -79,5 +84,29 @@ export function createFileExport({ getBus, getDataPolicy, setDirty, setSaveState
       toast(t(unconfirmed ? "toast.saveUnconfirmed" : cancelled ? "toast.exportCancelled" : "toast.exportFailed", { message: error.message }));
       return { ok: false, reason: stale ? "stale" : unconfirmed ? "unconfirmed" : cancelled ? "cancelled" : "failed", error };
     }
+  };
+}
+
+export function createPrintPreview({ getBus, getDataPolicy, toast }) {
+  return async function openPrintPreview() {
+    const { bus, policy, assertCurrent } = captureFileContext(getBus, getDataPolicy);
+    let target = null;
+    try {
+      assertCurrent();
+      if (bus.project.trust === "untrusted" || (bus.project.customScripts || []).length) {
+        return toast(t("error.printUntrusted", {}, "Print preview is disabled for untrusted documents."));
+      }
+      target = window.open("", "_blank");
+      if (!target) return toast(t("toast.popupBlocked"));
+      target.opener = null;
+      const result = await createStandaloneHtml(structuredClone(bus.project), {
+        requireTrusted: false, networkDisabled: true, dataPolicy: policy, assertCurrent
+      });
+      assertCurrent();
+      if (target.closed) return;
+      const url = URL.createObjectURL(new Blob([result.html], { type: "text/html" }));
+      target.location = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) { target?.close(); toast(error.message); }
   };
 }

@@ -79,13 +79,15 @@ export function initAgentPanel({
     log: $("#ai-chat-log")
   };
 
+  const applyScope = (scope) => {
+    state.activeScope = { ...(scope || { kind: "document" }) };
+    onScopeChange(state.activeScope);
+  };
+
   const docContext = createDocumentContextView({
     get: $,
     t,
-    onScopeChange: (scope) => {
-      state.activeScope = { ...(scope || { kind: "document" }) };
-      onScopeChange(state.activeScope);
-    }
+    onScopeChange: applyScope
   });
 
   function status(key, variables = {}) {
@@ -114,7 +116,7 @@ export function initAgentPanel({
     return node;
   }
 
-  const vaultBindings = bindAgentPanelVault({ $, vault, state, status, t });
+  const vaultBindings = bindAgentPanelVault({ $, vault, state, status, t, onRecipientChange: () => runtime.onRecipientChange() });
 
   function renderSessions() {
     const select = $("#ai-session-select");
@@ -159,7 +161,7 @@ export function initAgentPanel({
     openProviderSettings: () => settingsModal.open({ section: "provider", focusSelector: "#ai-public-gateway-key", opener: $("#ai-settings-button") })
   });
   cardController.setRuntime(runtime);
-  const policyControls = createAgentPanelPolicyControls({ state, sessions, runtime, renderProposal, renderSessions, docContext, addMessage, onDataPolicyChange, onRealDataChange, t });
+  const policyControls = createAgentPanelPolicyControls({ state, sessions, runtime, renderProposal, renderSessions, docContext, addMessage, onDataPolicyChange, onRealDataChange, onScopeChange: applyScope, t });
 
   host.querySelectorAll("[data-ai-prompt-key]").forEach((button) => button.addEventListener("click", () => {
     $("#ai-prompt").value = t(button.dataset.aiPromptKey);
@@ -257,9 +259,6 @@ export function initAgentPanel({
     getApplyMode() { return state.applyMode; },
     getScope() { return state.activeScope; },
     refreshHistoryControls: historyControls.refresh,
-    lock() {
-      vault.lock();
-      state.profileId = DEFAULT_PROVIDER_PRESET.id;
-    }
+    lock: vaultBindings.lock
   };
 }

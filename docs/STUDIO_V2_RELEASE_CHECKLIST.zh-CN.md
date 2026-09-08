@@ -2,7 +2,7 @@
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval.
 >
-> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) reopens M1 classification/session lifecycle. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Prior 86/454 unit, 190/222 combined browser, 54/54 targeted browser and doctor 5/5 results do not validate the latest session edits or authorize release. Preserve private UI approval and human production-export confirmation.
+> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) keeps M1 implementation acceptance Partial, with 13-04/07/08 case-specific Pass evidence. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls; `npm run doctor` is currently 5/5, while the earlier 4/5 timeout remains historical. These results do not authorize release. Preserve private UI approval and human production-export confirmation.
 
 ## Production Pilot 自动检查
 
@@ -40,7 +40,7 @@
 
 ## Production Ready 硬门
 
-Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) records 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Correct the confirmed defects before new closure claims; historical foundation completion below does not satisfy these requirements or authorize release.
+Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) records 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. The remaining cases still require evidence; historical foundation completion below does not satisfy these requirements or authorize release.
 
 以下六项须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免。**代码部分已于 2026-07-31 全部完成**（不允许人工勾选绕过，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)确认标准）：
 

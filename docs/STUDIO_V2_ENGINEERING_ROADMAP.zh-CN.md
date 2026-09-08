@@ -2,7 +2,7 @@
 
 > This roadmap separates implemented history, pending requirements and proposals. Current behavior is defined by code, [SPEC](../SPEC.md) and the protocol; current acceptance criteria live in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
-> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains PROD-13-first direction and reopens M1 lifecycle. Implementation Partial; coding resumed; M1 correction in progress. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. The prior 86/454, 190/222 and 54/54 runs are historical evidence; they do not close the classification/session defects or approve release.
+> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains PROD-13-first direction and keeps M1 implementation acceptance Partial. Implementation Partial; bounded host/session, prompt, recipient and explicit-save corrections are verified, with 13-04/07/08 now case-specific Passes while the remaining P0 gates stay open. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls; the prior 86/454, 190/222 and 54/54 runs remain historical evidence and do not approve release.
 
 ## Current priority and dependencies
 
