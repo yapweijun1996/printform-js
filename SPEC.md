@@ -2,15 +2,15 @@
 
 > 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 >
-> 最后核对：2026-09-07。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
+> 最后核对：2026-09-08。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
 
 ---
 
 ## 0. Studio v2 Production Foundation 规格（Current）
 
-### 0.0 Verification evidence (2026-09-07 review session)
+### 0.0 Verification evidence and known implementation limits (2026-09-08)
 
-Fresh documentation-review evidence: **80 files / 428 tests**. Doctor **5/5**, three pilot static validations, bundle checks and Windows Chromium **68/68** are carried forward from an earlier amendment snapshot and must be rerun after the concurrently changing implementation settles. The worktree includes the PROD-13/01/02/03 foundation and targeted boundary tests. Static pilot results report `layout.verified: false`; no real printer/Safari certification, deployment or real-provider test is claimed.
+Pre-review evidence: 86 files / 454 unit tests, generated assets/site, 190/222 combined browser tests with 32 expected skips, 54/54 targeted tests and earlier three-engine 13-01..06 sequences. The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) reopens 13-04 and records 13-08 as Fail; current P0 status is 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. These runs do not validate the latest session edits. No release, real Provider test or system-print certification is claimed.
 
 Browser verification matrix:
 
@@ -199,13 +199,14 @@ Known Current limitations:
 - Context consumes render state and document validation while keeping export-only review gates separate: waiting/rendering/candidate are non-final, document errors show Blocked, and `CommandBus.readiness().productionValid` remains authoritative for export controls (PROD-03).
 - Ordinary chat and layout-review repairs share the same apply-mode decision: Preview mode leaves the candidate pending, while Auto mode can advance only an explicit low-risk allowlist. Approval, revision and candidate-hash checks still run (PROD-02).
 - Current default is auto-apply. The shared allowlist is enforced, while a broader risk taxonomy and the complete retry/late-response matrix remain acceptance work.
-- The panel verifies its candidate approval token before using the privileged path, and registered MCP/WebMCP tools do not expose that path. `installAgentGateway()` nevertheless publishes `executeHuman` on the page-global gateway and bound session objects. Human approval is therefore not an authorization boundary against arbitrary same-origin script or raw CDP execution; PROD-02/02-03 remains open.
+- The panel verifies its candidate approval token before using the privileged path. `installAgentGateway()` keeps `executeHuman` only on an app-local UI session created through a private callback; the page-global gateway and ordinary bound sessions expose only `execute`, and registered MCP/WebMCP tools do not expose the privileged path. This closes the concrete public-surface bypass finding, while complete PROD-02/02-03 evidence remains open and the browser is not treated as a hostile-code sandbox.
 - Human draft helpers and convenience transactions may use `requireValid=false`; Applied does not imply valid, saved or export-ready.
 - `countRows` and runtime `maxArrayLength` take the maximum nested array length, not total bound rows. Default limits are 500 rows / 100 logical pages (PROD-05).
 - `set_pagination_rule(repeatHeader)` accepts a component ID but writes the document root repeat flag (PROD-06).
 - Recovery cache is best-effort, one localStorage record with a seven-day expiry. Download fallback reports initiation, not confirmed disk persistence (PROD-08).
-- Unknown/Real mode suppresses durable transaction storage, recovery writes, persistent sessions, external asset fetches, pixel evidence and provider document/media context; imported documents are classified as Unknown before CommandBus setup. The server adapter also defaults to Unknown and rejects restrictive document routes before SQLite initialization. Synthetic-only localStorage and server durability remain explicit positive controls, and explicit user save/export does not authorize automatic chat or recovery persistence (PROD-13 acceptance remains open).
-- Standalone page-gateway and WebMCP installation without a host policy getter currently falls back to Synthetic, and a missing current policy can be treated as unchanged. This differs from the main-app/server Unknown default and keeps the missing-policy/no-active-document boundary open under PROD-13.
+- Imports use Unknown and clear prior sample provenance. Missing session policy is Unknown; index/runtime stores check policy at transaction admission and reject stale completions. Switching Real/Unknown to Synthetic requires whole-current-document confirmation and a fresh persistence context without old snapshot hydration. These corrections have bounded controls, not complete [data-policy acceptance](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md).
+- The runtime sends DESIGNER_PROMPT through each consume input, including Review and resumed turns; a constructor-only systemPrompt was ignored by pinned Agrun. Actual panel and second-request browser captures verify current prompt delivery. Runtime/MCP instructions require restrictive geometry, prohibit Agent raw source and retain scope/reference/commit limits; model obedience is not an enforcement guarantee.
+- Standalone page-gateway and WebMCP installation without a host policy getter now defaults to Unknown, and a missing current policy is treated as stale. The missing-policy/no-active-document implementation boundary is fail-closed and covered by the 13-04 browser/unit evidence; complete sink and transition acceptance remains open under PROD-13.
 
 Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持久化到 localStorage；双击复位，方向键微调）。以下能力为下一阶段 Target：P1 历史抽屉与搜索、移动端全屏模式增强、P2 preview element 与 change card 双向 highlight。详见 [工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
@@ -215,8 +216,8 @@ Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（428 个，80 文件） | `npm test -- --run` | 当前全绿 |
+| 单元测试（439 个，84 文件） | `npm test -- --run --maxWorkers=1 --no-file-parallelism` | 当前全绿 |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（Chromium 68 条） | `npm run test:e2e` | 预 test hook 会先构建 `site-dist`；2026-09-07 Windows Chromium 项目 68/68 通过。完整三引擎矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先 `npm run build:site` |
+| E2E（当前 74 条/项目） | `npx playwright test --project=<chromium|firefox|webkit> --workers=1` | 先生成 `site-dist`；2026-09-08 Windows combined 190/222 passed, 32 expected skips, 0 failures：Chromium 74/74、Firefox 58/58 适用用例、WebKit 58/58 适用用例；各非 Chromium 项目另有 16 个明确跳过的 Chromium-only 用例。完整发布矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先生成当前 site artifact |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含三个带 attestation 的试点导出 |

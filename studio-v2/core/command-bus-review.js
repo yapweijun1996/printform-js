@@ -8,12 +8,14 @@ import {
   REQUIRED_EVIDENCE_SCENARIOS
 } from "./layout-review.js";
 import { verifyCurrentRender } from "./render-provenance.js";
+import { assertBusPolicyCurrent, assertContextCurrent } from "./agent-boundary.js";
 
 export const REVIEW_COMMANDS = new Set([
   "begin_layout_review", "capture_layout_evidence", "complete_layout_review"
 ]);
 
-async function beginReview(bus, input) {
+async function beginReview(bus, input, context) {
+  assertContextCurrent(context);
   bus.ensureRevision(input.expectedRevision);
   if (bus.renderReport?.status !== "ready") {
     throw Object.assign(new Error("Wait for a ready browser preview before starting review"), {
@@ -22,6 +24,8 @@ async function beginReview(bus, input) {
   }
   const currentRender = await verifyCurrentRender(bus.renderReport, bus.project, bus.revision);
   if (!currentRender.ok) throw Object.assign(new Error(currentRender.message), currentRender);
+  assertContextCurrent(context);
+  assertBusPolicyCurrent(bus, context);
   bus.reviewReceipt = null;
   bus.reviewAttempts += 1;
   if (bus.reviewAttempts > 3) {
@@ -54,7 +58,8 @@ function unavailablePixel(report) {
   return validation;
 }
 
-async function captureEvidence(bus, input) {
+async function captureEvidence(bus, input, context) {
+  assertContextCurrent(context);
   bus.ensureRevision(input.expectedRevision);
   if (!bus.renderCandidate) {
     throw Object.assign(new Error("This session cannot render scenarios, so it cannot issue layout evidence"), {
@@ -67,6 +72,8 @@ async function captureEvidence(bus, input) {
   };
   const visualMode = input.visualMode === "pixels" ? "pixels" : "geometry";
   const { report } = await bus.getCandidateReport(candidate, bus.revision, input.scenario, { visualMode });
+  assertContextCurrent(context);
+  assertBusPolicyCurrent(bus, context);
   if (report.status !== "ready" || (visualMode === "pixels" && !report.pixelSnapshot)) {
     const missingPixels = visualMode === "pixels" && !report.pixelSnapshot;
     return {
@@ -86,6 +93,8 @@ async function captureEvidence(bus, input) {
     renderReport: report,
     browser: detectBrowser()
   });
+  assertContextCurrent(context);
+  assertBusPolicyCurrent(bus, context);
   bus.evidenceReceipts.set(receipt.evidenceId, receipt);
   const capturedScenarios = Array.from(new Set(
     Array.from(bus.evidenceReceipts.values(), (item) => item.scenario)
@@ -99,7 +108,8 @@ async function captureEvidence(bus, input) {
   };
 }
 
-async function completeReview(bus, input) {
+async function completeReview(bus, input, context) {
+  assertContextCurrent(context);
   bus.ensureRevision(input.expectedRevision);
   if (!bus.reviewAttempts) {
     throw Object.assign(new Error("begin_layout_review must be called first"), {
@@ -108,6 +118,8 @@ async function completeReview(bus, input) {
   }
   const currentRender = await verifyCurrentRender(bus.renderReport, bus.project, bus.revision);
   if (!currentRender.ok) throw Object.assign(new Error(currentRender.message), currentRender);
+  assertContextCurrent(context);
+  assertBusPolicyCurrent(bus, context);
   bus.reviewReceipt = createLayoutReviewReceipt(
     bus.revision, bus.renderReport, input, bus.reviewAttempts,
     bus.evidenceReceipts, currentRender.projectHash
@@ -118,8 +130,8 @@ async function completeReview(bus, input) {
   return { revision: bus.revision, review: bus.reviewReceipt };
 }
 
-export async function executeReviewCommand(bus, name, input) {
-  if (name === "begin_layout_review") return beginReview(bus, input);
-  if (name === "capture_layout_evidence") return captureEvidence(bus, input);
-  return completeReview(bus, input);
+export async function executeReviewCommand(bus, name, input, context = null) {
+  if (name === "begin_layout_review") return beginReview(bus, input, context);
+  if (name === "capture_layout_evidence") return captureEvidence(bus, input, context);
+  return completeReview(bus, input, context);
 }

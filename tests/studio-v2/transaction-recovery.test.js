@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
+import { classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
 import { DurableTransactionStore, createMemoryDurableBackend } from "../../studio-v2/core/durable-transaction-store.js";
 import { journalKey } from "../../studio-v2/core/transaction-journal.js";
 import { createEvidencePack } from "../../studio-v2/core/evidence-pack.js";
@@ -8,6 +9,7 @@ import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice
 function makeSession(project, backend, options = {}) {
   return new CommandBus(project, {
     ...options,
+    dataPolicy: options.dataPolicy || classifySyntheticDocument(project.manifest?.documentId),
     transactionStore: new DurableTransactionStore({
       backend,
       key: DurableTransactionStore.keyFor(journalKey(project)),

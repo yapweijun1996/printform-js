@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { executeAgentCommand } from "../../studio-v2/adapters/gateway.js";
+import { classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { hashRenderProject } from "../../studio-v2/core/render-provenance.js";
 import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
@@ -49,7 +50,7 @@ function fakeAgrun(runTurn) {
 }
 
 async function harness(runTurn, renderer = async () => readyReport()) {
-  const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: renderer });
+  const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: renderer, dataPolicy: classifySyntheticDocument("layout-review-fixture") });
   const initial = readyReport();
   const projectHash = await hashRenderProject(bus.project);
   bus.recordRenderReport(initial, { revision: 0, candidateHash: projectHash, baseProjectHash: projectHash, source: "committed" });

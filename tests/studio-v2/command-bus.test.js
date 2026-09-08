@@ -8,7 +8,7 @@ import { AGENT_CONTRACT_VERSION, STUDIO_VERSION } from "../../studio-v2/core/con
 import { approveAndApply } from "./transaction-test-helpers.js";
 
 describe("PrintForm Studio v2 command bus", () => {
-  it("previews atomically and rejects stale revisions", async () => {
+  it("previews atomically, makes duplicate Apply idempotent, and rejects mismatched revisions", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
     const operations = [{ type: "set_manifest_value", path: "/title", value: "Revised invoice" }];
     const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations });
@@ -17,8 +17,12 @@ describe("PrintForm Studio v2 command bus", () => {
     const applied = await approveAndApply(bus, preview);
     expect(applied.result.revision).toBe(1);
     expect(bus.project.manifest.title).toBe("Revised invoice");
-    const stale = await bus.execute("apply_changes", { expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash });
-    expect(stale.error.code).toBe("REVISION_CONFLICT");
+    const duplicate = await bus.execute("apply_changes", { expectedRevision: 0, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash });
+    expect(duplicate.ok).toBe(true);
+    expect(duplicate.result.already_committed).toBe(true);
+    expect(duplicate.result.committed_revision).toBe(1);
+    const mismatched = await bus.execute("apply_changes", { expectedRevision: 1, transactionId: preview.result.transactionId, expectedCandidateHash: preview.result.candidateHash });
+    expect(mismatched.error.code).toBe("REVISION_CONFLICT");
   });
 
   it("surfaces a stable INVALID_OPERATION_SHAPE error during preview, leaving the draft untouched", async () => {

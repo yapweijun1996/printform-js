@@ -5,6 +5,7 @@ const FALLBACK_MESSAGES = Object.freeze({
   "banner.saveAndUpgradeBusy": "Saving the draft before upgrading…",
   "banner.saveAndUpgradeFailed": "Draft was not saved, so the upgrade was not started.",
   "banner.saveAndUpgradeCancelled": "Upgrade not started. The draft is still unsaved.",
+  "banner.saveAndUpgradeDownloadStarted": "Download started, but file completion was not confirmed; safe upgrade was not started.",
   "banner.draftSaved": "Draft saved locally; starting safe upgrade…",
   "toast.saveBeforeUpdate": "Export or save the current draft first",
   "toast.saveAndUpgradeUnavailable": "Draft was not saved, so the upgrade was not started",
@@ -152,9 +153,11 @@ export function createServiceWorkerUpgradeController({
       return { ok: false, reason: "save_failed" };
     }
     saving = false;
-    if (!saved?.ok) {
+    if (!saved?.ok || saved.mode !== "saved") {
       setBusy(false);
-      const reason = saved?.reason === "cancelled" ? "save_cancelled" : "save_failed";
+      const reason = saved?.reason === "cancelled"
+        ? "save_cancelled"
+        : saved?.mode === "download-started" ? "download_started" : "save_failed";
       onState({ reason });
       if (reason === "save_failed") toast(translate(translateMessage, "toast.saveAndUpgradeUnavailable"));
       return { ok: false, reason: saved?.reason || reason };
@@ -188,7 +191,7 @@ export function setupServiceWorkerUpgrade({
   let currentState = { reason: "ready" };
   const renderState = (state) => {
     currentState = state;
-    const messageKeys = { dirty: "banner.updateDirty", saving: "banner.saveAndUpgradeBusy", save_failed: "banner.saveAndUpgradeFailed", save_cancelled: "banner.saveAndUpgradeCancelled", saved: "banner.draftSaved" };
+    const messageKeys = { dirty: "banner.updateDirty", saving: "banner.saveAndUpgradeBusy", save_failed: "banner.saveAndUpgradeFailed", save_cancelled: "banner.saveAndUpgradeCancelled", download_started: "banner.saveAndUpgradeDownloadStarted", saved: "banner.draftSaved" };
     const messageKey = messageKeys[state.reason];
     if (banner?.dataset) banner.dataset.upgradeState = state.reason;
     if (status) {

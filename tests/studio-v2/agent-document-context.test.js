@@ -28,7 +28,7 @@ describe("agent-document-context view", () => {
     expect(document.querySelector("#ai-context-doc-name").textContent).toBe("PrintForm Document");
     expect(document.querySelector("#ai-context-revision").textContent).toBe("r0");
     expect(document.querySelector("#ai-context-state").textContent).toBe("aiChat.context.committed");
-    expect(document.querySelector("#ai-context-status").textContent).toBe("aiChat.context.printable");
+    expect(document.querySelector("#ai-context-status").textContent).toBe("status.waiting");
     expect(document.querySelector("#ai-context-selection-val").textContent).toBe("aiChat.context.entireDocument");
     expect(document.querySelector("#ai-context-scope-select").value).toBe("all");
   });
@@ -69,6 +69,45 @@ describe("agent-document-context view", () => {
     select.value = "table";
     select.dispatchEvent(new Event("change"));
 
-    expect(onScopeChange).toHaveBeenCalledWith("table");
+    expect(onScopeChange).toHaveBeenCalledWith({ kind: "table", tableId: "default" });
+  });
+
+  it("keeps document printability separate from export readiness", () => {
+    setupDom();
+    const t = (key, vars, fallback) => ({
+      "aiChat.context.blocked": "Blocked",
+      "aiChat.context.printable": "Printable"
+    }[key] || fallback || key);
+    const view = createDocumentContextView({ get: (sel) => document.querySelector(sel), t });
+
+    view.update({ renderStatus: "ready", readiness: { productionValid: false, errors: [{ code: "LAYOUT_REVIEW_REQUIRED" }], warnings: [] }, errorCount: 0 });
+    expect(document.querySelector("#ai-context-status").textContent).toBe("Printable");
+
+    view.update({ readiness: { productionValid: false, errors: [{ code: "INVALID_TEMPLATE" }], warnings: [] }, errorCount: 1 });
+    expect(document.querySelector("#ai-context-status").textContent).toBe("Blocked");
+  });
+
+  it("renders document-specific table scope options and resets stale selections", () => {
+    setupDom();
+    const onScopeChange = vi.fn();
+    const t = (key, vars, fallback) => fallback || key;
+    const view = createDocumentContextView({
+      get: (sel) => document.querySelector(sel),
+      t,
+      onScopeChange,
+      scopeOptions: [
+        { value: "all", label: "All sections", selection: "Entire document", scope: { kind: "document" } },
+        { value: "table:valuation", label: "Table valuation", selection: "Table valuation", scope: { kind: "table", tableId: "valuation" } },
+      ]
+    });
+
+    const select = document.querySelector("#ai-context-scope-select");
+    expect(Array.from(select.options, (option) => option.value)).toEqual(["all", "table:valuation"]);
+    select.value = "table:valuation";
+    select.dispatchEvent(new Event("change"));
+    expect(onScopeChange).toHaveBeenLastCalledWith({ kind: "table", tableId: "valuation" });
+    view.update({ scopeOptions: [{ value: "all", label: "All sections", selection: "Entire document", scope: { kind: "document" } }] });
+    expect(select.value).toBe("all");
+    expect(onScopeChange).toHaveBeenLastCalledWith({ kind: "document" });
   });
 });

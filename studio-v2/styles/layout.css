@@ -56,6 +56,7 @@ body:not(.inspector-closed) .ai-floating-launcher { visibility: hidden; opacity:
 .export-split .export-menu-button { min-width: 34px; padding: 0 8px; color: var(--blue); background: #fff; border: 1px solid #fff; border-left-color: #c9d6ef; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .export-split .export-menu-button:hover { filter: none; background: #eef2fb; }
 #export-readiness { flex: 0 0 auto; align-items: center; min-height: 34px; white-space: nowrap; }
+#save-state { flex: 0 0 auto; align-items: center; min-height: 34px; white-space: nowrap; }
 /* Popover menus render in the top layer, so they escape the topbar's overflow
    clipping; JS positions them fixed under the trigger. */
 .topbar-menu { margin: 0; inset: auto; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--blue); box-shadow: 0 14px 34px #0b173840; min-width: 200px; }

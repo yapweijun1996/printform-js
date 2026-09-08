@@ -2,19 +2,20 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> Last reviewed: 2026-09-07. Code is authoritative. Current evidence, open requirements and proposed layout are maintained in the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md); dated implementation history below is not a fresh release certificate.
+> Last reviewed: 2026-09-08. Code is authoritative. Current evidence, open requirements and proposed layout are maintained in the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md); dated implementation history below is not a fresh release certificate.
+> Selected runtime Target: [PI Agent Harness migration](docs/STUDIO_V2_PI_HARNESS_MIGRATION.md), browser-first, frontend-only BYOK, no Node.js/server runtime. Current embedded runtime remains AGRUN; PI-00 browser qualification precedes implementation.
 
 ## 0. Current architecture and maturity
 
 Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence.
 
-The 2026-09-07 documentation review freshly passes 80 test files / 428 tests. Doctor 5/5, three static pilot validations, bundle checks and Windows Chromium E2E 68/68 are carried forward from an earlier amendment snapshot and require a final rerun after concurrent implementation settles. Approval provenance and missing-policy adapter defaults remain open; full Windows/browser/real-print certification and a current network audit remain unverified.
+The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) retains the existing host/gateway/domain architecture. Its classification/session findings have bounded fixes in the [resumed evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), including current tests and actual Provider prompt delivery. P0 status remains 5 Pass, 2 Fail pending complete reverification, and 28 Not run; M1 acceptance is Partial. Historical aggregate runs are not current release certificates.
 
 ### 0.1 E14: implemented UI, incomplete behavioral acceptance
 
 Current: four-layer AI panel (`Navigation → Document context → Conversation → Composer`), title/revision/candidate badges, structured change cards, apply-mode controls, card-level Undo/Redo controls, session drawer, settings modal, collapsed trace, resizable rail, focus/tab handling and desktop export visibility.
 
-Partial: selection-to-FormSpec UI coverage and composed Review/late-response acceptance remain PROD-01/02/03; domain scope/apply/readiness gates are implemented. Card Undo invokes global history without card-target/result checks (PROD-04). Unknown/Real policy now disables durable transaction snapshots, recovery writes, persistent sessions, external asset fetches, pixel evidence and provider media; reload and combined acceptance remain open (PROD-13). These are acceptance gaps, not permission to claim Production Ready.
+Partial: PROD-01/02/03 domain scope/apply/readiness foundations exist, but composed acceptance is incomplete. The host now owns current-document reclassification; the session manager defaults to Unknown and uses guarded index/runtime adapters. One panel session-lifecycle owner rejects stale creation/list/controller results. This addresses the reproduced defects without moving policy into prompts or changing private UI approval, canonical transactions or human export controls.
 
 The project envelope is canonical, CommandBus owns committed state, and preview DOM is derived visual evidence. Neither chat messages nor preview DOM create another project source of truth.
 

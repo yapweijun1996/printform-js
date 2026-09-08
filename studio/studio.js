@@ -784,8 +784,6 @@
 
   // ---------- preview ----------
   var reloadTimers = { A: null, B: null };
-  var blobUrls = { A: null, B: null };
-
   function scheduleReload(side) {
     clearTimeout(reloadTimers[side]);
     reloadTimers[side] = setTimeout(function () { reload(side); }, 300);
@@ -797,9 +795,13 @@
     var frame = side === "A" ? $("#frame-a") : $("#frame-b");
     var status = side === "A" ? $("#status-a") : $("#status-b");
     status.textContent = t("loading");
-    if (blobUrls[side]) URL.revokeObjectURL(blobUrls[side]);
-    blobUrls[side] = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    frame.src = blobUrls[side];
+    // Use srcdoc for the isolated preview so Firefox keeps one stable frame
+    // identity while a template is replaced. The generated document already
+    // carries its own <base> and absolute bridge URL, so asset and message
+    // behavior remain the same as the former blob URL path.
+    frame.removeAttribute("src");
+    frame.srcdoc = "";
+    frame.srcdoc = html;
     clearLogs(side);
     // Re-apply the last known scale immediately (avoids a flash of
     // full-size, overflowing content while the new page reformats); the
@@ -913,6 +915,8 @@
     var data = event.data;
     if (!data || data.source !== "printform-studio-bridge") return;
     var side = data.side === "B" ? "B" : "A";
+    var sourceFrame = side === "B" ? $("#frame-b") : $("#frame-a");
+    if (!sourceFrame || event.source !== sourceFrame.contentWindow) return;
     if (data.type === "console") {
       logBuffers[side].push(data.payload);
       if (logBuffers[side].length > 500) logBuffers[side].shift();

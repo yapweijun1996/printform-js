@@ -141,7 +141,9 @@ export class LayoutReviewLoop {
     const begun = commandError(await this.controller.gateway.execute("begin_layout_review", { expectedRevision }), "REVIEW_START_FAILED", "The committed preview is not ready for review");
     const captures = [];
     for (const scenario of begun.requiredScenarios || FALLBACK_SCENARIOS) {
-      const requestedMode = this.controller.realData ? "geometry" : "pixels";
+      const requestedMode = this.controller.dataPolicy
+        ? (this.controller.dataPolicy.allowPixelEvidence ? "pixels" : "geometry")
+        : (this.controller.realData ? "geometry" : "pixels");
       let result = await this.controller.gateway.execute("capture_layout_evidence", { expectedRevision, scenario, visualMode: requestedMode });
       const pixelUnavailable = result.ok ? /^PIXEL_CAPTURE_/.test(result.result?.pixelCapture?.code || "") : /^PIXEL_CAPTURE_/.test(result.error?.code || "");
       if (requestedMode === "pixels" && pixelUnavailable) result = await this.controller.gateway.execute("capture_layout_evidence", { expectedRevision, scenario, visualMode: "geometry" });
@@ -167,7 +169,7 @@ export class LayoutReviewLoop {
   async runPass(profile) {
     const collected = await this.collectEvidence();
     this.controller.emit({ type: "layout_multimodal_started", detail: { pass: this.state.pass, imageCount: collected.parts.length } });
-    const outcome = await this.controller.consume(buildProviderInput(profile, buildReviewPrompt(this.state, collected), collected.parts));
+    const outcome = await this.controller.consume(buildProviderInput(profile, buildReviewPrompt(this.state, collected), collected.parts, { dataPolicy: this.controller.assertCurrentPolicy() }));
     if (outcome?.completed?.terminalKind === "abort") {
       this.controller.onCandidateState(false);
       return { ...outcome, evidence: collected.context, readiness: null, stopped: true };

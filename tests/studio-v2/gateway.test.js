@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { executeAgentCommand, installAgentGateway } from "../../studio-v2/adapters/gateway.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
+import { classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
 
 describe("installAgentGateway JSON input handling", () => {
   it("resolves the uniform {ok:false, error} shape for malformed JSON input instead of rejecting", async () => {
@@ -36,6 +37,49 @@ describe("installAgentGateway JSON input handling", () => {
     installAgentGateway(bus, scope);
     expect(scope.PrintFormStudioAgent).toBeDefined();
     expect(typeof scope.PrintFormStudioAgent.execute).toBe("function");
+  });
+
+  it("defaults a gateway without host policy to restrictive Unknown", async () => {
+    const storage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+    let rendered = false;
+    const bus = new CommandBus(createSalesInvoiceProject(), {
+      transactionStorage: storage,
+      renderCandidate: async () => { rendered = true; return { status: "ready" }; }
+    });
+    const gateway = installAgentGateway(bus, {});
+    const capabilities = await gateway.execute("get_capabilities");
+    const pixels = await gateway.execute("capture_layout_evidence", { expectedRevision: 0, scenario: "default", visualMode: "pixels" });
+
+    expect(bus.dataPolicy.classification).toBe("unknown");
+    expect(bus.transactionStore.persistent).toBe(false);
+    expect(capabilities.result.capabilities.durableTransactions).toBe(false);
+    expect(pixels.error.code).toBe("PIXEL_EVIDENCE_SYNTHETIC_ONLY");
+    expect(rendered).toBe(false);
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
+
+  it("does not infer Synthetic from the CommandBus when host policy is missing", async () => {
+    const bus = new CommandBus(createSalesInvoiceProject(), { dataPolicy: classifySyntheticDocument("unconfigured-synthetic") });
+    const gateway = installAgentGateway(bus, {});
+
+    const capabilities = await gateway.execute("get_capabilities");
+    const pixels = await gateway.execute("capture_layout_evidence", { expectedRevision: 0, scenario: "default", visualMode: "pixels" });
+
+    expect(bus.dataPolicy.classification).toBe("synthetic");
+    expect(capabilities.error.code).toBe("STALE_POLICY_CONTEXT");
+    expect(pixels.error.code).toBe("PIXEL_EVIDENCE_SYNTHETIC_ONLY");
+  });
+
+  it("rejects an empty host policy instead of reusing the previous policy", async () => {
+    let policy = classifySyntheticDocument("missing-current-policy");
+    const bus = new CommandBus(createSalesInvoiceProject(), { dataPolicy: policy });
+    const gateway = installAgentGateway(bus, {}, { getDataPolicy: () => policy });
+
+    expect((await gateway.execute("get_project_summary")).ok).toBe(true);
+    policy = null;
+    const result = await gateway.execute("get_project_summary");
+
+    expect(result).toMatchObject({ ok: false, error: { code: "STALE_POLICY_CONTEXT" } });
   });
 
   it("rejects pixel evidence before rendering when the session is real-data", async () => {

@@ -122,4 +122,20 @@ describe("agent-change-cards component", () => {
     redoBtn.click();
     expect(onRedo).toHaveBeenCalledWith(proposal);
   });
+
+  it("renders recovery state without an Apply or Discard action", () => {
+    const container = document.createElement("div");
+    renderChangeCardContent({
+      container,
+      proposal: { proposalId: "prop-recovery", revision: 2, operations: [] },
+      applyMode: "preview",
+      status: "recovery",
+      t: (key, vars, fallback) => fallback || key
+    });
+
+    expect(container.querySelector(".ai-card-recovery")).not.toBeNull();
+    expect(container.querySelector("#ai-apply-proposal")).toBeNull();
+    expect(container.querySelector("#ai-reject-proposal")).toBeNull();
+    expect(container.querySelector(".ai-card-status-badge").textContent).toBe("Commit status requires recovery");
+  });
 });

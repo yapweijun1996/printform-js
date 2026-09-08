@@ -10,9 +10,11 @@ import { inspectDesignState } from "./design-state.js";
 import { getAgentOperationCatalog } from "./operation-catalog.js";
 import { diffProjects, previewSourceEdit } from "./operations.js";
 import { provenanceError, verifyCurrentRender } from "./render-provenance.js";
+import { assertPolicyCommand } from "./agent-boundary.js";
 
-export async function dispatchCommand(bus, name, input = {}) {
+export async function dispatchCommand(bus, name, input = {}, context = null) {
   try {
+    assertPolicyCommand(name, input, context, bus);
     if (name === "get_capabilities") {
       const capabilities = {
         candidateHash: true,
@@ -36,7 +38,7 @@ export async function dispatchCommand(bus, name, input = {}) {
     if (name === "get_operation_catalog") return bus.success({ revision: bus.revision, operations: getAgentOperationCatalog() });
     if (name === "validate_project") return bus.success({ revision: bus.revision, validation: bus.validation() });
     if (name === "get_layout_review_status") return bus.success({ revision: bus.revision, review: layoutReviewStatus(bus.reviewReceipt, bus.revision), checklist: LAYOUT_REVIEW_CHECKLIST });
-    if (REVIEW_COMMANDS.has(name)) return bus.success(await executeReviewCommand(bus, name, input));
+    if (REVIEW_COMMANDS.has(name)) return bus.success(await executeReviewCommand(bus, name, input, context));
     if (name === "begin_transaction") return bus.success(bus.beginTransaction(input.baseRevision ?? bus.revision, input.agentId, input.owner));
     if (name === "get_transaction") return bus.success({ transaction: bus.getTransaction(input.transactionId) });
     if (name === "list_active_transactions") return bus.success({ transactions: bus.listActiveTransactions() });
@@ -48,15 +50,15 @@ export async function dispatchCommand(bus, name, input = {}) {
     if (name === "get_revision") return bus.success(bus.transactionStore.getRevision());
     if (name === "get_audit_events") return bus.success({ events: bus.transactionStore.listAuditEvents() });
     if (name === "preview_changes") {
-      const result = await bus.previewTransaction(input.operations, input.expectedRevision, input.transactionId);
+      const result = await bus.previewTransaction(input.operations, input.expectedRevision, input.transactionId, context);
       return bus.success({ revision: result.preview.revision, transactionId: result.transaction.transaction_id, diff: result.preview.diff, validation: result.validation, candidateHash: result.transaction.preview_hash });
     }
     if (name === "approve_transaction") {
-      return bus.success(bus.approveTransaction(input));
+      return bus.success(bus.approveTransaction(input, context));
     }
     if (name === "apply_changes") {
       if (!input.transactionId) throw Object.assign(new Error("apply_changes requires an approved transaction"), { code: "TRANSACTION_REQUIRED" });
-      return bus.success(await bus.applyApprovedTransaction(input));
+      return bus.success(await bus.applyApprovedTransaction(input, context));
     }
     if (name === "rollback_transaction") {
       return bus.success(bus.rollbackTransaction(input.transactionId));
@@ -76,6 +78,7 @@ export async function dispatchCommand(bus, name, input = {}) {
         [{ type: "replace_sample_data", value: createScenario(bus.defaultSample, input.scenario) }],
         input.expectedRevision,
         `sample scenario: ${input.scenario}`,
+        context,
       );
       return bus.success(result);
     }
@@ -85,6 +88,7 @@ export async function dispatchCommand(bus, name, input = {}) {
         [{ type: "set_manifest_value", path: "/locale", value: input.locale }],
         input.expectedRevision,
         `locale: ${input.locale}`,
+        context,
       );
       return bus.success({ ...result, locale: input.locale });
     }
@@ -93,6 +97,7 @@ export async function dispatchCommand(bus, name, input = {}) {
         [{ type: "set_asset_slot", slot: input.slot, source: input.source }],
         input.expectedRevision,
         `asset slot: ${input.slot}`,
+        context,
       );
       return bus.success({ ...result, slot: input.slot });
     }

@@ -3,6 +3,7 @@ import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot
 import { executeAgentCommand } from "../../studio-v2/adapters/gateway.js";
 import { sanitizeAgentResult } from "../../studio-v2/core/agent-sanitize.js";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
+import { classifyRealDocument } from "../../studio-v2/core/data-policy.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 
 const report = {
@@ -27,8 +28,9 @@ describe("redacted multimodal layout evidence", () => {
   it("keeps a safe snapshot in sanitized evidence while removing ERP values", async () => {
     const project = createSalesInvoiceProject();
     project.sampleData.items[0].description = "ERP SECRET CUSTOMER TEXT";
-    const bus = new CommandBus(project, { renderCandidate: async () => ({ ...report, safeSnapshot: createRedactedLayoutSnapshot(report) }) });
-    const result = await executeAgentCommand(bus, "capture_layout_evidence", { expectedRevision: 0, scenario: "default" }, { realData: true });
+    const policy = classifyRealDocument("real-layout-fixture");
+    const bus = new CommandBus(project, { dataPolicy: policy, renderCandidate: async () => ({ ...report, safeSnapshot: createRedactedLayoutSnapshot(report) }) });
+    const result = await executeAgentCommand(bus, "capture_layout_evidence", { expectedRevision: 0, scenario: "default" }, { dataPolicy: policy, realData: true });
     const serialized = JSON.stringify(result);
     expect(result.ok).toBe(true);
     expect(result.result.evidence.snapshot).toMatchObject({ source: "geometry-only", redacted: true, mimeType: "image/svg+xml" });

@@ -80,8 +80,17 @@ export function renderWebMcpStatus(adapter) {
   $("#webmcp-status").textContent = adapter?.supported ? t("webmcp.registered", { count: adapter.registered.length }) : t("webmcp.unavailable");
 }
 
-export function renderDataPolicy(realData) {
-  $("#data-policy").textContent = t(realData ? "data.real" : "data.synthetic");
+export function renderDataPolicy(policy, persistence = null) {
+  const classification = typeof policy === "string" ? policy : policy?.classification;
+  const key = classification === "real" ? "data.real" : classification === "unknown" ? "data.unknown" : "data.synthetic";
+  const text = t(key, {}, classification === "unknown" ? "Unknown data: restrictive, no durable document state" : undefined);
+  const persistenceUnavailable = persistence?.persistenceState === "volatile-fallback";
+  const node = $("#data-policy");
+  if (!node) return;
+  delete node.dataset.uiI18n;
+  node.textContent = persistenceUnavailable
+    ? `${text} · ${t("data.persistenceUnavailable", {}, "Persistence unavailable; current changes remain memory-only")}`
+    : text;
 }
 
 export function renderStatus(key, className) {

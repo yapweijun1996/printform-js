@@ -1,4 +1,6 @@
 import { TOOL_CONTRACTS } from "../core/tool-contracts.js";
+import { createAgentContext, createAgentSessionId } from "../core/agent-context.js";
+import { classifyImportedDocument } from "../core/data-policy.js";
 import { executeAgentCommand } from "./gateway.js";
 
 // WebMCP (Web Model Context) lives on navigator.modelContext per the
@@ -17,7 +19,13 @@ function toToolDefinition(bus, contract, options) {
     description: contract.description,
     inputSchema: contract.inputSchema,
     async execute(input = {}) {
-      const response = await executeAgentCommand(bus, contract.name, input, { realData: Boolean(options.isRealData()) });
+      const context = options.getAgentContext?.() || options.agentContext;
+      if (context) {
+        context.dataPolicy = options.getDataPolicy?.() || context.dataPolicy;
+        context.scope = options.getScopeContext?.() || context.scope;
+        context.applyMode = options.getApplyMode?.() || context.applyMode;
+      }
+      const response = await executeAgentCommand(bus, contract.name, input, { ...options, context, realData: Boolean(options.isRealData()) });
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
         structuredContent: response,
@@ -29,6 +37,37 @@ function toToolDefinition(bus, contract, options) {
 
 export function installWebMcpAdapter(bus, host = null, options = {}) {
   const adapterOptions = { ...options, isRealData: typeof options.isRealData === "function" ? options.isRealData : () => false };
+  let fallbackPolicy = options.dataPolicy
+    || (bus.dataPolicy?.classification === "unknown" ? bus.dataPolicy : null);
+  const hostPolicy = typeof options.getDataPolicy === "function" ? options.getDataPolicy : null;
+  adapterOptions.getDataPolicy = () => {
+    if (hostPolicy) {
+      const current = hostPolicy();
+      if (current) return current;
+      if (!fallbackPolicy || fallbackPolicy.classification !== "unknown"
+        || fallbackPolicy.documentId !== bus.project.manifest?.documentId) {
+        fallbackPolicy = classifyImportedDocument(bus.project.manifest?.documentId);
+      }
+      return fallbackPolicy;
+    }
+    if (fallbackPolicy) return fallbackPolicy;
+    fallbackPolicy = classifyImportedDocument(bus.project.manifest?.documentId);
+    return fallbackPolicy;
+  };
+  let contextPolicy = adapterOptions.getDataPolicy();
+  const sessionId = options.sessionId || createAgentSessionId("webmcp");
+  let agentContext = options.agentContext || createAgentContext({ dataPolicy: contextPolicy, sessionId, currentPolicy: adapterOptions.getDataPolicy });
+  adapterOptions.getAgentContext = () => {
+    const nextPolicy = adapterOptions.getDataPolicy();
+    if (nextPolicy?.contextId !== contextPolicy?.contextId
+      || nextPolicy?.generation !== contextPolicy?.generation
+      || nextPolicy?.documentId !== contextPolicy?.documentId) {
+      contextPolicy = nextPolicy;
+      agentContext = createAgentContext({ dataPolicy: nextPolicy, sessionId, currentPolicy: adapterOptions.getDataPolicy });
+    }
+    return agentContext;
+  };
+  adapterOptions.agentContext = agentContext;
   const modelContext = resolveModelContext(host);
   if (!modelContext) return { supported: false, api: "none", registered: [], dispose() {} };
   const tools = TOOL_CONTRACTS.map((contract) => toToolDefinition(bus, contract, adapterOptions));

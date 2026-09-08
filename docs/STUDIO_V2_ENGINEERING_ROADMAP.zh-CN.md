@@ -2,9 +2,11 @@
 
 > This roadmap separates implemented history, pending requirements and proposals. Current behavior is defined by code, [SPEC](../SPEC.md) and the protocol; current acceptance criteria live in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
-> Last reviewed: 2026-09-07. E12/E13 are implemented; E14 UI and the authorized PROD-13/01/02/03 foundation exist, but behavioral acceptance is Partial. Public writes remain preview → approve → apply with transaction/revision/hash checks; approval provenance and missing-policy adapter defaults remain open. Fresh evidence: 80 files / 428 tests. Doctor 5/5, three static pilots and Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and require a final rerun. No release is declared.
+> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains PROD-13-first direction and reopens M1 lifecycle. Implementation Partial; coding resumed; M1 correction in progress. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. The prior 86/454, 190/222 and 54/54 runs are historical evidence; they do not close the classification/session defects or approve release.
 
 ## Current priority and dependencies
+
+**Selected runtime target (2026-09-08):** [PI Agent Harness migration](STUDIO_V2_PI_HARNESS_MIGRATION.md), browser-first and frontend-only BYOK with no Node.js/server runtime. Start with PI-00 browser qualification; integrate PI-01 through PI-05 with the host-policy gates below. This explicitly permits the necessary Pi session adapter; it does not permit a backend dependency, weaker data policy or a claim that the runtime has already changed. E15 is outside this embedded migration.
 
 1. PROD-13 real-data classification/persistence and PROD-01/02/03: scope/selection enforcement, consistent apply policy and truthful state.
 2. PROD-04/07/08: candidate lifecycle, actionable Quality and draft/save/recovery acceptance.
@@ -13,7 +15,7 @@
 5. PROD-10/12: adopted release profile, full applicable print/failure evidence and aligned three-pilot release coverage.
 6. E15: shared-service/HA expansion only when required by deployment scope.
 
-Within priority 1, use the [Agent boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) for M0-M5 delivery gates. Host policy and shared projections integrate before client activation; provider/storage checks, scope/apply/state acceptance and safe rollback remain required. M0/M1/M3 foundation work is implemented; M2 is Partial because approval provenance and missing-policy fail-closed behavior remain open. M4/M5 remain Pending and the plan adds no deployed capability.
+Within priority 1, follow the [boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) and [direction review](STUDIO_V2_DIRECTION_REVIEW.md): repair host provenance and session policy/lifecycle, verify recipient/save/commit boundaries, then resume composed M4 acceptance. Reuse existing owners; the selected Pi migration is the scoped runtime/session replacement, while unrelated AI features, apply-mode changes and release-scope reductions remain outside this work. Coding resumed by explicit user instruction on 2026-09-08.
 
 A single-user Windows/Chromium first release and preview-first default are Proposed, not adopted changes. Existing broader acceptance goals remain until explicitly revised. Current default remains auto-apply.
 
@@ -61,7 +63,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 - ✅ Agent 伪造 evidence 标签（`EVIDENCE_RECEIPT_REQUIRED`/`EVIDENCE_UNKNOWN`）、其他 frame 伪造消息（`event.source` + 请求 token）或修改任一 runtime（双 runtime hash）都会阻断。
 - ✅ 已执行（2026-07-31）：Sales Invoice 与 Purchase Order 在 Chromium/Chrome/Firefox/WebKit 通过空值、1、45、100、500 行、长文本和五语言场景，**88/88 全过**。完整结论、覆盖范围与"四浏览器实为三引擎"的诚实说明见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)；可用 `node scripts/browser-matrix.mjs` 复现。**附带发现的跨引擎分页差异已解决**：Purchase Order 的页数曾随引擎变化（500 行时 Chromium 34 页 / Firefox 36 页）。根因是非行区块合计高度随 引擎×语言 波动 24.62px（约 0.59 行），使可用空间 14.59–15.18 行恰好跨在整数边界上。给非行区加 16px（`.pf-page-footer` padding-bottom 12→28px）把整段移到边界同一侧，全部 15 个 引擎×语言 组合收敛到每页 14 行，复跑矩阵 22 个可比格子零分歧。
 - ✅ 共同硬标准为无丢失、重复、乱序、重叠和越界，页码与重复区正确（`ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` + `HORIZONTAL_OVERFLOW`/`VERTICAL_OVERFLOW`）。
-- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。Windows Chromium 68/68 was verified on 2026-09-07; full Windows/browser/print acceptance remains pending and its blocking scope depends on the declared release profile. No claim about unavailable CI configurations is made without verification.
+- 六项 P0 的**代码硬门**已于 2026-07-31 全部完成，历史浏览器矩阵验收执行且全过，跨引擎分页差异也已收敛。文档状态**仍暂记为 Production Pilot**：Production Ready 是对外承诺，应由维护者显式宣布，不由一次跑批的绿灯自动推导。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`.github/workflows/browser-matrix.yml`，[Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)）两个系统上分别跑满 88/88 全过、零分歧，K=16px 收敛修法在两个系统上表现一致（详见 [docs/BROWSER_MATRIX.zh-CN.md](BROWSER_MATRIX.zh-CN.md)「Linux 复现」）。Windows 2026-09-08 combined Playwright run passed 190/222 with 32 expected skips and 0 failures: Chromium 74/74, Firefox 58/58 applicable and WebKit 58/58 applicable. 完整 Windows/browser/print acceptance remains pending，阻塞范围取决于声明的 release profile。No claim about unavailable CI configurations is made without verification。
 
 ## P1：工程师工作流
 
@@ -73,7 +75,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 - ✅ 已实现（2026-07-31，`d2fe47a`）：Branding 品牌色面板——两个模板的品牌色散落十几处硬编码 hex，全部 token 化是更大的独立设计任务；范围收敛到 `.pf-brand` 标题色一处，新增 `core/branding.js` + `set_brand_color` 操作。
 - ✅ 已实现（2026-07-31，`3699991`）：Data contract 面板——中档范围，schema 树只读展示 + 表单编辑样本值与既有约束（required/min·maxLength/minimum·maximum/enum），复用既有 `replace_schema`/`replace_sample_data` 整段替换操作而非新增操作类型。**不做**增删字段（牵动模板绑定与 i18n 同步，需单独设计）与数组逐行编辑（表单对 45 行数据没有可用性，`items` 类字段仍走原始 JSON）。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
-- Pending PROD-08/13: fingerprint-aware draft protection and combined browser evidence. Unknown/Real classification now disables durable storage and recovery writes before installation; existing records are not silently deleted.
+- Partial PROD-08/13: fingerprint-aware draft protection and combined browser evidence. Unknown/Real classification now disables durable storage and recovery writes before installation; quota fallback remains memory-only, existing records are not silently deleted, and browser disk-completion plus full destination inventory remain open.
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。
 - 连接状态区分 WebMCP registered、CDP discovered、Agent connected 与 last command。
 

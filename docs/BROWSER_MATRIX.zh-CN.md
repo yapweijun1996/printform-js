@@ -6,7 +6,7 @@
 >
 > 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。**Linux 复现**：2026-07-31，GitHub Actions Ubuntu runner（`.github/workflows/browser-matrix.yml`，`workflow_dispatch`），构建对齐 `af64b25`，见下方「Linux 复现」一节。
 
-> Documentation review: 2026-09-07. Historical macOS/Linux matrix results remain 88/88. Windows Chromium E2E passed 68/68 on an earlier amendment snapshot; rerun after concurrent implementation settles. The full four-target Windows matrix was not run. This is dated Chromium coverage, not certification of every Windows browser or print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
+> Implementation review: 2026-09-08. Historical macOS/Linux matrix results remain 88/88. The latest complete Windows Playwright E2E passed 190/222 tests with 32 expected skips and 0 failures: Chromium 74/74, Firefox 58/58 applicable and WebKit 58/58 applicable. The full four-target Windows matrix was not run. These are Playwright engine results, not certification of Edge, Safari.app or any print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## 结论
 
@@ -76,10 +76,20 @@
 - **结果：88/88 全过，零分歧**，四个目标（Chromium/Chrome/Firefox/WebKit）在 Ubuntu 上全部成功启动（含品牌版 Chrome，未出现 SKIP）。
 - **逐页行数与 macOS 结论完全一致**：Purchase Order 45 行场景四目标均为 `[14,14,14,3]`；Sales Invoice 45 行场景四目标均为 `[24,21,0]`。K=16px 的收敛修法**不是 macOS 专属的巧合**，同一份 CSS 在 Linux 上同样把所有组合收敛到边界同一侧。
 
-结论：ROADMAP/TASK.md 此前标注的"建议在 Linux/Windows 上重跑一次矩阵"，Linux 部分现已完成且通过；Windows 仍无对应的自动化通道（GitHub Actions 无 Windows + 四浏览器目标的现成方案），维持待办。
+结论：ROADMAP/TASK.md 此前标注的"建议在 Linux/Windows 上重跑一次矩阵"，Linux 部分现已完成且通过；Windows 的完整 `browser-matrix.mjs` 仍无对应的发布自动化通道（GitHub Actions 无 Windows + 四浏览器目标的现成方案），但本轮已补充三个 Playwright 引擎的完整 E2E 回归，见下节。
+
+## Windows Playwright 引擎回归（2026-09-08）
+
+这是本轮实施后、重建 `site-dist` 后的完整 Playwright 项目回归，不等同于上面的四目标 `browser-matrix.mjs` 发布矩阵：
+
+- Chromium：74/74 通过。
+- Firefox：58/58 个适用用例通过，另有 16 个明确标记为项目不适用的 Chromium-only 用例跳过。
+- WebKit：58/58 个适用用例通过，另有 16 个明确标记为项目不适用的 Chromium-only 用例跳过。
+
+它提供三个 Playwright 渲染引擎的 Windows 回归证据，但不证明 Edge、Safari.app、Windows 系统打印预览或真实打印机链路。完整 `browser-matrix.mjs` 仍需在声明的目标环境执行。
 
 ## 对成熟度的影响
 
 退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：88/88 通过，且跨引擎分页已收敛一致，并在 macOS 与 Linux 两个操作系统上分别验证过。
 
-但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前值得再确认的点：本矩阵在 macOS 与 Linux 已执行，而已知**同一引擎跨操作系统也会有度量差异**（见 [ROADMAP.md](../ROADMAP.md) §2.1 第三条陷阱：Firefox 的行分布在 macOS 与 CI 的 Linux 上就不同）。Windows 尚未完成完整矩阵；若要覆盖，应在目标 Windows 环境运行 `node scripts/browser-matrix.mjs`。
+但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前仍需完成 P0 个案证据、目标平台系统打印检查与明确的发布批准。本矩阵在 macOS、Linux 和当前 Windows Playwright 三引擎均有证据，但完整 `browser-matrix.mjs`、Edge、Safari.app、Windows 系统打印预览和真实打印机链路仍未认证。

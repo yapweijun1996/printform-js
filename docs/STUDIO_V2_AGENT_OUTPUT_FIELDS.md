@@ -103,6 +103,7 @@ Fixed catalog examples stay synthetic and static; they are examples, not valid l
 ## Verification and closure
 
 - Compare these 35 rows with TOOL_CONTRACTS; newly added commands require an output row and nested shape before exposure.
+- The current targeted matrix passes six tests and dispatches all 35 registered commands through the safe envelope, including root-field checks, recursive unknown-field canaries, no-op/direct-approval variants, lifecycle/reference round-trips, null/malformed-input handling and safe malformed/stale errors. `e2e/studio-v2-provider-wire.spec.js` additionally captures the actual second Provider request after a safe Agent result in all three Playwright engines. This closes the catalog-dispatch implementation check and one composed wire path, but is not a case-specific P0 record or proof of every command/result root or destination/privacy combination.
 - For every command, test success, null/no-op/empty variants where supported, malformed output and the common error envelope.
 - Add synthetic canaries to every omitted field and document-controlled ID/path/label; inspect the entire decoded result and provider request.
 - In particular test undo root project, direct-root transactions after preview, history arrays, FormSpec extensions and translated table labels.
@@ -110,13 +111,13 @@ Fixed catalog examples stay synthetic and static; they are examples, not valid l
 - Round-trip safe component, transaction, lease and evidence references through their consuming commands; preserve conflict/hash checks and late-outcome recovery.
 - Exercise Real, Unknown and Synthetic, mode switch during requests, plus embedded/WebMCP/CDP paths. No real provider or private data is needed.
 - Output validation after a successful mutation must not report that nothing committed. Keep the committed outcome in the host and use the recovery procedure described in field shapes.
-- Evidence belongs to P0 cases 13-02/04/06/07/08 and X-02/03; this document adds no executed tests and changes no Pending status.
+- Evidence belongs to P0 cases 13-02/04/06/07/08 and X-02/03; the targeted matrix strengthens those mappings, while the separate 13-02 persistent-sink and 13-04 policy-freshness browser records close those cases only; 13-03 reload/export evidence is recorded in the P0 checklist and all other Pending status remains unchanged.
 
 ## SCMC review
 
 - Scope/evidence: public command roots and actual producers; constraints: closed projections, privacy, transaction integrity and backward compatibility.
 - Simple: PASS; reuse nested shapes instead of 35 independent policies. Clear: PASS; root/wrapped variants and omissions are explicit.
 - Modular: PASS; domain results remain internal, Agent projection has one owner. Consistent: PASS; all 35 catalog entries have exactly one row.
-- Findings: no material documentation design issue; safe schemas, reference plumbing and client migration
-  are implemented as a foundation, while client and full-matrix evidence remain open.
+- Findings: no material documentation design issue; safe schemas, reference plumbing and the targeted
+  35-command matrix are implemented, while client migration, composed-wrapper and full P0 evidence remain open.
 - Overall: PASS for contract and implementation foundation only. M4 acceptance and M5 release evidence remain Pending.

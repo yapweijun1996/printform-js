@@ -1,10 +1,23 @@
 # TASK.md — 任务板
 
-> Last reviewed: 2026-09-07. Fresh documentation-review evidence: 80 test files / 428 tests. `npm run doctor` 5/5 and serial Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and must be rerun after the concurrently changing implementation settles. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. E14 is Partial. This worktree contains the authorized PROD-13/01/02/03 foundation implementation; approval provenance, missing-policy defaults, full acceptance and release evidence remain open.
+> Last reviewed: 2026-09-08, coding resumed. **Implementation Partial; R1-R3 host/session corrections and R5/R6 prompt corrections are implemented with bounded evidence.** Actual Provider testing also found and corrected missing runtime prompt delivery (R7). See [resumed implementation evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md) for current runs and remaining gates. P0 register remains 5 Pass, 2 Fail pending complete reverification, and 28 Not run. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. Production Ready is not established.
 >
 > 规则：任务完成时移到「已完成」并附 commit；新任务先写验收标准再动手。Epic 归属见 [EPIC.md](EPIC.md)。
 
 ---
+
+## PI Agent Harness replacement (Target, 2026-09-08)
+
+Scope: browser-first, frontend-only BYOK; no Node.js/server runtime, proxy or credential-free gateway. Implementation remains AGRUN. The [migration plan](docs/STUDIO_V2_PI_HARNESS_MIGRATION.md) owns architecture, constraints, verification and rollback. This documentation update does not implement the migration.
+
+| ID | Work | Status / acceptance owner |
+|---|---|---|
+| PI-00 | Qualify pinned actual AgentHarness in a static browser build | Not started; plan section 7; no backend workaround |
+| PI-01 | Direct browser BYOK transport and provider compatibility | Not started; depends on PI-00 |
+| PI-02 | PrintForm tools, prompts, events, budgets and approval boundary | Not started; depends on PI-01 |
+| PI-03 | Memory/IndexedDB policy-bound sessions and legacy history | Not started; depends on PI-02 |
+| PI-04 | Composed browser, provider, privacy and transaction acceptance | Not started; depends on PI-03 and relevant existing boundary gates |
+| PI-05 | Default cutover, cache upgrade and AGRUN retirement | Not started; depends on PI-04; deployment requires separate authorization |
 
 ## 🧱 Studio v2 Production Foundation + Verification（2026-08-17）
 
@@ -17,7 +30,7 @@
 | PF-03 | Deterministic pagination diagnostics | 输出 component/page/measured/available/reason/action；覆盖 row-too-tall、overflow、blank、footer/page-number、orphan totals、signature/total keep-together | `tests/studio-v2/render-diagnostics.test.js`、acceptance tests；依赖现有 DOM geometry；回滚仅关闭新增诊断合并，不改变 pagination |
 | PF-04 | Safe Agent transaction；preview candidate → validate → explicit approve → apply/commit；journal 持久化 | `apply_changes` 无 transaction/approved preview/hash 一律拒绝；候选内容被外部修改时 fail closed；失败不改 last-known-good；有 revision/history/rollback | `command-bus`、`agent-workflow`、`production-foundation` tests；依赖现有 revision history；回滚禁用 Agent write path，保留 Studio 内部编辑 |
 | PF-05 | Trusted Export strict allowlist 与 Evidence Pack | script/iframe/object/embed、事件属性、javascript URL、未允许外部资源被拒；artifact 包含 revision/FormSpec/runtime/validation/page/preview/export/security/timestamp；mandatory gate 失败不发布 | `content-security.test.js`、`exporter.test.js`、`production-foundation.test.js`；依赖现有 exporter/attestation；回滚到 untrusted preview，禁止 trusted publish |
-| PF-06 | Production evidence close-out | ✅ 已完成：记录全量 test/build/validate:v2、真实 Chromium E2E 与发布 hash；不把缺失环境标为 PASS | `npm test -- --run`、`npm run build:site`、`npm run check:agrun`、`npm run validate:v2`、Chromium Playwright 56/56；依赖 OPS 任务；回滚不发布 artifact |
+| PF-06 | Production evidence close-out | ✅ 已完成：记录 serial test/build/validate:v2、三引擎 Windows Playwright E2E 与 artifact hash；不把缺失环境标为 PASS | `npm run build:site`、`npm run doctor`、`npm run check`、three pilot `validate:v2`, `npx playwright test --workers=1` (187 passed / 32 expected skips)；依赖 OPS 任务；回滚不发布 artifact |
 
 ### 独立运维任务（不与 P0 代码混改）
 
@@ -25,7 +38,7 @@
 |---|---|---|---|
 | OPS-NANOID | ✅ 处理 `nanoid@3.3.16` high severity 间接依赖 | lockfile `3.3.18`；`npm audit --audit-level=high` 无 high，lockfile、build、test、validate:v2 全通过 | npm audit + 全量门禁；依赖上游 Vite/PostCSS 兼容性；仅回滚 lockfile/dependency patch |
 | OPS-PLAYWRIGHT | ✅ 固定 Chromium 版本并补可复现安装入口 | Active Table 多表长数据与 Production Verification 在真实 Chromium 执行；revision `1234`；56/56 | `npm run test:e2e -- --project=chromium`；CI 继续安装 Chromium/Firefox/WebKit；回滚安装步骤或版本 pin |
-| OPS-WINDOWS-DOCTOR | ✅ 修复 Windows 下 npm 子进程调用 | `npm run doctor` 在 Windows 5/5 PASS；实现使用当前 Node + npm CLI，保留 macOS/Linux 路径 | doctor smoke + CI；依赖 Node/npm CLI；回滚仅脚本适配，不改应用代码 |
+| OPS-WINDOWS-DOCTOR | ✅ 修复 Windows 下 npm 子进程调用 | 当前 Windows `npm run doctor` 5/5 PASS；`build` 固定串行 Vitest，避免本机资源竞争使默认健康检查失真；实现使用当前 Node + npm CLI，保留 macOS/Linux 路径 | doctor smoke + CI；依赖 Node/npm CLI；回滚仅脚本适配，不改应用代码 |
 
 ### E12 验证收口
 
@@ -33,7 +46,7 @@
 |---|---|
 | Unit / build / AGRUN / pilot validation | 68 files / 361 tests；`build:site`、`check:agrun`、3 pilot `validate:v2` PASS |
 | Chromium E2E | 56/56 PASS；Progress Claim、四顺序表、100/500/1000 行、paper modes、diagnostics、Evidence Pack |
-| Security / toolchain | nanoid 3.3.18；audit 0 high；Windows doctor 5/5；`git diff --check` PASS |
+| Security / toolchain | nanoid 3.3.18；audit 0 high；Windows `npm run doctor` 当前 5/5；`git diff --check` PASS |
 | 认证边界 | Chromium revision 1234 / A4 @ 96dpi portrait+landscape；Firefox/WebKit/真实 Safari/打印机链未在本阶段重新认证 |
 
 ### E13 Durable Transaction / Concurrency / Recovery（2026-08-17，第一阶段完成）
@@ -147,15 +160,15 @@
 | E11：新增 `npm run doctor`（ROADMAP §2.2 早已列为计划项）——一条命令依次跑单测+生产构建（`build:site`，内含 vitest --run）+ 两个试点样本 `validate:v2`，每步实时输出，结尾一页 PASS/FAIL 汇总 + 汇总耗时，任一步失败则整体退出码非零。刻意不含 `test:e2e`：那是 CI 每次 push 都跑的三引擎慢检查，doctor 定位是本地"工作树健不健康"的快速一问，不是发布门禁的替代品 | `07b3947` | 实跑一次：3 步全 PASS（单测+构建 7.4s、两个 validate:v2 各 0.6s），退出码 0；纯工具脚本，逻辑简单（检查每步 `spawnSync` 的 `status === 0`），未加专属单测，与 `browser-matrix.mjs`/`validate-printform-v2.mjs` 等既有纯脚本一致不强制加测试 |
 
 
-| A3：浏览器矩阵验收在真实 Linux（GitHub Actions Ubuntu runner）上跑通——`.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，不进 push/PR 快速通道，理由同 `scripts/browser-matrix.mjs` 自身注释：15–25 分钟不适合当每次提交的门槛） | `af64b25` | 用户 push 后手动触发 [Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)，全量 88 格（非 `--quick`）用时约 95 秒，**88/88 全过、零分歧**，四目标（含品牌版 Chrome）全部成功启动无 SKIP；Purchase Order/Sales Invoice 45 行场景逐页行数与 macOS 结论完全一致（`[14,14,14,3]`/`[24,21,0]`），证明 K=16px 收敛修法不是 macOS 专属巧合。结论存档 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」一节。**Windows 仍无自动化通道，维持待办**（GitHub Actions 无现成的 Windows+四浏览器方案） |
+| A3：浏览器矩阵验收在真实 Linux（GitHub Actions Ubuntu runner）上跑通——`.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，不进 push/PR 快速通道，理由同 `scripts/browser-matrix.mjs` 自身注释：15–25 分钟不适合当每次提交的门槛） | `af64b25` | 用户 push 后手动触发 [Actions run 30632832821](https://github.com/yapweijun1996/printform-js/actions/runs/30632832821)，全量 88 格（非 `--quick`）用时约 95 秒，**88/88 全过、零分歧**，四目标（含品牌版 Chrome）全部成功启动无 SKIP；Purchase Order/Sales Invoice 45 行场景逐页行数与 macOS 结论完全一致（`[14,14,14,3]`/`[24,21,0]`），证明 K=16px 收敛修法不是 macOS 专属巧合。结论存档 [docs/BROWSER_MATRIX.zh-CN.md](docs/BROWSER_MATRIX.zh-CN.md)「Linux 复现」一节。**Windows 完整 `browser-matrix.mjs` 仍无发布自动化通道，维持待办**；本轮已补充 Chromium/Firefox/WebKit Playwright E2E 回归证据。 |
 
 | P2（评估，非实现）：`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构——按 grilling 定的顺序（缓存→trace→类重构再评估）走到第三步。**先看 P2 的退出条件本身**：100 行首屏 ≤2s、500 行完整分页 ≤5s、v1 无回归——这三项在缓存那一步（`4c50a35`）已经达成且有金标准分页断言 + 新回归护栏背书，退出条件不要求这批类存在。**再看现状**：`pagination-context.js` 已经有一个每次渲染新建的轻量 `pageContext` 纯对象（`initializePageContext`），被拆分到 formatter 的多个 prototype mixin 里共享读写，已经过 232 单测 + 三引擎 e2e 反复验证；把它和新造的 `PaginationSession`/`LayoutPlan`/`RenderResult` 重新包装成正式类，不修复任何已知 bug、不满足任何未达成的退出条件、也没有具体消费方提出这类结构化返回值的需求——唯一的价值是"更规整"，但代价是再次改动刚刚精心修复并验证过的分页热路径，且改动面横跨 formatter 全部文件。**结论：评估后判定暂不值得做，非放弃、非遗忘，是"无具体驱动力时不为假设中的未来需求设计"的主动决定**（本仓库工程纪律，见 CLAUDE 系统指令）；若未来出现具体驱动力（例如多个独立消费方需要检视分页中间态、或某个真实 bug 追根溯源到当前隐式 context 传递方式），再重新评估。同一决定连带跳过结构化 trace 事件——它在原计划里唯一的价值就是为这批类重构做准备，重构本身既已判定不做，trace 事件也一并延后，不单独实现。**顺带记录一个不在本次评估范围内、决定不牵连的独立小缺口**：`formatAllPrintForms()`（`src/printform.js:82-84`）单份表单渲染失败时只 `console.error` 记录并继续下一份，不把错误反映进返回值——Studio v2 的 `inspectRenderedDocument` 结构校验会间接兜底（渲染失败的表单不会产出预期的分页 DOM 形状，会被结构检查捕获），所以不是静默漏检风险，只是丢失了具体错误信息；范围小、风险低、与类重构决策无关，留作独立待办，不在本次动作中实现 | 无 commit（评估结论，非代码变更） | 无需新测试（未改动任何代码）；核对 `pagination-context.js`（55 行，`initializePageContext`/`refreshPageContextForRow`/`computeRepeatingHeightForPage`/`measureContentHeight` 四个方法）与 `src/printform.js:43-91`（`formatAllPrintForms` 的 try/catch 结构）确认上述现状描述准确 |
 
 ## Current execution status
 
-- PROD-13/01/02/03 foundation: implemented across host classification, restrictive storage/resource policy, gateway scope/apply checks, closed output projections, opaque references, lifecycle state and provider payload gating.
-- M0/M1/M3 foundations are implemented and version-aligned. M2 is Partial because the privileged page-global `executeHuman` path does not prove approval provenance and no-policy gateway/WebMCP fallback remains Synthetic; M4 targeted/composed acceptance and M5 release evidence remain open. The P0 checklist still records all 35 cases as Not run until case-specific evidence is attached.
-- Verification: the fresh 80/428 run passed, including controlled embedded/WebMCP/CDP entry parity, catalog equality, CDP target replacement/reconnect and catalog-mismatch rejection; targeted scope/reference/policy/compatibility tests, the 35-command public matrix, restrictive server-policy tests and duplicate/lost-response/recovery commit-boundary tests. Doctor 5/5 and serial Windows Chromium 68/68 are carried-forward evidence, not fresh results after the active concurrent implementation. No deployment, publish, real business data connection or real-provider test was performed.
+- PROD-13/01/02/03 foundation: implemented across host classification, restrictive storage/resource policy, gateway scope/apply checks, closed output projections, opaque references, lifecycle state and provider payload gating. PROD-04 now also has revision-bound card Undo/Redo result guards; the overall requirements remain Partial pending case-specific evidence.
+- M0 inventory and private UI-only approval capability are retained. M1 classification/session lifecycle is reopened; M2/M3 acceptance is Partial and M4/M5 remain incomplete. Current P0 register: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Missing-policy gateway/WebMCP rejection does not prove that the session constructor or delayed storage follows the same rule.
+- Pre-review verification (not rerun after the latest session edits): serial Vitest 86/86 files and 454/454 tests passed, including storage-failure fallback, visible save-state transitions, revision-bound card history guards, service-worker shell-only caching, decoded Cache Storage inspection, missing-policy fail-closed behavior, the public/bound-session capability negative check, controlled embedded/WebMCP/CDP entry parity and Real-data diagnostic redaction, catalog equality, CDP target replacement/reconnect and catalog-mismatch rejection; targeted scope/reference/policy/compatibility tests, the 35-command public matrix including a Real-policy document-canary pass, recursive unknown-field canary checks across success/error variants, null/malformed-input coverage for every public command, restrictive server-policy tests, duplicate/lost-response/recovery commit-boundary tests, delayed apply-mode snapshots and late render/candidate ownership guards. Local asset/site generation, `npm run check`, `npm run doctor` and three pilot validations passed. The complete Windows Playwright run passed 190/222 with 32 expected skips and 0 failures: Chromium 74/74, Firefox 58/58 applicable, WebKit 58/58 applicable. The pre-review targeted production boundary/candidate/apply-policy/PROD-13 browser set passed 54/54 across all three engines; dedicated 13-01 through 13-06 cases each passed 3/3 across all three engines. The 13-05 case decodes old durable, transaction/audit, recovery, IndexedDB session, Cache Storage, sessionStorage and unrelated-project records, then checks scoped explicit recovery cleanup; the 13-06 case checks closed diagnostics through embedded, WebMCP and Chromium CDP, geometry redaction and pixel rejection. The controlled Provider wire test captures the second request after a safe Agent result and checks the final JSON body. The Firefox iframe lifecycle fixes now cover both the v1 structure case and v2 locale/boundary case in the generated site artifact. No deployment, publish, real business data connection or real-provider test was performed. The direction review reopens 13-04 and records 13-08 as Fail; these aggregate results do not override those findings.
 - Current evidence, detailed requirements and proposed layout: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## Corrected E14 acceptance
@@ -177,27 +190,29 @@ Retain original IDs for traceability; new PROD IDs identify specific closure wor
 
 All items below remain unimplemented or incompletely verified. Priority P0 denotes a proposed production-release gate, not an emergency or an external access blocker.
 Acceptance details and current code evidence are owned by the production plan.
-The [priority acceptance checklist](docs/STUDIO_V2_P0_ACCEPTANCE.md) defines 35 cases for PROD-13/01/02/03, including combined flows. The current code has targeted evidence, but the full checklist remains Not run and no Production Ready claim is made.
-The [data classification/destination policy](docs/STUDIO_V2_DATA_POLICY.md) is now enforced for the host foundation: Unknown/Real are restrictive across durable state, recovery, sessions, asset requests, evidence pixels and provider media. Chromium canaries now cover Real-mode storage exclusion across reload, delayed Provider responses after a mode and document switch, an explicit Untrusted export, and a legacy recovery record that remains dormant until restrictive explicit Restore; WebMCP parity and the server adapter's pre-SQLite Unknown/Real rejection are covered by tests. Complete sink inventory, all entry points and server-side provider/remote-store integration remain open.
-The [35-command field allowlist](docs/STUDIO_V2_AGENT_OUTPUT_FIELDS.md) now has gateway projection/reference plumbing and Agent Contract 4.0.0 version gating. Public get_revision is metadata-only; undo/project, direct transaction results and history are projected separately. The uniform 35-command matrix passes; per-command payload evidence and client-migration verification remain open.
-The [boundary/migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) records M0/M1/M3 foundations, the reopened M2 boundary findings and M4/M5 evidence work. No deployment, publish, push, real business data connection or real Provider test was performed.
+The [priority acceptance checklist](docs/STUDIO_V2_P0_ACCEPTANCE.md) owns the 35 cases: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Production Ready is not established.
+The [data classification/destination policy](docs/STUDIO_V2_DATA_POLICY.md) remains the required direction. Initial restrictive host/adapter paths exist, but retained sample provenance can broaden an imported document and a delayed session open can write after a Real switch. Repair these existing owners; do not weaken the policy or add alternate storage.
+The [35-command field allowlist](docs/STUDIO_V2_AGENT_OUTPUT_FIELDS.md) now has gateway projection/reference plumbing and Agent Contract 4.0.0 version gating. Public get_revision is metadata-only; undo/project, direct transaction results and history are projected separately. The uniform 35-command matrix passes its targeted six-test suite; per-case payload evidence and client-migration verification remain open.
+
+Resumed Agent-guidance follow-through: runtime/MCP prompt conflicts R5/R6 are corrected. Final Provider capture found the constructor prompt was ignored (R7); the prompt now enters each runtime consume input. Three-engine panel/Provider tests verify its presence and policy-isolated conversation bodies. This is controlled wire evidence, not proof of model obedience; host enforcement and remaining acceptance still apply.
+The [boundary/migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) retains the M0-M5 order. Coding resumed on 2026-09-08; continue in this order: (1) correct host provenance and session defaults/lifecycle; (2) verify recipient, save and commit-result boundaries; (3) rerun the affected controls, composed browser cases and regressions. Preserve product defaults, public command scope, canonical state and human export approval; no deployment, push, data deletion or live Provider testing.
 
 | ID | Priority / epic | Action and acceptance | Dependencies | Status |
 |---|---|---|---|---|
 | PROD-01 | P0 / E14 | Connect selection to FormSpec; reject out-of-scope edits in command path | Existing registry/gateway/operations | Partial: domain scope guard and stable table selection implemented; full selection matrix remains |
-| PROD-02 | P0 / E14 | One apply policy for chat/Review/retries; preview-first never auto-commits; align runtime-loaded host prompt during implementation | Existing transaction gate; explicit scope eligibility | Partial: shared mode/allowlist and commit-outcome resolution exist; page-global/bound-session `executeHuman` leaves trusted approval provenance unproven against arbitrary same-origin script/raw CDP |
+| PROD-02 | P0 / E14 | One apply policy for chat/Review/retries; preview-first never auto-commits; align runtime-loaded host prompt during implementation | Existing transaction gate; explicit scope eligibility | Partial: shared mode/allowlist, commit-outcome resolution and a private UI-owned approval capability exist; full 02-01..02-08 cross-entry evidence remains |
 | PROD-03 | P0 / E14 | Shared render/readiness/candidate/save projections; no premature Printable state | CommandBus + render controller | Partial: state mapping implemented; browser evidence remains |
-| PROD-04 | P0 / E14 | Guard card-target Undo and check command results; verify cancel/Stop/replacement/late response/double Apply | PROD-02/03 | Partial: Stop/late-result discard and recovery-card state are guarded; card-target Undo/result checks remain |
+| PROD-04 | P0 / E14 | Guard card-target Undo and check command results; verify cancel/Stop/replacement/late response/double Apply | PROD-02/03 | Partial: Stop/late-result discard, recovery-card state and revision-bound card Undo/Redo result checks are implemented; full lifecycle evidence remains |
 | PROD-05 | P0 / E8/E9 | Define bound per-table/total limits; test two 400-row tables and exact limits | Binding policy; preserve row-conservation checks | Pending |
 | PROD-06 | P0 / E8/E9 | Resolve component repeatHeader versus global flag; prove multi-table semantics | FormSpec/template/formatter; compatibility decision | Pending |
 | PROD-07 | P0 / E14 | Quality blockers explain next action and locate page/component/field | PROD-01/03 + existing diagnostics | Pending |
 | PROD-08 | P0 / E14 | Preserve raw drafts; distinguish applied/recovery/saved/download-started; exercise failure paths | PROD-03; existing privacy policy | Pending investigation and fixes |
 | PROD-09 | P1 / E14 | Reviewable workspace prototype and task-based layout acceptance | PROD-01/03; proposed layout/defaults need adoption | Proposed |
 | PROD-10 | Release / E10 | Record exact platform/paper/locale/template scope; real print, accessibility and failure-path acceptance | Applicable P0 closures; release profile | Pending |
-| PROD-11 | P1 / E11 | Keep responsibilities separated and touched files <=300 lines | Focused regression coverage | Partial: current touched files are <=300; pre-existing pagination-render.js remains 389 lines |
+| PROD-11 | P1 / E11 | Keep responsibilities separated and touched files <=300 lines | Focused regression coverage | Partial: new and changed Studio v2 files are <=300 lines; legacy `studio/studio.js` remains 1491 lines and received only a bounded iframe compatibility patch, while `src/printform/formatter/pagination-render.js` remains 389 lines |
 | PROD-12 | Release / E10/E11 | Align three-pilot validation/CI/matrix evidence; publish versions, limits, rollback and diagnostics | PROD-10; existing build/doctor/CI | Pending |
-| PROD-13 | P0 / E14 | Classify unknown imports before persistence/AI; enforce real-data policy across durable snapshots, recovery and sessions | app installBus, durable store, gateway and session policy | Partial: main-app/server restrictive foundation exists; standalone gateway/WebMCP missing-policy fallback is Synthetic and stale checks can retain the old policy when current policy is absent |
-| DOC-2026-09-07 | Documentation / E11 | Align root and related docs; distinguish Current/Partial/Target/Proposed/Historical; record amendment-review boundary findings | Code review and fresh 80/428 test evidence | Done; no code, test or configuration files amended |
+| PROD-13 | P0 / E14 | Authoritative classification and destination/lifecycle enforcement | Existing host, session/store, gateway and transport owners | Partial: R1/R2/R3 corrections implemented and bounded controls pass; complete 13-04/08 reverification, explicit-save/recipient races and other mapped acceptance remain. Register unchanged; see resumed implementation evidence |
+| DOC-2026-09-07 | Documentation / E11 | Keep Current/Target/Historical and Agent execution direction aligned | Source review and isolated synthetic probes; doc link/status checks | Direction/status correction recorded in this review; prior completion labels do not establish implementation conformance |
 
 Implementation rollback must preserve committed projects and durable records. Revert only the affected patch or disable the new path; never treat deleting user storage as the default recovery procedure.
 
@@ -211,8 +226,8 @@ Implementation rollback must preserve committed projects and durable records. Re
 ## Blockers and evidence boundaries
 
 - No external access blocker prevents the known local implementation work.
-- Production release is not complete: approval provenance, missing-policy fail-closed behavior, scope/status/privacy/history, multi-table criteria and editing/recovery acceptance remain open.
-- Windows Chromium 68/68 is carried-forward evidence for an earlier amendment snapshot; rerun it after concurrent implementation completes. A full Windows browser matrix and real printer/Safari certification are not available.
+- Production release is not complete: full approval/apply acceptance, scope/status/privacy/history, multi-table criteria, complete sink inventory and editing/recovery acceptance remain open. The concrete page-global approval-capability finding is closed in code and targeted browser evidence.
+- Windows Playwright evidence is fresh for this worktree: the complete three-engine run passed 190/222 tests with 32 expected test-level skips and 0 failures; Chromium passed 74/74, Firefox 58/58 applicable, and WebKit 58/58 applicable. A full four-target Windows release matrix, real printer chain and Safari.app certification are not available.
 - Historical macOS/Linux 88/88 records remain valid as dated evidence, not a current Windows certificate.
 - The recommended narrower release profile and preview-first default are Proposed. Do not silently weaken existing broader requirements.
 - HA/remote UI are blockers for a promised shared-service deployment, not for every possible single-user release.
@@ -220,6 +235,6 @@ Implementation rollback must preserve committed projects and durable records. Re
 
 ## Next action
 
-First close the M2 approval-provenance and missing-policy fail-closed findings without changing the documented transaction/data invariants. Then continue M4 targeted/combined acceptance for PROD-13/01/02/03, including browser-level WebMCP/CDP reconnect, explicit-save separation and the complete server destination inventory before M5 rollback/release evidence. Do not deploy or publish without separate authorization.
+Continue M4 case-specific acceptance for PROD-13/01/02/03, especially 13-07/08 and the remaining scope/apply/state cases; complete browser-level WebMCP/CDP reconnect, explicit-save separation and the server destination inventory, then prepare M5 rollback/release evidence. Do not deploy or publish without separate authorization.
 For direct `npx playwright test`, build `site-dist` first and avoid a conflicting server on port 4174; `npm run test:e2e` already runs its build hook.
 Service Worker shell entries are generated by the build; do not maintain a manual APP_SHELL list.

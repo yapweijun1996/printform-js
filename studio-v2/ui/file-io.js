@@ -11,16 +11,27 @@ export function downloadHtml(html, filename) {
   link.download = filename;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return { started: true };
 }
 
-export async function saveHtmlWithPicker(html, suggestedName, description = "Self-contained PrintForm HTML") {
+export async function saveHtmlWithPicker(html, suggestedName, description = "Self-contained PrintForm HTML", { assertCurrent = () => {} } = {}) {
+  assertCurrent();
   if (!("showSaveFilePicker" in window)) return false;
   const handle = await window.showSaveFilePicker({
     suggestedName,
     types: [{ description, accept: { "text/html": [".html"] } }]
   });
+  assertCurrent();
   const writable = await handle.createWritable();
-  await writable.write(html);
-  await writable.close();
+  try {
+    assertCurrent();
+    await writable.write(html);
+    assertCurrent();
+    await writable.close();
+  } catch (error) {
+    try { await writable.abort?.(); } catch { /* Preserve the original failure; never retry the write. */ }
+    throw error;
+  }
+  // A confirmed close is a real saved snapshot, even if its UI context changed while closing.
   return true;
 }

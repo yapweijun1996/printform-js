@@ -4,6 +4,7 @@ import { executeAgentCommand } from "../../studio-v2/adapters/gateway.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { createProposalApproval } from "../../studio-v2/ui/agent-approval.js";
 import { DesignerRuntimeController } from "../../studio-v2/ui/agent-runtime.js";
+import { classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
 
 const profile = { id: "workflow-test", provider: "openai", model: "gpt-test", apiKey: "memory-only" };
 
@@ -46,6 +47,25 @@ function commandGateway(bus, calls = []) {
 }
 
 describe("AI Designer deterministic proposal workflow", () => {
+  it("rejects a missing current policy instead of reusing the old policy", async () => {
+    const policy = classifySyntheticDocument("missing-current-policy");
+    let currentPolicy = policy;
+    const fake = fakeAgrun(null);
+    const controller = await DesignerRuntimeController.create({
+      Agrun: fake.Agrun,
+      gateway: { execute: async () => ({ ok: true, result: {} }) },
+      sessionManager: { createStore: () => ({}) },
+      sessionId: "missing-current-policy-session",
+      profile,
+      dataPolicy: policy,
+      getDataPolicy: () => currentPolicy
+    });
+
+    currentPolicy = null;
+    await expect(controller.run("do not send", profile)).rejects.toMatchObject({ code: "STALE_POLICY_CONTEXT" });
+    expect(fake.runCount()).toBe(0);
+  });
+
   it("stops after a yellow preview, then applies exactly once without a second model turn", async () => {
     const report = { status: "ready", validation: { errors: [], warnings: [] }, issues: [], metrics: {} };
     const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: async () => report });

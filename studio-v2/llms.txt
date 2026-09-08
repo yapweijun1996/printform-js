@@ -2,6 +2,8 @@
 
 > A production-oriented, agent-compatible print-form generator that exports one self-contained HTML file.
 
+Maturity: Production Pilot, not Production Ready. Classification/session fixes have bounded evidence, but complete privacy acceptance remains open; do not interpret the mode label as proof of full protection. Source-worktree evidence: ../docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md. Local corrections do not update an already published page or an older running client.
+
 ## Agent bootstrap
 
 When an end user gives you this Studio URL, read the machine manifest before attempting setup or editing:
@@ -22,7 +24,10 @@ The manifest contains verified Codex CLI and Claude Code setup commands for Chro
 5. Ask the user to restart the agent client.
 6. Open Studio with new_page, call list_webmcp_tools, then execute get_capabilities.
 7. Never claim readiness unless protocol 2.0.0, contract 4.0.0, and 35 Studio WebMCP tools are confirmed.
-8. Read `get_form_spec`/`list_components` before editing. Use only the semantic operation allowlist, then call `preview_changes` → `approve_transaction` → `apply_changes` with the exact transaction ID and candidate hash. Direct apply and raw source edits are rejected.
-9. Review complete-page Studio evidence for `default` and `long-text` (`pixels` only for synthetic data; geometry for real data). Broken scenarios may return unsigned observations for diagnosis, but only fresh clean evidence IDs can complete review. Leave final production export to the human.
+8. Read `get_form_spec`/`list_components` before editing and obey host scope. Use semantic operations and `preview_changes`; in Preview mode stop for human UI approval. Auto mode allows only host-eligible operations through the exact transaction/hash approval/apply sequence. Do not manufacture human permission. Raw source editing remains human-editor-only, even when requested in chat.
+9. Review complete-page Studio evidence for `default` and `long-text`: pixels only for currently confirmed Synthetic data, approved geometry for Unknown/Real. Do not obtain browser screenshots or raw DOM as a fallback. Report evidence limitations instead of claiming unsupported visual verification. Only fresh clean evidence IDs can complete review; final production export remains human-controlled.
+10. Keep opaque references in their document/session/policy context. A rejected reference does not permit whole-document scope. Version mismatch requires a safe update/reconnect path, never raw-output fallback.
+11. User-entered text is sent to the chosen provider, not automatically anonymized. Sending text or explicitly saving a file does not authorize chat/recovery persistence. A recipient change requires a fresh sending context.
+12. Timeout/cancellation is not proof of no commit. Reconcile using the same transaction while its context exists; do not retry blindly or roll back a known commit. Volatile Unknown/Real state cannot promise recovery after refresh.
 
 Do not use autoConnect with a daily Chrome profile and do not enable real ERP data unless the user explicitly authorizes it for the current session.

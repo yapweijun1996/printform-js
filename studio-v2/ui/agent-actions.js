@@ -110,7 +110,7 @@ export function makePrintFormActions({ Agrun, gateway, createProposal, onFailure
       operations: { type: "array", minItems: 1, items: { oneOf: operationSchemas() }, required: true }
     },
     argsExample: { expectedRevision: 0, operations: [{ type: "set_brand_color", hex: "#854d0e" }] },
-    guidance: "Call exactly once with the complete operation set, then stop; the host validates and applies it automatically.",
+    guidance: "Call exactly once with the complete operation set, then stop; the host validates it and applies only in user-selected Auto mode when every operation is eligible.",
     controls: ["complete"], control: "complete",
     execute: async (_context, args) => {
       reviewHooks.guardGeneralPreview?.();
@@ -130,7 +130,7 @@ export function makePrintFormActions({ Agrun, gateway, createProposal, onFailure
       findings: [{ code: "COLUMN_BALANCE", severity: "major", status: "open", message: "Description is too narrow" }],
       summary: "Rebalance the print table columns"
     },
-    guidance: "Use exactly once when attached evidence needs repair, then stop; the host applies it automatically after validation.",
+    guidance: "Use exactly once when attached evidence needs repair, then stop; the host applies it only according to the selected mode after validation.",
     controls: ["complete"], control: "complete",
     execute: async (_context, args) => {
       const operations = normalizeOperations(args.operations);

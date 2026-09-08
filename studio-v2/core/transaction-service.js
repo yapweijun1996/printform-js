@@ -22,6 +22,7 @@ import {
   transactionId,
   view,
 } from "./transaction-common.js";
+import { assertAgentOperations, assertApplyPermission, assertBusPolicyCurrent, assertContextCurrent, assertTransactionContext, bindTransactionContext } from "./agent-boundary.js";
 
 function candidateFormSpecHash(project) {
   return sha256(stableStringify(getFormSpec(project))).then((hash) => `sha256:${hash}`);
@@ -81,11 +82,13 @@ export function requireTransaction(bus, id) {
   return transaction;
 }
 
-export async function previewTransaction(bus, operations, expectedRevision, existingId = null) {
+export async function previewTransaction(bus, operations, expectedRevision, existingId = null, context = null) {
+  assertAgentOperations(bus, operations, context);
   const started = existingId ? null : beginTransaction(bus, expectedRevision);
   let transaction;
   try {
     transaction = existingId ? requireTransaction(bus, existingId) : currentTransaction(bus, started.transaction_id);
+    bindTransactionContext(transaction, context);
     bus.ensureRevision(expectedRevision);
     checkLease(bus, transaction);
     bus.maybeFail("before_preview");
@@ -93,6 +96,8 @@ export async function previewTransaction(bus, operations, expectedRevision, exis
     const preview = bus.preview(operations, expectedRevision);
     const candidateContentHash = await projectContentHash(preview.candidate);
     const candidateReport = await bus.getCandidateReport(preview.candidate, preview.revision);
+    assertContextCurrent(context);
+    assertBusPolicyCurrent(bus, context);
     const validation = candidateReport ? mergeRenderReport(preview.validation, candidateReport.report) : preview.validation;
     transaction.changes = structuredClone(operations);
     transaction.patches = structuredClone(operations);
@@ -115,15 +120,18 @@ export async function previewTransaction(bus, operations, expectedRevision, exis
     return { transaction, preview, validation, candidateReport };
   } catch (error) {
     if (!transaction) throw error;
+    if (error.code === "STALE_POLICY_CONTEXT") throw error;
     if (error.code === "REVISION_CONFLICT") markConflict(bus, transaction, error);
     else rollbackAfterFailure(bus, transaction, error);
     throw error;
   }
 }
 
-export function approveTransaction(bus, input) {
+export function approveTransaction(bus, input, context = null) {
   const transaction = currentTransaction(bus, input.transactionId);
   try {
+    assertTransactionContext(transaction, context);
+    assertApplyPermission(transaction, context);
     bus.ensureRevision(input.expectedRevision);
     checkLease(bus, transaction, input);
     if (!["previewed", "validated", "approved"].includes(transaction.status)) throw leaseError("PREVIEW_REQUIRED", "A fresh preview is required before approval");
@@ -135,15 +143,25 @@ export function approveTransaction(bus, input) {
     bus.maybeFail("after_approval");
     return view(transaction);
   } catch (error) {
+    if (error.code === "STALE_POLICY_CONTEXT") throw error;
     if (error.code === "REVISION_CONFLICT") markConflict(bus, transaction, error);
-    else if (!["INJECTED_CRASH", "CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "PREVIEW_REQUIRED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
+    else if (!["INJECTED_CRASH", "CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "PREVIEW_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
     throw error;
   }
 }
 
-export async function applyApprovedTransaction(bus, input) {
+export async function applyApprovedTransaction(bus, input, context = null) {
   const transaction = currentTransaction(bus, input.transactionId);
   try {
+    assertTransactionContext(transaction, context);
+    if (transaction.status === "committed") {
+      if (input.expectedRevision !== transaction.base_revision) throw leaseError("REVISION_CONFLICT", "The committed transaction belongs to another base revision", { expectedRevision: input.expectedRevision, actualRevision: transaction.base_revision });
+      if (input.expectedCandidateHash !== transaction.preview_hash) throw leaseError("CANDIDATE_HASH_MISMATCH", "The committed transaction does not match the requested candidate", { expectedCandidateHash: input.expectedCandidateHash, actualCandidateHash: transaction.preview_hash });
+      const revision = transaction.working_revision;
+      return { already_committed: true, committed_revision: revision, revision, diff: { changed: transaction.commit_result?.no_op !== true, changedSections: [], operationCount: transaction.changes.length }, validation: transaction.validation_result, candidateHash: transaction.preview_hash, transaction: view(transaction) };
+    }
+    if (["committing", "recovery_required"].includes(transaction.status)) throw leaseError("RECOVERY_REQUIRED", "The commit outcome requires recovery", { transactionId: transaction.transaction_id });
+    assertApplyPermission(transaction, context);
     bus.ensureRevision(input.expectedRevision);
     checkLease(bus, transaction, input);
     if (transaction.status !== "approved") throw leaseError("TRANSACTION_NOT_APPROVED", "Transaction must be approved from a current preview before commit");
@@ -153,8 +171,12 @@ export async function applyApprovedTransaction(bus, input) {
     try { candidate = applyOperations(bus.project, transaction.changes); }
     catch (error) { rollbackAfterFailure(bus, transaction, error); throw error; }
     const candidateContentHash = await projectContentHash(candidate);
+    assertContextCurrent(context);
+    assertBusPolicyCurrent(bus, context);
     if (candidateContentHash !== transaction.candidate_content_hash) throw leaseError("CANDIDATE_CONTENT_MISMATCH", "The project changed after preview; the transaction must be previewed again", { expectedCandidateHash: transaction.candidate_content_hash, actualCandidateHash: candidateContentHash });
     const diff = diffProjects(bus.project, candidate);
+    assertContextCurrent(context);
+    assertBusPolicyCurrent(bus, context);
     if (!diff.changed) {
       transaction.commit_result = { status: "committed", no_op: true, revision: bus.revision, committed_at: iso(bus) };
       setStatus(bus, transaction, "committing", "commit_started", { no_op: true }, "COMMIT_STARTED");
@@ -179,9 +201,10 @@ export async function applyApprovedTransaction(bus, input) {
     bus.persistTransaction(transaction);
     return { revision, diff, validation: transaction.validation_result, candidateHash: transaction.preview_hash, transaction: view(transaction) };
   } catch (error) {
+    if (error.code === "STALE_POLICY_CONTEXT") throw error;
     if (error.code === "REVISION_CONFLICT" || error.code === "STORE_CONFLICT") markConflict(bus, transaction, error);
     else if (error.code === "INJECTED_CRASH") rollbackAfterFailure(bus, transaction, error);
-    else if (!["CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "TRANSACTION_NOT_APPROVED", "CANDIDATE_CONTENT_MISMATCH"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
+    else if (!["CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "TRANSACTION_NOT_APPROVED", "CANDIDATE_CONTENT_MISMATCH", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED", "RECOVERY_REQUIRED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
     throw error;
   }
 }
@@ -209,8 +232,8 @@ export function revisionComparison(bus, fromRevision, toRevision) {
   return { fromRevision, toRevision, diff: diffProjects(from.project, to.project) };
 }
 
-export async function commitConvenienceTransaction(bus, operations, expectedRevision, reason) {
-  const preview = await previewTransaction(bus, operations, expectedRevision);
-  approveTransaction(bus, { expectedRevision, transactionId: preview.transaction.transaction_id, expectedCandidateHash: preview.transaction.preview_hash, requireValid: false });
-  return applyApprovedTransaction(bus, { expectedRevision, transactionId: preview.transaction.transaction_id, expectedCandidateHash: preview.transaction.preview_hash, requireValid: false, reason });
+export async function commitConvenienceTransaction(bus, operations, expectedRevision, reason, context = null) {
+  const preview = await previewTransaction(bus, operations, expectedRevision, null, context);
+  approveTransaction(bus, { expectedRevision, transactionId: preview.transaction.transaction_id, expectedCandidateHash: preview.transaction.preview_hash, requireValid: false }, context);
+  return applyApprovedTransaction(bus, { expectedRevision, transactionId: preview.transaction.transaction_id, expectedCandidateHash: preview.transaction.preview_hash, requireValid: false, reason }, context);
 }

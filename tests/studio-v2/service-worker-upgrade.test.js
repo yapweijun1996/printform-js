@@ -84,7 +84,7 @@ describe("service worker upgrade handoff", () => {
     expect(deps.worker.messages).toHaveLength(0);
     expect(deps.saveButton.disabled).toBe(true);
 
-    resolveSave({ ok: true });
+    resolveSave({ ok: true, mode: "saved" });
     await expect(upgradePromise).resolves.toEqual({ ok: true, saved: true });
     expect(deps.worker.messages).toEqual([{ type: "SKIP_WAITING" }]);
   });
@@ -99,7 +99,7 @@ describe("service worker upgrade handoff", () => {
       .mockImplementationOnce(async () => firstSave())
       .mockImplementationOnce(async () => {
         dirty = false;
-        return { ok: true };
+        return { ok: true, mode: "saved" };
       });
     const onState = vi.fn();
     const controller = createServiceWorkerUpgradeController({ ...deps, isDirty: () => dirty, onSaveDraft, onState });
@@ -119,6 +119,20 @@ describe("service worker upgrade handoff", () => {
     expect(retry).toEqual({ ok: true, saved: true });
     expect(onSaveDraft).toHaveBeenCalledTimes(2);
     expect(deps.worker.messages).toEqual([{ type: "SKIP_WAITING" }]);
+  });
+
+  it("does not upgrade after a download starts without confirmed file completion", async () => {
+    const deps = dependencies();
+    const onSaveDraft = vi.fn(async () => ({ ok: true, mode: "download-started" }));
+    const onState = vi.fn();
+    const controller = createServiceWorkerUpgradeController({ ...deps, isDirty: () => true, onSaveDraft, onState });
+
+    const result = await controller.saveAndUpgrade();
+
+    expect(result).toEqual({ ok: false, reason: "download_started" });
+    expect(onState).toHaveBeenLastCalledWith({ reason: "download_started" });
+    expect(deps.worker.messages).toHaveLength(0);
+    expect(deps.saveButton.disabled).toBe(false);
   });
 
   it("does not switch while the draft is dirty", async () => {

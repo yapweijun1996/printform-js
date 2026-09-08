@@ -1,9 +1,9 @@
 # Studio v2 Data Classification and Destination Rules
 
-Prepared: 2026-09-07. Baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
-Status: **Implemented foundation for PROD-13; combined acceptance Partial and not yet release-complete**.
+Prepared: 2026-09-08. Baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+Status: **Policy requirements retained; implementation Partial.** Review-time classification/session violations now have bounded corrections; complete acceptance remains open. See [resumed evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), [direction review](STUDIO_V2_DIRECTION_REVIEW.md) and the P0 register.
 This document specifies application behavior, not a claim about provider retention or an authorization to send data now.
-Classification labels and rule IDs below are design vocabulary, not newly implemented API fields.
+Rule IDs below specify required behavior. The implemented classification fields do not establish compliance with every rule.
 
 ## Authority and recommendation
 
@@ -21,16 +21,16 @@ Retain existing single-HTML, semantic editing, hash/approval and final human pro
 
 | Source | Current observation | Consequence for this design |
 |---|---|---|
-| [app.js](../studio-v2/ui/app.js), [durable store](../studio-v2/core/durable-transaction-store.js) | installBus classifies before constructing the bus; restrictive policies use a volatile store and do not hydrate localStorage | Full browser reload/mode-race evidence remains required |
-| [gateway.js](../studio-v2/adapters/gateway.js), [webmcp.js](../studio-v2/adapters/webmcp.js), [agent context](../studio-v2/core/agent-context.js) | Main-app installs receive an explicit policy, but standalone gateway/WebMCP fallback currently selects Synthetic when no policy getter is supplied; a missing current policy is treated as unchanged or replaced with the prior active policy | This contradicts DP-C05/DP-L04 and the migration rule “missing policy is Unknown”; adapter initialization and no-active-document transitions remain fail-open |
+| [app.js](../studio-v2/ui/app.js), [durable store](../studio-v2/core/durable-transaction-store.js) | Import is Unknown before bus construction and clears sample provenance. Real/Unknown to Synthetic requires current-whole-document confirmation and a fresh persistence context | Three-engine confirmation/cancellation and no-old-head/backfill controls pass; retain DP-C07/DP-L03 and finish complete M1 acceptance |
+| [gateway.js](../studio-v2/adapters/gateway.js), [webmcp.js](../studio-v2/adapters/webmcp.js), [agent context](../studio-v2/core/agent-context.js) | Main-app installs receive an explicit policy; standalone gateway/WebMCP now default a missing policy to Unknown, and a missing current policy rejects the old context instead of reusing the prior active policy | Preserve DP-C05/DP-L04 fail-closed behavior; adapter initialization and no-active-document transitions still need case-specific evidence |
 | [draft-cache.js](../studio-v2/ui/draft-cache.js) | Full recovery project/fingerprint stored; seven-day age checked on read | Read-time expiry is not scheduled deletion or a privacy guarantee |
-| [agent-sessions.js](../studio-v2/ui/agent-sessions.js) | Synthetic sessions use namespaced IndexedDB; Unknown/Real sessions use memory-only stores; mode changes do not delete old databases | Existing records and delayed writes remain disclosed, not silently erased |
-| [gateway](../studio-v2/adapters/gateway.js), [agent-output-projectors](../studio-v2/core/agent-output-projectors.js) | Public responses are rebuilt from command-specific closed projections; unsafe IDs/paths/selectors use context references | All 35 command cases still need combined acceptance evidence |
-| [command dispatch](../studio-v2/core/command-bus-dispatch.js) | Public get_revision returns only revision/projectHash/transactionId/committedAt; undo_revision includes project; FormSpec/component and audit commands expose domain results | Corrected after tracing getRevision() without arguments; inspect undo/project and nested event payloads; no blanket safe-result claim |
+| [agent-sessions.js](../studio-v2/ui/agent-sessions.js), [runtime store](../studio-v2/ui/agent-session-store.js) | Missing policy is Unknown. Index/runtime transactions recheck current policy after opening and before store work; stale stores are disposed and active work aborted | Preserve DP-C05/DP-L02/04, pinned Agrun schema and atomic version semantics; complete mapped storage-failure/late-result acceptance remains required |
+| [gateway](../studio-v2/adapters/gateway.js), [agent-output-projectors](../studio-v2/core/agent-output-projectors.js) | Public responses are rebuilt from command-specific closed projections; unsafe IDs/paths/selectors use context references; the all-35 dispatch matrix is green | Combined destination, provider-payload and cross-entry acceptance evidence remains required |
+| [command dispatch](../studio-v2/core/command-bus-dispatch.js) | Internal get_revision returns metadata; internal undo_revision can include project. The Agent projection excludes that project and reconstructs permitted fields | Keep full canonical results private; do not confuse internal return shapes with Agent outputs |
 | [layout-snapshot.js](../studio-v2/ui/layout-snapshot.js), [gateway](../studio-v2/adapters/gateway.js) | Geometry-only SVG exists; real-data pixel requests are rejected | Preserve pixel rejection; geometry still requires a bounded approved projection |
 | [agent-vault.js](../studio-v2/ui/agent-vault.js) | Encrypted profiles in IndexedDB; provider/model/endpoint and other profile metadata also stored outside ciphertext | Do not describe every profile field as encrypted; endpoints/IDs must contain no secrets |
-| [agent-provider.js](../studio-v2/ui/agent-provider.js), [runtime](../studio-v2/ui/agent-runtime.js) | User prompt and optional parts go to selected provider through the runtime; global memory is disabled | Local memory-only mode does not imply zero external transmission |
-| [sw.js](../studio-v2/sw.js), [assets.js](../studio-v2/core/assets.js) | Service worker caches only generated shell entries; restrictive asset/export paths reject fetchable imported URLs before fetch/HEAD | Browser/network evidence must confirm no stale worker or delayed request bypass |
+| [agent-provider.js](../studio-v2/ui/agent-provider.js), [runtime](../studio-v2/ui/agent-runtime.js) | User prompt and optional parts go to selected provider through the runtime; global memory is disabled. The controlled browser wire case captures the second Provider request after a safe Agent result and checks the decoded JSON body for Real/business canaries and credentials | Local memory-only mode does not imply zero external transmission; the case covers one composed result path, not every command or backend sink |
+| [sw.js](../studio-v2/sw.js), [assets.js](../studio-v2/core/assets.js) | Service worker caches only generated shell paths; arbitrary same-origin document navigations are not cache entries; the browser test decodes Cache Storage response bodies and checks that arbitrary navigation is absent; restrictive asset/export paths reject fetchable imported URLs before fetch/HEAD | Browser/network evidence must still confirm no stale worker or delayed request bypass |
 | [SQLite adapter](../studio-v2/server/sqlite-durable-backend.mjs), [HTTP server](../studio-v2/server/transaction-http-server.mjs) | Separate durable backend uses SQLite WAL/FULL; the server now defaults to Unknown and refuses restrictive document routes before opening SQLite | Browser policy does not automatically cover database files, WAL, backups or server logs; the explicit Synthetic server path still needs its deployment sink inventory |
 
 These observations establish review targets, not proof that every described leak scenario has occurred.
@@ -81,7 +81,7 @@ Real/Unknown restrictions apply to new application-owned writes, including tempo
 | DP-S02 localStorage durable head/revisions/transactions/evidence | Allowed under existing local single-session contract | No document-associated writes, including initial snapshots and patches; use a supported volatile path or block that operation | Durable adapter; bounded history is not time-based erasure |
 | DP-S03 localStorage recovery draft/fingerprint | Allowed; existing seven-day read-time expiry remains; startup may inspect metadata only and full recovery needs an explicit user action | No new writes or automatic restore of unclassified/real records; an explicit restore is reclassified before installation and stays volatile | Recovery owner; no claim of expiry while the app is closed |
 | DP-S04 IndexedDB session index and runtime chat/tool history | Allowed for explicitly synthetic conversations | Memory-only; no titles, prompts, responses, tool arguments or session labels persisted | Session manager; mode switch does not erase old databases |
-| DP-S05 Cache Storage / service worker | Only approved static resources and verified shipped fixtures; not arbitrary document GETs | Same static-only rule; no document, remote asset, provider or authenticated response caching by the app | Service worker; tighten current generic same-origin GET behavior |
+| DP-S05 Cache Storage / service worker | Only approved static resources and verified shipped fixtures; not arbitrary document GETs | Same static-only rule; no document, remote asset, provider or authenticated response caching by the app | Service worker allowlist; browser evidence still owns deployment-specific cache inspection |
 | DP-S06 UI preferences | Locale/panel sizing may persist | Same; no document identifiers, filenames, content or prompts | Existing preference owners; privacy mode does not require wiping harmless settings |
 | DP-S07 Provider vault | Explicit encrypted credential save permitted | Same credential-only exception; real document data is never put in profiles | Vault owner; user lock/delete controls; locking is not deletion |
 | DP-S08 Explicit draft/production HTML or diagnostics file | Allowed after action-specific checks | Explicit save allowed with content/destination identified; production gate unchanged; diagnostics use safe projection | File action; file belongs to user, no hidden extra copy or upload |
@@ -148,7 +148,7 @@ These limits belong in product wording without weakening the application's own w
 
 ## Implementation responsibilities and dependencies
 
-1. Host import/classification: resolve policy before installing project/session/store; maintain policy identity across async work. The server adapter already defaults to Unknown, but page-gateway/WebMCP fallback must be aligned so missing policy never means Synthetic. A no-active-document state must invalidate old async work rather than reuse the prior policy.
+1. Host import/classification: resolve policy before installing project/session/store; maintain policy identity across async work. The main app, server, page gateway and WebMCP now default a missing policy to Unknown. A no-active-document or missing-current-policy state invalidates old async work rather than reusing the prior policy.
 2. Existing storage adapters: enforce DP-S rules at initialization and each write; select supported volatile behavior, never pretend it is durable.
 3. Shared Agent boundary: define per-command safe projections, including get_revision, FormSpec/components and audit/recovery; keep opaque-ID reverse mappings local.
 4. Provider/asset transport: verify final payload, recipient and current policy; distinguish user text, automatic context and images.
@@ -162,29 +162,29 @@ If shared real-data service is selected later, document access, persistence, ret
 
 ## Acceptance mapping and evidence
 
-All cases remain Not run; these rows refine the existing eight PROD-13 cases and do not increase the 35-case total.
+PROD-13 records: 13-01/02/03/05/06 retain their bounded Pass evidence; 13-04/08 are Fail; 13-07 remains Not run for complete acceptance. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) explains the reopened findings. These mappings do not add case IDs.
 
 | Existing case | Rule coverage | Required additional evidence |
 |---|---|---|
-| 13-01 | DP-C01/02/05/07, DP-L01 | Canary import before durable constructor or URL request; no trust-based or missing-configuration Synthetic classification; gateway/WebMCP installs without policy fail closed as Unknown |
-| 13-02 | DP-C02/03/04, DP-S01..10 | Writes inspected across localStorage, session IndexedDB, Cache Storage and enabled server; decoded envelopes/patches/evidence checked |
-| 13-03 | DP-S01/03/04, DP-L04 | Reload does not silently restore volatile content; explicit saved artifact remains separately available |
-| 13-04 | DP-C05, DP-L02/04/08 | Delayed provider/image/session/cache callbacks cannot use prior policy, wrong document or a temporarily missing current policy; the old policy must not be substituted |
-| 13-05 | DP-L03/05/06 | Exact old-record inventory, ambiguous/blocked cleanup result and no cross-project/vault deletion |
-| 13-06 | DP-T01/02/03/05/07 | All 35 command projections: get_revision metadata-only control, undo project exclusion, direct/wrapped transactions, IDs/paths/URLs, FormSpec and audit canaries; no forbidden egress or asset/cache side effects |
+| 13-01 | DP-C01/02/05/07, DP-L01 | **Pass:** `e2e/studio-v2-p0-prod13.spec.js` imports a canary before installation, inspects decoded browser sinks and verifies missing-policy page/WebMCP adapters fail closed; no trust-based Synthetic classification |
+| 13-02 | DP-C02/03/04, DP-S01..10 | **Pass:** `e2e/studio-v2-p0-prod13-persistent-sinks.spec.js` performs Real-mode edit/preview/approve/apply and geometry review, then decodes localStorage, session IndexedDB and Cache Storage; `tests/studio-v2/server-policy.test.js` proves restrictive server routes reject before SQLite initialization |
+| 13-03 | DP-S01/03/04, DP-L04 | **Pass:** `e2e/studio-v2-p0-prod13-fresh-reload.spec.js` proves Real canary content is not restored after reload; explicit Untrusted download starts separately and does not change application storage |
+| 13-04 | DP-C05, DP-L02/04/08 | **Fail pending complete reverification:** review-time delayed index write was corrected; new index/runtime/panel lifecycle controls pass. Retain original failure evidence and complete all mapped transitions before closure |
+| 13-05 | DP-L03/05/06 | **Pass:** `e2e/studio-v2-p0-prod13-existing-records.spec.js` decodes old durable, transaction/audit, recovery, IndexedDB session, Cache Storage and sessionStorage records plus an unrelated project; Real adds no destination and explicit discard removes only the named recovery record |
+| 13-06 | DP-T01/02/03/05/07 | **Pass:** `e2e/studio-v2-p0-prod13-outbound.spec.js` checks summaries, diagnostics, audit/recovery/history, Evidence Pack, geometry and pixels through embedded/WebMCP in all three engines and first-party CDP in Chromium; no canary or unknown field leaves the closed projection |
 | 13-07 | DP-S07/08, DP-T04/06 | Intentional prompt/save destination; no implicit persistence, secret export or old-session forwarding |
-| 13-08 | DP-C06, DP-L03/07, DP-S05/06 | Synthetic positive control; quota/denied storage, mode downgrade and unrelated preference preservation |
+| 13-08 | DP-C06, DP-L03/07, DP-S05/06 | **Fail pending complete reverification:** imported provenance and permissive defaults were corrected. Three-engine classification and storage-denial controls pass; full asynchronous runtime-store/recovery composition remains under review |
 
-Use controlled provider/resource transports and synthetic canaries; inspect decoded content, temporary writes and final persisted state.
+Use controlled provider/resource transports and synthetic canaries; inspect decoded content, temporary writes and final persisted state. The current browser helper reads every IndexedDB object store and decodes cached response bodies, but it does not yet constitute a complete inventory of browser, server, provider or operating-system sinks.
 Do not contact a live provider with private data to prove redaction. Check application/adapter outcomes and actual browser storage separately.
-Document completion is not privacy acceptance. PROD-13 remains Partial until the fail-open adapter defaults are corrected and mapped cases have evidence.
+Document completion is not privacy acceptance. PROD-13 needs the reopened failures, 13-07 and all applicable application-controlled sink/transition evidence closed; operating-system and external-provider retention limits must be disclosed, not represented as application-enforced guarantees.
 
 ## SCMC review
 
 - Scope: PROD-13 data/destination contract; evidence: linked current sources; constraints: documentation only, existing trust and transaction invariants.
-- Simple: WARN. Three classifications remain understandable, but implicit Synthetic fallback adds an avoidable second default.
-- Clear: WARN. The policy says missing means Unknown while adapter code currently does the opposite.
+- Simple: PASS for the policy design: one host-owned classification and restrictive missing-policy behavior remain required.
+- Clear: PASS for the corrected Current/Target distinction; current implementation exceptions are identified above.
 - Modular: PASS. Host classifies; storage/transport enforce; UI reports results. No new service is introduced.
-- Consistent: FAIL. Main-app/server Unknown defaults and gateway/WebMCP Synthetic defaults implement conflicting answers to the same missing-policy state.
-- Findings: align every adapter to fail closed as Unknown and reject queued work when the current policy is absent; then run 13-01/13-04 before broader M4 acceptance.
-- Overall: FAIL for the current cross-adapter implementation, while the documented policy design remains valid. The highest-value next action is correcting and testing the missing-policy boundary before any M5 release decision.
+- Consistent: FAIL for implementation conformance: host provenance and session defaults/lifecycle do not yet follow the same rules.
+- Findings: High, Consistent: R1/R2/R3 in the [direction review](STUDIO_V2_DIRECTION_REVIEW.md). Correct the existing host/session owners and verify actual write/send boundaries; do not weaken DP-C or DP-L to match current code.
+- Overall: policy direction retained; implementation conformance FAIL. Repair and verify lifecycle enforcement before broader M4 case closure.

@@ -2,16 +2,16 @@
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval.
 >
-> Last reviewed: 2026-09-07. Fresh documentation-review evidence: 80 files / 428 tests. Doctor 5/5, three static pilots and Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and must be rerun after concurrent implementation settles. Approval provenance and missing-policy fail-closed behavior are open release findings. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current gaps and criteria.
+> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) reopens M1 classification/session lifecycle. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Prior 86/454 unit, 190/222 combined browser, 54/54 targeted browser and doctor 5/5 results do not validate the latest session edits or authorize release. Preserve private UI approval and human production-export confirmation.
 
 ## Production Pilot 自动检查
 
 - `npm ci`
 - `npm audit --audit-level=moderate`
-- `npm test -- --run`
-- `npm run build:site`
+- `npm test -- --run --maxWorkers=1 --no-file-parallelism`
+- `npm run build:assets` + `node scripts/build-site.mjs`
 - `npm run test:e2e`
-- `npm run test:e2e -- --project=chromium`（2026-09-07 Windows Chromium: 68/68）
+- `npx playwright test --workers=1`（2026-09-08 Windows combined: 190/222 passed, 32 expected skips, 0 failures；Chromium 74/74、Firefox 58/58 applicable、WebKit 58/58 applicable）
 - `npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html`
 - `npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html`
@@ -40,7 +40,7 @@
 
 ## Production Ready 硬门
 
-Additional behavioral acceptance: execute the [priority acceptance checklist](STUDIO_V2_P0_ACCEPTANCE.md) for PROD-13/01/02/03. Its 35 cases remain Not run; historical foundation completion below does not close these requirements or the other open PROD release criteria.
+Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) records 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Correct the confirmed defects before new closure claims; historical foundation completion below does not satisfy these requirements or authorize release.
 
 以下六项须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免。**代码部分已于 2026-07-31 全部完成**（不允许人工勾选绕过，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)确认标准）：
 
@@ -51,7 +51,7 @@ Additional behavioral acceptance: execute the [priority acceptance checklist](ST
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、权威内容 hash 与由真实 evidence receipt 推导的浏览器凭证。
 6. ✅ 自动验证内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（浏览器矩阵、系统打印预览人工确认等）。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`node scripts/browser-matrix.mjs` / `.github/workflows/browser-matrix.yml`）两个操作系统上各跑满 88/88 全过、零跨引擎分歧，Windows Chromium has current E2E evidence; the full Windows matrix and actual printer chain remain unverified. 硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（完整浏览器矩阵、系统打印预览人工确认等）。浏览器矩阵已在 macOS 与 Linux（GitHub Actions Ubuntu runner，`node scripts/browser-matrix.mjs` / `.github/workflows/browser-matrix.yml`）两个操作系统上各跑满 88/88 全过；Windows 已有 Chromium/Firefox/WebKit 的 Playwright 引擎 E2E 证据，但 Edge、Safari.app、真实打印链和完整发布矩阵仍未认证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 

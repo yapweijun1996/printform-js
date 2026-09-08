@@ -7,7 +7,7 @@ const BUSY = new Set([
   "actionRunning", "actionSelected", "approval"
 ]);
 const ERROR = new Set([
-  "failed", "applyFailed", "safetyStopped", "reviewBlocked", "gatewayTokenRequired"
+  "failed", "applyFailed", "safetyStopped", "reviewBlocked", "gatewayTokenRequired", "recoveryRequired"
 ]);
 const IDLE = new Set([
   "stopped", "rejected", "approvalNotRequested"

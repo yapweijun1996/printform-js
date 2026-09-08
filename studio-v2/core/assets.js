@@ -35,27 +35,32 @@ export function validateAssetSlots(project) {
   return { valid: errors.length === 0, errors, slots: nodes.map((node) => node.getAttribute("data-pf-asset-slot")) };
 }
 
-async function toDataUrl(url) {
+async function toDataUrl(url, assertCurrent = () => {}) {
+  assertCurrent();
   const response = await fetch(url, { credentials: "omit" });
+  assertCurrent();
   if (!response.ok) throw new Error(`Asset ${url} returned HTTP ${response.status}`);
   const blob = await response.blob();
+  assertCurrent();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => { try { assertCurrent(); resolve(reader.result); } catch (error) { reject(error); } };
     reader.onerror = () => reject(reader.error || new Error(`Cannot read asset ${url}`));
     reader.readAsDataURL(blob);
   });
 }
 
-async function checkExternal(url) {
+async function checkExternal(url, assertCurrent = () => {}) {
   // Ordinary image CDNs send no CORS headers, so a cors-mode HEAD rejects for
   // perfectly reachable assets. no-cors yields an opaque response (status 0):
   // treat "the request completed" as reachable and only fail on network errors.
+  assertCurrent();
   const response = await fetch(url, { method: "HEAD", credentials: "omit", mode: "no-cors" });
+  assertCurrent();
   if (!response.ok && response.type !== "opaque") throw new Error(`External asset ${url} returned HTTP ${response.status}`);
 }
 
-async function rewriteCssUrls(css, baseUrl, allowExternal, warnings) {
+async function rewriteCssUrls(css, baseUrl, allowExternal, warnings, assertCurrent) {
   const matches = [...css.matchAll(/url\(\s*(['"]?)([^'"\)]+)\1\s*\)/gi)];
   let rewritten = css;
   for (const match of matches) {
@@ -63,17 +68,27 @@ async function rewriteCssUrls(css, baseUrl, allowExternal, warnings) {
     if (!isEmbeddableUrl(raw)) continue;
     const absolute = new URL(raw, baseUrl).href;
     if (allowExternal && absolute.startsWith("https:")) {
-      await checkExternal(absolute);
+      await checkExternal(absolute, assertCurrent);
       warnings.push({ code: "EXTERNAL_ASSET", message: `External asset retained: ${absolute}` });
       continue;
     }
-    const dataUrl = await toDataUrl(absolute);
+    const dataUrl = await toDataUrl(absolute, assertCurrent);
     rewritten = rewritten.replace(match[0], `url("${dataUrl}")`);
   }
   return rewritten;
 }
 
-export async function inlineProjectAssets(project, baseUrl = document.baseURI) {
+function policyError() {
+  return Object.assign(new Error("External asset requests are blocked by the current data policy"), { code: "ASSET_FETCH_POLICY_BLOCKED" });
+}
+
+function hasFetchableCssUrl(css) {
+  return [...String(css || "").matchAll(/url\(\s*(['"]?)([^'"\)]+)\1\s*\)/gi)]
+    .some((match) => isEmbeddableUrl(match[2].trim()));
+}
+
+export async function inlineProjectAssets(project, baseUrl = document.baseURI, { dataPolicy = null, assertCurrent = () => {} } = {}) {
+  assertCurrent();
   const result = cloneProject(project);
   const warnings = [];
   const allowExternal = Boolean(project.manifest.assets?.allowExternalHttps);
@@ -83,13 +98,16 @@ export async function inlineProjectAssets(project, baseUrl = document.baseURI) {
   for (const node of nodes) {
     const raw = node.getAttribute("src");
     if (!isEmbeddableUrl(raw)) continue;
+    if (dataPolicy?.allowExternalAssetFetch === false) throw policyError();
     const absolute = new URL(raw, baseUrl).href;
     if (allowExternal && absolute.startsWith("https:")) {
-      await checkExternal(absolute);
+      await checkExternal(absolute, assertCurrent);
       warnings.push({ code: "EXTERNAL_ASSET", message: `External asset retained: ${absolute}` });
-    } else node.setAttribute("src", await toDataUrl(absolute));
+    } else node.setAttribute("src", await toDataUrl(absolute, assertCurrent));
   }
   result.templateHtml = template.innerHTML.trim();
-  result.themeCss = await rewriteCssUrls(result.themeCss, baseUrl, allowExternal, warnings);
+  if (dataPolicy?.allowExternalAssetFetch === false && hasFetchableCssUrl(result.themeCss)) throw policyError();
+  result.themeCss = await rewriteCssUrls(result.themeCss, baseUrl, allowExternal, warnings, assertCurrent);
+  assertCurrent();
   return { project: result, warnings };
 }

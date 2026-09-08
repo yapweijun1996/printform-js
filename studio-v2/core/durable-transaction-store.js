@@ -4,16 +4,13 @@ export const DURABLE_TRANSACTION_STORE_VERSION = 1;
 const MAX_AUDIT_EVENTS = 2000;
 const MAX_TRANSACTIONS = 300;
 const MAX_REVISIONS = 50;
-
 function clone(value) {
   return value === undefined ? undefined : structuredClone(value);
 }
-
 function isoNow(clock) {
   const value = typeof clock === "function" ? clock() : clock;
   return value instanceof Date ? value.toISOString() : new Date(value || Date.now()).toISOString();
 }
-
 function projectId(project) {
   return String(
     project?.manifest?.documentId
@@ -22,11 +19,9 @@ function projectId(project) {
       || "untitled",
   );
 }
-
 function error(code, message, details = {}) {
   return Object.assign(new Error(message), { code, ...details });
 }
-
 function defaultState(formId, project, clock) {
   const revision = Number.isInteger(project?.revision)
     ? project.revision
@@ -50,7 +45,6 @@ function defaultState(formId, project, clock) {
     updated_at: isoNow(clock),
   };
 }
-
 function normalizeState(value, formId, project, clock) {
   if (!value || typeof value !== "object") return defaultState(formId, project, clock);
   const base = defaultState(formId, project, clock);
@@ -72,7 +66,6 @@ function eventId() {
   return globalThis.crypto?.randomUUID?.()
     || `event-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
-
 /**
  * A synchronous store boundary used by the browser CommandBus and by the
  * deterministic test server. A production server adapter can implement
@@ -80,18 +73,20 @@ function eventId() {
  * never receives arbitrary database handles.
  */
 export class DurableTransactionStore {
-  constructor({ storage = null, backend = null, key, formId, initialProject = null, clock = () => new Date() } = {}) {
-    this.storage = storage;
-    this.backend = backend;
+  constructor({ storage = null, backend = null, key, formId, initialProject = null, clock = () => new Date(), persistenceAllowed = true } = {}) {
+    this.storage = persistenceAllowed ? storage : null;
+    this.backend = persistenceAllowed ? backend : null;
+    this.persistenceAllowed = persistenceAllowed !== false;
     this.key = key || `printform:studio-v2:durable:${formId || projectId(initialProject)}`;
     this.formId = formId || projectId(initialProject);
     this.clock = clock;
     this.memoryState = null;
+    this.persistenceError = null;
     if (!this._readRaw()) this._writeRaw(defaultState(this.formId, initialProject, this.clock));
   }
 
   get persistent() {
-    return Boolean(this.backend?.read || this.storage?.getItem);
+    return !this.persistenceError && Boolean(this.backend?.read || this.storage?.getItem);
   }
 
   get atomic() {
@@ -101,7 +96,9 @@ export class DurableTransactionStore {
   _readRaw() {
     if (this.backend?.read) return this.backend.read(this.key);
     if (this.storage?.getItem) {
-      try { return JSON.parse(this.storage.getItem(this.key) || "null"); } catch { return null; }
+      if (this.persistenceError && this.memoryState) return clone(this.memoryState);
+      try { return JSON.parse(this.storage.getItem(this.key) || "null") || clone(this.memoryState); }
+      catch (error) { this.persistenceError ||= error; return clone(this.memoryState); }
     }
     return clone(this.memoryState);
   }
@@ -114,8 +111,20 @@ export class DurableTransactionStore {
       return;
     }
     if (this.backend?.write) return this.backend.write(this.key, clone(state));
-    if (this.storage?.setItem) return this.storage.setItem(this.key, JSON.stringify(state));
+    if (this.storage?.setItem) {
+      try { return this.storage.setItem(this.key, JSON.stringify(state)); }
+      catch (error) {
+        this.persistenceError ||= error;
+        this.memoryState = clone(state);
+        return;
+      }
+    }
     this.memoryState = clone(state);
+  }
+
+  get persistenceState() {
+    if (this.persistenceError) return "volatile-fallback";
+    return this.persistent ? "persistent" : "memory-only";
   }
 
   readState() {

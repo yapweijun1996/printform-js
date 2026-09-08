@@ -42,7 +42,8 @@ const CODE_KEYS = new Map([
   ["REPEATED_LAYOUT_REPAIR", "aiChat.errors.repeatedRepair"],
   ["LAYOUT_REVIEW_DECISION_REQUIRED", "aiChat.errors.reviewDecision"],
   ["LAYOUT_OBSERVATION_UNAVAILABLE", "aiChat.errors.reviewObservation"],
-  ["LAYOUT_REPAIR_ACTION_REQUIRED", "aiChat.errors.reviewAction"]
+  ["LAYOUT_REPAIR_ACTION_REQUIRED", "aiChat.errors.reviewAction"],
+  ["RECOVERY_REQUIRED", "aiChat.errors.recoveryRequired"]
 ]);
 
 function messageOf(error) {

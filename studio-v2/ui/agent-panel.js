@@ -6,7 +6,7 @@ import { createAgentPanelRuntime } from "./agent-panel-runtime.js";
 import { panelMarkup, headerClusterMarkup } from "./agent-panel-view.js";
 import { toneForStatusKey } from "./agent-status-tone.js";
 import { createDocumentContextView } from "./agent-document-context.js";
-import { renderChangeCardContent } from "./agent-change-cards.js";
+import { createAgentCardController } from "./agent-card-controller.js";
 import { bindAgentSettingsModal } from "./agent-settings-modal.js";
 import { settingsModalMarkup } from "./agent-settings-view.js";
 import { applyUiI18n, t } from "./ui-i18n.js";
@@ -17,17 +17,22 @@ import { bindLayoutReviewView } from "./agent-review-view.js";
 import { bindAgentHistoryControls } from "./agent-history-controls.js";
 import { bindAgentPanelVault } from "./agent-panel-vault.js";
 import { createAgentPanelEventObserver } from "./agent-panel-events.js";
+import { classifyImportedDocument, classifyRealDocument } from "../core/data-policy.js";
+import { createAgentPanelPolicyControls } from "./agent-panel-policy.js";
 
 const $ = (selector) => document.querySelector(selector);
 
 export function initAgentPanel({
   realData = false,
+  dataPolicy = null,
   getGateway,
   getBaseProject = () => null,
   getHistoryState = () => ({}),
   onHistoryAction = async () => {},
   onCandidateState = () => {},
-  onRealDataChange = () => {}
+  onRealDataChange = null,
+  onDataPolicyChange = null,
+  onScopeChange = () => {}
 }) {
   const host = $("#ai-designer-tabpanel");
   host.innerHTML = panelMarkup();
@@ -48,14 +53,18 @@ export function initAgentPanel({
 
   const trace = bindAgentTrace({ get: $ });
   const vault = new ByokVault();
-  const sessions = new AgentSessionManager({ realData });
+  const initialPolicy = dataPolicy || (realData ? classifyRealDocument() : classifyImportedDocument());
+  const sessions = new AgentSessionManager({ realData, dataPolicy: initialPolicy });
   const historyControls = bindAgentHistoryControls({ get: $, onAction: onHistoryAction });
 
   const state = {
-    realData,
+    realData: initialPolicy.classification === "real",
+    dataPolicy: initialPolicy,
+    activeScope: { kind: "document" },
     records: [],
     currentRecord: null,
     sessionNeedsCreate: false,
+    sessionPersistenceAnnounced: false,
     controller: null,
     profileId: DEFAULT_PROVIDER_PRESET.id,
     proposal: null,
@@ -73,7 +82,10 @@ export function initAgentPanel({
   const docContext = createDocumentContextView({
     get: $,
     t,
-    onScopeChange: (scope) => { state.activeScope = scope; }
+    onScopeChange: (scope) => {
+      state.activeScope = { ...(scope || { kind: "document" }) };
+      onScopeChange(state.activeScope);
+    }
   });
 
   function status(key, variables = {}) {
@@ -120,54 +132,14 @@ export function initAgentPanel({
     if (delBtn) delBtn.disabled = !state.currentRecord;
   }
 
-  function renderProposal(proposal, options = {}) {
-    state.proposal = proposal;
-    const card = $("#ai-proposal-card");
-    if (!card) return;
-    card.classList.toggle("hidden", !proposal);
-    if (!proposal) {
-      card.replaceChildren();
-      if (!options.preserveCandidate) {
-        onCandidateState(false);
-        docContext.update({ stateMode: "committed" });
-      }
-      return;
-    }
-    const cardStatus = options.status || (state.applyMode === "preview" ? "pending" : "pending");
-    const appliedRevision = options.appliedRevision ?? proposal.appliedRevision ?? null;
-    const proposalData = appliedRevision !== null ? { ...proposal, appliedRevision } : proposal;
-
-    renderChangeCardContent({
-      container: card,
-      proposal: proposalData,
-      baseProject: getBaseProject(),
-      applyMode: state.applyMode,
-      status: cardStatus,
-      t,
-      onApply: () => runtime.resolveApproval("approve"),
-      onDiscard: () => runtime.resolveApproval("deny"),
-      onUndo: async (p) => {
-        await onHistoryAction("undo_revision");
-        renderProposal(p, { status: "reverted", preserveCandidate: false });
-      },
-      onRedo: async (p) => {
-        await onHistoryAction("redo_revision");
-        renderProposal(p, { status: "applied", appliedRevision: p.appliedRevision, preserveCandidate: false });
-      }
-    });
-
-    const isPending = cardStatus === "pending";
-    onCandidateState(isPending);
-    docContext.update({
-      stateMode: isPending ? "candidate" : "committed",
-      candidateRevision: isPending ? (proposal.revision !== undefined ? proposal.revision + 1 : null) : null
-    });
-  }
+  const cardController = createAgentCardController({ get: $, state, getBaseProject, onHistoryAction, onCandidateState, docContext, t });
+  const { renderProposal } = cardController;
 
   const reviewView = bindLayoutReviewView({ get: $, t, status });
   const settingsModal = bindAgentSettingsModal({ get: $, onSave: vaultBindings.saveProfile });
   const handleRuntimeEvent = createAgentPanelEventObserver({
-    state, trace, reviewView, status, addMessage, renderProposal
+    state, trace, reviewView, status, addMessage, renderProposal,
+    onDocumentContext: (nextState) => docContext.update(nextState)
   });
 
   const runtime = createAgentPanelRuntime({
@@ -183,8 +155,11 @@ export function initAgentPanel({
     renderSessions,
     onCandidateState,
     handleRuntimeEvent,
+    onApplied: cardController.showApplied,
     openProviderSettings: () => settingsModal.open({ section: "provider", focusSelector: "#ai-public-gateway-key", opener: $("#ai-settings-button") })
   });
+  cardController.setRuntime(runtime);
+  const policyControls = createAgentPanelPolicyControls({ state, sessions, runtime, renderProposal, renderSessions, docContext, addMessage, onDataPolicyChange, onRealDataChange, t });
 
   host.querySelectorAll("[data-ai-prompt-key]").forEach((button) => button.addEventListener("click", () => {
     $("#ai-prompt").value = t(button.dataset.aiPromptKey);
@@ -195,18 +170,28 @@ export function initAgentPanel({
   $("#ai-new-session")?.addEventListener("click", async () => {
     $("#ai-sessions-drawer")?.classList.remove("hidden");
     $("#ai-sessions-toggle")?.setAttribute("aria-expanded", "true");
-    await runtime.newSession();
+    try { await runtime.newSession(); }
+    catch (error) { if (error.code !== "STALE_POLICY_CONTEXT") addMessage("system", translateAgentError(error, "aiChat.errors.startSession")); }
   });
   $("#ai-delete-session")?.addEventListener("click", async () => {
     if (!state.currentRecord) return;
-    state.controller?.stop();
-    state.controller = null;
-    await sessions.delete(state.currentRecord.id);
-    state.currentRecord = null;
-    renderProposal(null);
-    await runtime.refreshSessions();
-    state.log.replaceChildren();
-    addMessage("system", t("aiChat.session.deleted"));
+    const record = state.currentRecord;
+    runtime.stopTurn();
+    const context = runtime.captureContext();
+    let deletion;
+    try {
+      deletion = await sessions.delete(record.id);
+      context.assertCurrent();
+    } catch (error) {
+      if (!context.isCurrent()) return;
+      addMessage("system", translateAgentError(error, "aiChat.errors.sessionDelete"));
+      status("aiChat.status.failed");
+      return;
+    }
+    runtime.invalidateSession();
+    try { await runtime.refreshSessions(); }
+    catch (error) { if (error.code === "STALE_POLICY_CONTEXT") return; throw error; }
+    addMessage("system", deletion?.persistent === false ? t("aiChat.session.deletedMemoryOnly") : t("aiChat.session.deleted"));
   });
   $("#ai-send")?.addEventListener("click", runtime.send);
   $("#ai-prompt")?.addEventListener("keydown", (event) => {
@@ -216,8 +201,7 @@ export function initAgentPanel({
     }
   });
   $("#ai-stop")?.addEventListener("click", () => {
-    state.controller?.stop();
-    renderProposal(null);
+    runtime.stopTurn();
     status("aiChat.status.stopped");
   });
   $("#ai-review-layout")?.addEventListener("click", runtime.reviewLayout);
@@ -262,36 +246,16 @@ export function initAgentPanel({
   populateProviderForm($, publicDefaultProviderProfile());
   historyControls.refresh(getHistoryState());
   vaultBindings.renderProfiles();
-  runtime.refreshSessions().catch((error) => status(agentErrorKey(error) || translateAgentError(error)));
+  runtime.refreshSessions().catch((error) => { if (error.code !== "STALE_POLICY_CONTEXT") status(agentErrorKey(error) || translateAgentError(error)); });
 
   return {
-    async setRealData(value) {
-      state.realData = Boolean(value);
-      sessions.setRealData(state.realData);
-      state.controller?.stop();
-      state.controller = null;
-      state.currentRecord = null;
-      renderProposal(null);
-      state.log.replaceChildren();
-      addMessage("system", state.realData ? t("aiChat.mode.realData") : t("aiChat.mode.syntheticData"));
-      await runtime.refreshSessions();
-      onRealDataChange(state.realData);
-    },
-    onProjectChanged(nextProject = null) {
-      state.controller?.stop();
-      state.controller = null;
-      renderProposal(null);
-      if (nextProject) {
-        docContext.update({
-          documentTitle: nextProject.manifest?.title || "PrintForm Document",
-          documentId: nextProject.manifest?.documentId || "",
-          revision: nextProject.revision || 0
-        });
-      }
-    },
+    ...policyControls,
     updateDocumentContext(docState) {
       docContext.update(docState);
     },
+    getDataPolicy() { return state.dataPolicy; },
+    getApplyMode() { return state.applyMode; },
+    getScope() { return state.activeScope; },
     refreshHistoryControls: historyControls.refresh,
     lock() {
       vault.lock();

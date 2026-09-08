@@ -8,7 +8,8 @@ export function createAgentPanelEventObserver({
   reviewView,
   status,
   addMessage,
-  renderProposal
+  renderProposal,
+  onDocumentContext = () => {}
 }) {
   return function handleRuntimeEvent(event) {
     reviewView.observe(event);
@@ -44,6 +45,15 @@ export function createAgentPanelEventObserver({
     }
     if (event.type === "layout_readiness") {
       const ready = event.detail?.ok && event.detail.result?.ready;
+      const result = event.detail?.result;
+      const readiness = result?.validation || null;
+      onDocumentContext({
+        revision: result?.revision,
+        renderStatus: ready ? "ready" : "failed",
+        readiness,
+        errorCount: readiness?.errors?.length || 0,
+        warningCount: readiness?.warnings?.length || 0
+      });
       status(ready ? "aiChat.status.reviewReady" : "aiChat.status.reviewBlocked");
     }
     if (record?.type === "completed") {

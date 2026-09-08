@@ -1,6 +1,6 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
-> Last reviewed: 2026-09-07. E14 visual foundation exists; behavioral correction precedes further UX expansion. Current criteria and evidence: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
+> Last reviewed: 2026-09-08. E14 visual foundation exists; behavioral correction precedes further UX expansion. Current criteria and evidence: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md).
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。
 
@@ -8,9 +8,11 @@
 
 ## 0. Current: Production Pilot behavioral and release acceptance
 
-The [Agent boundary migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) details the PROD-13/01/02/03 integration order: baseline and compatibility inventory, host/storage policy, shared command enforcement, client migration, combined acceptance, then authorized release. All implementation packages remain Pending; this does not change current versions or authorize rollout.
+**Selected target (2026-09-08):** replace the embedded AGRUN runtime with [PI Agent Harness](docs/STUDIO_V2_PI_HARNESS_MIGRATION.md), browser first, frontend-only BYOK, with no Node.js/server runtime or proxy. PI-00 qualification comes first; PI-01 through PI-05 cover transport, host tools, sessions, acceptance and retirement. This is planned work; current code remains AGRUN. Existing policy gates remain mandatory, and shared-service work is not a prerequisite for this target.
 
-状态：🔶 **Production Pilot / bounded Production Candidate**. Historical 94/100 scoring is not a current release decision. E13-SERVER 的单 writer SQLite 受控部署已通过真实进程/HTTP acceptance；active-active、外部 HA 数据库、浏览器 UI remote-store wiring 和更广打印链仍未认证。当前下一项产品工作是 E14 AI Designer 信息架构与交互基础，而不是宣布 Production Ready。
+The [Agent boundary migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) retains M0-M5 ordering. The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) reopens M1 lifecycle; fix host provenance and session admission at the existing owners before broader M4 acceptance. M2/M3 foundations do not imply acceptance closure. Coding has resumed; do not change product defaults, expand scope or authorize rollout through documentation.
+
+Status: **Production Pilot**. The next engineering priority is PROD-13 lifecycle correction coordinated with PROD-01/02/03, not additional AI Designer UI work. Historical scores and controlled single-writer SQLite results are not current release approval.
 
 本阶段在现有 Protocol、CommandBus 与 PrintForm runtime 上做最小增量：FormSpec/component registry、Active Table Context、多页确定性诊断、Agent transaction gate、trusted export allowlist、Evidence Pack，以及 E13 durable transaction store/state machine/CAS/lease/recovery/server adapter 已进入代码和测试。仍不扩大为一般 Production Ready，因为当前服务只认证单 writer SQLite 部署，浏览器默认 localStorage 仍是 offline/single-session fallback，Firefox/WebKit/真实 Safari/打印机链也未认证。
 

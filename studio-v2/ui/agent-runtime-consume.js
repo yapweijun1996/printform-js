@@ -70,6 +70,7 @@ export async function consumeRuntimeTurn(controller, input) {
   let guardError = null;
   let proposalReady = false;
   try {
+    controller.assertCurrentPolicy?.();
     const stream = session.runStream(input, {
       abortSignal: controller.abortController.signal,
       onStreamEvent: (event) => emitDiagnosticEvent(controller, event),
@@ -81,6 +82,7 @@ export async function consumeRuntimeTurn(controller, input) {
       onInvalidPlannerOutput: (text) => controller.recoverInvalidPlannerOutput?.(text)
     });
     for await (const event of stream) {
+      controller.assertCurrentPolicy?.();
       if (controller.actionFailure) {
         controller.abortController.abort();
         break;
@@ -99,12 +101,20 @@ export async function consumeRuntimeTurn(controller, input) {
       const publicEvent = projectRuntimeEvent(event);
       if (publicEvent) controller.emit(publicEvent);
     }
+    controller.assertCurrentPolicy?.();
   } catch (error) {
-    if (!controller.actionFailure) completed = { terminalKind: controller.abortController.signal.aborted ? "abort" : "error", error };
+    if (error?.code === "STALE_POLICY_CONTEXT") {
+      controller.actionFailure = error;
+      controller.clearProposal?.();
+      completed = { terminalKind: "error", result: null, error };
+    } else if (!controller.actionFailure) {
+      completed = { terminalKind: controller.abortController.signal.aborted ? "abort" : "error", error };
+    }
   } finally {
     controller.running = false;
     controller.abortController = null;
   }
+  if (controller.actionFailure?.code === "TURN_CANCELLED") { controller.actionFailure = null; completed = { terminalKind: "abort", result: null }; }
   let result = completed?.result || null;
   const resultText = result && controller.outputText(result);
   if (completed?.terminalKind === "done" && resultText && !controller.pendingProposal && !controller.actionFailure && !guardError) {

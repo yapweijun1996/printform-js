@@ -1,9 +1,10 @@
 const KEY = "printform-studio-v2-recovery";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function saveRecoveryDraft(project, fingerprint) {
+export function saveRecoveryDraft(project, fingerprint, { policy = null } = {}) {
+  if (policy?.classification !== "synthetic" || policy.allowRecovery !== true) return false;
   try {
-    localStorage.setItem(KEY, JSON.stringify({ version: 1, savedAt: Date.now(), fingerprint, project }));
+    localStorage.setItem(KEY, JSON.stringify({ version: 1, savedAt: Date.now(), fingerprint, classification: policy?.classification || "synthetic", project }));
     return true;
   } catch (error) {
     // QuotaExceededError (large projects with inlined logos) or Safari private
@@ -13,18 +14,26 @@ export function saveRecoveryDraft(project, fingerprint) {
   }
 }
 
-export function loadRecoveryDraft() {
+function readStoredDraft() {
   try {
     const draft = JSON.parse(localStorage.getItem(KEY));
-    if (!draft || Date.now() - draft.savedAt > MAX_AGE_MS) {
-      localStorage.removeItem(KEY);
-      return null;
-    }
+    if (!draft || !Number.isFinite(draft.savedAt) || Date.now() - draft.savedAt > MAX_AGE_MS) return null;
     return draft;
   } catch {
-    localStorage.removeItem(KEY);
     return null;
   }
+}
+
+export function peekRecoveryDraft() {
+  const draft = readStoredDraft();
+  if (!draft) return null;
+  const classification = ["synthetic", "unknown", "real"].includes(draft.classification) ? draft.classification : "unknown";
+  return { version: draft.version, savedAt: draft.savedAt, fingerprint: draft.fingerprint || null, classification };
+}
+
+export function loadRecoveryDraft({ policy = null, explicit = false } = {}) {
+  if (!policy || (policy.allowRecovery !== true && !explicit)) return null;
+  return readStoredDraft();
 }
 
 export function clearRecoveryDraft() {

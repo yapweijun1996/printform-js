@@ -1,12 +1,13 @@
 # Studio v2 Agent Boundary and Compatibility Migration
 
-Prepared: 2026-09-07. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
-Status: **M0/M1/M3 foundation implemented; M2 closure reopened by approval-provenance and missing-policy findings; M4/M5 remain open**.
+Prepared: 2026-09-08. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
+Status: **M0 inventory exists; M1 lifecycle reopened; M2/M3 acceptance Partial; M4/M5 incomplete.** The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) steers the next authorized implementation; coding resumed by explicit user instruction on 2026-09-08.
 This document sequences PROD-13 with PROD-01/02/03; it records the authorized implementation foundation
 in this worktree and does not authorize deployment.
 
 ## Authority and invariants
 
+- [PI Agent Harness migration](STUDIO_V2_PI_HARNESS_MIGRATION.md) owns the selected embedded-runtime replacement: browser-first, frontend-only BYOK, no Node.js/server runtime. That plan changes runtime ownership without weakening the policy, projection or transaction requirements here. PI implementation is Not started; existing boundary corrections remain required.
 - [Data policy](STUDIO_V2_DATA_POLICY.md) owns classification, destinations and lifetime.
 - [Command fields](STUDIO_V2_AGENT_OUTPUT_FIELDS.md) and [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) own allowed outputs; do not duplicate their schemas here.
 - This document owns enforcement placement, client migration, failure handling and rollout gates.
@@ -20,7 +21,7 @@ in this worktree and does not authorize deployment.
 
 | Boundary | Source-backed current behavior | Migration consequence |
 |---|---|---|
-| Host installation | [app.js](../studio-v2/ui/app.js) classifies the project before constructing CommandBus; restrictive policies omit durable storage and hydrate paths | Keep classification authoritative; the checkbox remains a view/control and cannot broaden an imported context |
+| Host installation | Initial import is classified before CommandBus construction; a retained sample key can wrongly broaden that imported context on a later toggle | The required checkbox/provenance boundary is not complete; fix current-document classification first |
 | Shared command entry | [gateway.js](../studio-v2/adapters/gateway.js) resolves context references, checks policy/scope/apply, calls bus.execute, then sanitizes the result | Reuse this single boundary; do not add parallel command services |
 | Early errors | Gateway JSON parsing, policy, dispatch and projection failures return fixed safe errors; direct human UI retains full internal errors | Keep the safe boundary stable and never fall back to a raw domain result |
 | Embedded actions | [agent-actions.js](../studio-v2/ui/agent-actions.js) calls gateway.execute but also wraps previews and returns local review-hook results | The 35 command schemas do not cover every runtime action envelope; inventory and validate these compositions too |
@@ -29,8 +30,8 @@ in this worktree and does not authorize deployment.
 | MCP/CDP | [server.mjs](../mcp/server.mjs) loads its local TOOL_CONTRACTS; [cdp-client.mjs](../mcp/cdp-client.mjs) calls window.PrintFormStudioAgent.execute and preflights live protocol, Agent Contract and complete tool catalog; controlled transport tests exercise target replacement/reconnect | Version/catalog mismatches fail before business calls and scope/apply/stale/reference outcomes agree with embedded/WebMCP in the controlled harness; browser-level reconnect/page-replacement evidence remains open |
 | MCP failure output | Server uses fixed safe text and CDP performs a `get_capabilities` contract handshake before business calls | Keep transport exceptions generic and reject incompatible page/server combinations before business calls |
 | Human UI | app.js uses bus.execute and internal project-bearing change events for editing/history; Agent panel receives only projected gateway results | Keep full local domain results available to human UI; never route them into AI context automatically |
-| Human approval capability | The panel verifies its candidate approval token before calling `executeHuman`, and registered MCP/WebMCP tools expose only normal `execute`; however, the page-global gateway and bound session objects also expose `executeHuman` | Approval provenance is not protected from arbitrary same-origin script/raw CDP execution. Keep the capability private to the UI or explicitly narrow the threat claim and prove 02-03 against every supported Agent surface |
-| Missing-policy fallback | Main-app and server paths establish explicit Unknown/Real/Synthetic policy, but standalone page-gateway and WebMCP fallback currently select Synthetic; missing-current-policy checks can reuse the old active policy | Align adapters with the admission rule “missing policy is Unknown” and fail stale/no-active-document work closed before M4 |
+| Human approval capability | The panel verifies its candidate approval token before calling `executeHuman`; `installAgentGateway()` supplies that method only on an app-local UI session factory. Page-global and ordinary bound sessions expose only normal `execute`, and registered MCP/WebMCP tools do the same | The concrete public gateway bypass is closed by implementation and targeted gateway/Chromium checks. The browser is not a hostile-code sandbox; complete 02-01..02-08 evidence remains required |
+| Missing-policy fallback | Main-app, server, page-gateway and WebMCP paths now establish Unknown/Real/Synthetic policy consistently; missing-current-policy checks reject stale/no-active-document work instead of reusing the old policy | Preserve the fail-closed rule through the remaining P0 evidence and client migration checks |
 
 These are source observations plus the implementation boundary now in the worktree; combined release evidence remains separate.
 Current versions are Runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0.
@@ -98,17 +99,18 @@ Never retain a raw-output compatibility path for Real/Unknown. Prefer one new sa
 
 ## Ordered implementation packages
 
-M0/M1/M3 have a bounded foundation. M2 remains **Partial** after the documentation-only review found
-approval-provenance and missing-policy gaps; M4 acceptance and M5 release evidence remain **Pending**.
+M0 inventory and the private UI approval-capability correction are retained. The direction review
+reopens M1 classification/session lifecycle; M2/M3 acceptance remains **Partial**. M4 is incomplete;
+M5 release evidence is **Pending**. Earlier aggregate runs do not override the reopened failures.
 Role names below identify responsibilities, not assigned people. No deployment is authorized.
 
 | Order / owner role | Bounded work package | Dependency and exit evidence |
 |---|---|---|
 | M0 / Tech Lead + QA | Freeze reviewed 35-command variants, runtime wrapper inventory, compatibility decision and controlled canary fixtures; assign implementation/review owners | Implemented inventory, version baseline and public matrix foundation; case-specific privacy evidence remains open |
-| M1 / Host + storage owner | Establish authoritative policy lifecycle before install/hydrate; guard durable/recovery/session/cache/resource sinks and explicit file actions | Implemented restrictive host/storage foundation; recovery startup is metadata-only and explicit restore is reclassified before install; 13-01/02/03/05/07/08 evidence remains open |
-| M2 / Gateway + domain owner | Closed projections/errors and reference resolution through existing gateway; couple scope/apply checks to domain admission and late-result handling | Partial: closed projections, session/document/policy references and scope/apply guards exist, but page-global `executeHuman` does not prove trusted approval provenance and missing-policy adapter fallback remains Synthetic; resolve these before the M2 exit claim |
-| M3 / Runtime + adapter owner | Migrate embedded wrappers/review/provider payloads, WebMCP and MCP/CDP; synchronize versions, schemas and guidance | Implemented runtime/provider/adapter foundation, version alignment, complete-catalog admission and controlled CDP target replacement checks; browser-level WebMCP/equivalent-context and full incompatible-client evidence remain open |
-| M4 / QA + reviewer | Run combined privacy/scope/apply/state races, no-op/recovery and human-editor regressions with independent evidence review | M1-M3; targeted duplicate/lost-response/recovery, Stop/late-callback, embedded/WebMCP/CDP entry-parity and catalog/reconnect tests now exist, but all 35 existing P0 cases still need case-specific evidence; browser, sink and other release requirements remain independently open |
+| M1 / Host + storage owner | Authoritative classification before install/hydrate and at every side effect; durable/recovery/session/cache/resource/file boundaries | Partial: imported provenance, missing session policy and delayed store admission corrections have bounded evidence. Complete 13-04/08 reverification and explicit-save/recipient boundaries before claiming the milestone |
+| M2 / Gateway + domain owner | Closed projections/errors and reference resolution through existing gateway; couple scope/apply checks to domain admission and late-result handling | Partial: closed projections, session/document/policy references, scope/apply guards and a private UI-owned approval capability exist; full P0 approval/apply evidence remains before the M2 exit claim |
+| M3 / Runtime + adapter owner | Migrate embedded wrappers/review/provider payloads, WebMCP and MCP/CDP; synchronize versions, schemas and guidance | Partial: R5/R6 prompt wording and R7 actual prompt delivery are corrected. Three-engine panel and second-wire checks confirm the prompt reaches the Provider substitute; complete host admission, recipient replacement and client coverage remain open |
+| M4 / QA + reviewer | Combined privacy/scope/apply/state races, no-op/recovery and human-editor regressions | After fixing M1 regressions, run the changed-path controls, actual browser sink/payload checks and relevant regressions. Earlier 190/222, 54/54 and Provider-delay sequences remain historical evidence; use the P0 register for current case status |
 | M5 / Release owner | Record build/client versions, supported environment, remaining limitations, rollback drill and release decision | M4 and all applicable PROD-10/12 gates; maintainer authorization required before rollout |
 
 M1 and M2 helper tests can be developed in parallel once the shared context contract is fixed; integration activation waits for both.
@@ -151,5 +153,5 @@ Operational diagnostics use fixed codes/counts/version metadata; do not log fail
 - Clear: PASS. Admission, commit, output delivery and rollback outcomes have distinct owners and gates.
 - Modular: PASS. Canonical domain results stay internal; projection, transport and persistence enforce separate responsibilities.
 - Consistent: PASS. Shared shapes, four version lines and existing acceptance IDs remain authoritative.
-- Findings: no material SCMC design issue; external version bootstrap, client migration and full wrapper evidence remain pending after the foundation work.
-- Overall: PASS for plan and implementation foundation only. Highest-value next action: run M4 combined acceptance and record case-specific evidence before M5 release review.
+- Findings: review-time High classification/session failures have bounded fixes, not complete milestone acceptance. See [resumed evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md); external-client host admission, recipient changes and save races remain unclosed.
+- Overall: PASS for the required owner/dependency design, FAIL for treating the current foundation as conformant. Highest-value next action in the resumed implementation: repair M1 lifecycle at existing owners, then validate composed boundaries and return to M4.

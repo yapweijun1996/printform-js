@@ -25,7 +25,9 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 - Prefer an isolated Chrome profile managed automatically by Chrome DevTools MCP. No manual profile command is required, and the temporary profile is removed when the MCP session ends.
 - Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
 - The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
-- Enabling real-data mode disables durable project snapshots, recovery drafts and persistent chat stores for the active document context. Unknown imports are classified restrictively before CommandBus/storage installation. Existing records are not silently deleted; browser transition, reload and delayed-write evidence remain under PROD-13 in the [production plan](../docs/STUDIO_V2_PRODUCTION_PLAN.md).
+- Unknown/Real must not automatically persist document snapshots, recovery drafts or chat records. Imported-policy loosening and delayed session writes have bounded fixes; complete privacy acceptance remains open in the [resumed evidence](../docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md). Do not use the mode label as proof of complete privacy enforcement or introduce real business data to test it. Existing records must not be silently deleted.
+- Host classification, scope and apply policy override model-supplied flags. Raw source replacement remains human-editor-only, even if a user requests it through chat. Missing safe fields or rejected references do not authorize browser/DOM inspection, screenshots or whole-document scope as a fallback.
+- Screenshots/pixel evidence are permitted only for a currently confirmed Synthetic document. Unknown/Real uses approved geometry; if that cannot support a visual judgment, report incomplete evidence and leave human inspection separate. A prompt requesting screenshots does not broaden this permission.
 
 ## Recommended Chrome DevTools MCP WebMCP route
 
@@ -99,16 +101,18 @@ The steps below exercise the **current Pilot contract**. Layout evidence is issu
 1. Open the Studio v2 PWA in the isolated profile. Use `?sample=purchase-order-red` for the Crimson purchase-order pilot or select it from **Standard sample**.
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
-4. Use `inspect_design_state` and `get_operation_catalog`, then use `preview_changes` with the current revision, `approve_transaction` with the returned candidate hash, and only then `apply_changes`.
+4. Use `inspect_design_state` and `get_operation_catalog`, then `preview_changes` with the current revision and permitted scope. In Preview mode, stop at the pending candidate and wait for the human UI; do not claim approval in tool input. Auto mode permits only host-eligible operations through the existing approval/apply transaction sequence with the exact transaction ID and candidate hash. A permission error is not a reason to bypass the gateway.
 5. Exercise `default` and `long-text`. In synthetic-data mode the embedded AI review receives bounded, complete-page pixel rasters plus safe metrics; in real-data mode it receives complete-page geometry-only SVG snapshots. A broken scenario returns an unsigned safe observation for diagnosis, never a completion receipt. A human should still inspect the actual browser/system print preview rather than relying on agent evidence alone.
 6. Call `begin_layout_review` and `capture_layout_evidence` for required scenarios. Any major or critical finding blocks completion even if the caller labels it `fixed`; apply a revision-bound repair, capture fresh evidence, then call `complete_layout_review` with the new clean `evidenceIds`.
 7. Treat the resulting receipt as Studio-issued layout evidence. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.
 
 Any project, locale, sample, theme, template, or asset change invalidates the prior review receipt. The agent must repeat the visual review before claiming Pilot completion. The embedded loop permits at most three passes and two approved repairs; repeated repairs are rejected. Studio can block readiness and export, but it cannot force an external Agent to continue working or prevent it from sending a response.
 
-Agent Contract 4.0 exposes a semantic FormSpec/component registry and requires `preview_changes` → `approve_transaction` → `apply_changes` with an exact transaction ID and candidate hash. Agent results use closed projections and session-scoped opaque references; `apply_changes` no longer accepts `operations[]`; raw source preview remains a Studio-internal command and is not an Agent tool. The embedded AI Designer follows the same transaction path. Use `get_transaction`, `get_revision`, `get_audit_events`, `get_transaction_history` and `get_evidence_pack` for durable audit/recovery state. Lease recovery uses `renew_lease`, `release_lease`, `takeover_transaction` and `recover_transaction`; releasing a lease expires the uncommitted record, and takeover creates a fresh transaction. Stale or conflicted drafts must be explicitly resolved before a new preview. End users can Undo or Redo committed revisions. `request_export` is readiness-only: AI never receives Production Export UI permission.
+Agent Contract 4.0 exposes semantic FormSpec/components and retains the preview/approval/apply transaction sequence. That sequence does not grant an Agent human approval permission. Results use closed projections and context-bound opaque references; `apply_changes` does not accept `operations[]`, and raw source preview is human-editor-only. Query transaction/revision/audit/history/evidence tools to reconcile outcomes, but Unknown/Real records and references are volatile, not recoverable after reload. Timeout or cancellation does not prove no commit: query the same transaction when its context remains available, or report reconciliation required without blind retry or automatic rollback. Lease takeover creates a fresh transaction; stale/conflicted drafts require explicit resolution. `request_export` is readiness-only; Production Export remains human-controlled.
 
 ## Embedded AI Designer and BYOK
+
+**Planned replacement:** [PI Agent Harness migration](../docs/STUDIO_V2_PI_HARNESS_MIGRATION.md) selects actual `AgentHarness`, browser-first execution and direct BYOK with no Node.js/server runtime. The plan removes the embedded credential-free gateway default and requires browser provider qualification. It is not implemented; the AGRUN behavior below remains Current. MCP setup elsewhere in this guide is not a prerequisite for the planned embedded Designer.
 
 The Studio includes a collapsible AI Designer panel backed by the pinned
 same-origin `agrun.min.js` bundle. It supports OpenAI, Gemini and an
@@ -119,10 +123,11 @@ derived key and decrypted credential exist only while the vault is unlocked.
 The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
 
 Security boundary: the supported MCP/WebMCP catalogs expose only normal Agent `execute` calls. The
-page-global gateway currently also contains the UI's privileged `executeHuman` method, so arbitrary
-same-origin script or raw CDP access is outside the proven human-approval boundary. Do not grant a
-model unrestricted page/CDP execution and then treat Preview mode as proof of human provenance;
-PROD-02/02-03 tracks moving that capability behind a private UI-owned boundary or narrowing the claim.
+page-global gateway and ordinary bound sessions also expose only `execute`; the UI's privileged
+`executeHuman` method is created on an app-local session factory and is not attached to the public
+gateway. The panel verifies its candidate approval token before using that private path. This does
+not sandbox hostile extensions, arbitrary debugging or untrusted same-origin code; do not grant a
+model unrestricted page/CDP execution, and keep the remaining PROD-02/02-03 acceptance evidence.
 
 ```text
 inspect → operation catalog → preview_changes → host auto-apply (candidate hash + requireValid) → validate
@@ -139,8 +144,8 @@ envelope is invalid, the controller converts it into the same native
 `preview_changes` action. High-risk raw replacement text is ignored.
 
 The AI runtime cannot production-export, cannot use Web search/URL/workspace
-actions, and cannot mutate an untrusted document. Real-data mode keeps chat
-sessions in memory and applies the same gateway redaction, but user-entered
+actions, and cannot mutate an untrusted document. Restrictive chat stores are
+intended to remain memory-only, subject to the incomplete lifecycle acceptance above. User-entered
 values or raw replacement text can still be intentionally sent to the chosen
 provider. The default runtime step limit is 100 (bounded to 4–100). The panel
 always reports token usage; a USD cap is enabled only when the user supplies
@@ -151,6 +156,12 @@ Agrun stream events are projected at the controller boundary. The UI and its
 memory-only trace receive action names, phases, statuses, error codes and
 numeric usage, but not raw prompts, image data URLs, credentials, normalized
 provider input or terminal run state.
+
+Runtime guidance is loaded separately from these engineering documents: the embedded controller uses
+`ui/agent-designer-prompt.js`, the fetched `agent-skills/printform-designer.md`, and pass-specific review
+prompts; MCP clients also receive `mcp/server.mjs` instructions. The direction review records remaining
+raw-source and unconditional-screenshot wording conflicts in those code-defined prompts. This guide
+does not fix them, prove a model followed it, or substitute for host enforcement and final payload tests.
 
 ## Production sample artifacts
 

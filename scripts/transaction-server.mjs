@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { TransactionHttpServer } from "../studio-v2/server/transaction-http-server.mjs";
 import { DurableTransactionStore } from "../studio-v2/core/durable-transaction-store.js";
+import { classifyImportedDocument, classifyRealDocument, classifySyntheticDocument } from "../studio-v2/core/data-policy.js";
 import { createSalesInvoiceProject } from "../studio-v2/samples/sales-invoice.js";
 
 function option(name, fallback = null) {
@@ -14,9 +15,14 @@ function option(name, fallback = null) {
 const initialProject = createSalesInvoiceProject();
 const dbPath = path.resolve(option("--db", path.join(os.tmpdir(), "printform-studio-v2.sqlite")));
 const formId = option("--form-id", DurableTransactionStore.formId(initialProject));
+const classification = option("--classification", "unknown");
 const port = Number(option("--port", process.env.PORT || 4175));
 const leaseDurationMs = Number(option("--lease-ms", process.env.PRINTFORM_LEASE_MS || 30_000));
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+const dataPolicy = classification === "synthetic"
+  ? classifySyntheticDocument(formId)
+  : (classification === "real" ? classifyRealDocument(formId) : classifyImportedDocument(formId));
 
 let crashTimer = null;
 const server = new TransactionHttpServer({
@@ -25,6 +31,7 @@ const server = new TransactionHttpServer({
   initialProject,
   port,
   leaseDurationMs,
+  dataPolicy,
   serverToken: process.env.PRINTFORM_TRANSACTION_SERVER_TOKEN || "",
   testMode: process.env.PRINTFORM_TRANSACTION_SERVER_TEST_MODE === "1",
   onCrash: () => {

@@ -6,7 +6,7 @@
 >
 > Documentation authority follows responsibility, not language: SPEC owns Current behavior; the English production plan owns latest evidence/criteria; TASK owns execution status. README and Agent setup summarize and link to these sources.
 
-> **2026-09-07 review**: PROD-13/01/02/03 foundation work is implemented with targeted evidence, but M2 remains Partial after approval-provenance and missing-policy fail-open findings. Full P0 acceptance and release matrix remain open. Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Latest evidence and open criteria: [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
+> **2026-09-08 direction correction**: implementation Partial; coding resumed; M1 correction in progress. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) confirms classification/session defects and retains the policy direction. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. Prior aggregate passes are not current lifecycle acceptance.
 
 ## 状态词
 
@@ -23,11 +23,12 @@
 
 | 目的 | 文档 | 权威范围 |
 |---|---|---|
-| Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-07 evidence, PROD requirement IDs, dependencies and proposed layout |
-| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | PROD-13/01/02/03: 35 observable cases, evidence rules and combined flows; all Not run |
+| Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-08 evidence, PROD requirement IDs, dependencies and proposed layout |
+| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | 35 cases: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run |
 | Data classification and destinations | [Data policy](STUDIO_V2_DATA_POLICY.md) | PROD-13 Target: data classes, storage/sending rules, lifetime, transitions and mapping to eight acceptance cases |
 | Agent output fields | [35-command table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md), [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) | Implemented closed projections for the public gateway; browser/provider and full acceptance evidence remain Partial |
-| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0/M1/M3 foundations implemented; M2 Partial; M4/M5 acceptance, release evidence and external client migration remain open |
+| Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0 inventory retained; M1 reopened; M2/M3 acceptance Partial; M4/M5 incomplete |
+| Embedded harness replacement | [PI Agent Harness plan](STUDIO_V2_PI_HARNESS_MIGRATION.md) | Selected Target: browser-first, frontend-only BYOK; no Node.js/server runtime. PI-00 through PI-05 are Not started; Current remains AGRUN. |
 | 判断产品适用性 | [产品策略](STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md) | 用户、非目标、指标、模板策略 |
 | 理解当前单 HTML | [协议 v2](PRINTFORM_V2_PROTOCOL.zh-CN.md) | Current 文件结构、绑定与 runtime API |
 | 理解 AI 与安全边界 | [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) | 六项 P0 信任闭环硬门（Current，代码已完成）与已评估未采纳的历史设想（Backlog） |
@@ -77,17 +78,17 @@
 - Selection starts as Entire document; the UI now maps available table choices to stable FormSpec IDs and the domain guard enforces the structured scope. Full component selection and browser evidence remain Partial (PROD-01).
 - The context badge now maps render lifecycle and committed readiness to visible states; stale/delayed/error browser evidence remains open (PROD-03).
 - Review-generated repairs now consult the shared apply mode and auto-eligibility guard; delayed/retry/cross-entry evidence remains open (PROD-02).
-- The panel verifies an approval token, but the page-global and bound-session gateways also expose `executeHuman`; trusted human provenance is not established against arbitrary same-origin script/raw CDP execution (PROD-02/02-03).
+- The panel verifies an approval token before using a UI-owned `executeHuman` capability; page-global and ordinary bound-session gateways expose only `execute`. Full PROD-02/02-03 acceptance remains open, and arbitrary browser debugging is not treated as sandboxed.
 - Candidate cancellation, raw draft protection and save outcomes need additional acceptance (PROD-04/08).
-- Card Undo currently invokes global history without card-target/result checks (PROD-04). Unknown/Real host classification now disables durable project snapshots and recovery writes before CommandBus installation; browser transition/reload evidence remains open (PROD-13).
-- Main-app/server missing policy is restrictive, while standalone gateway/WebMCP fallback currently selects Synthetic and can retain an old policy when the current getter is empty; this cross-adapter inconsistency must fail closed before PROD-13 closure.
+- Card Undo currently invokes global history without card-target/result checks (PROD-04). Unknown/Real host classification now disables durable project snapshots and recovery writes before CommandBus installation; the dedicated reload and stale-context evidence passes, while remaining sink-transition evidence stays open (PROD-13).
+- Main-app/server/gateway/WebMCP missing policy is restrictive Unknown, and an empty current policy invalidates old context; full sink and transition evidence is still required before PROD-13 closure.
 - Independent Changes/history search, component highlighting, richer visible progress and mobile workflows remain pending.
 - New Design/AI/Quality workspace and preview-first default are Proposed; current tabs/defaults are unchanged.
 - See the production plan for multi-table limits, repeat-rule semantics, Quality navigation and release tasks.
 
 ## 成熟度规则
 
-Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。本轮文档审查新鲜执行 80 个测试文件 / 428 个测试并全部通过；doctor 5/5、三项静态 pilot validation 和 Windows Chromium E2E 68/68 是较早 amendment snapshot 的沿用证据，必须在并行实现稳定后重跑。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
+Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。本轮实现验收串行执行 86 个测试文件 / 454 个测试并全部通过；三项静态 pilot validation、先前完整 Windows Playwright E2E 的 190/222 通过（32 个预期跳过、0 失败）、当前 targeted boundary/candidate/apply-policy/PROD-13 集合 54/54，以及 PROD-13 13-01 至 13-06 用例各自的三引擎 3/3 通过均已留证。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中执行真实分页渲染，`apply_changes` 命中同一 `candidateHash` 直接复用报告提交。
 2. ✅ revision 永不复用；写操作用 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性两阶段提交，评估后判定当前机制已达成同等安全目标）。
@@ -96,7 +97,7 @@ Production Pilot 可以用于受控试点，但工程师必须检查浏览器系
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、内容 hash 与由 evidence receipt 推导的真实浏览器凭证。
 6. ✅ 自动检查内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**但这不等于 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全自动推导。路线图 P0-B 退出条件还包含发布流程验收——两模板 × 四浏览器目标 × 全边界场景，已在 macOS 与 Linux（GitHub Actions Ubuntu runner）两个操作系统上各跑满 88/88 全过、零跨引擎分歧（见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）；Windows Chromium 68/68 是较早 amendment snapshot 的覆盖记录，当前并行实现完成后仍须重跑。完整 Windows matrix、real print chain 及已知 PROD 行为标准仍未关闭；现有硬门不能被 checkbox 豁免。自定义脚本仍可作为 `Untrusted` 草稿人工导出，但不能获得生产有效凭证。
+**但这不等于 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全自动推导。路线图 P0-B 退出条件还包含发布流程验收——两模板 × 四浏览器目标 × 全边界场景，已在 macOS 与 Linux（GitHub Actions Ubuntu runner）两个操作系统上各跑满 88/88 全过、零跨引擎分歧（见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）；Windows 当前有 Chromium/Firefox/WebKit 的 Playwright 引擎 E2E 覆盖，但不是完整 Windows release matrix。Edge、Safari.app、real print chain 及已知 PROD 行为标准仍未关闭；现有硬门不能被 checkbox 豁免。自定义脚本仍可作为 `Untrusted` 草稿人工导出，但不能获得生产有效凭证。
 
 ## 稳定边界
 

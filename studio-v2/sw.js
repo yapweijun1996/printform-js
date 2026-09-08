@@ -32,20 +32,29 @@ self.addEventListener("fetch", (event) => {
   // not cache keys — match ignoring search, and fall back to the cached app
   // shell when the network is down so offline reloads keep working.
   const isNavigation = event.request.mode === "navigate";
-  const matchOptions = isNavigation ? { ignoreSearch: true } : undefined;
+  const requestUrl = new URL(event.request.url);
+  const shellPaths = Array.isArray(APP_SHELL)
+    ? new Set(APP_SHELL.map((item) => new URL(item, self.location.href).pathname))
+    : new Set();
+  // Only generated shell paths are application-owned cache entries. A generic
+  // same-origin navigation can be an imported document or another user-owned
+  // resource; never turn it into a durable Cache Storage copy just because it
+  // happened inside the Studio origin.
+  const isShellRequest = shellPaths.has(requestUrl.pathname);
+  const matchOptions = isShellRequest ? { ignoreSearch: true } : undefined;
   const fromNetwork = () => fetch(event.request).then((response) => {
-    if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+    if (response.ok && isShellRequest) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
     return response;
   });
   if (DEV_MODE) {
-    event.respondWith(fromNetwork().catch(() => caches.match(event.request, matchOptions).then((cached) => {
+    event.respondWith(fromNetwork().catch(() => (isShellRequest ? caches.match(event.request, matchOptions) : Promise.resolve(null)).then((cached) => {
       if (cached) return cached;
       if (isNavigation) return caches.match("./index.html");
       return Response.error();
     })));
     return;
   }
-  event.respondWith(caches.match(event.request, matchOptions).then((cached) => cached || fromNetwork().catch((error) => {
+  event.respondWith((isShellRequest ? caches.match(event.request, matchOptions) : Promise.resolve(null)).then((cached) => cached || fromNetwork().catch((error) => {
     if (isNavigation) return caches.match("./index.html");
     throw error;
   })));

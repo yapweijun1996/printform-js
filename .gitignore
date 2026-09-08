@@ -14,3 +14,34 @@ browser-matrix-result.json
 studio-v2-current.png
 tmp-progress-template.html
 tmp-progress-theme.css
+
+# Local credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+.claude/settings.local.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and browser authentication state
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.db-wal
+*.db-shm
+playwright/.auth/
+
+# Editor and temporary output
+.cache/
+*.tmp
+*.swp
+*~
+Thumbs.db

@@ -134,4 +134,4 @@ No endpoint, API key, session prompt, imported schema default or user metadata m
 - 13-08: output failure after a committed mutation preserves outcome recovery and prevents blind retries; unknown audit types/oversized reports cannot silently become complete results.
 - 13-06/X-03: forged, expired, cross-document and cross-provider references cannot resolve or broaden scope; legitimate transaction recovery remains possible.
 
-All are Target assertions, Not run. Source inspection and documentation checks do not prove runtime privacy or compatibility.
+All are Target assertions, Not run. The controlled three-engine Provider wire case is evidence for one composed safe-result path only; source inspection, aggregate command dispatch and documentation checks do not prove runtime privacy or compatibility for every command.

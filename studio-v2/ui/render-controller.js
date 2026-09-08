@@ -7,7 +7,7 @@ import { bindPreviewWheel, scrollPreviewHorizontally } from "./preview-wheel.js"
 const $ = (selector) => document.querySelector(selector);
 const CANDIDATE_TIMEOUT = 30_000;
 
-export function createRenderController({ getBus, getOverlayEnabled, toast, onCandidateState }) {
+export function createRenderController({ getBus, getOverlayEnabled, getDataPolicy = () => null, toast, onCandidateState, onRenderState = () => {} }) {
   let previewTimer;
   let token = 0;
   let candidateActive = false;
@@ -18,6 +18,7 @@ export function createRenderController({ getBus, getOverlayEnabled, toast, onCan
     candidateActive = Boolean(active);
     $("#candidate-preview-banner").classList.toggle("hidden", !candidateActive);
     onCandidateState(candidateActive);
+    onRenderState({ renderStatus: candidateActive ? "candidate" : "waiting" });
   }
 
   function restoreCommitted() {
@@ -33,13 +34,24 @@ export function createRenderController({ getBus, getOverlayEnabled, toast, onCan
       const timer = setTimeout(() => {
         if (!pending.delete(requestToken)) return;
         reject(new Error("Candidate render timed out"));
-        restoreCommitted();
+        if (token === requestToken) restoreCommitted();
       }, CANDIDATE_TIMEOUT);
       pending.set(requestToken, { resolve, reject, timer });
-      renderPreview($("#preview-frame"), project, revision, getOverlayEnabled(), requestToken, { ...options, capturePixels: options.visualMode === "pixels" }).catch((error) => {
+      renderPreview($("#preview-frame"), project, revision, getOverlayEnabled(), requestToken, {
+        ...options,
+        dataPolicy: getDataPolicy(),
+        capturePixels: options.visualMode === "pixels",
+        isCurrent: () => token === requestToken && pending.has(requestToken),
+      }).then((result) => {
+        if (!result?.stale) return;
         const current = pending.get(requestToken);
         if (!current) return;
-        pending.delete(requestToken); clearTimeout(current.timer); current.reject(error); restoreCommitted();
+        pending.delete(requestToken); clearTimeout(current.timer); current.reject(new Error("Candidate render superseded"));
+      }).catch((error) => {
+        const current = pending.get(requestToken);
+        if (!current) return;
+        pending.delete(requestToken); clearTimeout(current.timer); current.reject(error);
+        if (token === requestToken) restoreCommitted();
       });
     });
   }
@@ -47,12 +59,32 @@ export function createRenderController({ getBus, getOverlayEnabled, toast, onCan
   function schedulePreview(delay = 180) {
     clearTimeout(previewTimer);
     const bus = getBus(); if (!bus) return;
-    renderQualityView(bus.readiness(), bus.project.trust); renderStatus("status.rendering", "pending");
+    const requestToken = ++token;
+    const project = bus.project;
+    const revision = bus.revision;
+    renderQualityView(bus.readiness(), bus.project.trust); renderStatus("status.rendering", "pending"); onRenderState({ revision: bus.revision, renderStatus: "rendering", readiness: bus.readiness() });
     previewTimer = setTimeout(async () => {
-      const requestToken = ++token;
-      try { await renderPreview($("#preview-frame"), bus.project, bus.revision, getOverlayEnabled(), requestToken); }
-      catch (error) { renderStatus("status.failed", "blocked"); toast(error.message); }
+      try {
+        const result = await renderPreview($("#preview-frame"), project, revision, getOverlayEnabled(), requestToken, {
+          dataPolicy: getDataPolicy(),
+          isCurrent: () => getBus() === bus && bus.revision === revision && token === requestToken,
+        });
+        if (result?.stale) return;
+      }
+      catch (error) {
+        if (getBus() !== bus || bus.revision !== revision || token !== requestToken) return;
+        renderStatus("status.failed", "blocked"); onRenderState({ revision, renderStatus: "failed", readiness: bus.readiness(), errorCount: 1 }); toast(error.message);
+      }
     }, delay);
+  }
+
+  function markPending() {
+    clearTimeout(previewTimer);
+    token += 1;
+    const bus = getBus();
+    if (!bus) return;
+    renderStatus("status.rendering", "pending");
+    onRenderState({ revision: bus.revision, renderStatus: "rendering", readiness: bus.readiness() });
   }
 
   function listen() {
@@ -64,8 +96,13 @@ export function createRenderController({ getBus, getOverlayEnabled, toast, onCan
       const candidate = pending.get(message.token);
       if (candidate) {
         pending.delete(message.token); clearTimeout(candidate.timer);
-        if (message.type === "rendered") candidate.resolve(decorateRenderReport(message.payload));
-        else { candidate.reject(new Error(message.payload?.message || "Candidate render failed")); restoreCommitted(); }
+        if (message.type === "rendered") {
+          if (message.token !== token) candidate.reject(new Error("Candidate render superseded"));
+          else candidate.resolve(decorateRenderReport(message.payload));
+        } else {
+          candidate.reject(new Error(message.payload?.message || "Candidate render failed"));
+          if (message.token === token) restoreCommitted();
+        }
         return;
       }
       const bus = getBus(); if (!bus || message.revision !== bus.revision || message.token !== token) return;
@@ -90,11 +127,14 @@ export function createRenderController({ getBus, getOverlayEnabled, toast, onCan
     const projectHash = await hashRenderProject(bus.project);
     if (bus.revision !== revision || token !== requestToken) return;
     bus.recordRenderReport(report, { revision, candidateHash: projectHash, baseProjectHash: projectHash, source: "committed", token: requestToken });
-    renderQualityView(bus.readiness(), bus.project.trust);
+    const readiness = bus.readiness();
+    const validation = bus.validation();
+    renderQualityView(readiness, bus.project.trust);
     const ready = report.status === "ready";
     renderStatus(ready ? "status.ready" : "status.blocked", ready ? "ready" : "blocked");
     renderMetrics(report.issues?.length ? { ...report.metrics, issues: report.issues } : report.metrics);
+    onRenderState({ revision, renderStatus: ready ? "ready" : "failed", readiness, errorCount: validation.errors?.length || 0, warningCount: validation.warnings?.length || 0 });
   }
 
-  return { renderCandidate, schedulePreview, listen, replaceProject, restoreCommitted, setCandidateState, toggleOverlay, dispose: disposePreviewWheel, get candidateActive() { return candidateActive; } };
+  return { renderCandidate, schedulePreview, markPending, listen, replaceProject, restoreCommitted, setCandidateState, toggleOverlay, dispose: disposePreviewWheel, get candidateActive() { return candidateActive; } };
 }

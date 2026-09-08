@@ -1,8 +1,8 @@
 # PrintForm.js / Studio v2 深度生产差距审计
 
-> Current review: 2026-09-07, baseline `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Product remains **Production Pilot / bounded Production Candidate**. This record distinguishes the current authorized implementation work from historical audit findings.
+> Current review: 2026-09-08, baseline `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Product remains **Production Pilot / bounded Production Candidate**. This record distinguishes the current authorized implementation work from historical audit findings.
 
-> [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns current evidence and PROD-01 through PROD-13 acceptance. Fresh documentation-review evidence: 80 files / 428 tests passed. Doctor 5/5, three static pilots and Windows Chromium 68/68 are carried forward from an earlier amendment snapshot and require a final rerun after concurrent implementation settles. The worktree contains the PROD-13/01/02/03 boundary foundation; M2, E14 and the full P0 matrix remain Partial.
+> The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns criteria; the [direction review](STUDIO_V2_DIRECTION_REVIEW.md) records the latest source/probe findings. P0: 5 Pass (13-01/02/03/05/06), 2 Fail (13-04/08), and 28 Not run. Prior 86/454, 190/222 and 54/54 aggregate passes are historical, not certification of the latest worktree. M1 lifecycle is reopened; implementation conformance remains FAIL and maturity remains Production Pilot.
 
 > Scores 58/72/84/89/94 are historical stage assessments, not an updated readiness score. Sections 3–8 and 10 preserve the earlier proposal/baseline and must not be read as current APIs or new pending duplicates.
 
@@ -24,13 +24,13 @@ E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`tak
 
 | 门 | 证据 | 结果 |
 |---|---|---|
-| 真实浏览器 | Earlier amendment snapshot: Windows Chromium; built site; `npx playwright test --project=chromium --workers=1` on 2026-09-07 | **68/68 PASS then; final rerun required** |
+| 真实浏览器 | Current Windows built site; Playwright Chromium/Firefox/WebKit projects on 2026-09-08 | **Chromium 74/74; Firefox 58/58 applicable; WebKit 58/58 applicable; 0 failures** |
 | Active Table | Valuation → Variation → Materials → Certification；每个表都跨页，续页只重复当前表头 | **PASS** |
 | 数据规模 | 100 / 500 / 1000 行；重复运行 page count 与 page signature 一致，记录 render/pagination duration 与 browser error | **PASS** |
 | Paper modes | A4 @ 96dpi portrait (794×1122) / landscape (1122×794)；纸张边界、margin、重复表头、无 clipping | **PASS** |
 | Diagnostics | `ROW_TOO_TALL`、overflow、blank、active header、footer/page number、orphan/keep-together/signature/total split；每项含 page/component/size/reason | **PASS** |
 | Evidence Pack | approved revision、FormSpec/runtime/preview/export hash、page count、validation/security、Chromium receipt、截图/JSON attachment | **PASS** |
-| 安全与工具链 | Fresh 80 files / 428 tests; carried-forward doctor 5/5 including AGRUN/build/three pilots and bundle syntax | Unit suite PASS; final doctor/browser rerun and fresh network audit remain open |
+| Safety and toolchain | Pre-review 86 files / 454 tests, local build/check, AGRUN and three pilot validations | Historical evidence; current lifecycle defects, fresh network audit and release matrix remain open |
 
 本阶段还修复了真实回归：PTAC/PADDT continuation row 不应触发普通 `.prowheader` 缺失诊断；现在诊断只对普通 table rows 建立 active-table header 约束，并有单测护栏。Studio source editor/AI inspector 仍默认隐藏，既有 E2E 在需要时显式打开，不改变产品默认行为。
 
@@ -54,8 +54,8 @@ E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`tak
 | Selection and scope foundation is implemented but not fully accepted | `agent-panel.js` stores structured activeScope; `agent-scope-options.js` maps stable table IDs; `agent-scope.js` rejects ambiguous/global effects | PROD-01: complete component/adapter/browser evidence |
 | Review apply policy foundation is implemented but not fully accepted | `agent-panel-runtime.js` applies mode and low-risk eligibility checks to chat and Review | PROD-02: delayed, retry and cross-entry matrix |
 | Context printability foundation is implemented but not fully accepted | `agent-document-context.js` maps render lifecycle and committed readiness to visible states | PROD-03: verify stale/delayed/error browser paths |
-| Candidate/history/draft/save acceptance | Card Undo calls global history without target/result checks; download is not a save receipt | PROD-04/08: correct history semantics and verify failure paths |
-| Real-data persistence acceptance | Unknown/Real host contexts now omit durable storage/hydration and recovery writes; existing records remain untouched | PROD-13: verify browser reload, delayed writes, every sink and actual decoded payload |
+| Candidate/history/draft/save acceptance | Card Undo/Redo now bind to the applied revision and retain the card on rejected results; visible save state distinguishes download-started from saved | PROD-04/08: complete browser lifecycle, disk-receipt and failure-path evidence |
+| Real-data persistence acceptance | Initial restrictive paths exist, but imported provenance and delayed session-store admission violate the lifecycle; 13-04/08 are Fail | PROD-13: repair the known defects, inspect actual sinks and rerun the affected controls before further closure |
 | Multi-table semantics differ from API expectations | Maximum array length; component repeat rule writes global root flag | PROD-05/06: explicit limits and repeat-rule granularity |
 | Quality/layout/release coverage is incomplete | Source-path navigation, two explicit CI pilot validations, incomplete full print matrix | PROD-07/09/10/12; PROD-11 tracks oversized JS |
 
@@ -236,9 +236,9 @@ P0 完成定义：每项均有单测、真实 Chromium E2E、至少一个失败�
 |---|---|---|
 | Pagination | Chromium core/golden/Active Table, PTAC/PADDT/N-up, 100/500/1000 rows | Multi-table limit policy; declared printer/font/paper combinations |
 | Pilots | Three built/static-validated pilots; Progress Claim Chromium coverage | CI explicit static validation still lists two; full browser-matrix script covers Invoice/PO |
-| Agent | Existing transaction/candidate/evidence/E14 E2E passes; fresh 80/428 unit suite passes | Approval provenance for page-global `executeHuman`, missing-policy adapter defaults, scope, cross-path preview-first, status and failure cases in PROD-01/02/03/04/08/13 |
+| Agent | Existing transaction/candidate/evidence/E14 E2E passes; fresh 86/454 serial unit suite, public-surface approval check, targeted 35-command matrix and delayed apply-mode/late-render guards pass | Full scope, cross-path preview-first, status and failure cases in PROD-01/02/03/04/08/13; page-global `executeHuman` exposure is closed in the current code |
 | Runtime integrity | AGRUN/build/static hashes and existing negative tests pass | Fresh dependency audit and exact release artifact acceptance |
-| Browser/print | Windows Chromium 68/68 on 2026-09-07; historical macOS/Linux 88/88 | Full Windows matrix, actual Safari/printer chain and selected release profile |
+| Browser/print | Windows combined Playwright Chromium 74/74, Firefox 58/58 applicable and WebKit 58/58 applicable on 2026-09-08; historical macOS/Linux 88/88 | Complete full Windows release matrix, Edge/Safari.app, actual printer chain and selected release profile |
 | Durable service | Existing SQLite single-writer recovery/CAS tests | Remote UI, HA/fencing/failover only for applicable shared-service scope |
 
 No new full matrix, live-provider reliability certification, real print or HA test is claimed.
@@ -278,6 +278,6 @@ Static `validate:v2` reports `layout.verified: false`; it does not certify brows
 | AI semantic architecture | 82 | FormSpec/component registry 与 semantic gateway 已有；transaction API 已受限，仍需服务端部署边界 |
 | ERP 多表/确定性诊断 | 84 | active table、row-too-tall、overflow、footer/page-number、keep-together 等有浏览器/单测护栏 |
 | 导出内容安全 | 90 | strict allowlist、CSP/runtime/artifact hash、Evidence Pack、publish fail-closed |
-| 发布与认证 | 88 | Chromium reference + 56/56、server acceptance 8/8、doctor PASS、历史 audit 记录、Evidence registry PASS；Firefox/WebKit/Safari/打印链与 HA 未认证 |
+| 发布与认证 | 88 | Chromium reference + 56/56、local Firefox/WebKit applicable E2E、server acceptance 8/8、doctor PASS、历史 audit 记录、Evidence registry PASS；Edge/Safari.app/打印链与 HA 未认证 |
 
 **Current decision: remain Production Pilot / bounded Production Candidate.** Continue on the existing architecture. Close PROD-13 and PROD-01/02/03 first, then editing/multi-table and release acceptance. Use explicit requirements and observed evidence, not the historical score, to decide release readiness. E15 remains conditional on shared-service scope.

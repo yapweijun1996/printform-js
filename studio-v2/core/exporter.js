@@ -28,6 +28,7 @@ function redactEmbeddedExportHash(html) {
 }
 
 export async function createStandaloneHtml(project, options = {}) {
+  options.assertCurrent?.();
   const validation = options.validation || validateProject(project);
   if (options.requireTrusted !== false && !validation.productionValid) {
     const error = new Error("Project is not eligible for a trusted production export");
@@ -35,11 +36,13 @@ export async function createStandaloneHtml(project, options = {}) {
     error.validation = validation;
     throw error;
   }
-  const assets = await inlineProjectAssets(project, options.baseUrl);
+  const assets = await inlineProjectAssets(project, options.baseUrl, { dataPolicy: options.dataPolicy || null, assertCurrent: options.assertCurrent });
+  options.assertCurrent?.();
   const security = options.requireTrusted !== false
     ? assertTrustedContent(assets.project, { allowExternalHttps: assets.project.manifest.assets?.allowExternalHttps === true })
     : null;
   const sources = await loadRuntimeSources();
+  options.assertCurrent?.();
   const runtimeHash = await sha256(`\n${sources.documentRuntime}\n`);
   const printformRuntimeHash = await sha256(`\n${sources.printform}\n`);
   const draftPack = await createEvidencePack({
@@ -87,5 +90,6 @@ export async function createStandaloneHtml(project, options = {}) {
     timestamp: draftPack.timestamp,
     transactionId: options.transactionId || null,
   });
+  options.assertCurrent?.();
   return { html, bytes, validation, security, evidencePack, warnings: [...validation.warnings, ...assets.warnings] };
 }

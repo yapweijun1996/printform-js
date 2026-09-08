@@ -7,6 +7,7 @@ import { sha256, stableStringify } from "./json.js";
 import { TransactionJournal, journalKey } from "./transaction-journal.js";
 import { DurableTransactionStore } from "./durable-transaction-store.js";
 import { mergeRenderReport } from "./render-report.js";
+import { classifyImportedDocument } from "./data-policy.js";
 import {
   beginTransaction as beginTransactionService,
   requireTransaction as requireTransactionService,
@@ -39,6 +40,7 @@ export class CommandBus extends EventTarget {
   constructor(initialProject, {
     renderCandidate,
     transactionStorage = null,
+    transactionNamespace = null,
     transactionStore = null,
     agentId = "studio-ui",
     owner = agentId,
@@ -46,15 +48,20 @@ export class CommandBus extends EventTarget {
     clock = () => new Date(),
     leaseDurationMs = 30 * 1000,
     hydrateDurable = true,
+    dataPolicy = null,
   } = {}) {
     super();
-    const journal = journalKey(initialProject);
-    this.transactionStore = transactionStore || new DurableTransactionStore({
-      storage: transactionStorage,
+    this.dataPolicy = dataPolicy || classifyImportedDocument(initialProject?.manifest?.documentId);
+    const durableStorage = this.dataPolicy.allowDurable === false ? null : transactionStorage;
+    const durableStore = this.dataPolicy.allowDurable === false ? null : transactionStore;
+    const journal = `${journalKey(initialProject)}${transactionNamespace ? `:context:${transactionNamespace}` : ""}`;
+    this.transactionStore = durableStore || new DurableTransactionStore({
+      storage: durableStorage,
       key: DurableTransactionStore.keyFor(journal),
       formId: DurableTransactionStore.formId(initialProject),
       initialProject,
       clock,
+      persistenceAllowed: this.dataPolicy.allowDurable !== false,
     });
     const durableProject = hydrateDurable ? this.transactionStore.getHeadProject() : null;
     const durableRevision = this.transactionStore.getHeadRevision();
@@ -88,7 +95,7 @@ export class CommandBus extends EventTarget {
     this.clock = clock;
     this.failureInjector = failureInjector;
     this.leaseDurationMs = leaseDurationMs;
-    this.transactionJournal = new TransactionJournal(transactionStorage, journal);
+    this.transactionJournal = new TransactionJournal(durableStorage, journal);
     this.transactions = new Map(this.transactionStore.listTransactions().map((transaction) => [transaction.transaction_id, transaction]));
     const persistedEvidence = this.transactionStore.getEvidencePack(this.revision)
       || this.transactionJournal.list().reverse().find((entry) => entry.type === "EVIDENCE_PACK" && entry.pack?.revision === this.revision)?.pack;
@@ -146,7 +153,8 @@ export class CommandBus extends EventTarget {
 
   hasAtomicRevisionCas() {
     return this.transactionStore.atomic || Boolean(
-      this.transactionStore.storage?.getItem
+      this.transactionStore.persistent
+      && this.transactionStore.storage?.getItem
       && globalThis.navigator?.locks?.request,
     );
   }
@@ -155,9 +163,9 @@ export class CommandBus extends EventTarget {
     return expireStaleTransactionsService(this, now);
   }
 
-  async previewTransaction(operations, expectedRevision, existingId = null) { return previewTransactionService(this, operations, expectedRevision, existingId); }
-  approveTransaction(input) { return approveTransactionService(this, input); }
-  async applyApprovedTransaction(input) { return applyApprovedTransactionService(this, input); }
+  async previewTransaction(operations, expectedRevision, existingId = null, context = null) { return previewTransactionService(this, operations, expectedRevision, existingId, context); }
+  approveTransaction(input, context = null) { return approveTransactionService(this, input, context); }
+  async applyApprovedTransaction(input, context = null) { return applyApprovedTransactionService(this, input, context); }
   async ensurePublishTransaction() { return ensurePublishTransactionService(this); }
   rollbackTransaction(id) { return rollbackTransactionService(this, id); }
 
@@ -173,8 +181,8 @@ export class CommandBus extends EventTarget {
     return revisionComparisonService(this, fromRevision, toRevision);
   }
 
-  async commitConvenienceTransaction(operations, expectedRevision, reason) {
-    return commitConvenienceTransactionService(this, operations, expectedRevision, reason);
+  async commitConvenienceTransaction(operations, expectedRevision, reason, context = null) {
+    return commitConvenienceTransactionService(this, operations, expectedRevision, reason, context);
   }
 
   ensureRevision(expected) {
@@ -277,8 +285,8 @@ export class CommandBus extends EventTarget {
     return recordEvidencePackService(this, pack);
   }
 
-  async execute(name, input = {}) {
-    return dispatchCommand(this, name, input);
+  async execute(name, input = {}, context = null) {
+    return dispatchCommand(this, name, input, context);
   }
 
   success(result) { return { ok: true, result }; }

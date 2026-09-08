@@ -212,17 +212,27 @@ export const buildPreviewBridge = (revision, overlayEnabled, token, options = {}
 // disambiguation (there's only ever one committed project at a time) can
 // omit it; app.js always passes an explicit one shared with its candidate
 // requests so both compete in the same ordering space.
+function assignPreviewSource(iframe, html) {
+  // Firefox can retain the old sandboxed about:blank browsing context after
+  // a parent navigation unless the previous srcdoc value is cleared first.
+  // The render controller rejects stale writes, so this reset cannot expose
+  // an older project after a newer request has taken ownership.
+  iframe.srcdoc = "";
+  iframe.srcdoc = html;
+}
+
 export async function renderPreview(iframe, project, revision, overlayEnabled = true, token = revision, options = {}) {
-  const result = await createStandaloneHtml(project, { requireTrusted: false, networkDisabled: true, scriptNonce: PREVIEW_SCRIPT_NONCE });
+  const result = await createStandaloneHtml(project, { requireTrusted: false, networkDisabled: true, scriptNonce: PREVIEW_SCRIPT_NONCE, dataPolicy: options.dataPolicy || null });
+  if (typeof options.isCurrent === "function" && !options.isCurrent()) return { ...result, stale: true };
   // Inject at the LAST </body>: sample data / template sections are serialized
   // before the real closing tag, so replacing the first occurrence would let a
   // data value containing the literal text "</body>" corrupt the JSON block.
   const marker = "</body>";
   const at = result.html.lastIndexOf(marker);
   const injected = buildPreviewBridge(revision, overlayEnabled, token, options);
-  iframe.srcdoc = at === -1
+  assignPreviewSource(iframe, at === -1
     ? result.html + injected
-    : result.html.slice(0, at) + injected + result.html.slice(at);
+    : result.html.slice(0, at) + injected + result.html.slice(at));
   return result;
 }
 

@@ -115,6 +115,8 @@ export function renderChangeCardContent({
     badge.textContent = t("aiChat.card.reverted", {}, "Reverted");
   } else if (status === "blocked") {
     badge.textContent = t("aiChat.card.blocked", {}, "Blocked");
+  } else if (status === "recovery") {
+    badge.textContent = t("aiChat.card.recoveryRequired", {}, "Commit status requires recovery");
   } else {
     badge.textContent = t("aiChat.card.pending", {}, "Preview ready");
   }

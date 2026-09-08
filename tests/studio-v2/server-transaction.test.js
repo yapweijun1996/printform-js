@@ -16,7 +16,7 @@ const FORM_ID = "sales-invoice-pilot";
 const handles = [];
 
 async function startServer({ dbPath, leaseMs = 30_000 } = {}) {
-  const child = spawn(process.execPath, [SERVER_SCRIPT, "--db", dbPath, "--port", "0", "--lease-ms", String(leaseMs)], {
+  const child = spawn(process.execPath, [SERVER_SCRIPT, "--db", dbPath, "--port", "0", "--lease-ms", String(leaseMs), "--classification", "synthetic"], {
     cwd: ROOT,
     env: { ...process.env, PRINTFORM_TRANSACTION_SERVER_TOKEN: "test-server-token", PRINTFORM_TRANSACTION_SERVER_TEST_MODE: "1" },
     stdio: ["ignore", "pipe", "pipe"],

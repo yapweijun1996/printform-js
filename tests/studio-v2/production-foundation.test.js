@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
+import { classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
 import { createEvidencePack } from "../../studio-v2/core/evidence-pack.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { approveAndApply } from "./transaction-test-helpers.js";
@@ -15,7 +16,7 @@ function memoryStorage() {
 describe("Studio v2 production foundation", () => {
   it("persists auditable transactions and evidence across a new command bus", async () => {
     const storage = memoryStorage();
-    const first = new CommandBus(createSalesInvoiceProject(), { transactionStorage: storage, agentId: "test-agent" });
+    const first = new CommandBus(createSalesInvoiceProject(), { transactionStorage: storage, agentId: "test-agent", dataPolicy: classifySyntheticDocument("sales-invoice-pilot") });
     const preview = await first.execute("preview_changes", {
       expectedRevision: 0,
       operations: [{ type: "set_brand_color", hex: "#854d0e" }],
@@ -39,7 +40,7 @@ describe("Studio v2 production foundation", () => {
     expect(entries.map((entry) => entry.type)).toEqual(expect.arrayContaining(["BEGIN_EDIT", "PREVIEW", "APPROVE", "REVISION_COMMIT", "COMMIT", "EVIDENCE_PACK"]));
     expect(pack).toMatchObject({ revision: 1, formSpecHash: expect.stringMatching(/^sha256:/), runtimeVersion: "test-runtime", exportHtmlHash: null, security: { status: "PASS" } });
 
-    const reloaded = new CommandBus(first.project, { transactionStorage: storage, agentId: "test-agent" });
+    const reloaded = new CommandBus(first.project, { transactionStorage: storage, agentId: "test-agent", dataPolicy: classifySyntheticDocument("sales-invoice-pilot") });
     expect(reloaded.revision).toBe(1);
     expect((await reloaded.execute("get_evidence_pack")).result.evidencePack).toMatchObject({ revision: 1, hash: pack.hash });
     expect((await reloaded.execute("get_capabilities")).result.capabilities.persistentAudit).toBe(true);
@@ -68,7 +69,7 @@ describe("Studio v2 production foundation", () => {
 
   it("creates one durable no-op transaction for a publish at the initial revision", async () => {
     const storage = memoryStorage();
-    const bus = new CommandBus(createSalesInvoiceProject(), { transactionStorage: storage });
+    const bus = new CommandBus(createSalesInvoiceProject(), { transactionStorage: storage, dataPolicy: classifySyntheticDocument("sales-invoice-pilot") });
     const first = await bus.ensurePublishTransaction();
     const second = await bus.ensurePublishTransaction();
 

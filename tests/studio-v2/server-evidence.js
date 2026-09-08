@@ -9,7 +9,7 @@ export function serverIt(it, name, test, timeout) {
   return it(name, async (...args) => {
     await test(...args);
     passed.push(name);
-  }, timeout);
+  }, timeout ?? 30_000);
 }
 
 export async function writeServerEvidence(root) {

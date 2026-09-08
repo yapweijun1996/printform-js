@@ -99,10 +99,35 @@ export function buildRuntimeBudget(profile) {
   };
 }
 
-export function buildProviderInput(profile, prompt, parts = []) {
+const PROVIDER_PART_KEYS = new Set(["type", "url", "mimeType", "filename"]);
+const IMAGE_MIME_PATTERN = /^image\/(?:png|jpeg|webp|svg\+xml)$/i;
+const DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpeg|webp|svg\+xml);base64,[a-z0-9+/=]+$/i;
+
+function providerPayloadError(message) {
+  return Object.assign(new Error(message), { code: "PROVIDER_PAYLOAD_INVALID" });
+}
+
+export function projectProviderParts(parts = [], { dataPolicy = null } = {}) {
+  if (!Array.isArray(parts)) throw providerPayloadError("Provider parts must be an array.");
+  if (parts.length > 16) throw providerPayloadError("Provider payload contains too many media parts.");
+  return parts.map((part) => {
+    if (!part || part.type !== "image" || typeof part.url !== "string" || !DATA_IMAGE_PATTERN.test(part.url)) {
+      throw providerPayloadError("Only validated inline image evidence may enter the Provider payload.");
+    }
+    if (Object.keys(part).some((key) => !PROVIDER_PART_KEYS.has(key))) throw providerPayloadError("Provider media metadata contains an unknown field.");
+    const mimeType = String(part.mimeType || part.url.slice(5, part.url.indexOf(";"))).toLowerCase();
+    if (!IMAGE_MIME_PATTERN.test(mimeType)) throw providerPayloadError("Provider media evidence has an unsupported image type.");
+    const filename = String(part.filename || "evidence").replace(/[^a-z0-9._-]/gi, "_").slice(0, 120);
+    const pixelPart = mimeType !== "image/svg+xml" || /\.(?:png|jpe?g|webp)$/i.test(filename);
+    if (dataPolicy?.allowPixelEvidence === false && pixelPart) throw providerPayloadError("Pixel evidence is blocked by the current data policy.");
+    return { type: "image", url: part.url, mimeType, filename };
+  });
+}
+
+export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = null } = {}) {
   const provider = profile.provider === "custom" ? "openai" : profile.provider;
   const credentialFreeGateway = isCredentialFreeDefaultGatewayProfile(profile);
-  const input = { provider, model: profile.model, prompt };
+  const input = { provider, model: profile.model, prompt: String(prompt || "").slice(0, 12000) };
   if (credentialFreeGateway) {
     input.authMode = "server";
     input.endpoint = responsesEndpoint(profile.endpoint);
@@ -116,6 +141,6 @@ export function buildProviderInput(profile, prompt, parts = []) {
     const reasoningEffort = profile.reasoningEffort || (usesOwnResponsesGateway ? DEFAULT_PROVIDER_PRESET.reasoningEffort : "");
     if (reasoningEffort) input.reasoningEffort = reasoningEffort;
   }
-  if (Array.isArray(parts) && parts.length) input.parts = parts;
+  if (parts.length) input.parts = projectProviderParts(parts, { dataPolicy });
   return input;
 }

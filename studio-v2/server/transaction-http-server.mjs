@@ -2,8 +2,10 @@ import http from "node:http";
 import { URL } from "node:url";
 import { JSDOM } from "jsdom";
 import { CommandBus } from "../core/command-bus.js";
+import { classifyImportedDocument } from "../core/data-policy.js";
 import { DurableTransactionStore } from "../core/durable-transaction-store.js";
 import { SqliteDurableBackend } from "./sqlite-durable-backend.mjs";
+import { crashHttpRequest, failHttpRequest, jsonResponse, respondAfterNetworkPolicy } from "./transaction-http-response.mjs";
 
 const SERVER_COMMANDS = new Set([
   "get_capabilities", "get_project_summary", "get_form_spec", "list_components",
@@ -14,18 +16,6 @@ const SERVER_COMMANDS = new Set([
   "renew_lease", "release_lease", "takeover_transaction", "recover_transaction",
   "resolve_conflict", "compare_revision", "request_export",
 ]);
-
-function jsonResponse(response, status, body, origin = null) {
-  const payload = JSON.stringify(body);
-  response.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Content-Length": Buffer.byteLength(payload),
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    ...(origin ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" } : {}),
-  });
-  response.end(payload);
-}
 
 async function readJson(request, limit = 8 * 1024 * 1024) {
   const chunks = [];
@@ -40,12 +30,6 @@ async function readJson(request, limit = 8 * 1024 * 1024) {
   catch (error) { throw Object.assign(new Error(`Invalid JSON: ${error.message}`), { code: "INVALID_JSON" }); }
 }
 
-function statusForError(error) {
-  if (["REVISION_CONFLICT", "STORE_CONFLICT", "TRANSACTION_RECORD_CONFLICT", "LEASE_EXPIRED", "LEASE_OWNER_MISMATCH", "LEASE_ID_MISMATCH", "COMMIT_IN_PROGRESS", "EVIDENCE_ANCHOR_CONFLICT"].includes(error.code)) return 409;
-  if (["SERVER_UNAVAILABLE", "RECOVERY_REQUIRED"].includes(error.code)) return 503;
-  return 400;
-}
-
 export class TransactionHttpServer {
   constructor({
     dbPath,
@@ -58,6 +42,7 @@ export class TransactionHttpServer {
     allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"],
     onCrash = null,
     testMode = false,
+    dataPolicy = null,
   } = {}) {
     if (!dbPath || !formId || !initialProject) throw new TypeError("TransactionHttpServer requires dbPath, formId and initialProject");
     this.dbPath = dbPath;
@@ -70,7 +55,9 @@ export class TransactionHttpServer {
     this.allowedOrigins = new Set(allowedOrigins);
     this.onCrash = onCrash;
     this.testMode = testMode;
-    this.backend = new SqliteDurableBackend({ filename: dbPath });
+    this.dataPolicy = dataPolicy || classifyImportedDocument(formId);
+    this.persistenceAllowed = this.dataPolicy.allowDurable === true;
+    this.backend = this.persistenceAllowed ? new SqliteDurableBackend({ filename: dbPath }) : null;
     this.key = `printform:server:${formId}`;
     this.httpServer = null;
     this.#ensureDomRuntime();
@@ -81,7 +68,7 @@ export class TransactionHttpServer {
     this.httpServer = http.createServer((request, response) => {
       this.#handle(request, response).catch((error) => {
         console.error(`[printform-transaction-server] request failure: ${error.code || "SERVER_ERROR"}: ${error.message}`);
-        try { this.#fail(request, response, error); }
+        try { failHttpRequest(request, response, error, this.#origin(request)); }
         catch (failure) { console.error(`[printform-transaction-server] response failure: ${failure.message}`); response.destroy(); }
       });
     });
@@ -101,7 +88,7 @@ export class TransactionHttpServer {
   async close() {
     if (this.httpServer) await new Promise((resolve) => this.httpServer.close(() => resolve()));
     this.httpServer = null;
-    this.backend.close();
+    this.backend?.close();
   }
 
   #origin(request) {
@@ -124,6 +111,7 @@ export class TransactionHttpServer {
   }
 
   #store() {
+    if (!this.backend) throw Object.assign(new Error("Server document persistence is disabled by the current data policy"), { code: "DATA_POLICY_STORAGE_BLOCKED", status: 403 });
     return new DurableTransactionStore({
       backend: this.backend,
       key: this.key,
@@ -143,16 +131,38 @@ export class TransactionHttpServer {
       agentId,
       clock: () => this.backend.serverNow(),
       leaseDurationMs: this.leaseDurationMs,
+      dataPolicy: this.dataPolicy,
       failureInjector: (phase) => phase === failurePhase,
     });
   }
 
   async #recoverPendingTransactions() {
+    if (!this.backend) return;
     const bus = this.#bus({ headers: {} });
     for (const transaction of bus.transactionStore.listTransactions()) {
       if (["committing", "recovery_required"].includes(transaction.status)) {
         bus.recoverTransaction({ transactionId: transaction.transaction_id });
       }
+    }
+  }
+
+  #serverNow() { return this.backend?.serverNow() || new Date(); }
+
+  #databaseSummary() {
+    if (this.backend) return this.backend.summary();
+    return {
+      persistence_allowed: false,
+      classification: this.dataPolicy.classification,
+      transactions: 0,
+      revisions: 0,
+      audit_events: 0,
+      evidence_anchors: 0,
+    };
+  }
+
+  #assertServerPersistenceAllowed() {
+    if (!this.persistenceAllowed) {
+      throw Object.assign(new Error("Server document persistence is disabled by the current data policy"), { code: "DATA_POLICY_STORAGE_BLOCKED", status: 403 });
     }
   }
 
@@ -175,13 +185,14 @@ export class TransactionHttpServer {
       return;
     }
     if (url.pathname === "/health" && request.method === "GET") {
-      jsonResponse(response, 200, { ok: true, server_time: this.backend.serverNow().toISOString(), pid: process.pid, database: this.backend.summary() }, origin);
+      jsonResponse(response, 200, { ok: true, server_time: this.#serverNow().toISOString(), pid: process.pid, database: this.#databaseSummary() }, origin);
       return;
     }
     const parts = url.pathname.split("/").filter(Boolean);
     if (parts[0] !== "v1" || parts[1] !== "forms" || decodeURIComponent(parts[2] || "") !== this.formId) {
       throw Object.assign(new Error("Route not found"), { code: "NOT_FOUND", status: 404 });
     }
+    this.#assertServerPersistenceAllowed();
     if (request.headers["x-printform-drop-before"] === "true") { request.socket.destroy(); return; }
     const body = ["POST"].includes(request.method) ? await readJson(request) : {};
     if (parts[3] === "command" && request.method === "POST") {
@@ -217,7 +228,7 @@ export class TransactionHttpServer {
     const transaction = name === "apply_changes" && input.transactionId ? store.getTransaction(input.transactionId) : null;
     if (name === "apply_changes" && transaction?.status === "committed") {
       if (input.expectedCandidateHash && transaction.preview_hash !== input.expectedCandidateHash) throw Object.assign(new Error("Idempotency key was reused for a different candidate"), { code: "IDEMPOTENCY_KEY_REUSE" });
-      this.#respondAfterNetworkPolicy(request, response, { ok: true, result: { already_committed: true, committed_revision: transaction.working_revision, transaction } }, origin);
+      respondAfterNetworkPolicy(request, response, { ok: true, result: { already_committed: true, committed_revision: transaction.working_revision, transaction } }, origin);
       return;
     }
     if (name === "apply_changes" && ["committing", "recovery_required"].includes(transaction?.status)) {
@@ -228,17 +239,17 @@ export class TransactionHttpServer {
     const bus = this.#bus(request, failurePhase);
     const result = await bus.execute(name, input);
     if (!result.ok && crashPhase && crashPhase === result.error?.phase) {
-      this.#crash(request, response, result.error.phase);
+      crashHttpRequest(request, response, result.error.phase, this.onCrash);
       return;
     }
     if (result.ok && name === "apply_changes") {
       result.result = { ...result.result, already_committed: false, committed_revision: result.result.revision };
       if (request.headers["x-printform-crash-after-commit"] === "true") {
-        this.#crash(request, response, "after_commit_before_response");
+        crashHttpRequest(request, response, "after_commit_before_response", this.onCrash);
         return;
       }
     }
-    this.#respondAfterNetworkPolicy(request, response, result, origin);
+    respondAfterNetworkPolicy(request, response, result, origin);
   }
 
   async #evidence(request, response, pack, origin) {
@@ -246,7 +257,7 @@ export class TransactionHttpServer {
     const existing = Number.isInteger(pack.revision) ? store.getEvidenceAnchor(pack.revision) : null;
     if (existing) {
       if (existing.evidence_pack_hash !== pack.hash) throw Object.assign(new Error("A different Evidence Pack is already anchored"), { code: "EVIDENCE_ANCHOR_CONFLICT" });
-      this.#respondAfterNetworkPolicy(request, response, { ok: true, result: { already_anchored: true, anchor: existing, evidencePack: store.getEvidencePack(pack.revision) } }, origin);
+      respondAfterNetworkPolicy(request, response, { ok: true, result: { already_anchored: true, anchor: existing, evidencePack: store.getEvidencePack(pack.revision) } }, origin);
       return;
     }
     const failurePhase = request.headers["x-printform-failure-phase"] || request.headers["x-printform-crash-at"] || null;
@@ -254,34 +265,14 @@ export class TransactionHttpServer {
     try {
       const evidencePack = bus.recordEvidencePack(pack);
       if (request.headers["x-printform-crash-at"] === "during_evidence_write") {
-        this.#crash(request, response, "during_evidence_write");
+        crashHttpRequest(request, response, "during_evidence_write", this.onCrash);
         return;
       }
-      this.#respondAfterNetworkPolicy(request, response, { ok: true, result: { already_anchored: false, evidencePack, anchor: store.getEvidenceAnchor(pack.revision) } }, origin);
+      respondAfterNetworkPolicy(request, response, { ok: true, result: { already_anchored: false, evidencePack, anchor: store.getEvidenceAnchor(pack.revision) } }, origin);
     } catch (error) {
-      if (request.headers["x-printform-crash-at"] && request.headers["x-printform-crash-at"] === error.phase) this.#crash(request, response, error.phase);
+      if (request.headers["x-printform-crash-at"] && request.headers["x-printform-crash-at"] === error.phase) crashHttpRequest(request, response, error.phase, this.onCrash);
       else throw error;
     }
   }
 
-  #respondAfterNetworkPolicy(request, response, body, origin) {
-    const send = () => {
-      if (request.headers["x-printform-drop-after-commit"] === "true") { request.socket.destroy(); return; }
-      jsonResponse(response, body.ok ? 200 : statusForError(body.error || {}), body, origin);
-    };
-    const delay = Math.max(0, Number(request.headers["x-printform-delay-ms"]) || 0);
-    if (delay) setTimeout(send, delay); else send();
-  }
-
-  #crash(request, response, phase) {
-    response.destroy();
-    if (this.onCrash) this.onCrash(phase);
-  }
-
-  #fail(request, response, error) {
-    if (response.destroyed || response.headersSent) return;
-    console.error(`[printform-transaction-server] ${error.code || "SERVER_ERROR"}: ${error.message}`);
-    const status = error.status || statusForError(error);
-    jsonResponse(response, status, { ok: false, error: { code: error.code || "SERVER_ERROR", message: error.message, expectedRevision: error.expectedRevision, actualRevision: error.actualRevision, transactionId: error.transactionId, phase: error.phase } }, this.#origin(request));
-  }
 }

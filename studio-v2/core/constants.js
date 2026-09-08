@@ -5,11 +5,10 @@ export const PROTOCOL_VERSION = "2.0.0";
 // that path would leave agents able to claim a review they never did, which
 // is the whole point of the change. 1.2.0 added real candidate rendering and
 // candidateHash additively (TASK.md #12-14).
-// 3.0.0 (2026-08-17): BREAKING. Agent writes now use the semantic operation
-// allowlist and an explicit preview -> approval -> commit transaction;
-// apply_changes no longer accepts operations[] directly and raw source
-// preview is kept as a Studio-internal command rather than an Agent tool.
-export const AGENT_CONTRACT_VERSION = "3.0.0";
+// 4.0.0 (2026-09-07): BREAKING. Public Agent responses use closed output
+// projections and opaque references; restrictive data policies, scope checks
+// and explicit human approval are enforced at the gateway boundary.
+export const AGENT_CONTRACT_VERSION = "4.0.0";
 
 // Studio v2's own SemVer line, independent of the Protocol and Agent Contract
 // versions above (which describe the FILE FORMAT and the COMMAND SURFACE — a

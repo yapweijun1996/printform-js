@@ -1,5 +1,6 @@
 import { buildProviderInput, buildRuntimeBudget, validateProviderProfile } from "./agent-provider.js";
 import { consumeRuntimeTurn } from "./agent-runtime-consume.js";
+import { bindAgentSession } from "../adapters/gateway.js";
 import { createProposalApproval } from "./agent-approval.js";
 import { makePrintFormActions } from "./agent-actions.js";
 import { DESIGNER_PROMPT } from "./agent-designer-prompt.js";
@@ -7,49 +8,31 @@ import { LayoutReviewLoop } from "./agent-layout-loop.js";
 import { parseTextProposal } from "./agent-proposal-parser.js";
 import { createTerminalState } from "./agent-terminal-state.js";
 import { READ_ACTIONS, DISABLED_ACTIONS } from "./agent-runtime-constants.js";
-let designerSkillPromise;
+import { assertPolicyCurrent, isPolicyCurrent } from "../core/data-policy.js";
+import { approvalFrom, outputText } from "./agent-runtime-output.js";
+import { executeApplyWithResolution } from "./agent-commit-resolution.js";
+import { loadCurrentDesignerSkill } from "./agent-runtime-skills.js";
 
-async function loadDesignerSkill(Agrun) {
-  if (!Agrun?.parseSkillMarkdown) return [];
-  if (!designerSkillPromise) {
-    designerSkillPromise = fetch(new URL("../agent-skills/printform-designer.md", import.meta.url))
-      .then((response) => {
-        if (!response.ok) throw new Error(`Designer skill unavailable (${response.status})`);
-        return response.text();
-      })
-      .then((markdown) => {
-        const skill = Agrun.parseSkillMarkdown(markdown);
-        return skill ? [skill] : [];
-      })
-      .catch(() => []);
-  }
-  return designerSkillPromise;
-}
 function clone(value) { return structuredClone(value); }
 
-function outputText(result) {
-  return result?.output?.text || result?.output?.message || result?.output?.body?.text || result?.output?.body?.message || "";
-}
-function approvalFrom(result) {
-  const output = result?.output || {};
-  const pending = output.resumeToken ? output : result?.runState?.pendingApproval;
-  if (!pending?.resumeToken) return null;
-  return { resumeToken: clone(pending.resumeToken), actionName: pending.actionName || pending.resumeToken.actionName || "printform_apply_approved_proposal", text: pending.text || "Approval is required before applying this proposal." };
-}
 export class DesignerRuntimeController {
   static async create(options) {
-    const agentSkills = await loadDesignerSkill(options.Agrun);
+    const agentSkills = await loadCurrentDesignerSkill(options);
+    options.assertCurrentContext?.();
+    if (options.dataPolicy && options.getDataPolicy) assertPolicyCurrent(options.dataPolicy, options.getDataPolicy());
     return new DesignerRuntimeController({ ...options, agentSkills });
   }
 
-  constructor({ Agrun, gateway, sessionManager, sessionId, profile, maxSteps = 100, existing = false, realData = false, agentSkills = [], onProposal = () => {}, onEvent = () => {}, onCandidateState = () => {} }) {
+  constructor({ Agrun, gateway, sessionManager, sessionId, profile, maxSteps = 100, existing = false, realData = false, dataPolicy = null, getDataPolicy = null, agentSkills = [], onProposal = () => {}, onEvent = () => {}, onCandidateState = () => {} }) {
     if (!Agrun) throw Object.assign(new Error("agrun runtime is unavailable"), { code: "AGRUN_UNAVAILABLE" });
-    this.gateway = gateway;
+    this.gateway = bindAgentSession(gateway, sessionId);
     this.sessionManager = sessionManager;
     this.sessionId = sessionId;
     this.profileId = profile.id;
     this.maxSteps = maxSteps;
     this.realData = Boolean(realData);
+    this.dataPolicy = dataPolicy;
+    this.getDataPolicy = getDataPolicy;
     this.onEvent = onEvent;
     this.onProposal = onProposal;
     this.onCandidateState = onCandidateState;
@@ -66,7 +49,7 @@ export class DesignerRuntimeController {
     this.layoutLoop = new LayoutReviewLoop(this);
     const actions = makePrintFormActions({
       Agrun,
-      gateway,
+      gateway: this.gateway,
       createProposal: (proposal) => this.createProposal(proposal),
       onFailure: (error) => { this.actionFailure = error; },
       onAction: (event) => {
@@ -90,15 +73,22 @@ export class DesignerRuntimeController {
       plannerMode: "native_tools", nativeToolsFailurePolicy: "hard_fail",
       approvalSigning: { ttlMs: 15 * 60 * 1000, enforceSessionBinding: true }, maxSteps,
       ...(budget.costPricing ? { costPricing: budget.costPricing } : {}),
-      ...(budget.maxCostUsd ? { maxCostUsd: budget.maxCostUsd } : {}),
-      systemPrompt: DESIGNER_PROMPT
+      ...(budget.maxCostUsd ? { maxCostUsd: budget.maxCostUsd } : {})
     });
     this.sessionPromise = existing ? this.runtime.openSession(sessionId) : this.runtime.createSession({ id: sessionId });
   }
   async session() { return this.sessionPromise; }
   emit(event) { this.onEvent(event); }
+  currentDataPolicy() { return this.getDataPolicy ? this.getDataPolicy() : this.dataPolicy; }
+  assertCurrentPolicy() {
+    const current = this.currentDataPolicy();
+    if (this.dataPolicy && (!current || !isPolicyCurrent(this.dataPolicy, current))) {
+      throw Object.assign(new Error("The Agent policy changed while this request was running"), { code: "STALE_POLICY_CONTEXT" });
+    }
+    return current;
+  }
 
-  async createProposal(proposal) {
+  async createProposal(proposal) { if (this.actionFailure) return clone(proposal);
     const approvalToken = await this.approval.issue(proposal.proposalId);
     const stored = { ...clone(proposal), approvalToken };
     this.proposals.set(proposal.proposalId, stored);
@@ -116,7 +106,7 @@ export class DesignerRuntimeController {
     this.onProposal(null);
     this.onCandidateState(false);
   }
-  async applyProposal(proposalId, profile = null) {
+  async applyProposal(proposalId, profile = null, { humanApproval = false } = {}) {
     if (this.running) throw Object.assign(new Error("The AI Designer is already running"), { code: "AGENT_BUSY" });
     const proposal = this.proposals.get(proposalId);
     if (!proposal || this.pendingProposal?.proposalId !== proposalId) {
@@ -124,21 +114,21 @@ export class DesignerRuntimeController {
     }
     try {
       await this.approval.verify(proposal.approvalToken, proposalId);
-      const approved = await this.gateway.execute("approve_transaction", {
+      const executeApproval = humanApproval && this.gateway.executeHuman ? this.gateway.executeHuman.bind(this.gateway) : this.gateway.execute.bind(this.gateway);
+      const approved = await executeApproval("approve_transaction", {
         expectedRevision: proposal.revision,
         transactionId: proposal.transactionId,
         expectedCandidateHash: proposal.candidateHash,
         requireValid: true,
       });
       if (!approved.ok) throw Object.assign(new Error(`Approval failed (${approved.error?.code || "APPROVAL_FAILED"}).`), { code: approved.error?.code || "APPROVAL_FAILED" });
-      const applied = await this.gateway.execute("apply_changes", {
+      const applied = await executeApplyWithResolution({ gateway: this.gateway, executeApproval, proposal, input: {
         expectedRevision: proposal.revision,
         transactionId: proposal.transactionId,
         expectedCandidateHash: proposal.candidateHash,
         requireValid: true,
         reason: "AI Designer auto-applied proposal"
-      });
-      if (!applied.ok) throw Object.assign(new Error(`Apply failed (${applied.error?.code || "APPLY_FAILED"}).`), { code: applied.error?.code || "APPLY_FAILED" });
+      }});
       const validation = await this.gateway.execute("validate_project", {});
       if (!validation.ok) throw Object.assign(new Error(`Validation failed (${validation.error?.code || "VALIDATION_FAILED"}).`), { code: validation.error?.code || "VALIDATION_FAILED" });
       this.proposals.delete(proposalId);
@@ -153,12 +143,12 @@ export class DesignerRuntimeController {
       return { applied, validation };
     } catch (error) {
       this.layoutLoop.stop("apply_failed");
-      this.clearProposal();
+      if (error.code === "RECOVERY_REQUIRED") { this.onProposal(this.pendingProposal, { status: "recovery", preserveCandidate: false }); this.onCandidateState(false); } else this.clearProposal();
       throw error;
     }
   }
-  async applyApprovedProposal(proposalId, profile = null) {
-    return this.applyProposal(proposalId, profile);
+  async applyApprovedProposal(proposalId, profile = null, options = {}) {
+    return this.applyProposal(proposalId, profile, options);
   }
   rejectProposal(proposalId) {
     if (this.pendingProposal?.proposalId !== proposalId) return false;
@@ -244,7 +234,7 @@ export class DesignerRuntimeController {
     this.actionFailure = null;
     this.turnText = "";
     this.terminalState?.reset();
-    return consumeRuntimeTurn(this, input);
+    return consumeRuntimeTurn(this, { ...input, systemPrompt: DESIGNER_PROMPT });
   }
 
   async run(prompt, profile, parts = []) {
@@ -256,7 +246,7 @@ export class DesignerRuntimeController {
     this.actionFailure = null;
     this.pendingApproval = null;
     this.layoutLoop.stop("new_design_turn");
-    return this.consume(buildProviderInput(profile, prompt, parts));
+    return this.consume(buildProviderInput(profile, prompt, parts, { dataPolicy: this.assertCurrentPolicy() }));
   }
 
   async resolveApproval(decision, profile) {
@@ -264,7 +254,7 @@ export class DesignerRuntimeController {
     const pending = this.pendingApproval;
     this.pendingApproval = null;
     const input = { type: "approval_resolution", decision, resumeToken: pending.resumeToken };
-    if (decision === "approve") Object.assign(input, buildProviderInput(profile, ""));
+    if (decision === "approve") Object.assign(input, buildProviderInput(profile, "", [], { dataPolicy: this.assertCurrentPolicy() }));
     const outcome = await this.consume(input);
     if (decision === "deny") this.pendingProposal = null;
     return outcome;
@@ -286,6 +276,7 @@ export class DesignerRuntimeController {
   stop() {
     this.layoutLoop.stop("user_stop");
     this.terminalState.noteStopped();
+    this.actionFailure = Object.assign(new Error("The AI turn was cancelled."), { code: "TURN_CANCELLED" });
     this.clearProposal();
     if (this.abortController) this.abortController.abort();
   }

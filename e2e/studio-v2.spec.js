@@ -83,9 +83,11 @@ test("switches the Studio UI across five languages without changing the document
   }
   const revisionAfter = await page.evaluate(async () => (await window.PrintFormStudioAgent.execute("get_project_summary")).result.revision);
   expect(revisionAfter).toBe(revision);
-  await page.reload();
+  await page.goto("/studio-v2/", { waitUntil: "load" });
   await expect(page.locator(".editor-panel h2")).toHaveText("Nguồn dự án");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi-VN");
+  await expect(page.locator("#render-status")).toHaveClass(/ready/, { timeout: 20_000 });
+  await expect(page.locator("#preview-frame")).toHaveAttribute("srcdoc", /.+/);
   await expect(page.frameLocator("#preview-frame").locator(".pf-title").first()).toHaveText("Sales Invoice");
 });
 
@@ -103,7 +105,11 @@ test("renders the Crimson purchase order in five languages and boundary layouts"
     await expect(page.frameLocator("#preview-frame").locator(".pf-po-box h2").first()).toHaveText(title);
   }
   const logos = page.frameLocator("#preview-frame").locator("[data-pf-asset-slot]");
-  expect(await logos.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.dataset.pfAssetSlot))].sort())).toEqual(["footer-logo", "letterhead-logo"]);
+  await expect(logos.first()).toBeVisible();
+  await expect.poll(
+    () => logos.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.dataset.pfAssetSlot))].sort()),
+    { timeout: 20_000, message: "preview asset slots should settle after the locale render" }
+  ).toEqual(["footer-logo", "letterhead-logo"]);
   await page.locator("#scenario-select").selectOption("long-text");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   metrics = JSON.parse(await page.locator("#metrics-output").textContent());

@@ -86,6 +86,66 @@ describe("AI panel automatic review proposal state", () => {
     expect(test.nodes.get("#ai-stop").disabled).toBe(true);
   });
 
+  it("does not auto-apply a preview-started proposal after switching to auto", async () => {
+    const test = harness();
+    test.state.applyMode = "preview";
+    test.state.proposal = null;
+    let release;
+    let started;
+    const startedPromise = new Promise((resolve) => { started = resolve; });
+    const releasePromise = new Promise((resolve) => { release = resolve; });
+    const applyProposal = vi.fn(async () => ({ applied: { result: { revision: 1 } } }));
+    test.state.controller = {
+      async run() {
+        started();
+        await releasePromise;
+        test.renderProposal(test.oldProposal);
+        return { completed: { terminalKind: "proposal_ready" } };
+      },
+      applyProposal
+    };
+
+    const pending = test.runtime.send();
+    await startedPromise;
+    test.state.applyMode = "auto";
+    release();
+    await pending;
+
+    expect(applyProposal).not.toHaveBeenCalled();
+    expect(test.state.proposal).toEqual(test.oldProposal);
+    expect(test.statuses).toContain("aiChat.card.pending");
+  });
+
+  it("does not auto-apply an auto-started proposal after switching to preview", async () => {
+    const test = harness();
+    test.state.applyMode = "auto";
+    test.state.proposal = null;
+    let release;
+    let started;
+    const startedPromise = new Promise((resolve) => { started = resolve; });
+    const releasePromise = new Promise((resolve) => { release = resolve; });
+    const applyProposal = vi.fn(async () => ({ applied: { result: { revision: 1 } } }));
+    test.state.controller = {
+      async run() {
+        started();
+        await releasePromise;
+        test.renderProposal(test.oldProposal);
+        return { completed: { terminalKind: "proposal_ready" } };
+      },
+      applyProposal
+    };
+
+    const pending = test.runtime.send();
+    await startedPromise;
+    test.state.applyMode = "preview";
+    release();
+    await pending;
+
+    expect(applyProposal).not.toHaveBeenCalled();
+    expect(test.state.proposal).toEqual(test.oldProposal);
+    expect(test.statuses).toContain("aiChat.card.pending");
+  });
+
   it("reports an aborted layout review as stopped instead of applied", async () => {
     const test = harness();
     test.state.controller = {

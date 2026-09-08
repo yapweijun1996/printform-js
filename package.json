@@ -11,7 +11,7 @@
     "jsdom": "^27.0.1"
   },
   "scripts": {
-    "build": "npm run test -- --run && npm run build:assets && node scripts/postbuild-generate-preview.js",
+    "build": "npm run test -- --run --maxWorkers=1 --no-file-parallelism && npm run build:assets && node scripts/postbuild-generate-preview.js",
     "build:assets": "node scripts/run-vite.js build && node scripts/build-document-runtime.mjs",
     "build:site": "npm run build && node scripts/build-site.mjs",
     "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist/printform.js',{force:true}); fs.rmSync('dist/printform.iife.js',{force:true}); fs.rmSync('dist/assets',{recursive:true,force:true}); fs.rmSync('dist/index.html',{force:true}); fs.rmSync('dist/footer_logo.jpg',{force:true}); fs.rmSync('dist/img',{recursive:true,force:true});\"",
