@@ -6,6 +6,9 @@ This plan is an execution overlay on existing requirement IDs, not a replacement
 
 ## Read order and ownership
 
+Resume using the [handoff](STUDIO_V2_AGENT_HANDOFF.md) and
+[per-step worksheets](STUDIO_V2_STEP_CHECKLISTS.md); TASK owns current gate credit.
+
 1. [AGENTS](../AGENTS.md), [TASK live ledger](../TASK.md#sequential-execution-ledger).
 2. [Definition of Done](STUDIO_V2_DEFINITION_OF_DONE.md): gate checklist and progress arithmetic.
 3. [Production plan](STUDIO_V2_PRODUCTION_PLAN.md): PROD requirements and Current/Target evidence.
@@ -27,7 +30,7 @@ Instructions in these documents remain subordinate to the user's current scope a
 - Current embedded runtime remains AGRUN: `studio-v2/index.html` loads its vendor bundle and
   `studio-v2/ui/agent-runtime.js` calls `Agrun.createRuntime`. S02/PI-00 and S14/PI-01 are qualified
   only in isolated static browser artifacts, and S03/M1 reconciles the application-controlled
-  destination inventory; PI-02 and PI-03 are implemented and qualified only in isolated static artifacts, PI-04..05 are not implemented, and the production entry has not changed.
+  destination inventory; PI-02 and PI-03 are implemented and qualified only in isolated static artifacts, PI-04 X-01..03 have isolated supporting qualification, the final PI-04 matrix and PI-05 remain open, and the production entry has not changed.
 - Existing transactions, host admission, scope, save policy and projection controls are substantial
   but do not close all behavioral criteria. Never reimplement them solely because a ledger is new.
 - S04/PROD-05 now uses `core/row-limits.js` to count actual table repeats with 500 aggregate and
@@ -37,7 +40,7 @@ Instructions in these documents remain subordinate to the user's current scope a
   absent local values inherit the legacy root `data-repeat-rowheader`. FormSpec and formatter policy
   preserve independent multi-table behavior, while full indirect-scope acceptance remains S06.
 - `ui/status-view.js` routes source issues and render issue details; S11 closes visual page/component navigation with the existing isolated preview bridge.
-- CI explicitly static-validates Invoice/PO while `scripts/doctor.mjs` lists three pilots.
+- CI now explicitly static-validates all three pilots while `scripts/browser-matrix.mjs` still covers Invoice/PO only.
 - Prior same-session serial unit run: 103 files / 536 tests passed in 149.53 seconds. This is a
   dated worktree run, not a fresh build, browser certificate or proof of every acceptance case.
 - P0 case state remains solely in its register (8/35 Pass at this baseline). Existing historical

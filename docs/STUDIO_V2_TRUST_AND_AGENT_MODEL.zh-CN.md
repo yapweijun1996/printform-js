@@ -8,7 +8,7 @@
 
 ## 信任边界
 
-PROD-13 details: [data classification and destination rules](STUDIO_V2_DATA_POLICY.md). Artifact trust does not certify synthetic data. Unknown/Real document state is now volatile in the host policy path, with separate explicit file-save and credential-vault rules; full P0 acceptance and browser/provider evidence remain open.
+PROD-13 details: [data classification and destination rules](STUDIO_V2_DATA_POLICY.md). Artifact trust does not certify synthetic data. Unknown/Real document state is now volatile in the host policy path, with separate explicit file-save and credential-vault rules; the 35-case P0 register is closed by three-engine browser evidence; PI live-provider and release evidence remain open.
 
 单 HTML 是项目与交付物的唯一事实来源。Studio、UI、WebMCP 和第一方 CDP bridge 都只能修改隔离草稿；AI 不能代替工程师执行最终生产导出。
 
@@ -47,7 +47,7 @@ Current review: shared scope and apply-policy guards now enforce the bounded fou
 - ✅ 已解除（2026-07-31）：预览消息除 `event.source` 外还绑定单调请求 token（跨 iframe reload 存活，只采纳最新一次请求的回执）；candidate hash 由 `preview_changes` 返回。
 - ✅ 已解除（2026-07-31）：attestation 覆盖两段 runtime hash + CSP script 允许列表，`browsers` 由真实 evidence receipt 推导（见下方《完整性与证明》）。内容无遗漏、乱序、重叠由 `ROW_*` 四项 + `HEADER_MISSING`/`DOCINFO_MISSING`/`SECTION_OVERLAP` 覆盖。
 
-**六项 P0 的代码硬门已于 2026-07-31 全部完成**，历史浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：2026-09-08 Windows combined Playwright run 为 190/222 通过、32 个预期跳过、0 失败，其中 Chromium 74/74、Firefox 58/58 适用用例、WebKit 58/58 适用用例通过。完整 P0 个案、发布矩阵、真实打印链、完整 approval/apply 与 E14 验收仍未完成。当前代码已移除 page-global approval capability，仍需按 P0 清单完成跨入口证据。HA 仅适用于声明该部署模型的 release；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
+**六项 P0 的代码硬门已于 2026-07-31 全部完成**，历史浏览器矩阵验收也已跑满并留存结论（88/88 全过，见[浏览器矩阵验收记录](BROWSER_MATRIX.zh-CN.md)）。Purchase Order 曾出现跨引擎分页页数差异，后续通过非行区 16px 余量修复并在 macOS/Linux 重新验证收敛。状态**仍暂记为 Production Pilot**：2026-09-08 Windows combined Playwright run 为 190/222 通过、32 个预期跳过、0 失败，其中 Chromium 74/74、Firefox 58/58 适用用例、WebKit 58/58 适用用例通过；当前 35/35 P0 个案已有三引擎生产壳浏览器证据。发布矩阵、真实打印链、PI live Provider 与 E14 之外的发布门仍未完成。当前代码已移除 page-global approval capability，Production Ready 仍须由维护者显式宣布。HA 仅适用于声明该部署模型的 release；Production Ready 是对外承诺，由维护者显式宣布，不由跑批绿灯自动推导。
 
 ## 数据隐私
 
@@ -58,7 +58,7 @@ Current review: shared scope and apply-policy guards now enforce the bounded fou
 - Unknown/real installation constructs a volatile transaction store, memory-only sessions and rejects new recovery writes; existing records are not silently deleted or replayed.
 - The service worker only caches the generated app shell, and restrictive export/preview paths reject fetchable imported assets before network access.
 - Standalone page-gateway/WebMCP installation now treats missing policy as restrictive Unknown, and a temporarily absent current policy rejects the old context. Complete PROD-13 acceptance still requires destination and transition evidence.
-- Remaining evidence is the complete P0 matrix, browser reload/mode-race coverage and a final inspection of actual captured Provider request bodies using only canary fixtures.
+- Remaining evidence is PI live-provider/release coverage and a final inspection of actual captured Provider request bodies using only canary fixtures; the current P0 matrix and browser reload/mode-race cases are recorded as passed.
 
 ### Required privacy acceptance (Partial, PROD-13)
 

@@ -116,8 +116,13 @@ export class IndexedDbSessionStorage {
 
   static async open(options) {
     const storage = new IndexedDbSessionStorage(options);
-    await storage.initialize();
-    return storage;
+    try {
+      await storage.initialize();
+      return storage;
+    } catch (error) {
+      await storage.close().catch(() => {});
+      throw error;
+    }
   }
 
   async initialize() {

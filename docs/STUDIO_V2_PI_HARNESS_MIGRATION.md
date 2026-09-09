@@ -1,6 +1,6 @@
 # Studio v2 PI Agent Harness Migration Plan
 
-Prepared: 2026-09-08. Status: **Target selected; PI-00 through PI-03 are Done as isolated qualifications; PI-04..05 remain not started.**
+Prepared: 2026-09-08. Current handoff: PI-00..03 retain isolated Done; PI-04 waits at G1; PI-05 not started. [TASK](../TASK.md#sequential-execution-ledger) owns current credit.
 The embedded Designer currently uses AGRUN. Its current browser default is the
 reviewed origin-bound Demo Gateway; this plan does not claim a working PI
 integration and does not authorize retaining the Demo route after a future
@@ -151,7 +151,7 @@ remain authoritative. Their current incomplete acceptance is not cured by a harn
 
 ## 7. Ordered implementation packages
 
-PI-00 and PI-01 direct transport, PI-02 host/tools/events/approval and PI-03 policy-bound sessions are **qualified in isolated static artifacts** at the current 2026-09-09 checkpoint; PI-04..05 remain **Not started**. These are acceptance criteria, not a release claim. Live state/gate percentages belong to [TASK](../TASK.md#sequential-execution-ledger); use the [DoD](STUDIO_V2_DEFINITION_OF_DONE.md) and [integrated execution plan](STUDIO_V2_EXECUTION_PLAN.md) to run PI-04..05 at S17..18 alongside the required host corrections. Do not duplicate the live ledger here.
+PI-00..03 retain isolated qualification. PI-03's deferred-close and pending-open lifecycle corrections are closed in current S16 evidence; proceed to S17. X-01..03 isolated supporting passes do not by themselves close P0; separate production-shell browser evidence now closes all three P0 cases, while the final PI-04 matrix and PI-05 remain open. Follow [handoff](STUDIO_V2_AGENT_HANDOFF.md), [DoD](STUDIO_V2_DEFINITION_OF_DONE.md) and [TASK](../TASK.md#sequential-execution-ledger); this document does not duplicate live gate credit.
 
 | ID | Work / dependency | Required exit evidence |
 |---|---|---|

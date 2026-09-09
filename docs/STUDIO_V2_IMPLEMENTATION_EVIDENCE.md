@@ -1,16 +1,16 @@
 # Studio v2 Resumed Implementation Evidence
 
 Date: 2026-09-09. Scope: the current uncommitted worktree after explicit coding resume.
-Status: **Partial**. This is a bounded implementation/run record, not a release decision; S11 actionable Quality and S12 retained current-workspace acceptance are separately closed in [their evidence records](STUDIO_V2_S11_PROD07_EVIDENCE.md) and [S12](STUDIO_V2_S12_PROD09_EVIDENCE.md).
+Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
-Latest P0 register: **32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, 3 Not run**. This closes only the
-recorded case paths; later PI/release and the remaining P0 cases are still incomplete.
+Latest P0 register: **35 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08/X-01/X-02/X-03), 0 Fail, 0 Not run**. This closes the
+recorded P0 case paths; later PI/release evidence remains incomplete.
 
 ## Sequential handoff review (2026-09-08)
 
 Source reviewed: `main` at `3a1a7dbb93de5edd7984842896afdaab42a92bed` plus the existing uncommitted worktree; no clean-commit or release claim. A prior same-session serial command `node node_modules/vitest/vitest.mjs run --maxWorkers=1 --no-file-parallelism --reporter=dot` passed **103 files / 536 tests**, exit 0, in 149.53 seconds. The earlier doctor result below remains a separate 535-test historical build/validator run; the current doctor result is recorded below.
 
-Code Slice review reconfirmed maximum-array row counting, component `repeatHeader` writing a root flag, current AGRUN loading/runtime creation, existing commit-outcome resolution and source-editor Quality routing. The prior direct synthetic probe returned 400 for two 400-row arrays. CI lists two static pilots while doctor lists three. These are bounded review findings, not a new full runtime/browser audit.
+Code Slice review reconfirmed maximum-array row counting, component `repeatHeader` writing a root flag, current AGRUN loading/runtime creation, existing commit-outcome resolution and source-editor Quality routing. The prior direct synthetic probe returned 400 for two 400-row arrays. At that 2026-09-08 snapshot, CI listed two static pilots while doctor listed three; S20 preparation later adds the third CI entry, with no remote run claimed. These are bounded review findings, not a new full runtime/browser audit.
 
 S01 G1/G2: created the [execution plan](STUDIO_V2_EXECUTION_PLAN.md), [DoD](STUDIO_V2_DEFINITION_OF_DONE.md), live TASK gate ledger and [Goal Prompt](STUDIO_V2_GOAL_PROMPT.md); connected the existing requirement/checklist owners. Application source was not amended. P0 Pass records and prior implementation remain intact; subsequent steps start with uncredited delivery gates, not an assertion of missing implementation.
 S01 G3/G4: document validation passed for 13 amended/new Markdown files and 176 local links; S01-S21 IDs/dependencies, gate arithmetic, 35 P0 cases with eight unchanged Pass records, <=300 lines per file and the 1962-character Goal Prompt passed. Scoped `git diff --check` passed. Amendment-only comparison against captured document preimages confirmed that changes preserve prior implementation/case records and replace only the intended sequencing/status wording. No new application build/browser/provider/print run is claimed or required for this documentation-only amendment.
@@ -272,28 +272,29 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). Cases 03-01 through
 - Case result: `e2e/studio-v2-p0-prod03-07.spec.js` passed **3/3** serially across Windows Chromium, Firefox and WebKit. It verified picker cancellation, failed write and download fallback states, required a confirmed close for Saved, and held the close while a locale edit committed r1; the completed file remained attested to r0 while current r1 stayed Unsaved and not export-ready. The revision-bound retry cache fix is covered by the focused `studio-file-export` suite **11/11**; no functional pageerror or unknown diagnostic occurred.
 - Case result: `e2e/studio-v2-p0-prod03-08.spec.js` passed **3/3** serially across Windows Chromium, Firefox and WebKit. It compared Document Context, Quality, export chip/button, save/review labels and `request_export` while the real browser moved through initial Rendering, rendered-but-unreviewed blocking, warning-only reviewed readiness, a pending candidate and a human-cancelled export. Each of `en-MY`, `zh-CN`, `ms-MY`, `ja-JP` and `vi-VN` refreshed the current state without stale diagnostics; the test asserted no automatic download. Chromium first exposed stale `lastValidation` reuse during locale refresh; `app.js` now re-derives `bus.readiness()` on every UI locale event. No functional pageerror or unknown diagnostic occurred; the known Firefox AGRUN CSP diagnostic remains explicitly allowed.
 - G2/G3: `app.js` now refreshes localized Quality from current `bus.readiness()` instead of a stale pre-render validation snapshot; existing render/controller/save ownership, revision/CAS, candidate separation and human confirmation boundaries remain unchanged. S10 additionally guards dirty HTML replacement and preserves newer dirty state during a held save. No protocol, persistence, provider or deployment scope was added. The S10 focused set passed **9 files / 82 tests**; the final serial unit run passed **105 files / 558 tests**, with `npm run check`, `node --check` and `node scripts/build-site.mjs` passing.
- - G4/G5: S14/PI-01 and S15/PI-02 each pass **18/18** in Chromium, Firefox and WebKit; S16/PI-03 16-01..06 pass **18/18**, and existing AGRUN session/policy regressions pass **18/18**. S13/PROD-11 remains closed with bounded browser/full-build evidence. The isolated suites do not certify Edge, Safari.app, a physical printer, a live Provider, live CORS/preflight or deployed retention. Final S16 build passed **106 files / 567 tests**; focused Storage passed **3/3**; PI-00..03 bundles are 823,439 / 14,270 / 1,122,557 / 856,838 bytes and SW precache is 188 entries. Plan closure is **76.2% (1600/21)** with **16/21** steps Done; P0 is **32/35**, PI is **4/6**; no deployment, push, release approval or user-data deletion was performed.
+ - S16 G4/G5: S14/PI-01 and S15/PI-02 each pass **18/18** in Chromium, Firefox and WebKit; current S16/PI-03 16-01..06 pass **18/18**, and affected AGRUN/session/policy regressions pass **31/31**. S13/PROD-11 remains closed with bounded browser/full-build evidence. The isolated suites do not certify Edge, Safari.app, a physical printer, a live Provider, live CORS/preflight or deployed retention. Final S16 build passed **106 files / 567 tests**; focused PI-03 Storage passed **3/3**; PI-00..03 bundles are 823,439 / 14,270 / 1,123,184 / 867,676 bytes and SW precache is 193 entries. Current plan credit is 76.7% with 16/21 Done; no deployment, push, release approval or user-data deletion was performed.
 - S16 G2/G3: the isolated public PI `StorageBackedSession`/`MemorySessionRepo` path uses policy-bound volatile memory, versioned IndexedDB, atomic CAS and an explicit same-session writer lock; legacy AGRUN records remain labeled read-only and are never hydrated. `node --check`, `npm run check`, the final entry boundary scan, the <=300-line inventory and `git diff --check` passed.
-- S16 G5: TASK, the PI migration plan, execution plan, index, direction review, roadmap, production plan, gap audit and this evidence now point to S17/PI-04; the production AGRUN entry and canonical/private approval/export boundaries remain unchanged.
+- S16 G5: the current isolated artifact is locally closed; documents now point to S17/PI-04. Production AGRUN cutover, release approval, live Provider/platform/print certification and later PI gates remain open.
+## S17 / PI-04 current case evidence
+- Isolated PI X-01 supporting case: **Pass 3/3** across Chromium, Firefox and WebKit; actual PI Harness, policy-bound memory, table-A scope,
+  private approval/apply, r0→r1 edit, geometry review and human export passed with no canary exposure. The separate P0 X-01
+  production-shell case also passed **3/3** through real UI import, Apply, review and confirmed export; its controlled in-page
+  AGRUN/BYOK runtime is UI evidence only, not live Provider/PI cutover evidence. X-02/X-03 also pass **3/3** each as isolated
+  policy/host/session boundaries; stale results leave revision 0 and no canary output. The combined production-shell X-01..03 command passed **9/9** across the same engines and closes the remaining P0 records. Cases 17-04 and 17-05 each add **3/3**
+  direct-browser `createPiByokAdapter`/Harness composition for Chat and Responses; 17-06 adds **3/3** for Gemini, 17-07 for
+  follow-up payloads, 17-08 for commit recovery and 17-09 for Real-policy privacy. Keys are header-only and bodies exclude
+  key/canary. The combined PI-04 browser command passed **27/27** across Chromium, Firefox and WebKit; all nine PI cases remain supporting evidence, and candidate/committed renders now use the sandboxed iframe/geometry path.
+- Current isolated PI-04 bundle: **1,212,449 bytes**, entry SHA-256 `acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; static/frontend-only manifest has `appBackend: false`,
+  `providerProxy: false`, `directProviderChat: true`, `directProviderResponses: true`, `directProviderGemini: true`, `directProviderFollowUp: true`, `directProviderCommitRecovery: true`, `directProviderRealPrivacy: true`, `providerMatrixSynthetic: true`, `liveByokSmoke: false`, and SHA-256 `fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`.
+  `npm run check`, JS `node --check`, `git diff --check`, PI-02 **18/18**, and full **106 files / 567 tests** passed; rebuilt site has **202** SW precache entries. See [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
+- S17 remains **G1 / 10% (`x----`)** because full provider/render/privacy/transaction matrix and final PI-04 exit
+  criteria remain open; current plan credit is 76.7% with 16/21 Done and gate credit remains in TASK.
 
 ## Remaining work and safe continuation
+1. P0 case closure is complete at 35/35; continue PI/release evidence without treating controlled runtime cases as live Provider certification.
+2. Continue S17 through the remaining final provider/render/privacy/transaction matrix one case at a time, reusing PI-00..04 without cutting over AGRUN.
+3. Prepare S18 cutover, S19 print/platform certification, S20 packet and S21 approval only at their gates; do not deploy, publish or push.
 
-1. Complete the remaining mapped P0 cases and their release evidence; the 32/35 register remains the authoritative denominator.
-2. Continue S17/PI-04 composed browser/provider/session/transaction acceptance one case at a time, reusing the qualified PI-00..03 artifacts without cutting over AGRUN.
-3. Retain the historical long-run transaction timeout separately and investigate if it recurs or its affected acceptance remains unproven; do not label it current solely from an older run.
-4. Prepare S18 cutover, S19 print/platform certification, S20 M5 packet and S21 approval only after their applicable gates; do not deploy, publish or push.
-
-Rollback must preserve canonical committed data and existing records. Do not restore permissive Unknown/Real defaults,
-raw output, unconditional pixel prompts or an unguarded session store as a compatibility fallback.
-No real business data, live Provider test, deployment, release, push or user-data deletion was performed.
-The five supported locale catalogs contain the new confirmation/status keys, and the browser i18n controls pass;
-unsupported locale fallback behavior was not expanded by this work.
-
-## SCMC review of this bounded correction
-
-- Simple: WARN, Medium. The pinned runtime schema is necessarily mirrored because its factory has no side-effect guard hook;
-  upgrade drift would break session compatibility. Keep the adapter narrow and rerun real-browser parity/CAS tests on vendor change.
-- Clear: PASS. Host classification, volatile state, initialization versus completed writes and instruction delivery are explicit.
-- Modular: PASS. Session lifecycle, IndexedDB execution and runtime-compatible record operations have separate reasons to change.
-- Consistent: PASS for the verified corrections. They follow the retained policy, transaction and human-approval boundaries.
-- Overall: **PASS WITH WARNINGS for this bounded design**, not global privacy conformance or Production Ready.
+Rollback preserves canonical committed data and existing records; never restore permissive Unknown/Real defaults,
+raw output, unconditional pixels or an unguarded session store. No real business data, live Provider test,
+deployment, release, push or user-data deletion was performed. SCMC: **PASS WITH WARNINGS** for this bounded design; pinned runtime drift requires rerunning browser parity/CAS checks. This is not Production Ready.

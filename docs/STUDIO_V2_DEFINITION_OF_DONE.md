@@ -84,6 +84,13 @@ Decision / blocker / rollback / next action:
 
 ## Progress report after each gate or material result
 
+For this handoff use the [step worksheets](STUDIO_V2_STEP_CHECKLISTS.md) and
+[resume instructions](STUDIO_V2_AGENT_HANDOFF.md). TASK remains the sole live ledger.
+Current recomputation from every row, including partial steps, is 16*100 + 10 = 1610;
+1610/21 = 76.7% rounded, with 16/21 steps Done. Neither value estimates remaining time.
+Historical passes stay dated when a shared change invalidates current verification; do not delete
+the evidence.
+
 ```text
 Step Sxx/21 — <name> | <status> | <earned points>% | active gate Gx
 G1 [ ] G2 [ ] G3 [ ] G4 [ ] G5 [ ]

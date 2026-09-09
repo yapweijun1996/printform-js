@@ -22,7 +22,10 @@ export async function buildPi04({ root = process.cwd(), output = path.resolve(ro
     id: "PI-04", sourceCommit: PI_SOURCE_COMMIT, entry: "qualification-entry.js",
     bytes: fs.statSync(bundle).size, format: "es", static: true, frontendOnly: true,
     appBackend: false, providerProxy: false, actualHarness: true, policyBound: true,
-    privateHumanApproval: true, canonicalCommandBus: true, x01: true, liveByokSmoke: false
+    privateHumanApproval: true, canonicalCommandBus: true, x01: true, x02: true, x03: true,
+    directProviderChat: true, directProviderResponses: true, directProviderGemini: true,
+    directProviderFollowUp: true, directProviderCommitRecovery: true, directProviderRealPrivacy: true,
+    providerMatrixSynthetic: true, liveByokSmoke: false
   };
   fs.writeFileSync(path.resolve(qualificationOutput, "qualification-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   console.log(`PI-04 qualification bundle: ${manifest.bytes} bytes`);

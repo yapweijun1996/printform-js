@@ -22,13 +22,13 @@ function publicProposal(proposal) {
   };
 }
 
-function publicRun(result, terminal, guardError) {
+function publicRun(result, terminal, guardError, fallbackErrorCode = "HARNESS_RUN_FAILED") {
   const value = result?.ok ? result.value : null;
   return {
     ok: Boolean(result?.ok) && !guardError,
     status: result?.ok ? value?.status || "completed" : "failed",
     terminal: terminal.snapshot(),
-    ...(guardError ? { error: { code: guardError.code } } : result?.ok ? {} : { error: { code: result?.error?.code || "HARNESS_RUN_FAILED" } })
+    ...(guardError ? { error: { code: guardError.code } } : result?.ok ? {} : { error: { code: result?.error?.code || fallbackErrorCode } })
   };
 }
 
@@ -48,6 +48,7 @@ export async function createPiHostAdapter({
   let currentGuard = null;
   let lastGuard = null;
   let lastToolError = null;
+  let lastHarnessError = null;
   let terminalSeen = false;
   let blockedAfterTerminal = false;
   let running = false;
@@ -75,6 +76,7 @@ export async function createPiHostAdapter({
   const lane = await harness.lane(laneName, CONTEXT);
 
   const offProjection = attachHarnessEventProjection(harness, (projected, raw) => {
+    if (projected.type === "runtime_error") lastHarnessError = projected.detail.code;
     if (raw.type === "usage") currentGuard?.observe({ type: "usage", usage: normalizeHarnessUsage(raw.row?.usage ?? raw.usage ?? raw.totals) });
     if (raw.type === "turn_end" && raw.message?.usage) currentGuard?.observe({ type: "usage", usage: normalizeHarnessUsage(raw.message.usage) });
     if (projected.type === "completed") {
@@ -117,6 +119,7 @@ export async function createPiHostAdapter({
     terminalSeen = false;
     blockedAfterTerminal = false;
     lastToolError = null;
+    lastHarnessError = null;
     currentGuard = createTurnGuard(budget);
     let result;
     try { result = await lane.prompt(String(prompt || ""), CONTEXT); }
@@ -130,6 +133,11 @@ export async function createPiHostAdapter({
       terminal.noteBlocked();
       emit({ type: "runtime_error", detail: { code: lastToolError.code } });
       lastRun = { ...publicRun(result, terminal, null), ok: false, error: { code: lastToolError.code } };
+    } else if (!terminalSeen && !result?.ok && result?.error) {
+      terminal.noteBlocked();
+      const errorCode = result.error.code || lastHarnessError || "HARNESS_RUN_FAILED";
+      if (!lastHarnessError) emit({ type: "runtime_error", detail: { code: errorCode } });
+      lastRun = publicRun(result, terminal, null, errorCode);
     } else if (!terminalSeen) {
       terminal.noteBlocked();
       emit({ type: "terminal_action_required", detail: { code: "TERMINAL_ACTION_REQUIRED" } });

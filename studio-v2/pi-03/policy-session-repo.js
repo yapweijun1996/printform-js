@@ -42,6 +42,11 @@ export class PolicySessionRepo {
     this.db = null;
     this.dbOpening = null;
     this.sessions = new Map();
+    this.retiredSessions = new Set();
+    this.retiredDatabases = new Set();
+    this.retiredSessionDatabases = new Map();
+    this.pendingSessionDatabases = new Map();
+    this.pendingSessionOpenings = new Set();
     this.closed = false;
   }
 
@@ -100,14 +105,33 @@ export class PolicySessionRepo {
 
   async openPersistent(metadata, policy) {
     if (this.sessions.has(metadata.id)) throw errorWithCode("PI_SESSION_ALREADY_OPEN", "PI session is already open in this repository.");
-    const storage = await IndexedDbSessionStorage.open({
-      db: await this.database(policy), sessionId: metadata.id, writerId: this.writerId,
-      assertCurrent: () => this.assertCurrent(policy)
-    });
-    const raw = new StorageBackedSession(metadata, storage);
-    const session = bindSession(raw, () => this.assertCurrent(policy), () => this.sessions.delete(metadata.id));
-    this.sessions.set(metadata.id, { raw, session, storage, policy });
-    return session;
+    const db = await this.database(policy);
+    const opening = {};
+    let finishOpening;
+    const openingDone = new Promise((resolve) => { finishOpening = resolve; });
+    this.pendingSessionDatabases.set(opening, db);
+    this.pendingSessionOpenings.add(openingDone);
+    let storage;
+    try {
+      this.assertCurrent(policy);
+      storage = await IndexedDbSessionStorage.open({
+        db, sessionId: metadata.id, writerId: this.writerId,
+        assertCurrent: () => this.assertCurrent(policy)
+      });
+      this.assertCurrent(policy);
+      const raw = new StorageBackedSession(metadata, storage);
+      const session = bindSession(raw, () => this.assertCurrent(policy), () => this.releaseSession(raw));
+      this.sessions.set(metadata.id, { raw, session, storage, policy });
+      return session;
+    } catch (error) {
+      await storage?.close().catch(() => {});
+      throw error;
+    } finally {
+      this.pendingSessionDatabases.delete(opening);
+      this.pendingSessionOpenings.delete(openingDone);
+      finishOpening();
+      this.releaseRetiredDatabase(db);
+    }
   }
 
   async list(_options, context) {
@@ -151,9 +175,25 @@ export class PolicySessionRepo {
   }
 
   track(raw, policy, mode) {
-    const session = bindSession(raw, () => this.assertCurrent(policy), () => this.sessions.delete(raw.metadata.id));
+    const session = bindSession(raw, () => this.assertCurrent(policy), () => this.releaseSession(raw));
     this.sessions.set(raw.metadata.id, { raw, session, storage: null, policy, mode });
     return session;
+  }
+
+  releaseSession(raw) {
+    this.sessions.delete(raw.metadata.id);
+    this.retiredSessions.delete(raw);
+    const database = this.retiredSessionDatabases.get(raw);
+    if (!database) return;
+    this.retiredSessionDatabases.delete(raw);
+    this.releaseRetiredDatabase(database);
+  }
+
+  releaseRetiredDatabase(database) {
+    if (!this.retiredDatabases.has(database)) return;
+    if ([...this.retiredSessionDatabases.values(), ...this.pendingSessionDatabases.values()].includes(database)) return;
+    database.close();
+    this.retiredDatabases.delete(database);
   }
 
   readLegacyHistory(records = []) {
@@ -187,7 +227,17 @@ export class PolicySessionRepo {
     const oldSessions = [...this.sessions.values()];
     const oldDb = this.db;
     this.sessions.clear();
-    void Promise.all(oldSessions.map((item) => item.raw.close(BACKGROUND_CONTEXT).catch(() => {}))).finally(() => oldDb?.close());
+    // Retire wrappers immediately, but keep their raw sessions alive until in-flight
+    // Harness provider/tool delivery reaches the current-policy guard. This preserves
+    // the stale-policy cause instead of turning the lifecycle race into a closed-session error.
+    oldSessions.forEach((item) => {
+      this.retiredSessions.add(item.raw);
+      if (item.storage?.db) this.retiredSessionDatabases.set(item.raw, item.storage.db);
+    });
+    if (oldDb) {
+      this.retiredDatabases.add(oldDb);
+      this.releaseRetiredDatabase(oldDb);
+    }
     this.db = null;
     this.dbOpening = null;
   }
@@ -195,10 +245,19 @@ export class PolicySessionRepo {
   async close(context = BACKGROUND_CONTEXT) {
     if (this.closed) return;
     this.closed = true;
-    await Promise.all([...this.sessions.values()].map((item) => item.raw.close(context).catch(() => {})));
+    await Promise.all([...this.pendingSessionOpenings]);
+    const sessions = new Set([
+      ...[...this.sessions.values()].map((item) => item.raw),
+      ...this.retiredSessions,
+    ]);
+    await Promise.all([...sessions].map((session) => session.close(context).catch(() => {})));
     this.sessions.clear();
+    this.retiredSessions.clear();
+    this.retiredSessionDatabases.clear();
     await this.memoryRepo.close(context).catch(() => {});
     this.db?.close();
+    for (const database of this.retiredDatabases) database.close();
+    this.retiredDatabases.clear();
     this.db = null;
   }
 }

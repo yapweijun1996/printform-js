@@ -69,7 +69,19 @@ test.describe("Studio v2 PI-03 policy-bound PI sessions", () => {
     const opened = await openQualification(page);
     const result = await runCase(page, "16-05");
     expect(opened.externalRequests).toEqual([]);
-    expect(result).toMatchObject({ caseId: "16-05", status: "passed", result: { stale: { code: "STALE_POLICY_CONTEXT" }, disposed: { code: "PI_SESSION_CLOSED" }, nextMode: "memory" } });
+    expect(result).toMatchObject({ caseId: "16-05", status: "passed", result: {
+      stale: { code: "STALE_POLICY_CONTEXT" }, disposed: { code: "PI_SESSION_CLOSED" }, nextMode: "memory",
+      delayed: { completion: { kind: "rejected", cause: { code: "STALE_POLICY_CONTEXT" } }, providerCalls: 1,
+        retiredSessionCountAfterClose: 0, retiredDatabaseCountAfterClose: 0, restoredSessionCount: 1,
+        restoredEntryCount: 1, staleResponsePersisted: false,
+        abort: { abort: { kind: "resolved", ok: true }, run: { kind: "resolved", ok: true }, providerCalls: 1,
+          restoredEntryCount: 2, abortCanaryPersisted: false },
+        repeated: { stale: { code: "STALE_POLICY_CONTEXT" }, missingPolicyMode: "memory",
+          modeAfterReenable: "indexeddb", followupOk: true, retiredSessionCountAfterClose: 0,
+          retiredDatabaseCountAfterClose: 0 },
+      sessionOpenRace: { stale: { code: "STALE_POLICY_CONTEXT" }, reopenedName: "reopened after stale open" }
+      }
+    } });
   });
 
   test("16-06 rejects a second Synthetic writer and allows a new writer after release", async ({ page }) => {

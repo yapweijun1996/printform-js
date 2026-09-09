@@ -53,6 +53,7 @@ jobs:
       # the Pages artifact ships below.
       - run: npm run validate:v2 -- site-dist/studio-v2/samples/sales-invoice-v2.html
       - run: npm run validate:v2 -- site-dist/studio-v2/samples/purchase-order-red-v2.html
+      - run: npm run validate:v2 -- site-dist/studio-v2/samples/progress-claim-northpeak-v2.html
 
       - uses: actions/upload-artifact@v4
         with:

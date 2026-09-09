@@ -44,20 +44,20 @@ not full browser storage behavior or proof that any real user data was disclosed
 
 - Session fallback: resumed tests cover delayed index/runtime opening, transaction abort after request success,
   and asynchronous runtime-write failure. The composed control set passes serially, but the complete storage/destination
-  P0 mapping remains open. A synchronous factory catch is not sufficient evidence for asynchronous persistence.
+  M4 mapping remains open. A synchronous factory catch is not sufficient evidence for asynchronous persistence.
 - Session/UI lifecycle: resumed code guards controller creation, new/open/list and callbacks in one owner; delayed/Stop unit controls and the actual panel policy-switch browser case pass. Complete acceptance remains broader than these controls.
 - Recipient lifecycle: bounded endpoint/credential replacement now invalidates the old session context, and the final wire/storage
-  checks pass 6/6 serially across three engines. Host-bound external-client admission is now implemented and bounded by focused transport/browser evidence; remaining recipient/P0 combinations remain open.
+  checks pass 6/6 serially across three engines. Host-bound external-client admission is now implemented and bounded by focused transport/browser evidence; remaining recipient/PI combinations remain open.
  - Explicit save: bounded policy checks now cover picker, writable stream, write and close boundaries; save/download/uncertain-close
    controls pass 24/24 serially across three engines. S10/PROD-08 now closes overwrite/recovery and production-export receipt
    acceptance for its six local cases; browser download remains started-only and has no disk-completion receipt.
-- Compatibility: first-party CDP now performs exact protocol/contract/catalog preflight and host admission, while MCP gates `tools/list` until that handshake succeeds. The admission is memory-only and document/session-bound; full P0 compatibility coverage and hostile-browser isolation remain open.
-- All-35 command coverage is useful supporting evidence, not all-35 acceptance-case closure. The resumed implementation now re-audits the high-risk return variants (undo, direct transactions, history, FormSpec/business labels and malformed envelopes) with focused tests and a current 103/537 unit run; it still does not prove every return variant or P0 case.
+- Compatibility: first-party CDP now performs exact protocol/contract/catalog preflight and host admission, while MCP gates `tools/list` until that handshake succeeds. The admission is memory-only and document/session-bound; PI/client compatibility coverage and hostile-browser isolation remain open.
+- All-35 command coverage is useful supporting evidence, not all-35 acceptance-case closure. The resumed implementation now re-audits the high-risk return variants (undo, direct transactions, history, FormSpec/business labels and malformed envelopes) with focused tests and a current 103/537 unit run; it still does not prove every return variant or every non-P0 release boundary.
 - S13/PROD-11 completed the bounded responsibility extraction: the v1 composition entry is 162 lines, the pagination attach adapter is 6 lines, and the extracted formatter helpers and Studio modules are all <=300 lines. The v1 and formatter browser contracts pass; canonical revision/CAS, scope, privacy, approval/export and public protocol behavior were not changed.
 
 ## Evidence correction
 
-Current P0 register: **32 Pass, 0 Fail, 3 Not run** (35 total). PROD-03 03-01 through 03-08, S09/PROD-04 04-01 through 04-06, S10/PROD-08 08-01 through 08-06 and S11/PROD-07 actionable Quality are now case-specific Passes; PI and release gates remain open.
+Current P0 register: **35 Pass, 0 Fail, 0 Not run** (35 total). PROD-03 03-01 through 03-08, S09/PROD-04 04-01 through 04-06, S10/PROD-08 08-01 through 08-06, S11/PROD-07 actionable Quality and production-shell X-01..03 are now case-specific Passes; isolated PI X-01..03 and PI/release gates remain open.
 
 - Retained bounded Pass records: 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08, 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 and 13-01/02/03/05/06, only for their documented tested sequences.
 - 01-01: the current three-engine preview-to-FormSpec/context/AI-target selection case passes; the Firefox AGRUN CSP eval console diagnostic is recorded as a known runtime limitation, not hidden or treated as a selection failure.
@@ -87,7 +87,7 @@ Current P0 register: **32 Pass, 0 Fail, 3 Not run** (35 total). PROD-03 03-01 th
 - 13-08: Pass after the latest serial three-engine storage-denial, volatile-fallback, runtime-write and imported-Unknown cases; the original provenance/default-policy probe remains Historical evidence.
 - 13-07: Pass after the latest serial three-engine explicit-save and final Provider-body case; operating-system file history and external-provider retention remain outside application evidence.
 - Prior 86 files / 454 unit tests, 54/54 targeted browser tests, 190/222 combined browser tests and doctor 5/5 are historical snapshot evidence.
-  Current resumed evidence is recorded in the implementation record: 105/558 unit tests, 17/17 old-bus/commit-race controls, 36/36 serial composed browser controls,
+  Current resumed evidence is recorded in the implementation record: 106/567 unit tests, 17/17 old-bus/commit-race controls, 36/36 serial composed browser controls,
   24/24 explicit-save controls and 6/6 recipient controls. The current doctor run is 5/5; an earlier 4/5 timeout result remains
   historical and was not hidden. The rebuilt E14/candidate history controls pass 21/21 across Chromium, Firefox and WebKit.
 - Tests that passed do not need to be erased. Their coverage must be stated narrowly enough that known failures cannot hide behind aggregate totals.
@@ -115,7 +115,7 @@ layout review supplies its own prompt, while MCP initialize supplies another ins
 The user resumed coding on 2026-09-08; proceed in this order:
 
 1. Retain the implemented R1-R3 corrections; S03/M1 maps the application-controlled destinations and S10/PROD-08 closes the bounded overwrite/recovery/file-outcome cases. Do not replace actual store admission guards with factory-only checks or discard committed memory state.
-2. Retain the bounded recipient and explicit-save controls; S12 current-workspace acceptance, S13 bounded maintainability, S14/PI-01 isolated direct browser BYOK transport, S15/PI-02 isolated host integration and S16/PI-03 policy-bound sessions are now evidenced, so continue S17/PI-04 composed transport/commit-receipt acceptance. Preserve confirmed writes and query uncertain transaction outcomes. Retain corrected R5/R6/R7 delivery and host enforcement. Scope/apply checks remain in domain operations, not duplicated in UI controls.
+2. Retain bounded recipient/explicit-save controls and S12-S15 evidence. S16 has been requalified against the deferred-close and pending-open lifecycle deltas; resume S17 next. X-01..03 isolated evidence is supporting only. Follow [handoff](STUDIO_V2_AGENT_HANDOFF.md). Preserve confirmed writes, uncertain-outcome reconciliation, R5/R6/R7 delivery and domain-owned scope/apply enforcement.
 3. Investigate the long-run transaction timeout, finish the remaining M4 cases and necessary build/version regressions, and inspect decoded storage plus final outbound requests. M5 records evidence and rollback readiness only; it is not permission to release.
 
 Do not treat moving to the next case number as progress while a shared lifecycle invariant is known to fail.

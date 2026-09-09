@@ -119,5 +119,5 @@ Fixed catalog examples stay synthetic and static; they are examples, not valid l
 - Simple: PASS; reuse nested shapes instead of 35 independent policies. Clear: PASS; root/wrapped variants and omissions are explicit.
 - Modular: PASS; domain results remain internal, Agent projection has one owner. Consistent: PASS; all 35 catalog entries have exactly one row.
 - Findings: no material documentation design issue; safe schemas, reference plumbing and the targeted
-  35-command matrix are implemented, while client migration, composed-wrapper and full P0 evidence remain open.
+  35-command matrix are implemented; the current 35-case P0 register is closed, while client migration and composed-wrapper evidence remain open.
 - Overall: PASS for contract and implementation foundation only. M4 acceptance and M5 release evidence remain Pending.

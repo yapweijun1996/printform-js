@@ -1,5 +1,5 @@
 import { BACKGROUND_CONTEXT } from "@earendil-works/pi-agent-core";
-import { createPi03Environment, policyFor, runActualHarness, safeError } from "./qualification-env.js";
+import { createPi03Environment, policyFor, runActualHarness, runDelayedHarnessPolicySwitch, safeError } from "./qualification-env.js";
 
 function uniqueContext(caseId) { return `pi03-${caseId}-${crypto.randomUUID()}`; }
 
@@ -106,7 +106,8 @@ async function lifecyclePolicyRace() {
   const disposed = await closed.getStats(BACKGROUND_CONTEXT).then(() => null, safeError);
   await environment.close();
   await closedEnvironment.close();
-  return { stale, disposed, nextMode: environment.repo.describe().mode };
+  const delayed = await runDelayedHarnessPolicySwitch();
+  return { stale, disposed, delayed, nextMode: environment.repo.describe().mode };
 }
 
 async function crossTabProtection() {

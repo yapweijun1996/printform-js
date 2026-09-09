@@ -1,11 +1,11 @@
 # S17 / PI-04 Composed Acceptance Evidence
 
-Date: 2026-09-09. Status: **In progress, G1 Investigated (10%)**. This record covers the
+Date: 2026-09-09. Status: **Pending closure, G1 Investigated (10%); S16 prerequisite closed, X-01..03 supporting cases recorded**. This record covers the
 isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
 
-Source identity: `main` at `3a1a7dbb93de5edd7984842896afdaab42a92bed` plus the existing shared
+Source identity: `main` at `86591663fc6f655622ea1244e83fa8803e8685e9` plus the existing shared
 uncommitted worktree. S16/PI-03, S12/PROD-09 and S13/PROD-11 are Done. No unrelated user changes
 were reverted or overwritten.
 
@@ -47,3 +47,161 @@ approval remain outside local qualification unless separately authorized.
 Decision: add only the session injection needed to reuse the PI-02 host controls with PI-03, then
 implement the PI-04 qualification environment and X-01 case. Keep later cases and any runtime cutover
 pending until this first composed case has its own observed evidence.
+
+## Current requalification log
+
+### Case 17-02 — interleaved policy, mode and scope
+
+Date: 2026-09-09; current PI-03 and PI-02 host sources plus generated PI-04 artifact. Expected: while an actual
+Provider response is in flight, switching Unknown→Real, Auto→Preview and table-A→component scope must reject the
+old result without a stale commit, canary disclosure or ready/saved misreport; committed content remains available.
+The first browser attempt failed 3/3 because the host adapter replaced an upstream Harness failure with
+`TERMINAL_ACTION_REQUIRED`. After the minimal envelope-preservation fix, `npx playwright test
+e2e/studio-v2-pi-04.spec.js --grep "17-02" --workers=1` passed **3/3** (Chromium, Firefox, WebKit), and the
+composed 17-01..02 run passed **6/6**. The final result observed `policy: real`, `applyMode: preview`, component
+scope `table-a-header`, `run.ok: false`, `run.error: HARNESS_HANDLER_ERROR`, one projected runtime error,
+`revision: 0`, unchanged committed project hash, `PREVIEW_REQUIRED`/`LAYOUT_REVIEW_REQUIRED`, and memory session
+mode. Provider context and qualification output contained no canary; no external request occurred.
+
+X-02 run artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,252 bytes**, SHA-256
+`165de582678b90395b25ad5b78f538b615fde3186af7dc76f3fbaef43ce164d7`; manifest SHA-256
+`46701249fe242b338b3c205574e2fd8833ec2f35fbd672d10d4e7f7e184e5a0b`. This remains supporting X-02 evidence;
+the later X-03 result is recorded below, while the full provider/render/privacy/transaction matrix and final S17 gates remain open.
+
+### Case 17-03 — cross-document isolation
+
+Date: 2026-09-09; current PI-04 qualification source. Expected: an actual review callback captured for document A must not
+write into unclassified document B after the active document changes; B must retain its policy, scope, revision,
+project, evidence and chat state. The first browser attempt failed 3/3 because the qualification module omitted its
+`BACKGROUND_CONTEXT` import; after the import correction, `npx playwright test e2e/studio-v2-pi-04.spec.js --grep
+"17-03" --workers=1` passed **3/3**, and the composed 17-01..03 run passed **9/9**. The actual result started a
+review on A, deactivated A on switch, rejected A's delayed callback as `HARNESS_HANDLER_ERROR`, kept A at revision 0
+with a stable project hash, and left B as `unknown`, table-A scoped, Preview, revision 0, stable project hash,
+no Evidence Pack and zero chat entries. B remained readiness-blocked with `PREVIEW_REQUIRED` and
+`LAYOUT_REVIEW_REQUIRED`; no canary appeared in the qualification output and no external request occurred.
+
+Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,449 bytes**, SHA-256
+`acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; manifest SHA-256
+`fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`; the manifest records `x01`, `x02`, `x03`,
+`directProviderChat`, `directProviderResponses`, `directProviderGemini`, `directProviderFollowUp`,
+`directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
+
+### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
+
+Date: 2026-09-09; environment: Chromium, Firefox and WebKit through the actual static PI-04 page. The case uses the
+actual `createPiByokAdapter` and `AgentHarness` with an OpenAI-compatible Chat Completions profile; Playwright intercepts
+the selected Provider URL with a deterministic tool-call SSE response. It does not use an application backend, Provider
+proxy, faux model, live credential, or production AGRUN entry.
+
+- Each engine issued exactly one direct `POST https://provider.test/v1/chat/completions`; the Authorization header carried
+the synthetic key, while the JSON body carried the model, tool catalog and semantic preview request but neither the key
+nor the PI-04 canary.
+- The actual Harness executed `printform_preview_changes`, produced one bound proposal at revision 0, kept the session
+in memory, and left the canonical revision unchanged. The qualification output contained neither canary nor credential.
+- The generated manifest records `directProviderChat: true`, `providerMatrixSynthetic: true` and `liveByokSmoke: false`.
+This is direct-browser adapter/Harness evidence only; it does not prove live CORS, quota, provider reliability, human
+approval/export UI, or the separate production-shell P0 X-01 closure. The remaining provider variants and final privacy/transaction matrix stay open.
+
+### Case 17-05 — direct OpenAI Responses composition (supporting; synthetic response)
+
+Date: 2026-09-09; Chromium, Firefox and WebKit each issued one direct `POST https://api.openai.com/v1/responses` from
+the static PI-04 page. The actual Responses adapter and Harness parsed a deterministic function-call SSE stream for
+`printform_preview_changes`, produced one revision-0 proposal, kept the policy-bound session in memory, and exposed no
+canary or credential in qualification output. The synthetic key appeared only in the intercepted Authorization header;
+the body retained the tool request but excluded the key and canary. Manifest capability `directProviderResponses: true`
+is recorded with `providerMatrixSynthetic: true` and `liveByokSmoke: false`. This remains supporting adapter/Harness
+coverage, not live CORS/reliability, human UI approval/export, P0 closure, or final S17 gate credit.
+
+### Case 17-06 — direct Google Gemini composition (supporting; synthetic response)
+
+Date: 2026-09-09; Chromium, Firefox and WebKit each issued one direct `POST` to the configured Gemini
+`streamGenerateContent` endpoint from the static PI-04 page. The actual Google adapter and Harness parsed a deterministic
+function-call SSE event, produced one revision-0 proposal, retained the memory-only session and excluded the canary and
+synthetic key from qualification output and JSON body. The key appeared only in the intercepted `x-goog-api-key` header.
+Manifest capability `directProviderGemini: true` is recorded with `providerMatrixSynthetic: true` and `liveByokSmoke: false`.
+This remains supporting adapter/Harness coverage, not live CORS/reliability, human UI approval/export, P0 closure, or
+final S17 gate credit.
+
+### Case 17-07 — direct-provider follow-up payload (supporting; synthetic response)
+
+Date: 2026-09-09; Chromium, Firefox and WebKit each completed two direct Chat Completions requests through the actual
+Harness: `printform_get_project_summary` first, followed by `printform_preview_changes`. The first safe tool result was
+carried into the second request; the second request produced one revision-0 proposal and no commit. Both intercepted
+requests carried the synthetic key only in Authorization, and neither JSON body contained the PI-04 canary or key.
+Manifest capability `directProviderFollowUp: true` is recorded with `providerMatrixSynthetic: true`. This proves the
+composed follow-up/payload boundary only; provider live behavior, broader privacy sinks, approval/export UI and final
+S17 PI credit remains open.
+
+### Case 17-08 — direct-provider commit uncertainty and recovery (supporting; synthetic response)
+
+Date: 2026-09-09; Chromium, Firefox and WebKit each used the actual direct Chat adapter and Harness to create one
+revision-0 proposal, then exercised private human approval/apply with a synthetic lost Apply response. The existing
+transaction resolver queried the same transaction, observed the committed candidate hash, and returned
+`already_committed: true` at revision 1. Revision history was exactly `[0, 1]`; no second Apply or Agent approval path
+was exposed. The intercepted request carried the synthetic key only in Authorization and its body contained neither
+key nor canary. Manifest capability `directProviderCommitRecovery: true` is recorded with
+`providerMatrixSynthetic: true`. This is supporting transaction-recovery evidence, not the separate production-shell P0 human UI acceptance,
+live Provider reliability, or final S17 gate credit.
+
+### Case 17-09 — direct-provider Real-policy privacy boundary (supporting; synthetic response)
+
+Date: 2026-09-09; Chromium, Firefox and WebKit each initialized the actual direct Chat adapter and Harness under a
+Real data policy. The policy-bound session remained `memory` with `allowPersistentSessions: false`; the request produced
+one revision-0 candidate through the actual sandboxed candidate renderer and did not commit. The synthetic key appeared
+only in Authorization; the intercepted JSON body and qualification output contained neither the key nor
+`PI04-PRIVATE-CANARY-20260909`. This verifies local frontend policy/wire redaction only; it does not prove provider
+retention, live CORS, live reliability, or final P0/S17 gate closure.
+
+## Separate production-shell P0 X-01..03 evidence
+
+`e2e/studio-v2-p0-x01.spec.js` passed **3/3** across Chromium, Firefox and WebKit on the existing `/studio-v2/` production shell. The test imported a valid synthetic canary fixture as Unknown, switched to Real memory-only policy, selected table A, used Preview mode, inspected the visible proposal diff, clicked the real UI Apply, rendered and completed the current geometry review, and confirmed the real production export picker path. Revision history had exactly one `REVISION_COMMIT` at r1; the saved artifact attested revision 1. Browser storage, prompts and controlled runtime output contained no canary; the canary appeared only in the explicitly confirmed export sink. `e2e/studio-v2-p0-x02-x03.spec.js` passed **6/6** across the same engines: X-02 rejected a delayed result after Unknown→Real, Auto→Preview and table→component changes without a candidate or revision, and X-03 rejected document-A review delivery after importing document B while preserving B's Unknown/revision-0/pending-review/no-evidence state. The combined command `npx playwright test e2e/studio-v2-p0-x01.spec.js e2e/studio-v2-p0-x02-x03.spec.js --workers=1` passed **9/9** across Chromium, Firefox and WebKit. These tests configure synthetic BYOK profiles and controlled in-page AGRUN sessions, so they are P0 production-shell/UI evidence only and do not prove live Provider transport, PI Harness cutover, CORS or release readiness. This closes P0 X-01..03, not S17/PI-04.
+
+## Remaining S17 blockers
+
+- The isolated PI-04 page has no production UI shell; visible approval/export still belongs to the AGRUN Studio entry. Replacing that runtime with PI would be S18/cutover work, not an authorized PI-04 fixture shortcut.
+- No authorized live Provider credential, target-origin/CORS profile, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Synthetic interception remains explicitly supporting evidence.
+
+## X-01 — historical supporting case evidence (Pass; S17 remains in progress)
+
+The isolated static PI-04 entry now composes the pinned `AgentHarness`, `PolicySessionRepo`, existing
+table scope/gateway, CommandBus transaction/CAS, private approval/apply, current geometry review and
+`createFileExport`. The production AGRUN entry was not changed.
+
+- Chromium, Firefox and WebKit: `npx playwright test e2e/studio-v2-pi-04.spec.js --workers=1` — **3/3**.
+- Observed policy and privacy: imported fixture is `unknown`; `PolicySessionRepo` reports `memory`,
+  IndexedDB `open` count is **0**, provider contexts contain no canary marker, and the safe qualification
+  result contains no canary content. No external provider request was observed.
+- Observed workflow: table A scope `{kind: "table", tableId: "a"}`; Preview produced one semantic
+  `set_column_widths` proposal at r0; private human approval/apply committed exactly r1; the
+  committed r1 rendered through the actual sandboxed iframe/runtime with a ready geometry report
+  and zero overflow; two Studio-issued evidence receipts completed a current review; human-confirmed
+  picker export completed as `saved`. Candidate preview now uses the same sandboxed iframe/geometry renderer as committed content; the retained `readyReport()` helper is not used as acceptance evidence.
+- Integrity: revision entries are `[0, 1]`; export Evidence Pack revision is **1**, embedded artifact
+  evidence identifies **1**, and the export filename is `pi04-x01-canary.html`. No automatic download
+  was used.
+- Boundary/static checks: historical isolated `buildPi04` produced **1,207,086 bytes** before final S16 PI-03 bundle changes; the current
+  manifest records `static`, `frontendOnly`, `actualHarness`, `policyBound`, `privateHumanApproval`,
+  `canonicalCommandBus` and isolated `x01`/`x02`/`x03`, with `appBackend: false`,
+  `providerProxy: false`, `liveByokSmoke: false`. The browser bundle has no bare PI package/Node
+  imports, `eval` or `new Function`; the bundle's third-party websocket status labels are non-executable
+  strings. `npm run check`, PI-04 JS `node --check`, and `git diff --check` passed. The full build baseline
+  passed **106 files / 567 tests**; PI-02 host regression after the shared injection passed **18/18** across
+  the three engines.
+
+This records isolated X-01 supporting coverage only, not the separate production-shell P0 closure. DoD remains **G1 / 10%** (`x----`):
+X-02/X-03 have supporting PI browser results and separate production-shell P0 passes, but the PI-04 matrix and step closure are still open.
+
+## Historical interrupted X-02 investigation
+
+At the earlier handoff, the checkout was `86591663fc6f655622ea1244e83fa8803e8685e9` plus dirty files.
+The deferred-close change in PI-03 was then a proposed correction; S16 G2-G5 were temporarily reopened.
+Node delayed-provider probes observed a blocked run with `HARNESS_HANDLER_ERROR` and
+`TERMINAL_ACTION_REQUIRED`, no proposal and no revision. This did not prove the root cause.
+Other Node probes never reached the delayed renderer: table scope needs browser DOM,
+document-scope probes returned `COMMAND_FAILED`, and unsettled top-level await was
+incomplete evidence, not proof of a deadlock. The current browser requalification is recorded in S16;
+no X-02 browser case had yet run. At that point the X-01 fixture injected `readyReport()` and used
+programmatic approval/save confirmations. The current isolated X-01 requalification now renders the committed
+revision through the sandboxed iframe/runtime, but it remains supporting-only for PI because its production-shell
+approval/export path is covered separately above and live provider transport remains outside it. See
+[handoff](STUDIO_V2_AGENT_HANDOFF.md) for exact continuation and verification order.

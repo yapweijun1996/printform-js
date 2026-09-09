@@ -2,12 +2,13 @@ import { AgentHarness, BACKGROUND_CONTEXT } from "@earendil-works/pi-agent-core"
 import { createModels, fauxAssistantMessage, fauxProvider } from "@earendil-works/pi-ai";
 import { CommandBus } from "../core/command-bus.js";
 import { classifyImportedDocument } from "../core/data-policy.js";
-import { hashRenderProject } from "../core/render-provenance.js";
 import { installAgentGateway, bindAgentSession } from "../adapters/gateway.js";
 import { createFileExport } from "../ui/studio-file-export.js";
 import { createSalesInvoiceProject } from "../samples/sales-invoice.js";
+import { createPiByokAdapter } from "../pi-01/provider-transport.js";
 import { createPiHostAdapter } from "../pi-02/host-adapter.js";
 import { PolicySessionRepo } from "../pi-03/policy-session-repo.js";
+import { renderCurrentProject, renderProject } from "./qualification-render.js";
 
 export const PI04_CONTEXT = "pi04-x01-context";
 export const PI04_DOCUMENT_ID = "pi04-x01-canary";
@@ -46,10 +47,10 @@ function readyReport() {
   };
 }
 
-function projectFixture() {
+function projectFixture(documentId = PI04_DOCUMENT_ID, canary = PI04_CANARY) {
   const project = createSalesInvoiceProject();
-  project.manifest = { ...project.manifest, documentId: PI04_DOCUMENT_ID, title: "PI-04 Imported Canary" };
-  project.sampleData = { ...project.sampleData, customer: { ...project.sampleData.customer, name: PI04_CANARY } };
+  project.manifest = { ...project.manifest, documentId, title: "PI-04 Imported Canary" };
+  project.sampleData = { ...project.sampleData, customer: { ...project.sampleData.customer, name: canary } };
   project.templateHtml = project.templateHtml
     .replace('class="prowheader pf-grid"', 'class="prowheader pf-grid scope-table-a-header" data-pf-table-id="a"')
     .replace('class="prowitem pf-grid"', 'class="prowitem pf-grid scope-table-a-row" data-pf-table-id="a"');
@@ -59,27 +60,27 @@ function projectFixture() {
 function publicCalls(calls) { return calls.map(({ surface, name }) => ({ surface, name })); }
 
 async function recordCurrentRender(bus) {
-  const projectHash = await hashRenderProject(bus.project);
-  bus.recordRenderReport(readyReport(), {
-    source: "committed", revision: bus.revision, candidateHash: projectHash,
-    baseProjectHash: projectHash, visualMode: "geometry"
-  });
-  return { status: bus.renderReport.status, revision: bus.renderReport.provenance.revision, visualMode: bus.renderReport.provenance.visualMode };
+  return renderCurrentProject(bus);
 }
 
-export async function createPi04Environment() {
-  const policy = classifyImportedDocument(PI04_DOCUMENT_ID);
+export async function createPi04Environment({ applyMode = "preview", documentId = PI04_DOCUMENT_ID, canary = PI04_CANARY, transactionNamespace = PI04_CONTEXT, dataPolicy = null } = {}) {
+  const policy = dataPolicy || classifyImportedDocument(documentId);
   let currentPolicy = policy;
+  let currentApplyMode = applyMode === "auto" ? "auto" : "preview";
   let scope = { kind: "table", tableId: "a" };
-  const bus = new CommandBus(projectFixture(), {
-    dataPolicy: policy, transactionNamespace: PI04_CONTEXT,
-    renderCandidate: async () => readyReport()
+  const bus = new CommandBus(projectFixture(documentId, canary), {
+    dataPolicy: policy, transactionNamespace,
+    renderCandidate: async (candidate, revision) => {
+      candidateRenderCount += 1;
+      return renderProject(bus, candidate, revision, "candidate");
+    }
   });
   const calls = [];
+  let candidateRenderCount = 0;
   let uiSessionFactory;
   const installed = installAgentGateway(bus, globalThis, {
-    sessionId: "pi04-agent", dataPolicy: policy, getDataPolicy: () => currentPolicy,
-    getScopeContext: () => scope, getApplyMode: () => "preview",
+    sessionId: "pi04-agent", getDataPolicy: () => currentPolicy,
+    getScopeContext: () => scope, getApplyMode: () => currentApplyMode,
     onUiSessionFactory: (factory) => { uiSessionFactory = factory; }
   });
   const agentSession = bindAgentSession(installed, "pi04-agent");
@@ -105,8 +106,11 @@ export async function createPi04Environment() {
   return {
     bus, policy, sessionRepo, session, agentGateway, privateGateway,
     calls: () => publicCalls(calls),
+    candidateRenderCount: () => candidateRenderCount,
     sessionMode: () => sessionRepo.describe().mode,
+    applyMode: () => currentApplyMode,
     scope: () => structuredClone(scope),
+    setApplyMode(next) { currentApplyMode = next === "auto" ? "auto" : "preview"; },
     setScope(next) { scope = structuredClone(next); },
     setPolicy(next) { currentPolicy = next; sessionRepo.setDataPolicy(next); },
     currentPolicy: () => currentPolicy,
@@ -116,19 +120,38 @@ export async function createPi04Environment() {
   };
 }
 
-export async function createPi04Harness(environment, { responses = [], reviewHooks = {} } = {}) {
+export async function createPi04Harness(environment, { responses = [], reviewHooks = {}, sessionId = "pi04-agent" } = {}) {
   const faux = fauxProvider({ provider: "pi04-faux", models: [{ id: "pi04-qualification" }], tokenSize: { min: 3, max: 3 } });
   faux.setResponses(responses);
   const models = createModels();
   models.setProvider(faux.provider);
+  const session = sessionId === "pi04-agent"
+    ? environment.session
+    : await environment.sessionRepo.create({ id: `${sessionId}-session` }, BACKGROUND_CONTEXT);
   const host = await createPiHostAdapter({
     models, model: faux.getModel(), gateway: environment.agentGateway,
-    privateGateway: environment.privateGateway, sessionId: "pi04-agent",
+    privateGateway: environment.privateGateway, sessionId,
     systemPrompt: "Use the PrintForm tools and stop after the requested terminal action.",
-    sessionRepo: environment.sessionRepo, session: environment.session,
+    sessionRepo: environment.sessionRepo, session,
     reviewHooks
   });
   return { faux, host };
+}
+
+export async function createPi04DirectHarness(environment, { profile, apiKey, sessionId = "pi04-direct" } = {}) {
+  const adapter = createPiByokAdapter(profile, { apiKey });
+  try {
+    const host = await createPiHostAdapter({
+      models: adapter.models, model: adapter.model, gateway: environment.agentGateway,
+      privateGateway: environment.privateGateway, sessionId,
+      systemPrompt: "Use the PrintForm tools and stop after the requested terminal action.",
+      sessionRepo: environment.sessionRepo, session: environment.session
+    });
+    return { adapter, host };
+  } catch (error) {
+    adapter.dispose();
+    throw error;
+  }
 }
 
 export async function prepareReview(environment) {
@@ -178,7 +201,7 @@ export async function exportCurrent(environment) {
     const result = await exportDocument(true);
     return {
       result, evidenceRevision: environment.bus.evidencePack?.revision ?? null,
-      embeddedRevision: writtenHtml.includes('"revision":1') ? 1 : null,
+      embeddedRevision: writtenHtml.includes('"revision": 1') ? 1 : null,
       htmlBytes: new TextEncoder().encode(writtenHtml).byteLength, confirmCalls, savedStates
     };
   } finally {
