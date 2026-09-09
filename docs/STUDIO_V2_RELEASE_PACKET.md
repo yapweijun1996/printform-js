@@ -3,12 +3,12 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-09T17:20:12+08:00. Repository HEAD: `86591663fc6f655622ea1244e83fa8803e8685e9`.
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-09T17:53:16+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`.
 Application delta manifest (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
-The worktree is intentionally dirty with the S16/S17 implementation and evidence changes; `main`
-tracks `origin/main`; no PR metadata or outgoing push is present in this checkout. No commit, push,
-deployment, publish, user-data deletion, or live Provider request was made.
+The S16/S17 implementation and evidence changes are committed in the application review revision;
+`main` tracks `origin/main` and contains the local review commit. No PR metadata or outgoing push is
+present in this checkout. No deployment, publish, user-data deletion, or live Provider request was made.
 
 ## 1. Prompt-to-artifact completion checklist
 
@@ -48,6 +48,8 @@ deployment, publishing, physical print, or maintainer approval.
   — **9/9**, Chromium/Firefox/WebKit.
 - `npx playwright test e2e/studio-v2-pi-04.spec.js e2e/studio-v2-pi-04-privacy.spec.js e2e/studio-v2-pi-04-transaction.spec.js --workers=1`
   — **27/27**, Chromium/Firefox/WebKit; synthetic direct-provider wire.
+- Latest combined local target run for P0 X-01..03 and PI-04 supporting cases — **54/54**, Chromium/Firefox/WebKit;
+  synthetic provider interception remains supporting evidence and does not close S17.
 - `npm run doctor` — **5/5**, including **106 files / 567 tests** and three static validators.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
@@ -57,6 +59,7 @@ deployment, publishing, physical print, or maintainer approval.
 - `.github/workflows/ci.yml` now declares all three static pilot validators; a local structural check found exactly three entries. A remote CI run is intentionally unrun.
 - `npx playwright test e2e/production-verification.spec.js --grep "opens the required progress claim" --project=chromium --workers=1` passed **1/1**. The real browser observed Printable, non-overflow metrics, a non-empty page count, the Progress Claim heading and no browser errors. This is one Chromium smoke case, not the full platform/scenario matrix.
 - `node scripts/browser-matrix.mjs` (full, not `--quick`) was attempted against the current `site-dist`: **88 cells, 88 with problems**. Chromium, Firefox and WebKit reported missing `result.result` values during `validate_project`/revision calls; branded Chrome timed out waiting for the settled render status. This is failed diagnostic evidence, not a browser pass or S20 credit. The ignored `browser-matrix-result.json` is retained for the next investigation; historical 88/88 claims are not substituted.
+- The latest repository-wide Chromium run was **159/169 passed** with 10 failures; a serial rerun of the affected files was **17/22 passed**. The five reproduced failures are existing/environment-sensitive file-save, P0 control/pixel, and session-lifecycle cases outside the amended PI-03/PI-04 target set; this run is not release evidence and no unrelated fix was introduced.
 - Current toolchain: Node `v25.2.1`, npm `11.6.2`, Playwright `1.62.0`.
 
 The spec audit confirms that 17-01..03 assert zero external requests, 17-04..07/17-09 use
