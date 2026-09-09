@@ -5,9 +5,9 @@ isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
 
-Source identity: `main` at `86591663fc6f655622ea1244e83fa8803e8685e9` plus the existing shared
-uncommitted worktree. S16/PI-03, S12/PROD-09 and S13/PROD-11 are Done. No unrelated user changes
-were reverted or overwritten.
+Source identity: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; packet
+provenance is committed in `d87464330044ceca33eb9062bc74d6d6c3c7edd6`. S16/PI-03, S12/PROD-09 and
+S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
 
 Owners inspected:
 
@@ -84,7 +84,7 @@ Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,
 `acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; manifest SHA-256
 `fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`; the manifest records `x01`, `x02`, `x03`,
 `directProviderChat`, `directProviderResponses`, `directProviderGemini`, `directProviderFollowUp`,
-`directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
+`directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. The latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
 
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 

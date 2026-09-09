@@ -1,7 +1,7 @@
 # Studio v2 Resumed Implementation Evidence
 
-Date: 2026-09-09. Scope: the current uncommitted worktree after explicit coding resume.
-Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
+Date: 2026-09-09. Scope: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0` with packet provenance commit `d87464330044ceca33eb9062bc74d6d6c3c7edd6`.
+Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
 Latest P0 register: **35 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08/X-01/X-02/X-03), 0 Fail, 0 Not run**. This closes the
 recorded P0 case paths; later PI/release evidence remains incomplete.
@@ -283,7 +283,7 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). Cases 03-01 through
   policy/host/session boundaries; stale results leave revision 0 and no canary output. The combined production-shell X-01..03 command passed **9/9** across the same engines and closes the remaining P0 records. Cases 17-04 and 17-05 each add **3/3**
   direct-browser `createPiByokAdapter`/Harness composition for Chat and Responses; 17-06 adds **3/3** for Gemini, 17-07 for
   follow-up payloads, 17-08 for commit recovery and 17-09 for Real-policy privacy. Keys are header-only and bodies exclude
-  key/canary. The combined PI-04 browser command passed **27/27** across Chromium, Firefox and WebKit; all nine PI cases remain supporting evidence, and candidate/committed renders now use the sandboxed iframe/geometry path.
+  key/canary. The combined PI-04 browser command passed **27/27**, and the latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit; all nine PI cases remain supporting evidence, and candidate/committed renders now use the sandboxed iframe/geometry path.
 - Current isolated PI-04 bundle: **1,212,449 bytes**, entry SHA-256 `acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; static/frontend-only manifest has `appBackend: false`,
   `providerProxy: false`, `directProviderChat: true`, `directProviderResponses: true`, `directProviderGemini: true`, `directProviderFollowUp: true`, `directProviderCommitRecovery: true`, `directProviderRealPrivacy: true`, `providerMatrixSynthetic: true`, `liveByokSmoke: false`, and SHA-256 `fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`.
   `npm run check`, JS `node --check`, `git diff --check`, PI-02 **18/18**, and full **106 files / 567 tests** passed; rebuilt site has **202** SW precache entries. See [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
