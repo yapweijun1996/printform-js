@@ -1,10 +1,11 @@
 import { findComponent } from "./form-spec.js";
 
 const SCOPE_KINDS = new Set(["document", "layout", "theme", "table", "component"]);
-const THEME_OPERATIONS = new Set(["set_brand_color", "set_font_scale"]);
-const LAYOUT_OPERATIONS = new Set(["set_brand_color", "set_font_scale", "set_column_widths", "update_component", "bind_field", "set_pagination_rule"]);
+const THEME_OPERATIONS = new Set(["set_brand_color"]);
+const LAYOUT_OPERATIONS = new Set(["set_font_scale", "set_column_widths", "update_component", "set_pagination_rule"]);
 const TABLE_OPERATIONS = new Set(["set_column_widths", "update_component", "bind_field", "set_pagination_rule"]);
 const COMPONENT_OPERATIONS = new Set(["update_component", "bind_field", "set_pagination_rule"]);
+const LAYOUT_COMPONENT_PATCHES = new Set(["keepTogether", "styleToken"]);
 
 export function normalizeScope(scope) {
   if (scope === undefined) scope = { kind: "document" };
@@ -35,15 +36,36 @@ function tableIdentity(node) {
   return node?.getAttribute?.("data-pf-table-id") || node?.getAttribute?.("data-pf-table") || "default";
 }
 
-function selectorTargetsTable(project, selector, tableId) {
-  if (typeof document === "undefined") return false;
+function matchingTableIds(project, selector) {
+  if (typeof document === "undefined") return new Set();
   const template = document.createElement("template");
   template.innerHTML = String(project?.templateHtml || "");
   let nodes;
   try { nodes = Array.from(template.content.querySelectorAll(selector)); }
-  catch { return false; }
+  catch { return new Set(); }
   const tables = nodes.filter((node) => node.tagName === "TABLE");
-  return tables.length > 0 && tables.every((node) => tableIdentity(node) === tableId);
+  return tables.length ? new Set(tables.map(tableIdentity)) : new Set();
+}
+
+function selectorTargetsTable(project, selector, tableId) {
+  const tableIds = matchingTableIds(project, selector);
+  return tableIds.size === 1 && tableIds.has(tableId);
+}
+
+function selectorTargetsSingleTable(project, selector) {
+  return matchingTableIds(project, selector).size === 1;
+}
+
+function assertComponentMutation(scope, operation, project) {
+  if (!["update_component", "bind_field", "set_pagination_rule"].includes(operation.type)) return;
+  const component = componentFor(project, operation.componentId);
+  if (!component) throw scopeFailure();
+  const componentTableId = component.tableId || "default";
+  if (scope.kind === "table" && componentTableId !== scope.tableId) throw scopeFailure();
+  if (operation.type !== "update_component") return;
+  const patch = operation.patch || {};
+  if (Object.prototype.hasOwnProperty.call(patch, "tableId") && String(patch.tableId) !== componentTableId) throw scopeFailure();
+  if (scope.kind === "layout" && Object.keys(patch).some((key) => !LAYOUT_COMPONENT_PATCHES.has(key))) throw scopeFailure();
 }
 
 function assertTarget(scope, operation, project) {
@@ -55,19 +77,20 @@ function assertTarget(scope, operation, project) {
     if (!TABLE_OPERATIONS.has(type)) throw scopeFailure();
     if (!scope.tableId && !scope.tableSelector) throw scopeFailure();
     if (type === "set_column_widths") {
-      if (scope.tableSelector && operation.tableSelector !== scope.tableSelector) throw scopeFailure();
+      if (scope.tableSelector && (
+        operation.tableSelector !== scope.tableSelector ||
+        !selectorTargetsSingleTable(project, operation.tableSelector)
+      )) throw scopeFailure();
       if (scope.tableId && !selectorTargetsTable(project, operation.tableSelector, scope.tableId)) throw scopeFailure();
     }
     if (type !== "set_column_widths") {
       if (!scope.tableId) throw scopeFailure();
-      const component = componentFor(project, operation.componentId);
-      if (!component || (scope.tableId && component.tableId !== scope.tableId)) throw scopeFailure();
     }
   }
   if (scope.kind === "component") {
     if (!COMPONENT_OPERATIONS.has(type) || operation.componentId !== scope.componentId) throw scopeFailure();
   }
-  if (type === "set_pagination_rule" && operation.rule === "repeatHeader" && scope.kind !== "document") throw scopeFailure();
+  assertComponentMutation(scope, operation, project);
 }
 
 export function assertOperationsInScope(project, operations, scope = { kind: "document" }) {

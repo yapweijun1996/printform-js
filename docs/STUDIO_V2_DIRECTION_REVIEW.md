@@ -1,6 +1,6 @@
 # Studio v2 Direction and Conformance Review
 
-Reviewed: 2026-09-08, after the user paused coding.
+Reviewed: 2026-09-09, after the user resumed coding following a direction review.
 Status: review/documentation correction completed; implementation **Partial**.
 Review-time SCMC implementation decision: **FAIL**. The policy direction is retained, not weakened.
 The user explicitly resumed coding on 2026-09-08. R1-R3/R5-R6 now have bounded code corrections and verified controls;
@@ -47,25 +47,49 @@ not full browser storage behavior or proof that any real user data was disclosed
   P0 mapping remains open. A synchronous factory catch is not sufficient evidence for asynchronous persistence.
 - Session/UI lifecycle: resumed code guards controller creation, new/open/list and callbacks in one owner; delayed/Stop unit controls and the actual panel policy-switch browser case pass. Complete acceptance remains broader than these controls.
 - Recipient lifecycle: bounded endpoint/credential replacement now invalidates the old session context, and the final wire/storage
-  checks pass 6/6 serially across three engines. Full external-client admission and remaining recipient/P0 combinations remain open.
-- Explicit save: bounded policy checks now cover picker, writable stream, write and close boundaries; save/download/uncertain-close
-  controls pass 24/24 serially across three engines. Full overwrite/recovery/production-export receipt acceptance remains open.
-- Compatibility: first-party CDP preflight is not the same as host-side admission of every old external client. The migration document's required bootstrap/admission evidence remains open.
-- All-35 command coverage is useful supporting evidence, not all-35 acceptance-case closure. The resumed implementation now re-audits the high-risk return variants (undo, direct transactions, history, FormSpec/business labels and malformed envelopes) with focused tests and a fresh 97/504 unit run; it still does not prove every return variant or P0 case.
-- The resumed session-lifecycle extraction brought agent-panel-runtime.js below 300 lines. The pre-existing modified legacy studio/studio.js still has 1491 lines; no exception was authorized. Resolve through bounded responsibility-based extraction, not an unrelated rewrite.
+  checks pass 6/6 serially across three engines. Host-bound external-client admission is now implemented and bounded by focused transport/browser evidence; remaining recipient/P0 combinations remain open.
+ - Explicit save: bounded policy checks now cover picker, writable stream, write and close boundaries; save/download/uncertain-close
+   controls pass 24/24 serially across three engines. S10/PROD-08 now closes overwrite/recovery and production-export receipt
+   acceptance for its six local cases; browser download remains started-only and has no disk-completion receipt.
+- Compatibility: first-party CDP now performs exact protocol/contract/catalog preflight and host admission, while MCP gates `tools/list` until that handshake succeeds. The admission is memory-only and document/session-bound; full P0 compatibility coverage and hostile-browser isolation remain open.
+- All-35 command coverage is useful supporting evidence, not all-35 acceptance-case closure. The resumed implementation now re-audits the high-risk return variants (undo, direct transactions, history, FormSpec/business labels and malformed envelopes) with focused tests and a current 103/537 unit run; it still does not prove every return variant or P0 case.
+- S13/PROD-11 completed the bounded responsibility extraction: the v1 composition entry is 162 lines, the pagination attach adapter is 6 lines, and the extracted formatter helpers and Studio modules are all <=300 lines. The v1 and formatter browser contracts pass; canonical revision/CAS, scope, privacy, approval/export and public protocol behavior were not changed.
 
 ## Evidence correction
 
-Current P0 register: **8 Pass, 0 Fail, 27 Not run** (35 total).
+Current P0 register: **32 Pass, 0 Fail, 3 Not run** (35 total). PROD-03 03-01 through 03-08, S09/PROD-04 04-01 through 04-06, S10/PROD-08 08-01 through 08-06 and S11/PROD-07 actionable Quality are now case-specific Passes; PI and release gates remain open.
 
-- Retained bounded Pass records: 13-01/02/03/05/06, only for their documented tested sequences.
+- Retained bounded Pass records: 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08, 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 and 13-01/02/03/05/06, only for their documented tested sequences.
+- 01-01: the current three-engine preview-to-FormSpec/context/AI-target selection case passes; the Firefox AGRUN CSP eval console diagnostic is recorded as a known runtime limitation, not hidden or treated as a selection failure.
+- 01-02: the current three-engine allowed table-A edit case passes; the candidate changes only the approved template source, Apply increments the revision once, and table B/unrelated PTAC content remains unchanged. The deterministic in-page action is browser evidence, not live-provider certification.
+- 01-03: the current three-engine wrong-target/category case passes; table-B and theme requests under table-A scope return `SCOPE_VIOLATION`, show an actionable scope message, create no candidate and commit no revision.
+- 01-04: the current three-engine mixed-batch case passes; complete allowed-plus-forbidden arrays are rejected atomically before transaction creation, with no candidate or revision change.
+- 01-05: the current three-engine indirect-effects case passes; Theme and cross-table selectors are rejected under component scope, while repeatHeader is proven local against the legacy root default.
+- 01-06: the current three-engine stale-selection case passes; a scope change returns `SCOPE_CHANGED` and requires a fresh preview, while document replacement clears the candidate and resets scope before a fresh current-revision Apply.
+- 01-07: the current three-engine adapter-parity case passes; embedded, WebMCP and direct domain calls agree, Chromium CDP repeats the result, forged caller scope fields do not broaden permission and raw source remains blocked.
+- 01-08: the current three-engine legacy/whole-document case passes; the legacy sample resolves through the existing adapter, an ambiguous table selector remains blocked under table scope, explicit `all` passes the existing preview/validation/private Apply path, and component restrictions return after switching back.
+- 02-01: the current three-engine chat-preview case passes; Preview mode holds the candidate and committed state unchanged until the private UI Apply, which commits once and leaves the applied revision/Undo state visible.
+- 02-02: the current three-engine Review-repair case passes; each approved repair produces a distinct next candidate, and the first approval cannot commit the later repair.
+- 02-03: the current three-engine approval-provenance case passes; page-global, ordinary bound-session, WebMCP and Chromium CDP callers cannot reach the private approval method, forged approval is rejected, and the UI-owned token/hash/lease/revision path commits only once.
+- 02-04: the current three-engine mode-change case passes; a delayed Auto-started proposal remains pending after switching to Preview, switching back to Auto does not commit or authorize it, and a new explicit Preview-mode Apply commits once.
+- 02-05: the current three-engine cancel/retry case passes; Stop cancels a delayed run before proposal creation, late stopped output does not become Applied, Discard removes the retry candidate before Apply, and late retry callbacks do not change the committed revision or brand color.
+- 02-06: the current three-engine duplicate/unknown-outcome case passes; a double Apply dispatch produces one approval attempt and at most one committed revision, lost response recovery preserves the real Applied revision, unavailable post-commit validation stays visible as Applied with an unavailable status, and an unresolved post-write outcome stays recovery-required without resubmission.
+- 02-07: the current three-engine Auto-mode case passes; one explicitly eligible in-scope brand-colour operation auto-applies once and completes a clean layout review, while ineligible/mixed pending work, invalid/out-of-scope operations, human source editing and the untrusted mutation boundary retain their required states.
+- 02-08: the current three-engine host/prompt/export case passes; the real panel loads the runtime designer skill and host prompt, observes pending/applying/applied states, produces no download from AI Apply or review, and requires a human confirmation before the one accepted production HTML download.
+- 03-02: the current three-engine render-failure case passes; held Rendering, current iframe failure and silent timeout show Preview failed/retry, blocked readiness and disabled export, while retry restores the committed Printable state. Candidate-report invalidation prevents a transient candidate from masking the failure.
+- 03-03: the current three-engine review-lifecycle case passes; missing review, blocking findings and unavailable AI remain visibly blocked with next actions, editing and untrusted draft export remain policy-permitted, and only a current passing review enables the human-confirmed trusted export path. The focused render/controller/CommandBus/context/status set passes 30/30; the full build passes 105 files/557 tests.
+- 03-04: the current three-engine invalidated-evidence case passes; a passing r0 review is cleared by a locale edit at r1 and by Undo/Redo at r2/r3, so each new committed revision returns to review-required and trusted export stays disabled until fresh evidence.
+- 03-05: the current three-engine late-result case passes; r0 Studio-issued evidence delivered after a locale edit committed r1 returns `REVISION_CONFLICT`, and the current r1 readiness remains review-required/Blocked.
+- 03-06: the current three-engine candidate-separation case passes; a reviewed committed r0 remains ready/exportable while an r1 candidate is visibly identified as not committed, the trusted export attestation names r0, and Discard restores the committed preview without changing revision or project hash.
+- 03-07: the current three-engine save-independence case passes; picker cancellation and failed writes remain Cancelled/Failed, only a confirmed close becomes Saved, download fallback is reported as started but unconfirmed, and an edit during a held close leaves r1 Unsaved while the completed artifact remains bound to r0. The focused retry unit suite passes 11/11.
+- 03-08: the current three-engine surface-agreement case passes; Context, Quality, export actions and `request_export` agree across pending, rendered-but-unreviewed, warning-only ready, candidate and human-cancelled-export states. All five UI locales refresh current readiness labels, and no automatic download occurs. The Chromium failure that found stale `lastValidation` reuse was fixed by refreshing from `bus.readiness()`.
 - 13-04: Pass after the latest serial three-engine mode/document/no-policy Provider and delayed IndexedDB admission cases; the original delayed-write probe remains Historical evidence.
 - 13-08: Pass after the latest serial three-engine storage-denial, volatile-fallback, runtime-write and imported-Unknown cases; the original provenance/default-policy probe remains Historical evidence.
 - 13-07: Pass after the latest serial three-engine explicit-save and final Provider-body case; operating-system file history and external-provider retention remain outside application evidence.
 - Prior 86 files / 454 unit tests, 54/54 targeted browser tests, 190/222 combined browser tests and doctor 5/5 are historical snapshot evidence.
-  Current resumed evidence is recorded in the implementation record: 97/504 unit tests, 36/36 serial composed browser controls,
+  Current resumed evidence is recorded in the implementation record: 105/558 unit tests, 17/17 old-bus/commit-race controls, 36/36 serial composed browser controls,
   24/24 explicit-save controls and 6/6 recipient controls. The current doctor run is 5/5; an earlier 4/5 timeout result remains
-  historical and was not hidden.
+  historical and was not hidden. The rebuilt E14/candidate history controls pass 21/21 across Chromium, Firefox and WebKit.
 - Tests that passed do not need to be erased. Their coverage must be stated narrowly enough that known failures cannot hide behind aggregate totals.
 
 ## Agent guidance follow-through (historical documentation-only supplement)
@@ -90,8 +114,8 @@ layout review supplies its own prompt, while MCP initialize supplies another ins
 
 The user resumed coding on 2026-09-08; proceed in this order:
 
-1. Retain the implemented R1-R3 corrections and complete the remaining side-effect, late-result and destination acceptance. Do not replace actual store admission guards with factory-only checks or discard committed memory state.
-2. Retain the bounded recipient and explicit-save controls, then complete remaining transport, overwrite/recovery and commit-receipt acceptance. Preserve confirmed writes and query uncertain transaction outcomes. Retain corrected R5/R6/R7 delivery and host enforcement. Scope/apply checks remain in domain operations, not duplicated in UI controls.
+1. Retain the implemented R1-R3 corrections; S03/M1 maps the application-controlled destinations and S10/PROD-08 closes the bounded overwrite/recovery/file-outcome cases. Do not replace actual store admission guards with factory-only checks or discard committed memory state.
+2. Retain the bounded recipient and explicit-save controls; S12 current-workspace acceptance, S13 bounded maintainability, S14/PI-01 isolated direct browser BYOK transport, S15/PI-02 isolated host integration and S16/PI-03 policy-bound sessions are now evidenced, so continue S17/PI-04 composed transport/commit-receipt acceptance. Preserve confirmed writes and query uncertain transaction outcomes. Retain corrected R5/R6/R7 delivery and host enforcement. Scope/apply checks remain in domain operations, not duplicated in UI controls.
 3. Investigate the long-run transaction timeout, finish the remaining M4 cases and necessary build/version regressions, and inspect decoded storage plus final outbound requests. M5 records evidence and rollback readiness only; it is not permission to release.
 
 Do not treat moving to the next case number as progress while a shared lifecycle invariant is known to fail.

@@ -10,7 +10,7 @@
     "humanGuide": "https://yapweijun1996.github.io/printform-js/studio-v2/AGENT_SETUP.md",
     "llmsText": "https://yapweijun1996.github.io/printform-js/studio-v2/llms.txt"
   },
-  "handoffPrompt": "Open this Studio URL, read its linked agent-setup.json, explain any MCP configuration change before applying it, restart the agent client when instructed, then verify WebMCP with get_capabilities before editing the print form.",
+  "handoffPrompt": "Open this Studio URL, read its linked agent-setup.json, explain any MCP configuration change before applying it, restart the agent client when instructed, then verify WebMCP with get_capabilities before editing the print form. Treat get_capabilities as bootstrap metadata only: MCP/CDP business clients must complete the exact live protocol, Agent Contract and catalog preflight plus host-bound in-memory admission; never invent or persist an admission token. For embedded browser AI, use the origin-bound Demo session contract, never a private /v1 Gateway key or a gw_ credential.",
   "requirements": [
     {
       "id": "node",
@@ -108,7 +108,7 @@
     {
       "id": "verify-capabilities",
       "mode": "mcp-call",
-      "instruction": "Execute get_capabilities and verify the protocol and command contract versions.",
+      "instruction": "Execute get_capabilities and verify the protocol, command contract versions and complete 35-tool catalog. This is bootstrap metadata only; before MCP/CDP business calls the client must complete the live host admission handshake and repeat it after reconnect or page replacement.",
       "mcpTool": "execute_webmcp_tool",
       "arguments": { "toolName": "get_capabilities", "input": "{}" }
     }

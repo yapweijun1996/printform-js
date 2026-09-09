@@ -11,8 +11,9 @@ describe("buildPreviewBridge request token", () => {
     const script = buildPreviewBridge(7, true, 42);
     expect(script).toContain("token: 42");
     expect(script).toContain("revision: 7");
-    // Both listeners (printform:rendered and window "error") must echo it.
-    expect(script.match(/token: 42/g)).toHaveLength(2);
+    // Render, selection, quality-navigation selection and error replies echo it.
+    expect(script.match(/token: 42/g)).toHaveLength(4);
+    expect(script).toContain('type: "selection"');
   });
 
   it("JSON-encodes the token so a non-numeric value can't break out of the inline script", () => {
@@ -25,6 +26,16 @@ describe("buildPreviewBridge request token", () => {
     expect(script).toContain('addEventListener("wheel"');
     expect(script).toContain('type: "wheel"');
     expect(script).toContain("deltaY: event.deltaY");
+  });
+
+  it("embeds revision-bound quality navigation with a component fallback", () => {
+    const script = buildPreviewBridge(7, true, 42);
+    expect(script).toContain('data.type === "focus-issue"');
+    expect(script).toContain('data-pf-component-id');
+    expect(script).toContain('data-pf-table-id');
+    expect(script).toContain('target.scrollIntoView');
+    expect(script).toContain("data.revision !== 7");
+    expect(script).toContain("data.token !== 42");
   });
 });
 

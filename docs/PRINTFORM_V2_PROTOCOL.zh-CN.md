@@ -43,7 +43,12 @@ await PrintFormDocument.render(data, options)
 
 不调用 `render` 时，文件在 DOM ready 后读取 `pf-sample-data` 自动渲染。显式 `render(data)` 优先并可重复调用；每次都会重建未分页 DOM，再运行 PrintForm 分页。
 
-Failure returns `status: "blocked"`. Default limits are 10 MB, 500 rows and 100 logical pages. Current row-limit calculation uses the maximum nested array length, not total bound rows across tables; PROD-05 tracks correction. A 1000-row E2E scenario does not increase this default.
+Failure returns `status: "blocked"`. Default limits are 10 MB, 500 aggregate bound table rows, 500 rows per bound table and 100 logical pages. `maxRows` remains the compatible aggregate manifest field; `maxRowsPerTable` declares the per-table limit. Only actual table repeats (`.prowitem` or an explicit table ID) count, so unrelated nested arrays do not consume the row budget. A 1000-row E2E scenario does not increase these defaults.
+
+`data-repeat-rowheader` remains the legacy document-level default. Studio pagination operations may set
+`data-pf-repeat-rowheader="y|n"` on a `table-header` component; that local value affects only its table and
+is represented in the optional FormSpec component `repeatHeader` field. A `repeatHeader` operation targeting
+another component role is rejected, so a component edit cannot silently change a different table.
 
 渲染结果（`printform:rendered` 事件 detail）除 `status`、`validation`、`metrics` 外还包含 `issues[]`（2026-07-31 起）：每个越界/对比度问题元素的 `{ code, pageIndex, selector, rect, text? }`，每类上限 20 条，供 Agent 与 Studio 无截图定位问题。
 

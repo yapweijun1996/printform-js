@@ -1,8 +1,9 @@
 import { bindTemplate } from "./binding.js";
-import { LIMITS, SECTION_IDS } from "./constants.js";
+import { SECTION_IDS } from "./constants.js";
 import { inspectRenderedDocument } from "./acceptance.js";
 import { parseJson } from "./json.js";
 import { validateData, validateSchemaProfile } from "./schema.js";
+import { measureBoundRows, resolveRowLimits, rowLimitErrors } from "./row-limits.js";
 
 function readJson(doc, id) {
   const element = doc.getElementById(id);
@@ -23,12 +24,6 @@ function waitForAssets(doc, timeoutMs = 5000) {
   return Promise.race([Promise.all([fonts, ...images]), timeout]);
 }
 
-function maxArrayLength(value) {
-  if (Array.isArray(value)) return Math.max(value.length, ...value.map(maxArrayLength), 0);
-  if (value && typeof value === "object") return Math.max(0, ...Object.values(value).map(maxArrayLength));
-  return 0;
-}
-
 export function installPrintFormDocument(globalScope = globalThis) {
   const doc = globalScope.document;
   let generation = 0;
@@ -45,12 +40,13 @@ export function installPrintFormDocument(globalScope = globalThis) {
     try {
       const manifest = readJson(doc, SECTION_IDS.manifest);
       const schema = readJson(doc, SECTION_IDS.schema);
+      const template = doc.getElementById(SECTION_IDS.template);
       const profile = validateSchemaProfile(schema);
       if (!profile.valid) return profile;
       const report = validateData(schema, data);
-      const maxRows = manifest.acceptance?.maxRows || LIMITS.rows;
-      const rows = maxArrayLength(data);
-      if (rows > maxRows) report.errors.push({ code: "ROW_LIMIT", path: "/", message: `${rows} rows exceed limit ${maxRows}` });
+      const rowReport = measureBoundRows(data, template);
+      const rows = rowReport.total;
+      report.errors.push(...rowLimitErrors(rowReport, resolveRowLimits(manifest), "/"));
       report.valid = report.errors.length === 0;
       report.metrics = { rows };
       return report;
@@ -93,9 +89,12 @@ export function installPrintFormDocument(globalScope = globalThis) {
     if (current !== generation) return { status: "superseded", validation };
     if (!globalScope.PrintForm?.formatAll) return finish({ status: "blocked", validation: { valid: false, errors: [{ code: "PRINTFORM_RUNTIME_MISSING", path: "/", message: "PrintForm runtime is unavailable" }], warnings: [] } }, mount, true);
     await globalScope.PrintForm.formatAll({ force: true });
-    const layout = inspectRenderedDocument(doc, manifest, { expectedRowCount: bound.report.rows });
+    const boundRowReport = { total: bound.report.tableRows, byTable: bound.report.tableRowsByTable };
+    validation.errors.push(...rowLimitErrors(boundRowReport, resolveRowLimits(manifest), "/"));
+    if (validation.errors.length) return finish({ status: "blocked", validation: { ...validation, valid: false }, binding: bound.report }, mount, true);
+    const layout = inspectRenderedDocument(doc, manifest, { expectedRowCount: bound.report.tableRows });
     const combined = { valid: layout.valid, errors: [...validation.errors, ...layout.errors], warnings: [...validation.warnings, ...layout.warnings] };
-    const result = { status: combined.valid ? "ready" : "blocked", validation: combined, binding: bound.report, issues: layout.issues || [], pageGeometry: layout.pageGeometry || [], metrics: { ...layout.metrics, rows: bound.report.rows, durationMs: performance.now() - startedAt } };
+    const result = { status: combined.valid ? "ready" : "blocked", validation: combined, binding: bound.report, issues: layout.issues || [], pageGeometry: layout.pageGeometry || [], metrics: { ...layout.metrics, rows: bound.report.tableRows, durationMs: performance.now() - startedAt } };
     return finish(result, mount);
   }
 

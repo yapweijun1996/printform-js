@@ -144,6 +144,23 @@ describe("AI Designer deterministic proposal workflow", () => {
     expect(fake.options()).toMatchObject({ plannerMode: "native_tools", nativeToolsFailurePolicy: "hard_fail" });
   });
 
+  it("uses provider-tool-free envelope mode for the built-in Demo Gateway", async () => {
+    const fake = fakeAgrun(async () => {});
+    const demoProfile = {
+      id: "own-gpt-server", provider: "openai", model: "gpt-5.4-mini",
+      endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses"
+    };
+    await DesignerRuntimeController.create({
+      Agrun: fake.Agrun,
+      gateway: { execute: async () => ({ ok: true, result: {} }) },
+      sessionManager: { createStore: () => ({}) },
+      sessionId: "demo-envelope-workflow",
+      profile: demoProfile
+    });
+    expect(fake.options()).toMatchObject({ plannerMode: "envelope", nativeToolsFailurePolicy: "hard_fail" });
+    expect(fake.options().customActions.map((action) => action.name)).toContain("printform_preview_changes");
+  });
+
   it("stops a plain provider final before it can pretend a design action happened", async () => {
     const bus = new CommandBus(createSalesInvoiceProject());
     const events = [];

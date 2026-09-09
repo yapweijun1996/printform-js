@@ -26,7 +26,7 @@ Open this Studio URL. Read its linked agent-setup.json, explain any MCP configur
 - Do not auto-connect the bridge to a daily authenticated browser profile unless access to every open tab is explicitly acceptable.
 - The first-party bridge accepts exactly one tab whose origin is allowlisted and whose path contains `/studio-v2/`; the official MCP route restricts network access to the published Studio path.
 - Unknown/Real must not automatically persist document snapshots, recovery drafts or chat records. Imported-policy loosening and delayed session writes have bounded fixes; complete privacy acceptance remains open in the [resumed evidence](../docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md). Do not use the mode label as proof of complete privacy enforcement or introduce real business data to test it. Existing records must not be silently deleted.
-- Host classification, scope and apply policy override model-supplied flags. Raw source replacement remains human-editor-only, even if a user requests it through chat. Missing safe fields or rejected references do not authorize browser/DOM inspection, screenshots or whole-document scope as a fallback.
+- Host classification, scope and apply policy override model-supplied flags. A table scope using only `tableSelector` must resolve to one semantic table identity; reject selectors spanning different table IDs or unresolved selectors before creating a transaction. Raw source replacement remains human-editor-only, even if a user requests it through chat. Missing safe fields or rejected references do not authorize browser/DOM inspection, screenshots or whole-document scope as a fallback.
 - Screenshots/pixel evidence are permitted only for a currently confirmed Synthetic document. Unknown/Real uses approved geometry; if that cannot support a visual judgment, report incomplete evidence and leave human inspection separate. A prompt requesting screenshots does not broaden this permission.
 
 ## Recommended Chrome DevTools MCP WebMCP route
@@ -102,7 +102,7 @@ The steps below exercise the **current Pilot contract**. Layout evidence is issu
 2. Call `get_capabilities`.
 3. Call `get_project_summary` and confirm `protocolVersion` is `2.0.0`.
 4. Use `inspect_design_state` and `get_operation_catalog`, then `preview_changes` with the current revision and permitted scope. In Preview mode, stop at the pending candidate and wait for the human UI; do not claim approval in tool input. Auto mode permits only host-eligible operations through the existing approval/apply transaction sequence with the exact transaction ID and candidate hash. A permission error is not a reason to bypass the gateway.
-5. Exercise `default` and `long-text`. In synthetic-data mode the embedded AI review receives bounded, complete-page pixel rasters plus safe metrics; in real-data mode it receives complete-page geometry-only SVG snapshots. A broken scenario returns an unsigned safe observation for diagnosis, never a completion receipt. A human should still inspect the actual browser/system print preview rather than relying on agent evidence alone.
+5. Exercise `default` and `long-text`. In synthetic-data mode the embedded AI review receives bounded, complete-page pixel rasters plus safe metrics. In real-data mode the host can produce complete-page geometry-only SVG snapshots for a compatible recipient, but the built-in Demo Gateway accepts only PNG/JPEG/WebP and therefore rejects that evidence before sending. A broken or unsupported scenario returns an unsigned safe observation or transport error for diagnosis, never a completion receipt. A human should still inspect the actual browser/system print preview rather than relying on agent evidence alone.
 6. Call `begin_layout_review` and `capture_layout_evidence` for required scenarios. Any major or critical finding blocks completion even if the caller labels it `fixed`; apply a revision-bound repair, capture fresh evidence, then call `complete_layout_review` with the new clean `evidenceIds`.
 7. Treat the resulting receipt as Studio-issued layout evidence. Confirm `request_export` returns `ready: true`, then ask the engineer to inspect system print preview and click **Production export**.
 
@@ -112,13 +112,33 @@ Agent Contract 4.0 exposes semantic FormSpec/components and retains the preview/
 
 ## Embedded AI Designer and BYOK
 
-**Planned replacement:** [PI Agent Harness migration](../docs/STUDIO_V2_PI_HARNESS_MIGRATION.md) selects actual `AgentHarness`, browser-first execution and direct BYOK with no Node.js/server runtime. The plan removes the embedded credential-free gateway default and requires browser provider qualification. It is not implemented; the AGRUN behavior below remains Current. MCP setup elsewhere in this guide is not a prerequisite for the planned embedded Designer.
+**Future runtime direction:** [PI Agent Harness migration](../docs/STUDIO_V2_PI_HARNESS_MIGRATION.md) selects actual `AgentHarness`, browser-first execution and direct BYOK with no Node.js/server runtime. It remains a future replacement and must qualify provider, session, privacy and transaction parity before retiring the current AGRUN path. The current embedded Designer uses the browser Demo Gateway described below; MCP setup elsewhere in this guide is not a prerequisite for the embedded Designer.
 
 The Studio includes a collapsible AI Designer panel backed by the pinned
 same-origin `agrun.min.js` bundle. It supports OpenAI, Gemini and an
 OpenAI-compatible Custom LLM. Provider keys are stored only as PBKDF2-HMAC-
 SHA256 (600,000 iterations) + AES-256-GCM ciphertext in IndexedDB; the
 derived key and decrypted credential exist only while the vault is unlocked.
+
+### Current browser Demo Gateway
+
+The default browser profile uses the server-side Demo contract from the reviewed
+OpenAI Gateway Admin/User Guide Reports Admin v0.1. It first sends
+`POST https://gpt.yapweijun1996.com/demo/session` with `{ "project_id": "github-pages" }`
+and no Gateway or Provider key. The server returns a short-lived `dmo_...`
+session token; Studio keeps it in memory, sends it only as `Bearer` authentication
+to `https://gpt.yapweijun1996.com/demo/v1/responses`, refreshes once after a 401,
+and never persists, logs, exports or puts it in an Agent payload. The browser's
+normal CORS request supplies the registered Origin; application code must not
+invent an `Origin` header.
+
+The private `/v1/*` route and `gw_...` credentials are server-side only. Never
+embed a private Gateway key, call `/v1/*` from the browser, pass a Demo token to
+Studio commands, or use a rejected session as permission to broaden document
+scope. The guide advertises model discovery and `demo-auto`/`demo-fast`, while
+also documenting `gpt-5.4-mini`; this client deliberately keeps its existing
+`gpt-5.4-mini` default until the provider-side model contract is confirmed.
+Live Demo endpoint compatibility was not tested in this worktree.
 
 The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
 
@@ -135,13 +155,20 @@ review → full-page evidence/observation → multimodal decision
        → repair proposal → host auto-apply after validation → fresh evidence → pass or block
 ```
 
-The embedded controller runs Agrun in `native_tools` mode with
-`nativeToolsFailurePolicy: "hard_fail"`. A design turn must finish through a
-terminal PrintForm action; ordinary provider prose is stopped with
-`TERMINAL_ACTION_REQUIRED` instead of consuming the full step budget. If the
-provider emits an unambiguous safe JSON semantic operation where the planner
-envelope is invalid, the controller converts it into the same native
-`preview_changes` action. High-risk raw replacement text is ignored.
+The embedded controller selects its planner mode by recipient. The built-in
+browser Demo Gateway uses provider-tool-free `envelope` mode: the host keeps its
+PrintForm action registry locally, but the final `/demo/v1/responses` payload
+contains neither `tools` nor `tool_choice`. The Provider must return one strict
+JSON action envelope; if that envelope is invalid, an unambiguous safe JSON
+semantic operation can be recovered into the same host `preview_changes` path.
+BYOK profiles retain `native_tools` with `nativeToolsFailurePolicy: "hard_fail"`.
+In both modes, a design turn must finish through a terminal PrintForm action;
+ordinary provider prose is stopped with `TERMINAL_ACTION_REQUIRED`, and
+high-risk raw replacement text is ignored.
+
+The host-side MCP/WebMCP catalog remains separate from the Provider payload. Its
+35 commands and their permission checks are not sent as Demo `tools`; a Demo
+session is transport-only and never authorizes command, scope or apply.
 
 The AI runtime cannot production-export, cannot use Web search/URL/workspace
 actions, and cannot mutate an untrusted document. Restrictive chat stores are

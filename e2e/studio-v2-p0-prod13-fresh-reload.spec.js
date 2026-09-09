@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openEditor } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 const CANARY = "REAL-RELOAD-CANARY-20260908";
@@ -10,6 +10,7 @@ test("PROD-13 13-03 reload does not restore Real data and explicit export stays 
   await openEditor(page);
   await page.locator("label.privacy-toggle").click();
   await expect(page.locator("#data-policy")).toHaveText(/Real data: session only, not cached|真实数据：仅本会话，不缓存/i);
+  await admitPublicGateway(page);
 
   const manifestEditor = page.locator("#manifest-editor");
   const manifest = JSON.parse(await manifestEditor.inputValue());
@@ -35,6 +36,7 @@ test("PROD-13 13-03 reload does not restore Real data and explicit export stays 
   await page.reload();
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   await openEditor(page);
+  await admitPublicGateway(page);
   const reloaded = await page.evaluate(async () => ({
     summary: await window.PrintFormStudioAgent.execute("get_project_summary"),
     recoveryVisible: !document.querySelector("#restore-banner")?.classList.contains("hidden"),

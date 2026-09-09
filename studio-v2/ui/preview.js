@@ -1,7 +1,20 @@
 import { createStandaloneHtml } from "../core/exporter.js";
+import { findComponentNode, getFormSpec } from "../core/form-spec.js"; import { buildPreviewIssueNavigation } from "./preview-issue-navigation.js";
 
-const OVERLAY_COMMAND_SOURCE = "printform-studio-v2-command";
+export const OVERLAY_COMMAND_SOURCE = "printform-studio-v2-command";
 export const PREVIEW_SCRIPT_NONCE = "cHJpbnRmb3JtLXN0dWRpby12Mi1wcmV2aWV3LTIwMjY";
+
+function annotatePreviewTemplate(project) {
+  if (typeof document === "undefined") return project;
+  const template = document.createElement("template");
+  template.innerHTML = String(project?.templateHtml || "");
+  const components = getFormSpec(project).components || [];
+  components.forEach((component) => {
+    const node = findComponentNode(template, component);
+    if (node) node.setAttribute("data-pf-component-id", component.id);
+  });
+  return { ...project, templateHtml: template.innerHTML.trim() };
+}
 
 // Draws a red box over each flagged element using the issue's page-scoped
 // selector, re-measured live inside the iframe (postMessage payloads cannot
@@ -146,6 +159,36 @@ export const buildPreviewBridge = (revision, overlayEnabled, token, options = {}
     parent.postMessage({ source: "printform-studio-v2-preview", type: "wheel", payload: { deltaY: event.deltaY, ctrlKey: event.ctrlKey } }, "*");
   });
 
+  function clearSelection() {
+    var nodes = document.querySelectorAll("[data-pf-preview-selected]");
+    for (var i = 0; i < nodes.length; i += 1) {
+      nodes[i].removeAttribute("data-pf-preview-selected");
+      nodes[i].style.outline = "";
+      nodes[i].style.outlineOffset = "";
+    }
+  }
+
+  document.addEventListener("click", function (event) {
+    var start = event.target;
+    var target = start && start.nodeType === 1 ? start : start && start.parentElement;
+    target = target && target.closest ? target.closest("[data-pf-component-id]") : null;
+    var componentId = target && target.getAttribute("data-pf-component-id");
+    if (!componentId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearSelection();
+    target.setAttribute("data-pf-preview-selected", "true");
+    target.style.outline = "2px solid #2457d6";
+    target.style.outlineOffset = "-2px";
+    parent.postMessage({
+      source: "printform-studio-v2-preview",
+      type: "selection",
+      revision: ${revision},
+      token: ${JSON.stringify(token)},
+      payload: { componentId: componentId }
+    }, "*");
+  }, true);
+
   function clearOverlays() {
     var nodes = document.querySelectorAll(".pf-issue-overlay");
     for (var i = 0; i < nodes.length; i += 1) nodes[i].remove();
@@ -196,7 +239,7 @@ export const buildPreviewBridge = (revision, overlayEnabled, token, options = {}
     if (event.source !== window.parent) return;
     var data = event.data;
     if (!data || data.source !== "${OVERLAY_COMMAND_SOURCE}") return;
-    if (data.type === "toggle-overlay") {
+    ${buildPreviewIssueNavigation(revision, token)}if (data.type === "toggle-overlay") {
       overlayEnabled = !!data.enabled;
       drawOverlays();
     }
@@ -222,7 +265,8 @@ function assignPreviewSource(iframe, html) {
 }
 
 export async function renderPreview(iframe, project, revision, overlayEnabled = true, token = revision, options = {}) {
-  const result = await createStandaloneHtml(project, { requireTrusted: false, networkDisabled: true, scriptNonce: PREVIEW_SCRIPT_NONCE, dataPolicy: options.dataPolicy || null });
+  const previewProject = annotatePreviewTemplate(project);
+  const result = await createStandaloneHtml(previewProject, { requireTrusted: false, networkDisabled: true, scriptNonce: PREVIEW_SCRIPT_NONCE, dataPolicy: options.dataPolicy || null });
   if (typeof options.isCurrent === "function" && !options.isCurrent()) return { ...result, stale: true };
   // Inject at the LAST </body>: sample data / template sections are serialized
   // before the real closing tag, so replacing the first occurrence would let a

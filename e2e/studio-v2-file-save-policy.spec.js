@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openEditor, passLayoutReview } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor, passLayoutReview } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 for (const phase of ["picker", "open", "write", "close"]) {
@@ -9,6 +9,7 @@ for (const phase of ["picker", "open", "write", "close"]) {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
     await openEditor(page);
+    await admitPublicGateway(page);
     expect((await passLayoutReview(page)).ok).toBe(true);
     await page.evaluate((phase) => {
       window.confirm = () => true;
@@ -57,6 +58,7 @@ for (const phase of ["picker", "open", "write", "close"]) {
 test("does not describe an unconfirmed close as cancelled or retry it", async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   expect((await passLayoutReview(page)).ok).toBe(true);
   await page.evaluate(() => {
     window.confirm = () => true;

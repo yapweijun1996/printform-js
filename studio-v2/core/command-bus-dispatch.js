@@ -10,10 +10,25 @@ import { inspectDesignState } from "./design-state.js";
 import { getAgentOperationCatalog } from "./operation-catalog.js";
 import { diffProjects, previewSourceEdit } from "./operations.js";
 import { provenanceError, verifyCurrentRender } from "./render-provenance.js";
-import { assertPolicyCommand } from "./agent-boundary.js";
+import { assertPolicyCommand, filterAgentTransactions } from "./agent-boundary.js";
+
+function transactionHistoryForContext(bus, context) {
+  const transactions = filterAgentTransactions(bus.transactionStore.listTransactions(), context);
+  if (!context?.agent || context.legacy) {
+    return { transactions, auditEvents: bus.transactionStore.listAuditEvents(), entries: bus.transactionJournal.list() };
+  }
+  const allowed = new Set(transactions.map((transaction) => transaction.transaction_id));
+  const owns = (item) => !item.transaction_id || allowed.has(item.transaction_id);
+  return {
+    transactions,
+    auditEvents: bus.transactionStore.listAuditEvents().filter(owns),
+    entries: bus.transactionJournal.list().filter(owns),
+  };
+}
 
 export async function dispatchCommand(bus, name, input = {}, context = null) {
   try {
+    bus.assertCurrent?.();
     assertPolicyCommand(name, input, context, bus);
     if (name === "get_capabilities") {
       const capabilities = {
@@ -39,16 +54,16 @@ export async function dispatchCommand(bus, name, input = {}, context = null) {
     if (name === "validate_project") return bus.success({ revision: bus.revision, validation: bus.validation() });
     if (name === "get_layout_review_status") return bus.success({ revision: bus.revision, review: layoutReviewStatus(bus.reviewReceipt, bus.revision), checklist: LAYOUT_REVIEW_CHECKLIST });
     if (REVIEW_COMMANDS.has(name)) return bus.success(await executeReviewCommand(bus, name, input, context));
-    if (name === "begin_transaction") return bus.success(bus.beginTransaction(input.baseRevision ?? bus.revision, input.agentId, input.owner));
-    if (name === "get_transaction") return bus.success({ transaction: bus.getTransaction(input.transactionId) });
-    if (name === "list_active_transactions") return bus.success({ transactions: bus.listActiveTransactions() });
-    if (name === "renew_lease") return bus.success(bus.renewLease(input));
-    if (name === "release_lease") return bus.success(bus.releaseLease(input));
-    if (name === "takeover_transaction") return bus.success(bus.takeoverTransaction(input));
-    if (name === "recover_transaction") return bus.success(bus.recoverTransaction(input));
-    if (name === "resolve_conflict") return bus.success(bus.resolveConflict(input));
+    if (name === "begin_transaction") return bus.success(bus.beginTransaction(input.baseRevision ?? bus.revision, input.agentId, input.owner, context));
+    if (name === "get_transaction") return bus.success({ transaction: bus.getTransaction(input.transactionId, context) });
+    if (name === "list_active_transactions") return bus.success({ transactions: bus.listActiveTransactions(context) });
+    if (name === "renew_lease") return bus.success(bus.renewLease(input, context));
+    if (name === "release_lease") return bus.success(bus.releaseLease(input, context));
+    if (name === "takeover_transaction") return bus.success(bus.takeoverTransaction(input, context));
+    if (name === "recover_transaction") return bus.success(bus.recoverTransaction(input, context));
+    if (name === "resolve_conflict") return bus.success(bus.resolveConflict(input, context));
     if (name === "get_revision") return bus.success(bus.transactionStore.getRevision());
-    if (name === "get_audit_events") return bus.success({ events: bus.transactionStore.listAuditEvents() });
+    if (name === "get_audit_events") return bus.success({ events: transactionHistoryForContext(bus, context).auditEvents });
     if (name === "preview_changes") {
       const result = await bus.previewTransaction(input.operations, input.expectedRevision, input.transactionId, context);
       return bus.success({ revision: result.preview.revision, transactionId: result.transaction.transaction_id, diff: result.preview.diff, validation: result.validation, candidateHash: result.transaction.preview_hash });
@@ -61,12 +76,15 @@ export async function dispatchCommand(bus, name, input = {}, context = null) {
       return bus.success(await bus.applyApprovedTransaction(input, context));
     }
     if (name === "rollback_transaction") {
-      return bus.success(bus.rollbackTransaction(input.transactionId));
+      return bus.success(bus.rollbackTransaction(input.transactionId, context));
     }
     if (name === "compare_revision") {
       return bus.success(bus.revisionComparison(input.fromRevision, input.toRevision));
     }
-    if (name === "get_transaction_history") return bus.success({ revision: bus.revision, entries: bus.transactionJournal.list(), transactions: bus.transactionStore.listTransactions(), auditEvents: bus.transactionStore.listAuditEvents() });
+    if (name === "get_transaction_history") {
+      const history = transactionHistoryForContext(bus, context);
+      return bus.success({ revision: bus.revision, entries: history.entries, transactions: history.transactions, auditEvents: history.auditEvents });
+    }
     if (name === "get_evidence_pack") return bus.success({ revision: bus.revision, evidencePack: structuredClone(bus.transactionStore.getEvidencePack(bus.revision) || bus.evidencePack), anchor: bus.transactionStore.getEvidenceAnchor(bus.revision) });
     if (name === "preview_source_edit") {
       bus.ensureRevision(input.expectedRevision);
@@ -102,30 +120,10 @@ export async function dispatchCommand(bus, name, input = {}, context = null) {
       return bus.success({ ...result, slot: input.slot });
     }
     if (name === "undo_revision") {
-      const result = bus.history.undo(input.expectedRevision);
-      if (result.changed) {
-        bus.renderReport = null;
-        bus.reviewReceipt = null;
-        bus.reviewAttempts = 0;
-        bus.evidenceReceipts.clear();
-        bus.evidencePack = null;
-        bus.transactionJournal.append({ type: "UNDO", revision: result.revision, agent_id: bus.agentId });
-        bus.dispatchEvent(new CustomEvent("change", { detail: { revision: result.revision, project: result.project, reason: "undo" } }));
-      }
-      return bus.success(result);
+      return bus.success(await bus.navigateHistory("undo", input.expectedRevision, context));
     }
     if (name === "redo_revision") {
-      const result = bus.history.redo(input.expectedRevision);
-      if (result.changed) {
-        bus.renderReport = null;
-        bus.reviewReceipt = null;
-        bus.reviewAttempts = 0;
-        bus.evidenceReceipts.clear();
-        bus.evidencePack = null;
-        bus.transactionJournal.append({ type: "REDO", revision: result.revision, agent_id: bus.agentId });
-        bus.dispatchEvent(new CustomEvent("change", { detail: { revision: result.revision, project: result.project, reason: "redo" } }));
-      }
-      return bus.success(result);
+      return bus.success(await bus.navigateHistory("redo", input.expectedRevision, context));
     }
     if (name === "request_export") {
       const validation = bus.readiness();

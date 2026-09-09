@@ -1,0 +1,158 @@
+import { expect, test } from "@playwright/test";
+import { admitPublicGateway, openEditor, openInspector } from "./studio-v2-helpers.js";
+
+test.describe.configure({ timeout: 180_000 });
+
+test.describe("Studio v2 PROD-01 01-02 allowed edit", () => {
+  test("applies column widths to selected table A once and preserves table B", async ({ page }) => {
+    const browserErrors = [];
+    const browserDiagnostics = [];
+    const knownFirefoxAgrunCspDiagnostic = (message) => test.info().project.name === "firefox"
+      && /Content-Security-Policy:[\s\S]*blocked a JavaScript eval[\s\S]*agrun\.min\.js/i.test(message);
+    page.on("pageerror", (error) => browserErrors.push(error.message));
+    page.on("console", (message) => { if (message.type() === "error") browserDiagnostics.push(message.text()); });
+
+    await page.goto("/studio-v2/?sample=sales-invoice");
+    await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await openEditor(page);
+    await page.locator("#template-editor").evaluate((editor) => {
+      const document = new DOMParser().parseFromString(editor.value, "text/html");
+      const root = document.querySelector(".printform");
+      const header = root?.querySelector(".prowheader");
+      const row = root?.querySelector(".prowitem");
+      if (!root || !header || !row) throw new Error("Synthetic two-table fixture could not find the invoice tables");
+      const mark = (table, tableId, marker, role) => {
+        table.setAttribute("data-pf-table-id", tableId);
+        table.setAttribute("data-scope-canary", marker);
+        table.classList.add(`scope-table-${tableId}-${role}`);
+      };
+      mark(header, "a", "A", "header");
+      mark(row, "a", "A", "row");
+      const comparison = document.createElement("section");
+      comparison.className = "ptac scope-table-b-container";
+      comparison.setAttribute("data-scope-canary", "B");
+      comparison.innerHTML = `<table class="pf-grid scope-table-b-header" data-pf-table-id="b" data-scope-canary="B"><thead><tr><th style="width:7%">B No.</th><th style="width:43%">B Description</th><th style="width:11%">B Qty</th><th style="width:16%">B Unit</th><th style="width:18%">B Amount</th></tr></thead><tbody><tr><td style="width:7%">B-1</td><td style="width:43%">Static comparison row</td><td style="width:11%">1</td><td style="width:16%">RM 1.00</td><td style="width:18%">RM 1.00</td></tr></tbody></table>`;
+      root.append(comparison);
+      editor.value = root.outerHTML;
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#apply-source-button").click();
+    await expect(page.locator("#source-diff-modal")).toBeVisible();
+    await page.locator("#source-diff-apply").click();
+    await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await openInspector(page);
+    await expect(page.locator("#ai-context-scope-select option[value='table:a']")).toHaveCount(1);
+    await admitPublicGateway(page);
+
+    const frame = page.frameLocator("#preview-frame");
+    const tableAHeader = frame.locator("table.scope-table-a-header").first();
+    await expect(tableAHeader).toBeVisible({ timeout: 12_000 });
+    await tableAHeader.click();
+    await expect(page.locator("#ai-context-selection-meta")).toHaveAttribute("data-component-id", "table-a-header");
+    await expect(page.locator("#ai-context-selection-meta")).toHaveAttribute("data-table-id", "a");
+    await expect(page.locator("#ai-context-scope-select")).toHaveValue("table:a");
+
+    const tableSnapshot = async (selector) => frame.locator(selector).first().evaluate((table) => ({
+      widths: Array.from(table.rows[0]?.cells || [], (cell) => cell.style.width),
+      text: table.textContent.trim(),
+      canary: table.getAttribute("data-scope-canary")
+    }));
+    const baseline = await page.evaluate(async () => {
+      const revision = await window.PrintFormStudioAgent.execute("get_revision");
+      return {
+        revision: revision.result.revision,
+        projectHash: revision.result.projectHash,
+        source: document.querySelector("#template-editor").value
+      };
+    });
+    const baselineA = await tableSnapshot("table.scope-table-a-header");
+    const baselineB = await tableSnapshot("table.scope-table-b-header");
+    const unrelated = await frame.locator(".ptac").first().textContent();
+    await page.locator("#ai-mode-preview").click();
+
+    await page.evaluate((baselineRevision) => {
+      const control = { runs: 0, actionCalls: 0, actionResult: null };
+      let runtimeOptions;
+      const session = {
+        getState: () => ({ cumulativeUsage: { totalTokens: 0 } }),
+        runStream() {
+          control.runs += 1;
+          return (async function* () {
+            const action = runtimeOptions.customActions.find((item) => item.name === "printform_preview_changes");
+            control.actionCalls += 1;
+            control.actionResult = await action.execute({}, {
+              expectedRevision: baselineRevision,
+              operations: [{
+                type: "set_column_widths",
+                tableSelector: ".scope-table-a-header, .scope-table-a-row",
+                widths: ["12%", "43%", "11%", "16%", "18%"]
+              }]
+            });
+            yield { type: "phase", detail: { phase: "act", transition: "completed", info: { actionName: "printform_preview_changes", outcome: "executed" } } };
+            yield { type: "completed", detail: { terminalKind: "done", result: { output: { text: "Preview ready" } } } };
+          }());
+        }
+      };
+      window.__p0Prod0102 = { control, getRuntimeOptions: () => runtimeOptions };
+      window.Agrun = {
+        defineAction: (definition) => definition,
+        createInMemorySessionStore: () => ({}),
+        createRuntime: (options) => {
+          runtimeOptions = options;
+          return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
+        },
+        openaiBrowserSkill: {},
+        geminiBrowserSkill: {}
+      };
+    }, baseline.revision);
+    await page.locator("#ai-prompt").fill("Widen the Description column in table A only");
+    await page.locator("#ai-send").click();
+    await expect(page.locator("#ai-apply-proposal")).toBeVisible({ timeout: 20_000 });
+
+    const proposal = JSON.parse(await page.locator("#ai-proposal-diff").textContent());
+    expect(proposal.revision).toBe(baseline.revision);
+    expect(proposal.candidateHash).toEqual(expect.any(String));
+    expect(proposal.diff.changedSections).toEqual(["templateHtml"]);
+    const candidateA = await tableSnapshot("table.scope-table-a-header");
+    const candidateB = await tableSnapshot("table.scope-table-b-header");
+    expect(candidateA.widths).toEqual(["12%", "43%", "11%", "16%", "18%"]);
+    expect(candidateA.widths).not.toEqual(baselineA.widths);
+    expect(candidateB).toEqual(baselineB);
+    await expect(frame.locator(".ptac").first()).toHaveText(unrelated);
+    expect(await page.locator("#template-editor").inputValue()).toBe(baseline.source);
+
+    await page.locator("#ai-apply-proposal").click();
+    await expect(page.locator("#revision-label")).toHaveText(`Revision ${baseline.revision + 1}`);
+    await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await expect(page.locator("#candidate-preview-banner")).toBeHidden();
+    const committedA = await tableSnapshot("table.scope-table-a-header");
+    const committedB = await tableSnapshot("table.scope-table-b-header");
+    const after = await page.evaluate(async () => {
+      const revision = await window.PrintFormStudioAgent.execute("get_revision");
+      return {
+        revision: revision.result.revision,
+        projectHash: revision.result.projectHash,
+        source: document.querySelector("#template-editor").value
+      };
+    });
+    expect(after.revision).toBe(baseline.revision + 1);
+    expect(after.projectHash).not.toBe(baseline.projectHash);
+    await expect(page.locator("#ai-apply-proposal")).toHaveCount(0);
+    await expect(page.locator(".ai-card-undo")).toBeVisible();
+    expect(committedA.widths).toEqual(["12%", "43%", "11%", "16%", "18%"]);
+    expect(committedA.canary).toBe("A");
+    expect(committedB).toEqual(baselineB);
+    expect(after.source).not.toBe(baseline.source);
+    expect(after.source).toContain('data-pf-table-id="a"');
+    expect(after.source).toContain('data-pf-table-id="b"');
+    const control = await page.evaluate(() => window.__p0Prod0102.control);
+    expect(control.runs).toBe(1);
+    expect(control.actionCalls).toBe(1);
+    expect(browserErrors).toEqual([]);
+    expect(browserDiagnostics.filter((message) => !knownFirefoxAgrunCspDiagnostic(message))).toEqual([]);
+    if (browserDiagnostics.some(knownFirefoxAgrunCspDiagnostic)) test.info().annotations.push({
+      type: "known-browser-diagnostic",
+      description: "Firefox reports the existing AGRUN CSP eval diagnostic; no functional page error was observed."
+    });
+  });
+});

@@ -49,7 +49,10 @@ export class CdpStudioClient {
     this.protocolVersion = protocolVersion;
     this.contractVersion = contractVersion;
     this.contractChecked = false;
+    this.admissionId = null;
     this.target = null;
+    this.contractCheck = null;
+    this.connectionGeneration = 0;
   }
 
   async discoverTarget() {
@@ -67,10 +70,12 @@ export class CdpStudioClient {
     const target = await this.discoverTarget();
     if (this.socket?.readyState === WebSocket.OPEN && targetIdentity(this.target) === targetIdentity(target)) return;
     if (this.socket) {
+      this.connectionGeneration += 1;
       const previous = this.socket;
       this.socket = null;
       this.target = null;
       this.contractChecked = false;
+      this.admissionId = null;
       rejectPending(this.pending, "CDP_TARGET_REPLACED");
       previous.close();
     }
@@ -81,10 +86,12 @@ export class CdpStudioClient {
       socket.on("message", (data) => this.handleMessage(data));
       socket.on("close", () => {
         if (this.socket !== socket) return;
+        this.connectionGeneration += 1;
         rejectPending(this.pending);
         this.socket = null;
         this.target = null;
         this.contractChecked = false;
+        this.admissionId = null;
       });
     });
   }
@@ -110,23 +117,50 @@ export class CdpStudioClient {
     });
   }
 
-  async evaluateGateway(toolName, input = {}) {
-    const expression = `window.PrintFormStudioAgent.execute(${JSON.stringify(toolName)}, ${JSON.stringify(input)})`;
+  async evaluateGateway(toolName, input = {}, admissionId = this.admissionId) {
+    const admissionArgument = admissionId ? `, ${JSON.stringify(admissionId)}` : "";
+    const expression = `window.PrintFormStudioAgent.execute(${JSON.stringify(toolName)}, ${JSON.stringify(input)}${admissionArgument})`;
     const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true, userGesture: false });
     if (result.exceptionDetails) throw Object.assign(new Error("Studio command failed"), { code: "STUDIO_COMMAND_FAILED" });
     if (!result.result || result.result.type === "undefined") throw Object.assign(new Error("Studio gateway unavailable"), { code: "STUDIO_GATEWAY_UNAVAILABLE" });
     return result.result.value;
   }
 
+  async evaluateAdmission() {
+    const request = { protocolVersion: this.protocolVersion, contractVersion: this.contractVersion, tools: LOCAL_TOOL_CATALOG };
+    const expression = `window.PrintFormStudioAgent && typeof window.PrintFormStudioAgent.admitClient === "function" ? window.PrintFormStudioAgent.admitClient(${JSON.stringify(request)}) : { ok: false, error: { code: "CLIENT_ADMISSION_UNAVAILABLE", message: "Command failed" } }`;
+    const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true, userGesture: false });
+    if (result.exceptionDetails) throw Object.assign(new Error("Studio admission failed"), { code: "STUDIO_ADMISSION_FAILED" });
+    if (!result.result || result.result.type === "undefined") throw Object.assign(new Error("Studio admission unavailable"), { code: "STUDIO_ADMISSION_UNAVAILABLE" });
+    return result.result.value;
+  }
+
   async ensureContract() {
+    if (this.contractCheck) return this.contractCheck;
+    const check = this.verifyContract();
+    this.contractCheck = check;
+    try { return await check; }
+    finally { if (this.contractCheck === check) this.contractCheck = null; }
+  }
+
+  async verifyContract() {
     if (this.socket) await this.connect();
     if (this.contractChecked) return;
+    const generation = this.connectionGeneration;
     const response = await this.evaluateGateway("get_capabilities", {});
     const actualProtocol = response?.ok && response.result?.protocolVersion;
     if (actualProtocol !== this.protocolVersion) throw Object.assign(new Error("Studio Protocol version is incompatible"), { code: "STUDIO_PROTOCOL_VERSION_MISMATCH" });
     const actual = response?.ok && response.result?.contractVersion;
     if (actual !== this.contractVersion) throw Object.assign(new Error("Studio Agent Contract version is incompatible"), { code: "AGENT_CONTRACT_VERSION_MISMATCH" });
     if (!catalogMatches(response?.ok && response.result?.tools)) throw Object.assign(new Error("Studio Agent tool catalog is incompatible"), { code: "AGENT_TOOL_CATALOG_MISMATCH" });
+    if (generation !== this.connectionGeneration) throw Object.assign(new Error("Studio target changed during compatibility admission"), { code: "CDP_TARGET_REPLACED" });
+    const admission = await this.evaluateAdmission();
+    if (!admission?.ok || typeof admission.result?.admissionId !== "string") {
+      const code = admission?.error?.code || "STUDIO_ADMISSION_REJECTED";
+      throw Object.assign(new Error("Studio client admission was rejected"), { code });
+    }
+    if (generation !== this.connectionGeneration) throw Object.assign(new Error("Studio target changed during compatibility admission"), { code: "CDP_TARGET_REPLACED" });
+    this.admissionId = admission.result.admissionId;
     this.contractChecked = true;
   }
 
@@ -136,7 +170,10 @@ export class CdpStudioClient {
   }
 
   close() {
+    this.connectionGeneration += 1;
+    this.contractCheck = null;
     this.contractChecked = false;
+    this.admissionId = null;
     this.target = null;
     const socket = this.socket;
     this.socket = null;

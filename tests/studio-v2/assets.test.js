@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { inlineProjectAssets, validateAssetSlots } from "../../studio-v2/core/assets.js";
 import { applyOperations } from "../../studio-v2/core/operations.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
@@ -15,6 +15,16 @@ describe("standalone asset policy", () => {
     project.templateHtml += '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==" alt="pixel">';
     const result = await inlineProjectAssets(project, "https://studio.test/");
     expect(result.project.templateHtml).toContain("data:image/gif;base64");
+  });
+
+  it("defaults a missing policy to restrictive Unknown before external fetch", async () => {
+    const project = createSalesInvoiceProject();
+    project.templateHtml += '<img src="https://assets.test/unknown.png" alt="external">';
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(inlineProjectAssets(project, "https://assets.test/")).rejects.toMatchObject({ code: "ASSET_FETCH_POLICY_BLOCKED" });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("validates and safely replaces declared logo slots", () => {

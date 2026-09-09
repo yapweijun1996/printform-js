@@ -1,5 +1,5 @@
 import { createPanelSessions } from "./agent-panel-sessions.js";
-import { isCredentialFreeDefaultGatewayProfile, validateProviderProfile } from "./agent-provider.js";
+import { validateProviderProfile } from "./agent-provider.js";
 import { translateAgentError } from "./agent-error-text.js";
 import { t } from "./ui-i18n.js";
 import { isAutoApplyEligible } from "../core/agent-boundary.js";
@@ -28,16 +28,9 @@ export function createAgentPanelRuntime({
 }) {
   const sessionOwner = createPanelSessions({ state, sessions, get, getGateway, profile, status, addMessage, renderProposal, renderSessions, onCandidateState, handleRuntimeEvent });
   const { captureContext, ensureController, reportSessionPersistence } = sessionOwner;
+  let approvalInFlight = false;
   function isAutoMode() {
     return (state.applyMode || "auto") === "auto";
-  }
-
-  function requireGatewayToken(item) {
-    if (!isCredentialFreeDefaultGatewayProfile(item)) return false;
-    addMessage("system", t("aiChat.errors.gatewayTokenRequired"));
-    status("aiChat.status.gatewayTokenRequired");
-    openProviderSettings();
-    return true;
   }
 
   async function autoApplyPending(item, { modeAtStart = state.applyMode || "auto" } = {}) {
@@ -66,7 +59,8 @@ export function createAgentPanelRuntime({
         const canShowApplied = !state.proposal || state.proposal.proposalId === proposalId;
         if (canShowApplied) { renderProposal(null); if (pendingProposal.diff?.changed !== false) onApplied(pendingProposal, lastResult); }
         const revision = lastResult?.applied?.result?.revision;
-        addMessage("system", t("aiChat.message.autoApplied", { revision: revision ?? "?" }));
+        const validationUnavailable = lastResult?.validationUnavailable === true;
+        addMessage("system", t(validationUnavailable ? "aiChat.message.autoAppliedValidationUnavailable" : "aiChat.message.autoApplied", { revision: revision ?? "?" }));
       } catch (error) {
         if (!context.isCurrent()) return null;
         addMessage("system", translateAgentError(error, "aiChat.errors.autoApply"));
@@ -80,7 +74,7 @@ export function createAgentPanelRuntime({
       status("aiChat.status.applyFailed");
       return null;
     }
-    if (lastResult) status("aiChat.status.applied");
+    if (lastResult) status(lastResult.validationUnavailable ? "aiChat.status.validationUnavailable" : "aiChat.status.applied");
     return lastResult ? { ...lastResult, changed } : null;
   }
 
@@ -142,7 +136,6 @@ export function createAgentPanelRuntime({
     const modeAtStart = state.applyMode || "auto";
     const item = profile();
     if (!item) return addMessage("system", t("aiChat.errors.profileRequired"));
-    if (requireGatewayToken(item)) return;
     const error = validateProviderProfile(item);
     if (error) return addMessage("system", translateAgentError(error));
     const preparation = ensureController();
@@ -195,7 +188,8 @@ export function createAgentPanelRuntime({
     const controller = state.controller;
     const item = profile();
     const proposal = state.proposal;
-    if (!state.controller || !proposal) return;
+    if (approvalInFlight || !state.controller || !proposal) return;
+    approvalInFlight = true;
     status(decision === "approve" ? "aiChat.status.applying" : "aiChat.status.rejecting");
     try {
       if (decision === "deny") {
@@ -208,17 +202,21 @@ export function createAgentPanelRuntime({
       const proposalId = proposal.proposalId;
       const result = await controller.applyApprovedProposal(proposalId, item, { humanApproval: true });
       context.assertCurrent();
+      if (result?.validationUnavailable) addMessage("system", t("aiChat.message.autoAppliedValidationUnavailable", { revision: result.applied?.result?.revision ?? "?" }));
       const canShowApplied = !state.proposal || state.proposal.proposalId === proposalId;
       if (canShowApplied) { renderProposal(null); if (proposal.diff?.changed !== false) onApplied(proposal, result); }
       if (state.proposal) status("aiChat.status.approval");
       else if (result?.review?.readiness) status(result.review.readiness.ok && result.review.readiness.result?.ready ? "aiChat.status.reviewReady" : "aiChat.status.reviewBlocked");
       else if (result?.review?.blocked) status("aiChat.status.reviewBlocked");
+      else if (result?.validationUnavailable) status("aiChat.status.validationUnavailable");
       else status("aiChat.status.applied");
     } catch (error) {
       if (!context.isCurrent()) return;
       addMessage("system", translateAgentError(error, "aiChat.errors.approvalResolution"));
       if (error.code !== "RECOVERY_REQUIRED") renderProposal(null);
       status(error.code === "RECOVERY_REQUIRED" ? "aiChat.status.recoveryRequired" : "aiChat.status.applyFailed");
+    } finally {
+      approvalInFlight = false;
     }
   }
 
@@ -226,7 +224,6 @@ export function createAgentPanelRuntime({
     if (state.activePanelTurn) return;
     const item = profile();
     if (!item) return addMessage("system", t("aiChat.errors.profileRequired"));
-    if (requireGatewayToken(item)) return;
     const preparation = ensureController();
     let context = captureContext(false);
     const turn = state.activePanelTurn = Symbol("review-turn");

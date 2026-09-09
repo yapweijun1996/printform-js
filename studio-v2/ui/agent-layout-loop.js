@@ -169,7 +169,10 @@ export class LayoutReviewLoop {
   async runPass(profile) {
     const collected = await this.collectEvidence();
     this.controller.emit({ type: "layout_multimodal_started", detail: { pass: this.state.pass, imageCount: collected.parts.length } });
-    const outcome = await this.controller.consume(buildProviderInput(profile, buildReviewPrompt(this.state, collected), collected.parts, { dataPolicy: this.controller.assertCurrentPolicy() }));
+    const outcome = await this.controller.consume(buildProviderInput(profile, buildReviewPrompt(this.state, collected), collected.parts, {
+      dataPolicy: this.controller.assertCurrentPolicy(),
+      assertCurrentPolicy: () => this.controller.assertCurrentPolicy()
+    }));
     if (outcome?.completed?.terminalKind === "abort") {
       this.controller.onCandidateState(false);
       return { ...outcome, evidence: collected.context, readiness: null, stopped: true };

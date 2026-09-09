@@ -44,7 +44,7 @@ export function attachPaginationContextMethods(FormatterClass) {
       }
     });
     const rowHeader = sections.rowHeadersById?.[tableId] || sections.rowHeader;
-    if (this.config.repeatRowheader && rowHeader && !skipRowHeader) {
+    if (this.isRowHeaderRepeated(sections, tableId) && rowHeader && !skipRowHeader) {
       total += heights.rowHeaders?.[tableId] ?? heights.rowHeader ?? 0;
     }
     return normalizeHeight(total);

@@ -19,6 +19,7 @@ function captureFileContext(getBus, getDataPolicy) {
 }
 
 export function createFileExport({ getBus, getDataPolicy, setDirty, setSaveState, toast }) {
+  let preparedTrustedExport = null;
   return async function exportDocument(trusted, { confirmExport = true } = {}) {
     const { bus, policy, revision, documentId, sameContext, currentSnapshot, assertCurrent } = captureFileContext(getBus, getDataPolicy);
     let blank = null;
@@ -50,11 +51,17 @@ export function createFileExport({ getBus, getDataPolicy, setDirty, setSaveState
       assertCurrent();
       const transaction = transactionId ? bus.getTransaction(transactionId) : null;
       const previewHash = transaction?.preview_hash || bus.renderReport?.provenance?.candidateHash;
-      const result = await createStandaloneHtml(project, {
+      const reusable = trusted && preparedTrustedExport
+        && preparedTrustedExport.bus === bus
+        && preparedTrustedExport.policy === policy
+        && preparedTrustedExport.revision === revision
+        && preparedTrustedExport.documentId === documentId;
+      const result = reusable ? preparedTrustedExport.result : await createStandaloneHtml(project, {
         requireTrusted: trusted, validation, revision, previewHash, transactionId, dataPolicy: policy, assertCurrent
       });
       assertCurrent();
-      if (trusted && result.evidencePack) bus.recordEvidencePack(result.evidencePack);
+      if (!reusable && trusted && result.evidencePack) bus.recordEvidencePack(result.evidencePack);
+      if (!reusable && trusted) preparedTrustedExport = { bus, policy, revision, documentId, result };
       const filename = `${documentId || "printform"}${trusted ? "" : "-untrusted"}.html`;
       if (trusted && "showSaveFilePicker" in window && window.confirm(t("confirm.savePicker"))
         && await saveHtmlWithPicker(result.html, filename, t("picker.description"), { assertCurrent })) {

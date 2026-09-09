@@ -123,5 +123,9 @@ describe("Studio UI i18n", () => {
     await setUiLocale("en-MY", document, false);
     expect(translateAgentError({ code: "TERMINAL_ACTION_REQUIRED", message: "The provider turn failed." }))
       .toBe("The provider did not execute a PrintForm action. Retry the design request.");
+    expect(translateAgentError({ code: "SCOPE_VIOLATION", message: "The provider turn failed." }))
+      .toBe("This change is outside the selected scope. Choose the target scope or request an allowed operation.");
+    expect(translateAgentError({ code: "SCOPE_CHANGED", message: "The active Agent scope changed after preview" }))
+      .toBe("The proposal must be previewed again.");
   });
 });

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { TransactionHttpServer } from "../studio-v2/server/transaction-http-server.mjs";
+import { safeServerError } from "../studio-v2/server/transaction-http-response.mjs";
 import { DurableTransactionStore } from "../studio-v2/core/durable-transaction-store.js";
 import { classifyImportedDocument, classifyRealDocument, classifySyntheticDocument } from "../studio-v2/core/data-policy.js";
 import { createSalesInvoiceProject } from "../studio-v2/samples/sales-invoice.js";
@@ -50,10 +51,10 @@ async function shutdown(code = 0) {
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 process.on("uncaughtException", (error) => {
-  console.error(error);
+  console.error(`[printform-transaction-server] fatal: ${safeServerError(error).code}`);
   shutdown(1);
 });
 process.on("unhandledRejection", (error) => {
-  console.error(error);
+  console.error(`[printform-transaction-server] rejection: ${safeServerError(error).code}`);
   shutdown(1);
 });

@@ -18,6 +18,17 @@ describe("FormSpec compatibility registry", () => {
     ]));
   });
 
+  it("keeps the legacy root repeat flag as the default and records per-table overrides", () => {
+    const project = createEmptyProject();
+    project.templateHtml = `<div class="printform" data-repeat-rowheader="n">
+      <div class="prowheader" data-pf-table-id="a" data-pf-repeat-rowheader="y">A</div>
+      <div class="prowheader" data-pf-table-id="b" data-pf-repeat-rowheader="n">B</div>
+    </div>`;
+    const spec = createLegacyFormSpec(project);
+    expect(spec.pagination.repeatTableHeader).toBe(false);
+    expect(spec.components.filter((item) => item.role === "table-header").map((item) => item.repeatHeader)).toEqual([true, false]);
+  });
+
   it("applies binding and pagination edits through component ids, not arbitrary selectors", () => {
     const project = createEmptyProject();
     project.templateHtml = '<div class="printform"><div class="pheader">Header</div></div>';

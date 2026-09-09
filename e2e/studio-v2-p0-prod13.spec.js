@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { admitPublicGateway } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 const CANARY = "UNKNOWN-CANARY-20260908";
@@ -16,6 +17,7 @@ test("PROD-13 13-01 classifies an imported canary before persistence and fails c
     name: "unknown-canary.html", mimeType: "text/html", buffer: Buffer.from(importedHtml)
   });
   await expect(page.locator("#data-policy")).toHaveText(/Unknown data|未知数据|restrictive|kandungan tidak diketahui|不明なデータ|dữ liệu không xác định/i);
+  await admitPublicGateway(page);
 
   const result = await page.evaluate(async () => {
     const run = (name, input = {}) => window.PrintFormStudioAgent.execute(name, input);

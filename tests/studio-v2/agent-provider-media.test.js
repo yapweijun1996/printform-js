@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildProviderInput } from "../../studio-v2/ui/agent-provider.js";
+import { buildProviderInput, projectProviderParts } from "../../studio-v2/ui/agent-provider.js";
 import { AGRUN_VENDOR_PROVENANCE } from "../../studio-v2/vendor/agrun.provenance.js";
 
 function loadAgrun() {
@@ -38,6 +38,66 @@ describe("AI Designer inline media transport", () => {
     expect(html).toContain(`integrity="${sri}"`);
   });
 
+  it("defaults a missing policy to restrictive Unknown for pixel media", () => {
+    const profile = { provider: "openai", model: "gpt-vision-mock", apiKey: "media-policy-key", apiVariant: "responses" };
+    expect(() => buildProviderInput(profile, "review layout", [{
+      type: "image",
+      url: "data:image/png;base64,AAAA",
+      mimeType: "image/png",
+      filename: "layout.png",
+      source: "sandbox-pixel",
+      syntheticData: true,
+      redacted: false
+    }])).toThrowError(/Pixel evidence/);
+  });
+
+  it("keeps the exported media projection restrictive without a policy argument", () => {
+    expect(() => projectProviderParts([{
+      type: "image",
+      url: "data:image/png;base64,AAAA",
+      mimeType: "image/png",
+      filename: "layout.png",
+      source: "untrusted-pixel",
+      syntheticData: true,
+      redacted: false
+    }])).toThrowError(/provenance/);
+  });
+
+  it("checks the current policy at the final provider transport boundary", async () => {
+    const Agrun = loadAgrun();
+    const transport = vi.fn();
+    vi.stubGlobal("fetch", transport);
+    let current = true;
+    const assertCurrentPolicy = vi.fn(() => {
+      if (!current) throw Object.assign(new Error("The Agent policy changed before provider send"), { code: "STALE_POLICY_CONTEXT" });
+    });
+    const input = buildProviderInput({ provider: "openai", model: "gpt-mock", apiKey: "transport-policy-key", apiVariant: "chat" }, "review", [], { assertCurrentPolicy });
+    current = false;
+
+    await expect(Agrun.requestOpenAIChatCompletion(input, input.fetch)).rejects.toMatchObject({ code: "STALE_POLICY_CONTEXT" });
+    expect(assertCurrentPolicy).toHaveBeenCalledOnce();
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it("rejects a response that completes after the policy becomes stale", async () => {
+    const Agrun = loadAgrun();
+    let release;
+    const transport = vi.fn(() => new Promise((resolve) => { release = () => resolve(jsonResponse({ choices: [{ message: { content: "stale" } }] })); }));
+    vi.stubGlobal("fetch", transport);
+    let current = true;
+    const assertCurrentPolicy = () => {
+      if (!current) throw Object.assign(new Error("The Agent policy changed after provider send"), { code: "STALE_POLICY_CONTEXT" });
+    };
+    const input = buildProviderInput({ provider: "openai", model: "gpt-mock", apiKey: "response-policy-key", apiVariant: "chat" }, "review", [], { assertCurrentPolicy });
+    const pending = Agrun.requestOpenAIChatCompletion(input, input.fetch);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    current = false;
+    release();
+
+    await expect(pending).rejects.toMatchObject({ code: "STALE_POLICY_CONTEXT" });
+    expect(transport).toHaveBeenCalledOnce();
+  });
+
   it("sends data images inline without downloading them first", async () => {
     const Agrun = loadAgrun();
     const providerRequests = [];
@@ -70,7 +130,9 @@ describe("AI Designer inline media transport", () => {
       type: "image",
       url: imageUrl,
       mimeType: "image/svg+xml",
-      filename: "layout-default.svg"
+      filename: "layout-default.svg",
+      source: "geometry-only",
+      redacted: true
     }]);
     const result = await Agrun.requestOpenAIChatCompletion(input);
 

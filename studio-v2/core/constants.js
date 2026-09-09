@@ -39,6 +39,7 @@ export const SECTION_IDS = Object.freeze({
 export const LIMITS = Object.freeze({
   htmlBytes: 10 * 1024 * 1024,
   rows: 500,
+  rowsPerTable: 500,
   logicalPages: 100
 });
 

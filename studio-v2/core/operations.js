@@ -66,14 +66,22 @@ function applyPaginationRule(project, operation) {
   const spec = ensureFormSpec(project);
   const component = findComponent(spec, operation.componentId);
   if (!component) throw Object.assign(new Error(`Unknown FormSpec component: ${operation.componentId}`), { code: "COMPONENT_NOT_FOUND" });
-  spec.pagination.rules = { ...(spec.pagination?.rules || {}), [operation.componentId]: { rule: operation.rule, value: operation.value } };
+  if (operation.rule === "repeatHeader" && component.role !== "table-header") {
+    throw Object.assign(new Error("repeatHeader requires a table-header component"), { code: "PAGINATION_RULE_TARGET_INVALID" });
+  }
+  spec.pagination = {
+    ...(spec.pagination || {}),
+    rules: { ...(spec.pagination?.rules || {}), [operation.componentId]: { rule: operation.rule, value: operation.value } },
+  };
+  const specComponent = spec.components.find((item) => item.id === operation.componentId);
+  if (operation.rule === "repeatHeader" && specComponent) specComponent.repeatHeader = operation.value;
   project.spec = spec;
   const { template, node } = componentTemplateNode(project, operation.componentId);
   if (node && operation.rule === "keepTogether") node.setAttribute("data-pf-keep-together", String(operation.value));
   if (node && operation.rule === "pageBreakBefore") node.classList.toggle("tb_page_break_before", operation.value);
   if (operation.rule === "repeatHeader") {
-    const root = template.content.querySelector(".printform");
-    if (root) root.setAttribute("data-repeat-rowheader", operation.value ? "y" : "n");
+    if (!node) throw Object.assign(new Error(`Table-header component is not present in the template: ${operation.componentId}`), { code: "COMPONENT_NODE_NOT_FOUND" });
+    node.setAttribute("data-pf-repeat-rowheader", operation.value ? "y" : "n");
   }
   project.templateHtml = template.innerHTML.trim();
 }

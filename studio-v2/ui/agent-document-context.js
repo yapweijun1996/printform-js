@@ -10,6 +10,7 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
     stateMode: "committed",
     candidateRevision: null,
     selection: "Entire document",
+    selectionDetails: null,
     scope: "all",
     scopeOptions: scopeOptions || [
       { value: "all", label: "All sections", selection: "Entire document", scope: { kind: "document" } },
@@ -25,6 +26,7 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
     const stateEl = get("#ai-context-state");
     const statusEl = get("#ai-context-status");
     const selEl = get("#ai-context-selection-val");
+    const selectionMetaEl = get("#ai-context-selection-meta");
     const scopeSelect = get("#ai-context-scope-select");
 
     if (docEl) docEl.textContent = state.documentTitle;
@@ -39,12 +41,17 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
     }
 
     if (statusEl) {
-      if (state.errorCount > 0 || ["failed", "blocked"].includes(state.renderStatus)) {
+      const readinessErrors = Array.isArray(state.readiness?.errors) ? state.readiness.errors.length : 0;
+      const productionReady = state.readiness?.productionValid === true;
+      if (state.errorCount > 0 || readinessErrors > 0 || ["failed", "blocked"].includes(state.renderStatus)) {
         statusEl.className = "ai-context-badge ai-badge-status ai-badge-blocked";
         statusEl.textContent = t("aiChat.context.blocked");
       } else if (["waiting", "rendering", "candidate"].includes(state.renderStatus)) {
         statusEl.className = "ai-context-badge ai-badge-status ai-badge-warning";
         statusEl.textContent = t(state.renderStatus === "rendering" ? "status.rendering" : "status.waiting");
+      } else if (!productionReady) {
+        statusEl.className = "ai-context-badge ai-badge-status ai-badge-blocked";
+        statusEl.textContent = t("aiChat.context.blocked");
       } else if (state.warningCount > 0) {
         statusEl.className = "ai-context-badge ai-badge-status ai-badge-warning";
         statusEl.textContent = t("aiChat.context.issues", { count: state.warningCount });
@@ -58,6 +65,17 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
       selEl.textContent = state.selection === "Entire document"
         ? t("aiChat.context.entireDocument")
         : state.selection;
+    }
+
+    if (selectionMetaEl) {
+      const details = state.selectionDetails;
+      selectionMetaEl.textContent = details
+        ? [details.type, details.role, details.tableId && `table=${details.tableId}`, details.componentId]
+          .filter(Boolean).join(" · ")
+        : state.scope === "all" ? "Whole document" : "Scope selected";
+      selectionMetaEl.dataset.componentId = details?.componentId || "";
+      selectionMetaEl.dataset.tableId = details?.tableId || "";
+      selectionMetaEl.dataset.source = details?.source || "scope-control";
     }
 
     if (scopeSelect) {
@@ -75,6 +93,7 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
         const option = state.scopeOptions.find((item) => item.value === event.target.value) || state.scopeOptions[0];
         state.scope = option.value;
         state.selection = option.selection;
+        state.selectionDetails = null;
         onScopeChange({ ...option.scope });
         render();
       });
@@ -91,7 +110,11 @@ export function createDocumentContextView({ get, t, onScopeChange = () => {}, sc
     if (nextState.warningCount !== undefined) state.warningCount = nextState.warningCount;
     if (nextState.stateMode !== undefined) state.stateMode = nextState.stateMode;
     if (nextState.candidateRevision !== undefined) state.candidateRevision = nextState.candidateRevision;
-    if (nextState.selection !== undefined) state.selection = nextState.selection;
+    if (nextState.selection !== undefined) {
+      state.selection = nextState.selection;
+      if (nextState.selection === "Entire document") state.selectionDetails = null;
+    }
+    if (nextState.selectionDetails !== undefined) state.selectionDetails = nextState.selectionDetails ? { ...nextState.selectionDetails } : null;
     if (nextState.scope !== undefined) state.scope = nextState.scope;
     if (nextState.scopeOptions !== undefined) {
       state.scopeOptions = nextState.scopeOptions;

@@ -1,4 +1,5 @@
 import { cloneProject } from "./operations.js";
+import { classifyImportedDocument } from "./data-policy.js";
 
 function isEmbeddableUrl(url) {
   if (!url || url.startsWith("data:") || url.startsWith("#")) return false;
@@ -90,6 +91,7 @@ function hasFetchableCssUrl(css) {
 export async function inlineProjectAssets(project, baseUrl = document.baseURI, { dataPolicy = null, assertCurrent = () => {} } = {}) {
   assertCurrent();
   const result = cloneProject(project);
+  const effectivePolicy = dataPolicy || classifyImportedDocument(project.manifest?.documentId);
   const warnings = [];
   const allowExternal = Boolean(project.manifest.assets?.allowExternalHttps);
   const template = document.createElement("template");
@@ -98,7 +100,7 @@ export async function inlineProjectAssets(project, baseUrl = document.baseURI, {
   for (const node of nodes) {
     const raw = node.getAttribute("src");
     if (!isEmbeddableUrl(raw)) continue;
-    if (dataPolicy?.allowExternalAssetFetch === false) throw policyError();
+    if (effectivePolicy.allowExternalAssetFetch === false) throw policyError();
     const absolute = new URL(raw, baseUrl).href;
     if (allowExternal && absolute.startsWith("https:")) {
       await checkExternal(absolute, assertCurrent);
@@ -106,7 +108,7 @@ export async function inlineProjectAssets(project, baseUrl = document.baseURI, {
     } else node.setAttribute("src", await toDataUrl(absolute, assertCurrent));
   }
   result.templateHtml = template.innerHTML.trim();
-  if (dataPolicy?.allowExternalAssetFetch === false && hasFetchableCssUrl(result.themeCss)) throw policyError();
+  if (effectivePolicy.allowExternalAssetFetch === false && hasFetchableCssUrl(result.themeCss)) throw policyError();
   result.themeCss = await rewriteCssUrls(result.themeCss, baseUrl, allowExternal, warnings, assertCurrent);
   assertCurrent();
   return { project: result, warnings };

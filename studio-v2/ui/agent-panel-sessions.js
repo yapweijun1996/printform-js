@@ -36,7 +36,13 @@ export function createPanelSessions({ state, sessions, get, getGateway, profile,
     stopTurn();
     state.currentRecord = null;
     state.sessionNeedsCreate = true;
-    state.log.replaceChildren();
+    if (typeof state.log?.querySelectorAll === "function") {
+      state.log.querySelectorAll(".ai-message").forEach((node) => node.remove());
+    } else {
+      state.log.replaceChildren();
+    }
+    state.streamingNode = null;
+    state.streamingText = "";
   }
 
   function onRecipientChange() {

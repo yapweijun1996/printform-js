@@ -51,10 +51,10 @@ describe("PrintForm Studio v2 command bus", () => {
     expect(bus.project.sampleData.items).toHaveLength(500);
     await bus.execute("undo_revision", { expectedRevision: 1 });
     expect(bus.project.sampleData.items).toHaveLength(45);
-    expect(bus.historyState()).toEqual({ revision: 0, canUndo: false, canRedo: true });
-    const redone = await bus.execute("redo_revision", { expectedRevision: 0 });
+    expect(bus.historyState()).toEqual({ revision: 2, canUndo: false, canRedo: true });
+    const redone = await bus.execute("redo_revision", { expectedRevision: 2 });
     expect(redone.ok).toBe(true);
-    expect(redone.result.revision).toBe(1);
+    expect(redone.result.revision).toBe(3);
     expect(bus.project.sampleData.items).toHaveLength(500);
   });
 
@@ -64,9 +64,9 @@ describe("PrintForm Studio v2 command bus", () => {
     const bus = new CommandBus(project);
     await bus.execute("set_sample_scenario", { expectedRevision: 0, scenario: "one" });
     await bus.execute("undo_revision", { expectedRevision: 1 });
-    const result = await executeAgentCommand(bus, "redo_revision", { expectedRevision: 0 });
+    const result = await executeAgentCommand(bus, "redo_revision", { expectedRevision: 2 });
     expect(result.error.code).toBe("UNTRUSTED_READ_ONLY");
-    expect(bus.revision).toBe(0);
+    expect(bus.revision).toBe(2);
   });
 
   it("builds every scenario from the immutable default sample", async () => {

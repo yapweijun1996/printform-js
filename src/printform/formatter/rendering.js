@@ -3,11 +3,10 @@
 import { updatePageNumberContent, updatePhysicalPageNumberContent } from "../helpers.js";
 import { FOOTER_LOGO_VARIANT, FOOTER_PAGENUM_VARIANT } from "../config.js";
 import { DomHelpers } from "../dom.js";
+import { attachRowHeaderPolicyMethods } from "./row-header-policy.js";
 
 export function attachRenderingMethods(FormatterClass) {
-  FormatterClass.prototype.getSectionRowHeader = function getSectionRowHeader(sections, tableId = "default") {
-    return sections.rowHeadersById?.[tableId] || sections.rowHeader || null;
-  };
+  if (!FormatterClass.prototype.getSectionRowHeader) attachRowHeaderPolicyMethods(FormatterClass);
 
   FormatterClass.prototype.ensureFirstPageSections = function ensureFirstPageSections(container, sections, heights, logFn, skipRowHeader, tableId = "default") {
     let consumedHeight = 0;
@@ -27,7 +26,7 @@ export function attachRenderingMethods(FormatterClass) {
     const rowHeader = this.getSectionRowHeader(sections, tableId);
     if (rowHeader && !skipRowHeader) {
       DomHelpers.appendClone(container, rowHeader, logFn, "prowheader");
-      if (!this.config.repeatRowheader) {
+      if (!this.isRowHeaderRepeated(sections, tableId)) {
         consumedHeight += heights.rowHeaders?.[tableId] ?? heights.rowHeader ?? 0;
       }
     }
@@ -45,13 +44,13 @@ export function attachRenderingMethods(FormatterClass) {
       }
     });
     const rowHeader = this.getSectionRowHeader(sections, tableId);
-    if (this.config.repeatRowheader && rowHeader && !skipRowHeader) {
+    if (this.isRowHeaderRepeated(sections, tableId) && rowHeader && !skipRowHeader) {
       DomHelpers.appendClone(container, rowHeader, logFn, "prowheader");
     }
   };
 
   FormatterClass.prototype.ensureActiveTableHeader = function ensureActiveTableHeader(container, sections, logFn, tableId) {
-    if (!this.config.repeatRowheader) return null;
+    if (!this.isRowHeaderRepeated(sections, tableId)) return null;
     const rowHeader = this.getSectionRowHeader(sections, tableId);
     if (!rowHeader) return null;
     const hasHeader = Array.from(container.querySelectorAll(".prowheader_processed")).some(

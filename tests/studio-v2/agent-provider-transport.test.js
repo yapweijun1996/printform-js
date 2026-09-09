@@ -38,15 +38,15 @@ afterEach(() => {
 });
 
 describe("AI Designer provider mocked transport", () => {
-  it("defaults to the private gateway Responses profile without embedding a credential", () => {
+  it("defaults to the browser Demo Responses profile without embedding a credential", () => {
     expect(DEFAULT_PROVIDER_PRESET).toMatchObject({
       id: "own-gpt-server", provider: "openai", model: "gpt-5.4-mini",
-      endpoint: "https://gpt.yapweijun1996.com/v1", apiVariant: "responses", reasoningEffort: "medium"
+      endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses", reasoningEffort: "medium"
     });
     expect(DEFAULT_PROVIDER_PRESET).not.toHaveProperty("apiKey");
     expect(chooseDefaultProviderProfile([{ id: "openai-old", provider: "openai" }, DEFAULT_PROVIDER_PRESET])).toBe(DEFAULT_PROVIDER_PRESET);
-    expect(buildProviderInput({ ...DEFAULT_PROVIDER_PRESET, apiKey: "gateway-test-key" }, "hello")).toMatchObject({
-      provider: "openai", endpoint: "https://gpt.yapweijun1996.com/v1", apiVariant: "responses", reasoningEffort: "medium", model: "gpt-5.4-mini"
+    expect(buildProviderInput(DEFAULT_PROVIDER_PRESET, "hello")).toMatchObject({
+      provider: "openai", authMode: "server", endpoint: "https://gpt.yapweijun1996.com/demo/v1/responses", apiVariant: "responses", reasoningEffort: "medium", model: "gpt-5.4-mini"
     });
   });
 
@@ -126,7 +126,7 @@ describe("AI Designer provider mocked transport", () => {
     };
     const profile = { provider: "openai", model: "gpt-vision-mock", apiKey, apiVariant: "responses" };
     const result = await Agrun.requestOpenAIChatCompletion(buildProviderInput(profile, "review layout", [{
-      type: "image", url: "data:image/svg+xml;base64,PHN2Zz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PC9zdmc+", mimeType: "image/svg+xml", filename: "layout-default.svg"
+      type: "image", url: "data:image/svg+xml;base64,PHN2Zz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PC9zdmc+", mimeType: "image/svg+xml", filename: "layout-default.svg", source: "geometry-only", redacted: true
     }]));
     checkRequest(request.mock.calls.at(-1)[0]);
     expect(result.text).toBe("layout reviewed");

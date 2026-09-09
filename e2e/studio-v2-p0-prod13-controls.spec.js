@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { openEditor, openInspector, passLayoutReview } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor, openInspector, passLayoutReview } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 const SAVE_CANARY = "EXPLICIT-SAVE-CANARY-20260908";
@@ -14,6 +14,7 @@ async function makeRealCanary(page) {
   await openEditor(page);
   await page.locator("label.privacy-toggle").click();
   await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
+  await admitPublicGateway(page);
   const editor = page.locator("#manifest-editor");
   const manifest = JSON.parse(await editor.inputValue());
   manifest.title = SAVE_CANARY;
@@ -66,7 +67,7 @@ test("PROD-13 13-07 saves only the selected file and discloses user prompts", as
     window.__p0PromptRequest = null;
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input, init = {}) => {
-      if (!String(input).includes("gpt.yapweijun1996.com/v1/responses")) return originalFetch(input, init);
+      if (!String(input).includes("gpt.yapweijun1996.com/demo/v1/responses")) return originalFetch(input, init);
       window.__p0PromptRequest = { body: JSON.parse(init.body) };
       return new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true }));
     };
@@ -104,6 +105,7 @@ test("PROD-13 13-08 falls back to memory and does not inherit Synthetic policy o
   });
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   const faultInjection = await page.evaluate(async () => {
     let durableBlocked = false;
     try { localStorage.setItem("printform:studio-v2:durable:probe", "probe"); } catch { durableBlocked = true; }

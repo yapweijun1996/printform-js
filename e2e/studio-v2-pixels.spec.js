@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openEditor } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 
 test.describe("synthetic pixel evidence boundary", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "Sandbox pixel rasterization is validated in Chromium; geometry evidence covers other engines.");
@@ -8,6 +8,7 @@ test.describe("synthetic pixel evidence boundary", () => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
     await openEditor(page);
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const summary = await window.PrintFormStudioAgent.execute("get_project_summary");
       return window.PrintFormStudioAgent.execute("capture_layout_evidence", {
@@ -20,6 +21,7 @@ test.describe("synthetic pixel evidence boundary", () => {
     expect(result.result.evidence.pixelSnapshot.dataUrl).toMatch(/^data:image\/(png|jpeg|webp);base64,/);
 
     await page.locator("#real-data-mode").check();
+    await admitPublicGateway(page);
     const blocked = await page.evaluate(() => window.PrintFormStudioAgent.execute("capture_layout_evidence", {
       expectedRevision: 0, scenario: "default", visualMode: "pixels"
     }));
@@ -29,6 +31,7 @@ test.describe("synthetic pixel evidence boundary", () => {
   test("runs a real pixel review, approval-bound repair, fresh re-review and readiness check", async ({ page }) => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const { DesignerRuntimeController } = await import("/studio-v2/ui/agent-runtime.js");
       let runtimeOptions;

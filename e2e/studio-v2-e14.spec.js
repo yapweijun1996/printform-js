@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { openInspector } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openInspector, passLayoutReview } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page).toHaveTitle(/PrintForm Studio v2/);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
 });
 
 test("presents the 4-layer E14 IA: Navigation -> Document Context -> Conversation -> Composer", async ({ page }) => {
@@ -27,7 +28,12 @@ test("presents the 4-layer E14 IA: Navigation -> Document Context -> Conversatio
   await expect(docContext.locator("#ai-context-doc-name")).toHaveText(/Sales Invoice/);
   await expect(docContext.locator("#ai-context-revision")).toHaveText("r0");
   await expect(docContext.locator("#ai-context-state")).toHaveText("Committed");
-  await expect(docContext.locator("#ai-context-status")).toHaveText(/Printable|\d+\s+issues/);
+  await expect(docContext.locator("#ai-context-status")).toHaveText("Blocked");
+  const review = await passLayoutReview(page);
+  expect(review.ok).toBe(true);
+  await expect(docContext.locator("#ai-context-status")).toHaveText(/\d+\s+issues/);
+  await expect(page.locator("#export-readiness")).toHaveText("● Ready");
+  await expect(page.locator("#export-button")).toBeEnabled();
   await expect(docContext.locator("#ai-context-selection-val")).toHaveText("Entire document");
   await expect(docContext.locator("#ai-context-scope-select")).toHaveValue("all");
 
@@ -138,13 +144,13 @@ test("renders structured proposal and change card with actionable batch undo", a
   await expect(page.locator("#ai-context-revision")).toHaveText("r1");
   await expect(page.locator("#ai-undo-revision")).toBeEnabled();
 
-  // Undo and verify document context returns to r0
+  // Undo creates a new canonical revision while selecting the prior logical state.
   await page.locator("#ai-undo-revision").click();
-  await expect(page.locator("#ai-context-revision")).toHaveText("r0");
+  await expect(page.locator("#ai-context-revision")).toHaveText("r2");
   await expect(page.locator("#ai-undo-revision")).toBeDisabled();
   await expect(page.locator("#ai-redo-revision")).toBeEnabled();
 
   // Redo
   await page.locator("#ai-redo-revision").click();
-  await expect(page.locator("#ai-context-revision")).toHaveText("r1");
+  await expect(page.locator("#ai-context-revision")).toHaveText("r3");
 });

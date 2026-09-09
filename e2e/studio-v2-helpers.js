@@ -1,3 +1,19 @@
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION } from "../studio-v2/core/constants.js";
+import { TOOL_CONTRACTS } from "../studio-v2/core/tool-contracts.js";
+
+const ADMISSION_REQUEST = Object.freeze({
+  protocolVersion: PROTOCOL_VERSION,
+  contractVersion: AGENT_CONTRACT_VERSION,
+  tools: TOOL_CONTRACTS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema }))
+});
+
+export async function admitPublicGateway(page) {
+  await page.waitForFunction(() => typeof window.PrintFormStudioAgent?.admitClient === "function");
+  const result = await page.evaluate((request) => window.PrintFormStudioAgent.admitClient(request), ADMISSION_REQUEST);
+  if (!result?.ok) throw new Error(`Public Agent gateway admission failed: ${result?.error?.code || "unknown"}`);
+  return result.result.admissionId;
+}
+
 export async function passLayoutReview(page) {
   return page.evaluate(async () => {
     const summary = await window.PrintFormStudioAgent.execute("get_project_summary");

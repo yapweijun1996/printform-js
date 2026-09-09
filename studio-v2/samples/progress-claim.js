@@ -30,7 +30,7 @@ export function createProgressClaimProject() {
     manifest: {
       protocolVersion: PROTOCOL_VERSION, title: "Progress Claim — Northpeak Buildworks", documentId: "progress-claim-northpeak", locale: "en-MY", currency: "SGD", timeZone: "Asia/Singapore",
       i18n: { supportedLocales: ["en-MY", "zh-CN", "ms-MY", "ja-JP", "vi-VN"], fallbackLocale: "en-MY" },
-      acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxLogicalPages: LIMITS.logicalPages, requirePrintPreview: true },
+      acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxRowsPerTable: LIMITS.rowsPerTable, maxLogicalPages: LIMITS.logicalPages, requirePrintPreview: true },
       assets: { inlineByDefault: true, allowExternalHttps: false, requiredSlots: ["letterhead-logo", "footer-logo"] }
     },
     schema, i18n: {}, themeCss: PROGRESS_CLAIM_THEME, templateHtml: PROGRESS_CLAIM_TEMPLATE,

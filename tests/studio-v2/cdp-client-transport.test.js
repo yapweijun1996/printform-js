@@ -8,7 +8,7 @@ import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
 const catalog = () => TOOL_CONTRACTS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema }));
 
 async function createCdpFixture() {
-  const state = { targetId: "page-1", catalog: catalog(), capabilities: 0, businessCalls: 0, connections: 0 };
+  const state = { targetId: "page-1", catalog: catalog(), capabilities: 0, admissions: 0, businessCalls: 0, connections: 0, expressions: [] };
   const httpServer = http.createServer((request, response) => {
     if (request.url !== "/json/list") { response.writeHead(404); response.end(); return; }
     const port = httpServer.address().port;
@@ -26,11 +26,17 @@ async function createCdpFixture() {
     state.connections += 1;
     socket.on("message", (raw) => {
       const message = JSON.parse(raw.toString());
-      const capabilities = message.params?.expression?.includes('"get_capabilities"');
-      if (capabilities) state.capabilities += 1;
+      const expression = message.params?.expression || "";
+      state.expressions.push(expression);
+      const admission = expression.includes("admitClient");
+      const capabilities = !admission && expression.includes('"get_capabilities"');
+      if (admission) state.admissions += 1;
+      else if (capabilities) state.capabilities += 1;
       else state.businessCalls += 1;
       const value = capabilities
         ? { ok: true, result: { protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION, tools: state.catalog } }
+        : admission
+          ? { ok: true, result: { admissionId: `admission:${state.targetId}` } }
         : { ok: true, result: { revision: 0 } };
       socket.send(JSON.stringify({ id: message.id, result: { result: { type: "object", value } } }));
     });
@@ -60,7 +66,9 @@ describe("CDP transport admission", () => {
       await expect(client.execute("get_project_summary")).resolves.toMatchObject({ ok: true });
       expect(fixture.state.connections).toBe(2);
       expect(fixture.state.capabilities).toBe(2);
+      expect(fixture.state.admissions).toBe(2);
       expect(fixture.state.businessCalls).toBe(2);
+      expect(fixture.state.expressions.filter((expression) => expression.includes("admission:page-")).length).toBe(2);
     } finally {
       client.close();
       await fixture.close();
@@ -75,6 +83,7 @@ describe("CDP transport admission", () => {
       fixture.replace("page-2", fixture.state.catalog.slice(0, -1));
       await expect(client.execute("get_project_summary")).rejects.toMatchObject({ code: "AGENT_TOOL_CATALOG_MISMATCH" });
       expect(fixture.state.capabilities).toBe(2);
+      expect(fixture.state.admissions).toBe(1);
       expect(fixture.state.businessCalls).toBe(1);
     } finally {
       client.close();

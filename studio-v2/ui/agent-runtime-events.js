@@ -1,3 +1,5 @@
+import { SAFE_TRACE_TYPES } from "./agent-trace-events.js";
+
 const SAFE_PHASES = new Set([
   "preflight", "planning", "provider", "streaming", "tool", "execution",
   "approval", "finalize", "observe", "orient", "decide", "act", "evaluate"
@@ -128,6 +130,7 @@ function usageProjection(event) {
 
 export function projectRuntimeEvent(event) {
   if (!event || typeof event.type !== "string") return null;
+  if (event.type !== "token" && !SAFE_TRACE_TYPES.has(event.type)) return null;
   if (event.type === "token") {
     return { type: "token", text: typeof event.text === "string" ? event.text : "" };
   }

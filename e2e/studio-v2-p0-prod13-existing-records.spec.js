@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openEditor } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 const CANARIES = Object.freeze({
@@ -87,10 +87,12 @@ async function seedLegacyRecords(page) {
 test("PROD-13 13-05 preserves exact old records while Real mode blocks new persistence", async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   const seeded = await seedLegacyRecords(page);
 
   await page.reload();
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   await expect(page.locator("#restore-banner")).not.toHaveClass(/hidden/);
   const beforeSwitch = await page.evaluate(async () => ({
     summary: await window.PrintFormStudioAgent.execute("get_project_summary"),

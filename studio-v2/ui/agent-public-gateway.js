@@ -17,23 +17,21 @@ export function gatewayProfileFromForm(get) {
     maxCostUsd: get("#ai-max-cost").value
   };
   const isDefaultGateway = isDefaultGatewayProfile(item);
-  const gatewayKey = isDefaultGateway ? get("#ai-public-gateway-key").value.trim() : "";
   return {
     isDefaultGateway,
-    gatewayKey,
-    profile: isDefaultGateway ? publicDefaultProviderProfile(gatewayKey) : item,
-    item: isDefaultGateway ? { ...item, apiKey: gatewayKey } : item
+    profile: isDefaultGateway ? publicDefaultProviderProfile() : item,
+    item: isDefaultGateway ? { ...item, apiKey: "" } : item
   };
 }
 
-export function gatewayOptionLabel(t, hasToken) {
-  return t(hasToken ? "aiSettings.runtime.defaultGatewaySession" : "aiSettings.runtime.defaultGatewayPublic", { model: DEFAULT_PROVIDER_PRESET.model });
+export function gatewayOptionLabel(t) {
+  return t("aiSettings.runtime.defaultGatewayDemo", { model: DEFAULT_PROVIDER_PRESET.model });
 }
 
-export function gatewayBadgeKey(hasToken) {
-  return hasToken ? "aiSettings.sessionGateway" : "aiSettings.publicGateway";
+export function gatewayBadgeKey() {
+  return "aiSettings.publicGateway";
 }
 
-export function gatewayStatusKey(hasToken) {
-  return hasToken ? "aiChat.status.sessionGateway" : "aiChat.status.publicGateway";
+export function gatewayStatusKey() {
+  return "aiChat.status.demoGateway";
 }

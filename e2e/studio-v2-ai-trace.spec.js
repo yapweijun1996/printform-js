@@ -15,7 +15,7 @@ test("exposes a memory-only sanitized runtime trace", async ({ page }) => {
   await page.evaluate(() => {
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input, init = {}) => {
-      if (!String(input).includes("gpt.yapweijun1996.com/v1/responses")) return originalFetch(input, init);
+      if (!String(input).includes("gpt.yapweijun1996.com/demo/v1/responses")) return originalFetch(input, init);
       return new Promise((_resolve, reject) => init.signal?.addEventListener(
         "abort", () => reject(new DOMException("aborted", "AbortError")), { once: true }
       ));

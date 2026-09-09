@@ -96,7 +96,7 @@ describe("Studio v2 production boundary", () => {
     expect(approved.ok).toBe(true);
   });
 
-  it("fails closed for ambiguous table scopes and component-shaped global pagination flags", async () => {
+  it("keeps component pagination local while rejecting ambiguous table scopes", async () => {
     const ambiguous = policyBus(classifySyntheticDocument("fixture"), { scope: { kind: "table" } });
     const ambiguousResult = await ambiguous.gateway.execute("preview_changes", {
       expectedRevision: 0,
@@ -111,7 +111,7 @@ describe("Studio v2 production boundary", () => {
       expectedRevision: 0,
       operations: [{ type: "set_pagination_rule", componentId: component.id, rule: "repeatHeader", value: false }]
     });
-    expect(result.error.code).toBe("SCOPE_VIOLATION");
+    expect(result.ok).toBe(true);
   });
 
   it("binds policy context and opaque references to the document identity", async () => {

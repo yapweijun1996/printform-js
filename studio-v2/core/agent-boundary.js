@@ -7,7 +7,8 @@ const DOCUMENT_SCOPED_COMMANDS = new Set(["set_locale", "set_asset_source", "set
 
 export function isAutoApplyEligible(value) {
   const changes = Array.isArray(value) ? value : value?.operations || value?.changes || [];
-  return changes.every((operation) => AUTO_APPLY_OPERATIONS.has(operation.type));
+  return Array.isArray(changes) && changes.length > 0
+    && changes.every((operation) => operation && AUTO_APPLY_OPERATIONS.has(operation.type));
 }
 
 function failure(code, message) {
@@ -41,6 +42,9 @@ export function assertAgentOperations(bus, operations, context) {
   if (!context?.agent) return;
   assertContextCurrent(context);
   assertBusPolicyCurrent(bus, context);
+  if (!Array.isArray(operations) || operations.length === 0) {
+    throw failure("INVALID_OPERATION_SET", "Agent preview requires at least one operation");
+  }
   assertOperationsInScope(bus.project, operations, context.scope);
   if (context.dataPolicy?.allowExternalAssetFetch === false) {
     const external = operations.find((operation) => operation.type === "set_asset_slot"
@@ -64,7 +68,8 @@ export function bindTransactionContext(transaction, context) {
 }
 
 export function assertTransactionContext(transaction, context) {
-  if (!context?.agent || context.legacy || !transaction?.agent_context) return;
+  if (!context?.agent || context.legacy) return;
+  if (!transaction?.agent_context) throw failure("STALE_POLICY_CONTEXT", "The transaction has no trusted Agent context");
   assertContextCurrent(context);
   const expected = transaction.agent_context;
   if (expected.contextId && expected.contextId !== context.dataPolicy?.contextId) throw failure("STALE_POLICY_CONTEXT", "The transaction belongs to another Agent context");
@@ -72,6 +77,18 @@ export function assertTransactionContext(transaction, context) {
   if (expected.documentId !== context.dataPolicy?.documentId) throw failure("STALE_POLICY_CONTEXT", "The transaction belongs to another document");
   if (expected.sessionId && expected.sessionId !== context.sessionId) throw failure("STALE_POLICY_CONTEXT", "The transaction belongs to another Agent session");
   if (expected.scopeFingerprint !== scopeFingerprint(context.scope)) throw failure("SCOPE_CHANGED", "The active Agent scope changed after preview");
+}
+
+export function filterAgentTransactions(transactions, context) {
+  if (!context?.agent || context.legacy) return transactions;
+  return transactions.filter((transaction) => {
+    const bound = transaction?.agent_context;
+    return Boolean(bound)
+      && bound.contextId === (context.dataPolicy?.contextId || null)
+      && bound.generation === (context.dataPolicy?.generation || null)
+      && bound.documentId === (context.dataPolicy?.documentId || null)
+      && bound.sessionId === (context.sessionId || null);
+  });
 }
 
 export function assertApplyPermission(transaction, context) {

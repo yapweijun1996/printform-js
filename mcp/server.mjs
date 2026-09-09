@@ -20,6 +20,7 @@ function write(message) {
 
 function success(id, result) { write({ jsonrpc: "2.0", id, result }); }
 function failure(id, code, message, data) { write({ jsonrpc: "2.0", id, error: { code, message, ...(data ? { data } : {}) } }); }
+function compatibilityFailure(id, error) { return failure(id, -32001, "A compatible Studio v2 page is required", { code: error.code || "STUDIO_COMPATIBILITY_FAILED" }); }
 
 async function handle(request) {
   const { id, method, params = {} } = request;
@@ -33,6 +34,8 @@ async function handle(request) {
   }
   if (method === "ping") return success(id, {});
   if (method === "tools/list") {
+    try { await client.ensureContract(); }
+    catch (error) { return compatibilityFailure(id, error); }
     return success(id, { tools: TOOL_CONTRACTS.map((tool) => ({ name: tool.name, description: tool.description, inputSchema: tool.inputSchema })) });
   }
   if (method === "tools/call") {

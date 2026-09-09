@@ -9,6 +9,7 @@ function setupDom() {
       <span id="ai-context-state"></span>
       <span id="ai-context-status"></span>
       <span id="ai-context-selection-val"></span>
+      <span id="ai-context-selection-meta"></span>
       <select id="ai-context-scope-select">
         <option value="all">All sections</option>
         <option value="layout">Layout</option>
@@ -72,19 +73,23 @@ describe("agent-document-context view", () => {
     expect(onScopeChange).toHaveBeenCalledWith({ kind: "table", tableId: "default" });
   });
 
-  it("keeps document printability separate from export readiness", () => {
+  it("does not show Printable until current production readiness passes", () => {
     setupDom();
     const t = (key, vars, fallback) => ({
       "aiChat.context.blocked": "Blocked",
-      "aiChat.context.printable": "Printable"
+      "aiChat.context.printable": "Printable",
+      "aiChat.context.issues": `${vars?.count} issues`
     }[key] || fallback || key);
     const view = createDocumentContextView({ get: (sel) => document.querySelector(sel), t });
 
     view.update({ renderStatus: "ready", readiness: { productionValid: false, errors: [{ code: "LAYOUT_REVIEW_REQUIRED" }], warnings: [] }, errorCount: 0 });
+    expect(document.querySelector("#ai-context-status").textContent).toBe("Blocked");
+
+    view.update({ readiness: { productionValid: true, errors: [], warnings: [] }, errorCount: 0 });
     expect(document.querySelector("#ai-context-status").textContent).toBe("Printable");
 
-    view.update({ readiness: { productionValid: false, errors: [{ code: "INVALID_TEMPLATE" }], warnings: [] }, errorCount: 1 });
-    expect(document.querySelector("#ai-context-status").textContent).toBe("Blocked");
+    view.update({ warningCount: 1 });
+    expect(document.querySelector("#ai-context-status").textContent).toBe("1 issues");
   });
 
   it("renders document-specific table scope options and resets stale selections", () => {
@@ -109,5 +114,29 @@ describe("agent-document-context view", () => {
     view.update({ scopeOptions: [{ value: "all", label: "All sections", selection: "Entire document", scope: { kind: "document" } }] });
     expect(select.value).toBe("all");
     expect(onScopeChange).toHaveBeenLastCalledWith({ kind: "document" });
+  });
+
+  it("renders structural preview selection details without exposing values", () => {
+    setupDom();
+    const t = (key, vars, fallback) => fallback || key;
+    const view = createDocumentContextView({ get: (sel) => document.querySelector(sel), t });
+
+    view.update({
+      scope: "table",
+      selection: "Table default · DataTable (table-header) [table-default-header]",
+      selectionDetails: {
+        componentId: "table-default-header", tableId: "default", type: "DataTable", role: "table-header", source: "preview"
+      }
+    });
+
+    const meta = document.querySelector("#ai-context-selection-meta");
+    expect(meta.textContent).toBe("DataTable · table-header · table=default · table-default-header");
+    expect(meta.dataset.componentId).toBe("table-default-header");
+    expect(meta.dataset.tableId).toBe("default");
+    expect(meta.dataset.source).toBe("preview");
+    expect(meta.textContent).not.toContain("Example Business");
+    view.update({ selection: "Entire document", scope: "all" });
+    expect(meta.dataset.componentId).toBe("");
+    expect(meta.dataset.source).toBe("scope-control");
   });
 });

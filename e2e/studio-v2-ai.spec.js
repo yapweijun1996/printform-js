@@ -167,7 +167,7 @@ test("presents a chat-first AI Designer with provider setup tucked away", async 
   await expect(page.locator("#ai-provider")).toHaveValue("openai");
   await expect(page.locator("#ai-model")).toHaveValue("gpt-5.4-mini");
   await expect(page.locator("#ai-api-variant")).toHaveValue("responses");
-  await expect(page.locator("#ai-endpoint")).toHaveValue("https://gpt.yapweijun1996.com/v1");
+  await expect(page.locator("#ai-endpoint")).toHaveValue("https://gpt.yapweijun1996.com/demo/v1");
   await expect(page.getByRole("button", { name: "Save changes" })).toBeVisible();
   await page.locator("#ai-settings-cancel").click();
   await expect(page.locator("#ai-settings-button")).toBeFocused();
@@ -177,7 +177,7 @@ test("presents a chat-first AI Designer with provider setup tucked away", async 
   await expect(page.locator("#ai-model")).toBeFocused();
   await page.locator("#ai-settings-close").click();
 
-  await expect(page.locator("#ai-status")).toContainText("Built-in Gateway ready");
+  await expect(page.locator("#ai-status")).toContainText("Demo Gateway ready");
 
   await page.locator("#ai-new-session").click();
   await expect(page.locator("#ai-session-select")).not.toHaveValue("");
@@ -228,11 +228,11 @@ test("localizes provider settings modal across all supported languages", async (
   await page.locator("#ai-settings-button").click();
 
   const expected = {
-    "en-MY": { title: "Provider settings", save: "Save changes", provider: "Provider", navLabel: "Provider setting sections", profileState: "Default gateway: gpt-5.4-mini · built-in public credential", status: "Built-in Gateway ready · server abuse controls apply." },
-    "zh-CN": { title: "提供商设置", save: "保存更改", provider: "提供商", navLabel: "提供商设置分区", profileState: "默认 Gateway：gpt-5.4-mini · 内置公开凭证", status: "内置 Gateway 已就绪 · 服务端滥用控制生效。" },
-    "ms-MY": { title: "Tetapan pembekal", save: "Simpan perubahan", provider: "Pembekal", navLabel: "Bahagian tetapan pembekal", profileState: "Gateway lalai: gpt-5.4-mini · kelayakan awam terbina dalam", status: "Gateway terbina dalam sedia · kawalan penyalahgunaan pelayan berkuat kuasa." },
-    "ja-JP": { title: "プロバイダー設定", save: "変更を保存", provider: "プロバイダー", navLabel: "プロバイダー設定セクション", profileState: "既定ゲートウェイ：gpt-5.4-mini · 組み込み公開認証情報", status: "組み込みGatewayは準備完了です。サーバー側の不正利用対策が適用されます。" },
-    "vi-VN": { title: "Cài đặt nhà cung cấp", save: "Lưu thay đổi", provider: "Nhà cung cấp", navLabel: "Các mục cài đặt nhà cung cấp", profileState: "Gateway mặc định: gpt-5.4-mini · thông tin công khai tích hợp", status: "Gateway tích hợp đã sẵn sàng · áp dụng kiểm soát lạm dụng phía máy chủ." }
+    "en-MY": { title: "Provider settings", save: "Save changes", provider: "Provider", navLabel: "Provider setting sections", profileState: "Default gateway: gpt-5.4-mini · browser demo session", status: "Demo Gateway ready · a short-lived origin-bound session is acquired on demand." },
+    "zh-CN": { title: "提供商设置", save: "保存更改", provider: "提供商", navLabel: "提供商设置分区", profileState: "默认 Gateway：gpt-5.4-mini · 浏览器 Demo 会话", status: "Demo Gateway 已就绪 · 按需获取短时、绑定来源的会话。" },
+    "ms-MY": { title: "Tetapan pembekal", save: "Simpan perubahan", provider: "Pembekal", navLabel: "Bahagian tetapan pembekal", profileState: "Gateway lalai: gpt-5.4-mini · sesi Demo pelayar", status: "Gateway Demo sedia · sesi ringkas terikat Origin diperoleh atas permintaan." },
+    "ja-JP": { title: "プロバイダー設定", save: "変更を保存", provider: "プロバイダー", navLabel: "プロバイダー設定セクション", profileState: "既定ゲートウェイ：gpt-5.4-mini · ブラウザーDemoセッション", status: "Demo Gatewayは準備完了です。短期でOriginに束縛されたセッションをオンデマンド取得します。" },
+    "vi-VN": { title: "Cài đặt nhà cung cấp", save: "Lưu thay đổi", provider: "Nhà cung cấp", navLabel: "Các mục cài đặt nhà cung cấp", profileState: "Gateway mặc định: gpt-5.4-mini · phiên Demo trên trình duyệt", status: "Gateway Demo đã sẵn sàng · phiên ngắn hạn gắn với Origin sẽ được lấy khi cần." }
   };
 
   for (const [locale, copy] of Object.entries(expected)) {

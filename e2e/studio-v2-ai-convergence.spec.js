@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { admitPublicGateway } from "./studio-v2-helpers.js";
 
 async function openDesigner(page) {
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   if (await page.locator("#inspector-toggle").getAttribute("aria-expanded") !== "true") await page.locator("#inspector-toggle").click();
   await page.locator("#ai-designer-tab").click();
 }

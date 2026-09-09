@@ -28,6 +28,7 @@ import {
   resolveConflict as resolveConflictService,
 } from "./transaction-recovery-service.js";
 import { dispatchCommand } from "./command-bus-dispatch.js";
+import { navigateHistory as navigateHistoryService } from "./history-navigation-service.js";
 import {
   expireStaleTransactions as expireStaleTransactionsService,
   ensurePublishTransaction as ensurePublishTransactionService,
@@ -51,6 +52,7 @@ export class CommandBus extends EventTarget {
     dataPolicy = null,
   } = {}) {
     super();
+    this.active = true;
     this.dataPolicy = dataPolicy || classifyImportedDocument(initialProject?.manifest?.documentId);
     const durableStorage = this.dataPolicy.allowDurable === false ? null : transactionStorage;
     const durableStore = this.dataPolicy.allowDurable === false ? null : transactionStore;
@@ -101,15 +103,18 @@ export class CommandBus extends EventTarget {
       || this.transactionJournal.list().reverse().find((entry) => entry.type === "EVIDENCE_PACK" && entry.pack?.revision === this.revision)?.pack;
     this.evidencePack = persistedEvidence ? structuredClone(persistedEvidence) : null;
   }
-
   get project() { return this.history.project; }
   get revision() { return this.history.revision; }
   historyState() { return { revision: this.revision, canUndo: this.history.canUndo, canRedo: this.history.canRedo }; }
-
-  beginTransaction(baseRevision = this.revision, agentId = this.agentId, owner = this.owner) { return beginTransactionService(this, baseRevision, agentId, owner); }
+  deactivate() { this.active = false; }
+  assertCurrent() {
+    if (!this.active) throw Object.assign(new Error("The document command context is no longer current"), { code: "STALE_POLICY_CONTEXT" });
+  }
+  beginTransaction(baseRevision = this.revision, agentId = this.agentId, owner = this.owner, context = null) { return beginTransactionService(this, baseRevision, agentId, owner, context); }
   requireTransaction(id) { return requireTransactionService(this, id); }
   transactionView(transaction) { return structuredClone(transaction); }
   persistTransaction(transaction) {
+    this.assertCurrent();
     const saved = this.transactionStore.saveTransaction(transaction);
     this.transactions.set(saved.transaction_id, saved);
     Object.assign(transaction, saved);
@@ -122,6 +127,7 @@ export class CommandBus extends EventTarget {
   }
 
   auditTransaction(type, transaction, details = {}) {
+    this.assertCurrent();
     return this.transactionStore.appendAudit({
       type,
       form_id: this.transactionStore.formId,
@@ -138,7 +144,6 @@ export class CommandBus extends EventTarget {
       ...details,
     });
   }
-
   maybeFail(phase) {
     if (!this.failureInjector) return;
     const shouldFail = typeof this.failureInjector === "function"
@@ -150,7 +155,6 @@ export class CommandBus extends EventTarget {
     failure.phase = phase;
     throw failure;
   }
-
   hasAtomicRevisionCas() {
     return this.transactionStore.atomic || Boolean(
       this.transactionStore.persistent
@@ -158,27 +162,28 @@ export class CommandBus extends EventTarget {
       && globalThis.navigator?.locks?.request,
     );
   }
-
   expireStaleTransactions(now = this.clock()) {
     return expireStaleTransactionsService(this, now);
   }
-
   async previewTransaction(operations, expectedRevision, existingId = null, context = null) { return previewTransactionService(this, operations, expectedRevision, existingId, context); }
   approveTransaction(input, context = null) { return approveTransactionService(this, input, context); }
   async applyApprovedTransaction(input, context = null) { return applyApprovedTransactionService(this, input, context); }
   async ensurePublishTransaction() { return ensurePublishTransactionService(this); }
-  rollbackTransaction(id) { return rollbackTransactionService(this, id); }
-
-  renewLease(input) { return renewLeaseService(this, input); }
-  releaseLease(input) { return releaseLeaseService(this, input); }
-  takeoverTransaction(input) { return takeoverTransactionService(this, input); }
-  listActiveTransactions() { return listActiveTransactionsService(this); }
-  getTransaction(id) { return getTransactionService(this, id); }
-  recoverTransaction(input) { return recoverTransactionService(this, input); }
-  resolveConflict(input) { return resolveConflictService(this, input); }
+  rollbackTransaction(id, context = null) { return rollbackTransactionService(this, id, context); }
+  renewLease(input, context = null) { return renewLeaseService(this, input, context); }
+  releaseLease(input, context = null) { return releaseLeaseService(this, input, context); }
+  takeoverTransaction(input, context = null) { return takeoverTransactionService(this, input, context); }
+  listActiveTransactions(context = null) { return listActiveTransactionsService(this, context); }
+  getTransaction(id, context = null) { return getTransactionService(this, id, context); }
+  recoverTransaction(input, context = null) { return recoverTransactionService(this, input, context); }
+  resolveConflict(input, context = null) { return resolveConflictService(this, input, context); }
 
   revisionComparison(fromRevision, toRevision) {
     return revisionComparisonService(this, fromRevision, toRevision);
+  }
+
+  navigateHistory(direction, expectedRevision, context = null) {
+    return navigateHistoryService(this, direction, expectedRevision, context);
   }
 
   async commitConvenienceTransaction(operations, expectedRevision, reason, context = null) {
@@ -200,7 +205,7 @@ export class CommandBus extends EventTarget {
   recordRenderReport(report, provenance = null) {
     this.renderReport = provenance ? attachRenderProvenance(report, provenance) : structuredClone(report);
   }
-
+  invalidateRenderReport() { this.renderReport = null; }
   // Real pagination for a not-yet-committed candidate, cached by content
   // hash so a preview_changes immediately followed by the identical
   // apply_changes doesn't pay for a second render. Returns null (not a
@@ -255,7 +260,9 @@ export class CommandBus extends EventTarget {
     );
   }
 
-  commitNow(candidate, reason, { expectedRevision = this.revision, expectedProjectHash = null, transactionId = null, candidateHash = null } = {}) {
+  commitNow(candidate, reason, { expectedRevision = this.revision, expectedProjectHash = null, transactionId = null, candidateHash = null, assertCurrent = null } = {}) {
+    this.assertCurrent();
+    assertCurrent?.();
     const storedCandidate = structuredClone(candidate);
     const nextRevision = expectedRevision + 1;
     storedCandidate.revision = nextRevision;

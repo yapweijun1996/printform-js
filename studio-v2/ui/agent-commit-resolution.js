@@ -49,6 +49,31 @@ async function resolveCommitOutcome(gateway, proposal) {
   };
 }
 
+function safeValidationFailure(error) {
+  return { ok: false, error: { code: error?.code || "VALIDATION_UNAVAILABLE", message: "Command failed" } };
+}
+
+export async function resolvePostCommitValidation({ gateway, proposal, applied }) {
+  let validation;
+  try { validation = await gateway.execute("validate_project", {}); }
+  catch (error) { validation = safeValidationFailure(error); }
+  if (validation?.ok) return { applied, validation, unavailable: false };
+
+  let response;
+  try { response = await gateway.execute("get_transaction", { transactionId: proposal.transactionId }); }
+  catch { throw recoveryError(proposal.transactionId); }
+  const transaction = response?.result?.transaction;
+  if (!transaction || transaction.status !== "committed" || transaction.preview_hash !== proposal.candidateHash) {
+    throw recoveryError(proposal.transactionId);
+  }
+  const revision = committedRevision(transaction);
+  if (revision === null) throw recoveryError(proposal.transactionId);
+  return {
+    applied: { ...applied, result: { ...applied.result, revision, committed_revision: applied.result?.committed_revision ?? revision, transaction } },
+    validation, unavailable: true,
+  };
+}
+
 export async function executeApplyWithResolution({ gateway, executeApproval, proposal, input }) {
   let response;
   try {

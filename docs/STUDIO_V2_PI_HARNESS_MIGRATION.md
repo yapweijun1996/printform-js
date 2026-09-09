@@ -1,7 +1,10 @@
 # Studio v2 PI Agent Harness Migration Plan
 
-Prepared: 2026-09-08. Status: **Target selected; implementation not started.**
-The embedded Designer currently uses AGRUN. This plan does not claim a working PI integration.
+Prepared: 2026-09-08. Status: **Target selected; PI-00 through PI-03 are Done as isolated qualifications; PI-04..05 remain not started.**
+The embedded Designer currently uses AGRUN. Its current browser default is the
+reviewed origin-bound Demo Gateway; this plan does not claim a working PI
+integration and does not authorize retaining the Demo route after a future
+direct-BYOK cutover.
 User requirements: PI Agent Harness, browser first, BYOK, frontend only, no Node.js server.
 This document owns the harness replacement design and acceptance gates; [TASK](../TASK.md) owns execution status.
 
@@ -31,16 +34,18 @@ The historical `badlogic/pi-mono` URL redirects to `earendil-works/pi`.
 | Primary source at the reviewed commit | Verified fact / implication |
 |---|---|
 | [Project README](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/README.md) | Current package family is `@earendil-works/pi-*`; do not assume old `@mariozechner` instructions describe the selected release. Pi is not the application's permission boundary. |
-| [Agent package manifest](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/agent/package.json) | Source manifest says `0.85.1`, ESM, Node engine `>=22.19.0`. A source version is not evidence that a matching npm artifact is published or browser-qualified. |
+| [Agent package manifest](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/agent/package.json) | Source manifest names the published package `@earendil-works/pi-agent-core`, version `0.85.1`, ESM, Node engine `>=22.19.0`. The old shorthand `@earendil-works/pi-agent` is not a published package name. |
 | [Public exports](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/agent/src/index.ts) and [session exports](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/agent/src/harness/session/index.ts) | Export `AgentHarness` and `MemorySessionRepo`. Export availability alone does not prove the complete browser import graph is usable. |
 | [Harness specification](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/agent/docs/harness.md) | Defines session/lane execution, explicit Context, hooks, recovery and terminal results. Includes incomplete surfaces; qualify the exact methods used. |
 | [Provider library](https://github.com/earendil-works/pi/blob/b2602be77cb7b0de45dd616407fd210daa48aa75/packages/ai/README.md#browser-usage) | Documents browser usage and explicit API keys. Bedrock and Node-only OAuth are excluded. Selective provider imports reduce the bundle. |
 
-PI-00 must record exact published package versions, lockfile integrity, matching source commit,
-license notices and supported public exports. Never resolve `latest` during a site load.
-Do not mix API examples from older Pi releases with the reviewed Harness surface.
-The package Node engine applies to dependency/build qualification; it is not proof of a server requirement.
-No browser bundle, live BYOK call or PI session adapter was tested during this documentation task.
+PI-00 records exact published package versions, lockfile integrity, matching source commit,
+license notices and supported public exports in the [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md).
+Never resolve `latest` during a site load. Do not mix API examples from older Pi releases with
+the reviewed Harness surface. The package Node engine applies to dependency/build qualification;
+it is not proof of a server requirement. PI-01 now qualifies direct browser transport through
+synthetic intercepted Responses, Chat, Gemini, image, no-key, error and abort cases; live BYOK,
+provider CORS/preflight and the PI session adapter remain untested and are not release claims.
 
 ## 3. Current integration and replacement owners
 
@@ -56,7 +61,7 @@ No browser bundle, live BYOK call or PI session adapter was tested during this d
 | `agent-budget.js`, `agent-terminal-state.js`, `agent-layout-loop.js`, `agent-approval.js`, `agent-commit-resolution.js` | Preserve host budgeting, terminal behavior, review and approval/commit reconciliation rather than duplicating them in Pi. |
 | `scripts/build-site.mjs`, `scripts/sync-agrun.mjs`, `scripts/doctor.mjs`, package scripts, CI, `sw.js` | Build/cache the Pi browser assets and replace vendor integrity checks at cutover; remove obsolete AGRUN-only machinery after acceptance. |
 
-Confirm exact module names and all callers in PI-00 before edits. New or amended source files
+PI-00 confirmed exact module names and current AGRUN callers before the isolated qualification edit. New or amended source files
 must stay within 300 lines; split by responsibility, not arbitrary line ranges.
 
 ## 4. Target ownership and data flow
@@ -146,7 +151,7 @@ remain authoritative. Their current incomplete acceptance is not cured by a harn
 
 ## 7. Ordered implementation packages
 
-All packages are **Not started**. These are acceptance criteria, not reported test results.
+PI-00 and PI-01 direct transport, PI-02 host/tools/events/approval and PI-03 policy-bound sessions are **qualified in isolated static artifacts** at the current 2026-09-09 checkpoint; PI-04..05 remain **Not started**. These are acceptance criteria, not a release claim. Live state/gate percentages belong to [TASK](../TASK.md#sequential-execution-ledger); use the [DoD](STUDIO_V2_DEFINITION_OF_DONE.md) and [integrated execution plan](STUDIO_V2_EXECUTION_PLAN.md) to run PI-04..05 at S17..18 alongside the required host corrections. Do not duplicate the live ledger here.
 
 | ID | Work / dependency | Required exit evidence |
 |---|---|---|

@@ -7,6 +7,7 @@ import { getFormSpec, validateFormSpec } from "./form-spec.js";
 import { collectPaginationDiagnostics } from "./render-diagnostics.js";
 import { validateTrustedContent } from "./content-security.js";
 import { contrastFailures } from "./contrast.js";
+import { countBoundRows, measureBoundRows, resolveRowLimits, rowLimitErrors } from "./row-limits.js";
 
 function error(code, message, path = "/") {
   return { code, message, path, severity: "error" };
@@ -16,17 +17,7 @@ function warning(code, message, path = "/") {
   return { code, message, path, severity: "warning" };
 }
 
-export function countRows(data) {
-  let maximum = 0;
-  const visit = (value) => {
-    if (Array.isArray(value)) {
-      maximum = Math.max(maximum, value.length);
-      value.forEach(visit);
-    } else if (value && typeof value === "object") Object.values(value).forEach(visit);
-  };
-  visit(data);
-  return maximum;
-}
+export function countRows(data, template) { return countBoundRows(data, template); }
 
 export function validateProject(project, options = {}) {
   const errors = [];
@@ -59,11 +50,13 @@ export function validateProject(project, options = {}) {
   const limits = {
     maxHtmlBytes: LIMITS.htmlBytes,
     maxRows: LIMITS.rows,
+    maxRowsPerTable: LIMITS.rowsPerTable,
     maxLogicalPages: LIMITS.logicalPages,
     ...(manifest.acceptance || {})
   };
-  const rows = countRows(project.sampleData);
-  if (rows > limits.maxRows) errors.push(error("ROW_LIMIT", `${rows} rows exceed the ${limits.maxRows} row limit`, "/sampleData"));
+  const rowReport = measureBoundRows(project.sampleData, project.templateHtml);
+  const rows = rowReport.total;
+  errors.push(...rowLimitErrors(rowReport, resolveRowLimits(limits), "/sampleData"));
   if (!project.templateHtml || !project.templateHtml.includes("printform")) errors.push(error("PRINTFORM_ROOT_MISSING", "Template must contain a .printform root", "/template"));
   if (project.trust === TRUST.untrusted) errors.push(error("UNTRUSTED_SCRIPT", "Custom executable script prevents production attestation", "/trust"));
   // Defense in depth: re-derive from content instead of trusting the stored
@@ -137,7 +130,7 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
   // "验证数量、顺序、重复与遗漏"): .prowitem rows are cloned-then-placed by
   // the pagination engine, never split (unlike .ptac/.paddt long-text
   // segments) — so the count of .prowitem_processed elements in the final
-  // output must exactly equal how many rows data-pf-each bound. A mismatch
+  // output must exactly equal how many table rows data-pf-each bound. A mismatch
   // means the pagination engine silently dropped or duplicated a data row,
   // which no other check here would otherwise catch.
   const expectedRowCount = options.expectedRowCount;

@@ -5,7 +5,7 @@ import { CommandBus } from "../core/command-bus.js";
 import { classifyImportedDocument } from "../core/data-policy.js";
 import { DurableTransactionStore } from "../core/durable-transaction-store.js";
 import { SqliteDurableBackend } from "./sqlite-durable-backend.mjs";
-import { crashHttpRequest, failHttpRequest, jsonResponse, respondAfterNetworkPolicy } from "./transaction-http-response.mjs";
+import { crashHttpRequest, failHttpRequest, jsonResponse, respondAfterNetworkPolicy, safeServerError } from "./transaction-http-response.mjs";
 
 const SERVER_COMMANDS = new Set([
   "get_capabilities", "get_project_summary", "get_form_spec", "list_components",
@@ -67,9 +67,9 @@ export class TransactionHttpServer {
     await this.#recoverPendingTransactions();
     this.httpServer = http.createServer((request, response) => {
       this.#handle(request, response).catch((error) => {
-        console.error(`[printform-transaction-server] request failure: ${error.code || "SERVER_ERROR"}: ${error.message}`);
+        console.error(`[printform-transaction-server] request failure: ${safeServerError(error).code}`);
         try { failHttpRequest(request, response, error, this.#origin(request)); }
-        catch (failure) { console.error(`[printform-transaction-server] response failure: ${failure.message}`); response.destroy(); }
+        catch (failure) { console.error(`[printform-transaction-server] response failure: ${safeServerError(failure).code}`); response.destroy(); }
       });
     });
     return new Promise((resolve, reject) => {

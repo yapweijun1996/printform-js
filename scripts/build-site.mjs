@@ -7,6 +7,11 @@ import { createProgressClaimProject } from "../studio-v2/samples/progress-claim.
 import { validateProject } from "../studio-v2/core/acceptance.js";
 import { serializeStandalone } from "../studio-v2/core/project-model.js";
 import { collectAppShell } from "./app-shell.mjs";
+import { buildPi00 } from "./build-pi-00.mjs";
+import { buildPi01 } from "./build-pi-01.mjs";
+import { buildPi02 } from "./build-pi-02.mjs";
+import { buildPi03 } from "./build-pi-03.mjs";
+import { buildPi04 } from "./build-pi-04.mjs";
 
 const root = process.cwd();
 const output = path.resolve(root, "site-dist");
@@ -79,5 +84,10 @@ function finalizePwa() {
 prepareOutput();
 copyAllowlist();
 await writePilotExports();
+await buildPi00({ root, output });
+await buildPi01({ root, output });
+await buildPi02({ root, output });
+await buildPi03({ root, output });
+await buildPi04({ root, output });
 finalizePwa();
 console.log(`GitHub Pages artifact ready: ${output}`);

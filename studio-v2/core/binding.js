@@ -1,6 +1,7 @@
 import { resolvePointer } from "./json.js";
 import { SAFE_URL_PROTOCOLS } from "./constants.js";
 import { translateFragment } from "./i18n.js";
+import { tableRepeatDescriptor } from "./row-limits.js";
 
 function formatValue(value, format, manifest, options = {}) {
   if (value === undefined || value === null) return "";
@@ -62,6 +63,7 @@ function bindElement(element, rootData, scope, manifest, report) {
 
 function expandRepeat(element, rootData, scope, manifest, report) {
   const pointer = element.getAttribute("data-pf-each");
+  const tableRepeat = tableRepeatDescriptor(element);
   const items = resolvePointer(rootData, pointer, scope);
   const fragment = element.ownerDocument.createDocumentFragment();
   if (!Array.isArray(items)) {
@@ -82,6 +84,10 @@ function expandRepeat(element, rootData, scope, manifest, report) {
     fragment.appendChild(clone);
   });
   report.rows += items.length;
+  if (tableRepeat) {
+    report.tableRows += items.length;
+    report.tableRowsByTable[tableRepeat.tableId] = (report.tableRowsByTable[tableRepeat.tableId] || 0) + items.length;
+  }
   element.replaceWith(fragment);
 }
 
@@ -97,7 +103,7 @@ export function bindTemplate(template, data, manifest = {}, options = {}) {
   const locale = options.locale || manifest.locale || "en-MY";
   const effectiveManifest = { ...manifest, locale };
   const translation = translateFragment(fragment, options.i18n || {}, locale, manifest.i18n?.fallbackLocale || "en-MY");
-  const report = { bindings: 0, rows: 0, errors: [...translation.errors], warnings: [], translations: translation.translated, locale };
+  const report = { bindings: 0, rows: 0, tableRows: 0, tableRowsByTable: {}, errors: [...translation.errors], warnings: [], translations: translation.translated, locale };
   bindChildren(fragment, data, data, effectiveManifest, report);
   return { fragment, report };
 }

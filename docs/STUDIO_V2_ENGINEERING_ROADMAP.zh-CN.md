@@ -2,16 +2,18 @@
 
 > This roadmap separates implemented history, pending requirements and proposals. Current behavior is defined by code, [SPEC](../SPEC.md) and the protocol; current acceptance criteria live in the [production plan](STUDIO_V2_PRODUCTION_PLAN.md).
 
-> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains PROD-13-first direction and keeps M1 implementation acceptance Partial. Implementation Partial; bounded host/session, prompt, recipient and explicit-save corrections are verified, with 13-04/07/08 now case-specific Passes while the remaining P0 gates stay open. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls; the prior 86/454, 190/222 and 54/54 runs remain historical evidence and do not approve release.
+> Last reviewed: 2026-09-09. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains PROD-13-first direction and keeps M1 implementation acceptance Partial. Implementation Partial; bounded host/session, prompt, recipient, explicit-save, host-admission, transaction-context, component-scope, canonical history, old-bus lifecycle, final Provider-payload/transport and reviewed Demo Gateway session corrections are verified, with PROD-01 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08, PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08, PROD-03 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08 and 13-04/07/08 now case-specific Passes while the remaining P0 gates stay open. P0: 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run. The current `npm run doctor` passed 5/5 with 105 files / 558 tests (see [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md)); the prior 536-test standalone and 535-test doctor runs are historical. Other recorded evidence includes, 17/17 old-bus/commit-race controls, 30/30 focused transaction-context tests, 20/20 focused host-admission tests, 6/6 three-engine component-scope browser controls, 3/3 each for three-engine PROD-01 01-01 through 01-08 browser controls, 3/3 each for three-engine PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 chat, Review, approval-provenance, mode-change, cancel/retry, duplicate/unknown-outcome, Auto-mode and host/prompt/export controls, 3/3 each for PROD-03 03-01 initial-readiness, 03-02 render-failure/retry, 03-03 review-lifecycle, 03-04 invalidated-evidence, 03-05 late-result, 03-06 candidate-separation, 03-07 save-independence and 03-08 surface-agreement controls, 6/6 final Provider/outbound browser controls, 6/6 three-engine Demo Gateway browser controls, 2/2 Chromium AI settings controls, 21/21 three-engine E14/candidate history controls, 47/47 Chromium direct-gateway tests and 52 Firefox/WebKit direct-gateway passes with 10 expected skips; the prior 102/529, 100/525, 99/519, 99/515, 99/513, 98/510, 97/504, 86/454, 190/222 and 54/54 runs remain historical evidence and do not approve release.
 
 ## Current priority and dependencies
 
-**Selected runtime target (2026-09-08):** [PI Agent Harness migration](STUDIO_V2_PI_HARNESS_MIGRATION.md), browser-first and frontend-only BYOK with no Node.js/server runtime. Start with PI-00 browser qualification; integrate PI-01 through PI-05 with the host-policy gates below. This explicitly permits the necessary Pi session adapter; it does not permit a backend dependency, weaker data policy or a claim that the runtime has already changed. E15 is outside this embedded migration.
+The [sequential execution plan](STUDIO_V2_EXECUTION_PLAN.md) turns these priorities into 21 dependency-aware steps; [TASK](../TASK.md#sequential-execution-ledger) alone records live gate credit, and the [DoD](STUDIO_V2_DEFINITION_OF_DONE.md) defines completion. Use that schedule for one-step execution; the priority groups below remain architectural context. PROD-05/06 precede final indirect-scope acceptance because their current global/table semantics affect it.
+
+**Selected runtime target (2026-09-09):** [PI Agent Harness migration](STUDIO_V2_PI_HARNESS_MIGRATION.md), browser-first and frontend-only BYOK with no Node.js/server runtime. PI-00 through PI-03 isolated qualifications are Done; continue with PI-04/PI-05 and the host-policy gates below. This explicitly permits the necessary Pi session adapter; it does not permit a backend dependency, weaker data policy or a claim that the runtime has already changed. E15 is outside this embedded migration.
 
 1. PROD-13 real-data classification/persistence and PROD-01/02/03: scope/selection enforcement, consistent apply policy and truthful state.
 2. PROD-04/07/08: candidate lifecycle, actionable Quality and draft/save/recovery acceptance.
 3. PROD-05/06: bound multi-table limits and explicit repeat-rule granularity; bounded investigation can run independently.
-4. PROD-09/11: proposed workspace and focused <=300-line JS refactors after state contracts are stable.
+4. PROD-09/11: retained workspace acceptance and S13 bounded JS maintainability are locally closed; the proposed reorganization remains unadopted.
 5. PROD-10/12: adopted release profile, full applicable print/failure evidence and aligned three-pilot release coverage.
 6. E15: shared-service/HA expansion only when required by deployment scope.
 
@@ -32,7 +34,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 目标：Agent 看到、批准和提交的是同一份真实分页候选项目。
 
 1. ✅ 已实现（2026-07-31）：`operations[]` 按 `type` 判别联合校验（`core/operation-schemas.js`，复用 `core/schema.js` 引擎），已知类型的缺字段/多字段/类型错误统一 `INVALID_OPERATION_SHAPE`；命令执行层的共享 JSON Schema 校验（`preview_changes`/`apply_changes` 之外的其他工具入参）仍未覆盖。
-2. ✅ 已实现（2026-07-31，commit `1bc63d7`）：永不复用的 revision counter；undo 后提交产生新 revision identity。
+2. ✅ 已实现（2026-07-31，commit `1bc63d7`；2026-09-08 补齐 durable head 对齐）：永不复用的 revision counter；Undo/Redo 选择逻辑历史内容时通过 durable CAS 产生新的 revision identity，undo 后新提交继续使用新的编号。
 3. ✅ 已实现（2026-07-31）：复用现有可见预览 iframe 渲染 candidate（用户拍板否决"新开隐藏 iframe"方案），不复用当前草稿的 RenderReport。`CommandBus` 通过依赖注入获得可选的 `renderCandidate` 异步渲染器；无 DOM 环境下保持现有静态校验行为，零回归。完整设计与实现细节见 [DESIGN.md §4.4](../DESIGN.md)。
 4. ✅ 已升级（2026-08-17）：`preview_changes` 生成 candidate hash 并绑定 transaction；`approve_transaction` 固定 approved preview，`apply_changes` 必须携带 transaction ID、当前 revision 和同一 candidate hash，且候选内容被外部改变时 fail closed。
 5. ✅ 已实现：命中 candidateHash 时复用已渲染 report；公共 Agent 若跳过 preview 或缺审批则直接拒绝，不再退化成直接 apply。Studio 内部编辑路径不属于 Agent contract。
@@ -43,7 +45,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 
 - stale revision（✅ `REVISION_CONFLICT`）、候选 hash mismatch（✅ `CANDIDATE_HASH_MISMATCH`）、invalid candidate（✅ `CANDIDATE_INVALID`）、未知 operation（✅ `UNSUPPORTED_OPERATION`/`INVALID_OPERATION_SHAPE`）都有稳定错误码，且所有失败路径在 commit 前返回，revision 不变。
 - default 与 long-text candidate 报告分别绑定自己的 `candidateHash`，并共同绑定当前 revision 与 `baseProjectHash`；嵌入式 layout-review、单测和 Playwright 已覆盖两种场景，避免把不同 sample scenario 错当成同一候选。
-- undo 后的旧写命令永远不能命中新状态（✅，revision 单调 + candidateReports 按内容 hash 寻址，undo 不会让旧 hash 复活）。
+- undo/redo 后的旧写命令永远不能命中新状态（✅，revision 单调 + durable CAS + candidateReports 按内容 hash 寻址，逻辑导航不会回退 durable head 或让旧 hash 复活）。
 - UI、WebMCP、CDP 对相同输入返回一致结果（✅，三者共享同一 `CommandBus.execute`，没有分叉实现）。
 
 ## P0-B：信任闭环
@@ -75,7 +77,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 - ✅ 已实现（2026-07-31，`d2fe47a`）：Branding 品牌色面板——两个模板的品牌色散落十几处硬编码 hex，全部 token 化是更大的独立设计任务；范围收敛到 `.pf-brand` 标题色一处，新增 `core/branding.js` + `set_brand_color` 操作。
 - ✅ 已实现（2026-07-31，`3699991`）：Data contract 面板——中档范围，schema 树只读展示 + 表单编辑样本值与既有约束（required/min·maxLength/minimum·maximum/enum），复用既有 `replace_schema`/`replace_sample_data` 整段替换操作而非新增操作类型。**不做**增删字段（牵动模板绑定与 i18n 同步，需单独设计）与数组逐行编辑（表单对 45 行数据没有可用性，`items` 类字段仍走原始 JSON）。
 - 图片支持文件选择、尺寸/比例/大小/alt 检查，并以单一事务修改多个 asset slot。
-- Partial PROD-08/13: fingerprint-aware draft protection and combined browser evidence. Unknown/Real classification now disables durable storage and recovery writes before installation; quota fallback remains memory-only, existing records are not silently deleted, and browser disk-completion plus full destination inventory remain open.
+- Partial PROD-13: fingerprint-aware draft protection and combined browser evidence. Unknown/Real classification now disables durable storage and recovery writes before installation; quota fallback remains memory-only, existing records are not silently deleted, S03/M1 has reconciled the application-controlled destination inventory, and S10/PROD-08 closes browser overwrite/recovery, storage/privacy and truthful save outcomes with 08-01..06 three-engine evidence. S11/PROD-07 now closes declared actionable Quality navigation; Provider/OS/deployment retention and broader P0 acceptance remain open.
 - 生成 JSON Schema 示例、边界数据及 `validate`/`render` ERP 接入片段。
 - 连接状态区分 WebMCP registered、CDP discovered、Agent connected 与 last command。
 
@@ -89,7 +91,7 @@ A single-user Windows/Chromium first release and preview-first default are Propo
 | Context | Title/revision/candidate badges; Scope selector | PROD-01 enforced selection/scope and PROD-03 truthful rendering/readiness |
 | Cards/history | Structured changes and card-level Undo/Redo controls | PROD-04 candidate lifecycle and pending Changes/history search |
 | Apply mode | Auto/preview controls; default auto | PROD-02 all Review/chat/retry paths honor mode |
-| Responsive | Resizable rail, focus restoration/tab handling, mobile tests | Visible progress, full mobile/error workflows and proposed workspace |
+| Responsive | S12 validates the retained resizable rail, focus restoration/tab handling and mobile workspace | Visible progress, full mobile/error workflows and proposed workspace adoption |
 
 The canonical project envelope remains the source of truth; preview DOM is derived evidence.
 Keep semantic operations, existing transaction/revision/hash checks, real-data privacy and human export.

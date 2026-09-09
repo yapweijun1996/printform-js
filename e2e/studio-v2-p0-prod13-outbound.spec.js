@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { CdpStudioClient } from "../mcp/cdp-client.mjs";
+import { admitPublicGateway } from "./studio-v2-helpers.js";
 
 const CANARY = "REAL-OUTBOUND-CANARY-20260908";
 
@@ -31,6 +32,7 @@ async function installRealEntryHarness(page) {
       getDataPolicy: () => policy,
       getScopeContext: () => ({ kind: "document" }),
       getApplyMode: () => "preview",
+      requireAdmission: true,
       isRealData: () => true
     };
     const gateway = installAgentGateway(bus, {}, options);
@@ -68,6 +70,7 @@ test("PROD-13 13-06 keeps Real outbound diagnostics closed across embedded, WebM
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   const harness = await installRealEntryHarness(page);
+  await admitPublicGateway(page);
   expect(harness.webToolNames).toContain("get_project_summary");
   const browserOutputs = await page.evaluate(async () => {
     async function run(invoke) {

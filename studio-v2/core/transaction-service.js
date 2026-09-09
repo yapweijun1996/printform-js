@@ -28,7 +28,7 @@ function candidateFormSpecHash(project) {
   return sha256(stableStringify(getFormSpec(project))).then((hash) => `sha256:${hash}`);
 }
 
-export function beginTransaction(bus, baseRevision = bus.revision, agentId = bus.agentId, owner = bus.owner) {
+export function beginTransaction(bus, baseRevision = bus.revision, agentId = bus.agentId, owner = bus.owner, context = null) {
   bus.ensureRevision(baseRevision);
   bus.expireStaleTransactions(now(bus));
   const created = now(bus);
@@ -61,6 +61,7 @@ export function beginTransaction(bus, baseRevision = bus.revision, agentId = bus
     commit_result: null,
     evidence_pack_ref: null,
   };
+  bindTransactionContext(transaction, context);
   bus.persistTransaction(transaction);
   bus.auditTransaction("transaction_started", transaction, { lease_id: leaseId, lease_expires_at: transaction.lease.lease_expires_at });
   bus.auditTransaction("lease_acquired", transaction, { lease_id: leaseId, lease_expires_at: transaction.lease.lease_expires_at });
@@ -84,10 +85,11 @@ export function requireTransaction(bus, id) {
 
 export async function previewTransaction(bus, operations, expectedRevision, existingId = null, context = null) {
   assertAgentOperations(bus, operations, context);
-  const started = existingId ? null : beginTransaction(bus, expectedRevision);
+  const started = existingId ? null : beginTransaction(bus, expectedRevision, bus.agentId, bus.owner, context);
   let transaction;
   try {
     transaction = existingId ? requireTransaction(bus, existingId) : currentTransaction(bus, started.transaction_id);
+    if (existingId) assertTransactionContext(transaction, context);
     bindTransactionContext(transaction, context);
     bus.ensureRevision(expectedRevision);
     checkLease(bus, transaction);
@@ -145,7 +147,7 @@ export function approveTransaction(bus, input, context = null) {
   } catch (error) {
     if (error.code === "STALE_POLICY_CONTEXT") throw error;
     if (error.code === "REVISION_CONFLICT") markConflict(bus, transaction, error);
-    else if (!["INJECTED_CRASH", "CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "PREVIEW_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
+    else if (!["INJECTED_CRASH", "CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "PREVIEW_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED", "LEASE_EXPIRED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
     throw error;
   }
 }
@@ -188,12 +190,23 @@ export async function applyApprovedTransaction(bus, input, context = null) {
     transaction.commit_result = { status: "committing", expected_revision: transaction.base_revision, candidate_content_hash: transaction.candidate_content_hash, started_at: iso(bus) };
     setStatus(bus, transaction, "committing", "commit_started", { expected_revision: transaction.base_revision, candidate_content_hash: transaction.candidate_content_hash }, "COMMIT_STARTED");
     bus.maybeFail("during_commit");
-    const revision = await bus.commit(candidate, input.reason || "transaction commit", { expectedRevision: transaction.base_revision, expectedProjectHash: transaction.base_project_hash, transactionId: transaction.transaction_id, candidateHash: transaction.candidate_content_hash });
+    const revision = await bus.commit(candidate, input.reason || "transaction commit", {
+      expectedRevision: transaction.base_revision,
+      expectedProjectHash: transaction.base_project_hash,
+      transactionId: transaction.transaction_id,
+      candidateHash: transaction.candidate_content_hash,
+      assertCurrent: () => { assertContextCurrent(context); assertBusPolicyCurrent(bus, context); }
+    });
+    bus.assertCurrent?.();
+    assertContextCurrent(context);
+    assertBusPolicyCurrent(bus, context);
     transaction.working_revision = revision;
     transaction.commit_result = { status: "committed", revision, candidate_content_hash: transaction.candidate_content_hash, committed_at: iso(bus) };
     bus.maybeFail("after_revision_write");
     if (transaction.candidate_report?.status === "ready" && transaction.preview_hash) {
       const committedProjectHash = await hashRenderProject(bus.project);
+      assertContextCurrent(context);
+      assertBusPolicyCurrent(bus, context);
       bus.recordRenderReport(transaction.candidate_report, { revision, candidateHash: committedProjectHash, baseProjectHash: committedProjectHash, source: "committed" });
     }
     setStatus(bus, transaction, "committed", "revision_committed", { revision, changes: auditChanges(transaction.changes), preview_hash: transaction.preview_hash }, "COMMIT");
@@ -201,20 +214,24 @@ export async function applyApprovedTransaction(bus, input, context = null) {
     bus.persistTransaction(transaction);
     return { revision, diff, validation: transaction.validation_result, candidateHash: transaction.preview_hash, transaction: view(transaction) };
   } catch (error) {
-    if (error.code === "STALE_POLICY_CONTEXT") throw error;
+    if (error.code === "STALE_POLICY_CONTEXT") {
+      error.transactionId ||= transaction.transaction_id;
+      throw error;
+    }
     if (error.code === "REVISION_CONFLICT" || error.code === "STORE_CONFLICT") markConflict(bus, transaction, error);
     else if (error.code === "INJECTED_CRASH") rollbackAfterFailure(bus, transaction, error);
-    else if (!["CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "TRANSACTION_NOT_APPROVED", "CANDIDATE_CONTENT_MISMATCH", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED", "RECOVERY_REQUIRED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
+    else if (!["CANDIDATE_HASH_MISMATCH", "CANDIDATE_INVALID", "TRANSACTION_NOT_APPROVED", "CANDIDATE_CONTENT_MISMATCH", "HUMAN_APPROVAL_REQUIRED", "AUTO_APPLY_NOT_ALLOWED", "RECOVERY_REQUIRED", "LEASE_EXPIRED"].includes(error.code)) rollbackAfterFailure(bus, transaction, error);
     throw error;
   }
 }
 
-export function rollbackTransaction(bus, id) {
+export function rollbackTransaction(bus, id, context = null) {
   const transaction = currentTransaction(bus, id);
+  assertTransactionContext(transaction, context);
   if (transaction.status === "committed") throw leaseError("TRANSACTION_ALREADY_COMMITTED", "A committed transaction can only be reverted with undo_revision");
   if (transaction.status === "rolled_back") return view(transaction);
   if (transaction.status === "committing" || transaction.status === "recovery_required") {
-    const recovered = recoverTransaction(bus, { transactionId: id });
+    const recovered = recoverTransaction(bus, { transactionId: id }, context);
     if (recovered.status === "committed") throw leaseError("TRANSACTION_ALREADY_COMMITTED", "The commit completed and cannot be rolled back");
     if (recovered.status === "rolled_back") return view(recovered);
   }
@@ -226,8 +243,8 @@ export function rollbackTransaction(bus, id) {
 }
 
 export function revisionComparison(bus, fromRevision, toRevision) {
-  const from = bus.history.entries.find((entry) => entry.revision === fromRevision);
-  const to = bus.history.entries.find((entry) => entry.revision === toRevision);
+  const from = bus.transactionStore.getRevision(fromRevision) || bus.history.entries.find((entry) => entry.revision === fromRevision);
+  const to = bus.transactionStore.getRevision(toRevision) || bus.history.entries.find((entry) => entry.revision === toRevision);
   if (!from || !to) throw Object.assign(new Error("Revision is no longer available in the in-memory history window"), { code: "REVISION_NOT_AVAILABLE" });
   return { fromRevision, toRevision, diff: diffProjects(from.project, to.project) };
 }

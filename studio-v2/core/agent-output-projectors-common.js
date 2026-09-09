@@ -35,6 +35,7 @@ export function projectComponent(component, context) {
     binding: projectBinding(component.binding, context),
     keepTogether: safeBoolean(component.keepTogether, false),
     styleToken: ref(context, "style", component.styleToken),
+    repeatHeader: typeof component.repeatHeader === "boolean" ? component.repeatHeader : undefined,
   });
 }
 

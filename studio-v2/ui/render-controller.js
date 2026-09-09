@@ -1,4 +1,4 @@
-import { renderPreview, listenForPreview, setPreviewOverlayEnabled } from "./preview.js";
+import { renderPreview, listenForPreview, setPreviewOverlayEnabled, OVERLAY_COMMAND_SOURCE } from "./preview.js";
 import { renderMetrics, renderQualityView, renderStatus } from "./status-view.js";
 import { decorateRenderReport } from "./layout-snapshot.js";
 import { hashRenderProject } from "../core/render-provenance.js";
@@ -6,9 +6,11 @@ import { bindPreviewWheel, scrollPreviewHorizontally } from "./preview-wheel.js"
 
 const $ = (selector) => document.querySelector(selector);
 const CANDIDATE_TIMEOUT = 30_000;
+const COMMITTED_TIMEOUT = 30_000;
 
-export function createRenderController({ getBus, getOverlayEnabled, getDataPolicy = () => null, toast, onCandidateState, onRenderState = () => {} }) {
+export function createRenderController({ getBus, getOverlayEnabled, getDataPolicy = () => null, toast, onCandidateState, onRenderState = () => {}, onPreviewSelection = () => {} }) {
   let previewTimer;
+  let committedTimer;
   let token = 0;
   let candidateActive = false;
   const pending = new Map();
@@ -23,7 +25,25 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
 
   function restoreCommitted() {
     setCandidateState(false);
-    schedulePreview(0);
+    schedulePreview(0, { preserveReport: true });
+  }
+
+  function clearCommittedTimer() {
+    clearTimeout(committedTimer);
+    committedTimer = undefined;
+  }
+
+  function failCommitted(revision, requestToken, message) {
+    const bus = getBus();
+    if (!bus || bus.revision !== revision || token !== requestToken) return;
+    clearCommittedTimer();
+    bus.invalidateRenderReport?.();
+    const validation = bus.validation();
+    const readiness = bus.readiness();
+    renderQualityView(readiness, bus.project.trust);
+    renderStatus("status.failed", "blocked");
+    onRenderState({ revision, renderStatus: "failed", readiness, errorCount: Math.max(1, validation.errors?.length || 0), warningCount: validation.warnings?.length || 0 });
+    toast(message || "Preview failed");
   }
 
   function renderCandidate(project, revision, options = {}) {
@@ -56,9 +76,11 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
     });
   }
 
-  function schedulePreview(delay = 180) {
+  function schedulePreview(delay = 180, { preserveReport = false } = {}) {
     clearTimeout(previewTimer);
+    clearCommittedTimer();
     const bus = getBus(); if (!bus) return;
+    if (!preserveReport) bus.invalidateRenderReport?.();
     const requestToken = ++token;
     const project = bus.project;
     const revision = bus.revision;
@@ -70,16 +92,19 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
           isCurrent: () => getBus() === bus && bus.revision === revision && token === requestToken,
         });
         if (result?.stale) return;
+        if (getBus() === bus && bus.revision === revision && token === requestToken) {
+          committedTimer = setTimeout(() => failCommitted(revision, requestToken, "Preview timed out"), COMMITTED_TIMEOUT);
+        }
       }
       catch (error) {
-        if (getBus() !== bus || bus.revision !== revision || token !== requestToken) return;
-        renderStatus("status.failed", "blocked"); onRenderState({ revision, renderStatus: "failed", readiness: bus.readiness(), errorCount: 1 }); toast(error.message);
+        failCommitted(revision, requestToken, error.message);
       }
     }, delay);
   }
 
   function markPending() {
     clearTimeout(previewTimer);
+    clearCommittedTimer();
     token += 1;
     const bus = getBus();
     if (!bus) return;
@@ -91,6 +116,11 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
     return listenForPreview($("#preview-frame"), (message) => {
       if (message.type === "wheel") {
         scrollPreviewHorizontally($(".preview-viewport"), { ...message.payload, source: "frame" });
+        return;
+      }
+      if (message.type === "selection") {
+        if (message.token !== token || (message.revision !== undefined && message.revision !== getBus()?.revision)) return;
+        onPreviewSelection(message.payload, { revision: message.revision, token: message.token, candidate: pending.has(message.token) });
         return;
       }
       const candidate = pending.get(message.token);
@@ -109,7 +139,7 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
       if (message.type === "rendered") {
         const report = decorateRenderReport(message.payload);
         void recordCommitted(report, message.revision, message.token);
-      } else toast(message.payload?.message || "Preview failed");
+      } else failCommitted(message.revision, message.token, message.payload?.message || "Preview failed");
     });
   }
 
@@ -117,13 +147,23 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
     token += 1;
     pending.forEach(({ reject, timer }) => { clearTimeout(timer); reject(new Error("Studio project was replaced")); });
     pending.clear(); clearTimeout(previewTimer); setCandidateState(false);
+    clearCommittedTimer();
   }
 
   function toggleOverlay(enabled) { setPreviewOverlayEnabled($("#preview-frame"), enabled); }
 
+  function navigateToIssue(issue) {
+    const frame = $("#preview-frame");
+    const bus = getBus();
+    if (!frame?.contentWindow || !bus || !issue) return false;
+    frame.contentWindow.postMessage({ source: OVERLAY_COMMAND_SOURCE, type: "focus-issue", revision: bus.revision, token, issue }, "*");
+    return true;
+  }
+
   async function recordCommitted(report, revision, requestToken) {
     const bus = getBus();
     if (!bus || bus.revision !== revision || token !== requestToken) return;
+    clearCommittedTimer();
     const projectHash = await hashRenderProject(bus.project);
     if (bus.revision !== revision || token !== requestToken) return;
     bus.recordRenderReport(report, { revision, candidateHash: projectHash, baseProjectHash: projectHash, source: "committed", token: requestToken });
@@ -136,5 +176,5 @@ export function createRenderController({ getBus, getOverlayEnabled, getDataPolic
     onRenderState({ revision, renderStatus: ready ? "ready" : "failed", readiness, errorCount: validation.errors?.length || 0, warningCount: validation.warnings?.length || 0 });
   }
 
-  return { renderCandidate, schedulePreview, markPending, listen, replaceProject, restoreCommitted, setCandidateState, toggleOverlay, dispose: disposePreviewWheel, get candidateActive() { return candidateActive; } };
+  return { renderCandidate, schedulePreview, markPending, listen, replaceProject, restoreCommitted, setCandidateState, toggleOverlay, navigateToIssue, dispose: disposePreviewWheel, get candidateActive() { return candidateActive; } };
 }

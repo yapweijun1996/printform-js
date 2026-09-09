@@ -12,7 +12,7 @@ test("isolates actual panel session stores and provider bodies across a policy s
     const originalFetch = window.fetch.bind(window);
     window.__sessionWire = [];
     window.fetch = (input, init = {}) => {
-      if (!String(input).includes("gpt.yapweijun1996.com/v1/responses")) return originalFetch(input, init);
+      if (!String(input).includes("gpt.yapweijun1996.com/demo/v1/responses")) return originalFetch(input, init);
       window.__sessionWire.push(JSON.parse(init.body));
       return new Promise((_resolve, reject) => {
         if (init.signal?.aborted) return reject(new DOMException("aborted", "AbortError"));

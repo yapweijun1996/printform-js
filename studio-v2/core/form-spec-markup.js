@@ -41,6 +41,15 @@ function binding(attrs) {
   return Object.keys(result).length ? result : null;
 }
 
+function repeatHeaderOverride(attrs, role) {
+  if (role !== "table-header" || !/data-pf-repeat-rowheader\s*=\s*["']/i.test(attrs)) return undefined;
+  return !["false", "n", "no", "0"].includes(attribute(attrs, "data-pf-repeat-rowheader").trim().toLowerCase());
+}
+
+function repeatFlagOn(value) {
+  return !["false", "n", "no", "0"].includes(String(value ?? "").trim().toLowerCase());
+}
+
 function matches(classes, rule) {
   const tokens = new Set(String(classes).split(/\s+/).filter(Boolean));
   return rule.split(" ").find((token) => tokens.has(token)) || "";
@@ -57,10 +66,12 @@ export function inspectLegacyMarkup(markup) {
   const elements = String(markup || "").matchAll(/<([A-Za-z][\w:-]*)\b([^>]*?)>/g);
   let paper = "A4";
   let orientation = "portrait";
+  let rootAttributes = "";
   for (const match of elements) {
     const [, , attrs] = match;
     const classes = attribute(attrs, "class");
     if (classes.split(/\s+/).includes("printform")) {
+      rootAttributes = attrs;
       paper = attribute(attrs, "data-papersize") || paper;
       orientation = attribute(attrs, "data-orientation") || orientation;
     }
@@ -71,7 +82,7 @@ export function inspectLegacyMarkup(markup) {
       const key = `${type}:${role}:${tableId || ""}`;
       const ordinal = (ordinals.get(key) || 0) + 1;
       ordinals.set(key, ordinal);
-      components.push({
+      const component = {
         id: componentId(attrs, type, role, tableId, ordinal),
         type,
         role,
@@ -80,9 +91,18 @@ export function inspectLegacyMarkup(markup) {
         binding: binding(attrs),
         keepTogether: attribute(attrs, "data-pf-keep-together") === "true",
         styleToken: attribute(attrs, "data-pf-style-token") || null,
-      });
+      };
+      const repeatHeader = repeatHeaderOverride(attrs, role);
+      if (repeatHeader !== undefined) component.repeatHeader = repeatHeader;
+      components.push(component);
       break;
     }
   }
-  return { components, paper, orientation };
+  return {
+    components,
+    paper,
+    orientation,
+    repeatTableHeader: repeatFlagOn(attribute(rootAttributes, "data-repeat-rowheader")),
+    repeatDocumentHeader: repeatFlagOn(attribute(rootAttributes, "data-repeat-header")),
+  };
 }

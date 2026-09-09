@@ -45,6 +45,11 @@ function bindingFor(node) {
   return Object.keys(binding).length ? binding : null;
 }
 
+function repeatHeaderOverride(node, role) {
+  if (role !== "table-header" || !node?.hasAttribute?.("data-pf-repeat-rowheader")) return undefined;
+  return !["false", "n", "no", "0"].includes(String(node.getAttribute("data-pf-repeat-rowheader")).trim().toLowerCase());
+}
+
 function sourceSelector(node, root) {
   if (!node || !root) return null;
   const parts = [];
@@ -84,6 +89,8 @@ function addComponent(components, node, root, type, role, ordinal) {
     keepTogether: node.getAttribute?.("data-pf-keep-together") === "true",
     styleToken: node.getAttribute?.("data-pf-style-token") || null,
   };
+  const repeatHeader = repeatHeaderOverride(node, role);
+  if (repeatHeader !== undefined) component.repeatHeader = repeatHeader;
   components.push(component);
 }
 
@@ -91,6 +98,10 @@ function addAll(components, root, selector, type, role) {
   Array.from(root.querySelectorAll(selector)).forEach((node, index) =>
     addComponent(components, node, root, type, role, index + 1),
   );
+}
+
+function repeatFlagOn(value) {
+  return !["false", "n", "no", "0"].includes(String(value ?? "").trim().toLowerCase());
 }
 
 export function createEmptyFormSpec(documentType = "printform") {
@@ -135,8 +146,8 @@ export function createLegacyFormSpec(project) {
       components: inspected.components,
       pagination: {
         ...legacy.pagination,
-        repeatTableHeader: !/data-repeat-rowheader\s*=\s*["']false["']/i.test(project?.templateHtml || ""),
-        repeatDocumentHeader: !/data-repeat-header\s*=\s*["']false["']/i.test(project?.templateHtml || ""),
+        repeatTableHeader: inspected.repeatTableHeader,
+        repeatDocumentHeader: inspected.repeatDocumentHeader,
       },
     };
   }
@@ -167,8 +178,8 @@ export function createLegacyFormSpec(project) {
     components,
     pagination: {
       ...legacy.pagination,
-      repeatTableHeader: form.getAttribute("data-repeat-rowheader") !== "false",
-      repeatDocumentHeader: form.getAttribute("data-repeat-header") !== "false",
+      repeatTableHeader: repeatFlagOn(form.getAttribute("data-repeat-rowheader")),
+      repeatDocumentHeader: repeatFlagOn(form.getAttribute("data-repeat-header")),
     },
   };
 }

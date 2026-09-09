@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CdpStudioClient } from "../../mcp/cdp-client.mjs";
 import { installAgentGateway } from "../../studio-v2/adapters/gateway.js";
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION } from "../../studio-v2/core/constants.js";
 import { installWebMcpAdapter } from "../../studio-v2/adapters/webmcp.js";
 import { CommandBus } from "../../studio-v2/core/command-bus.js";
 import { classifyRealDocument, classifySyntheticDocument } from "../../studio-v2/core/data-policy.js";
+import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
 import { createSalesInvoiceProject } from "../../studio-v2/samples/sales-invoice.js";
 import { createRedactedLayoutSnapshot } from "../../studio-v2/ui/layout-snapshot.js";
 
@@ -39,6 +41,11 @@ function createEntryHarness({ scope = { kind: "document" }, applyMode = "auto", 
   });
   const cdp = new CdpStudioClient();
   cdp.evaluateGateway = (name, input) => gateway.execute(name, input);
+  cdp.evaluateAdmission = () => gateway.admitClient({
+    protocolVersion: PROTOCOL_VERSION,
+    contractVersion: AGENT_CONTRACT_VERSION,
+    tools: TOOL_CONTRACTS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema }))
+  });
 
   return {
     bus,

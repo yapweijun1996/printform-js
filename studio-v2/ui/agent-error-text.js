@@ -14,7 +14,6 @@ const EXACT_KEYS = new Map([
   ["The proposal must be previewed again.", "aiChat.errors.previewAgain"],
   ["Choose OpenAI, Gemini or Custom LLM.", "aiChat.errors.chooseProvider"],
   ["A model name is required.", "aiChat.errors.modelRequired"],
-  ["A current-session Gateway token is required.", "aiChat.errors.gatewayTokenRequired"],
   ["An API key is required.", "aiChat.errors.apiKeyRequired"],
   ["Custom LLM requires an HTTPS or localhost endpoint.", "aiChat.errors.customEndpointRequired"],
   ["Provider endpoint must use HTTPS, or HTTP on localhost only.", "aiChat.errors.unsafeEndpoint"],
@@ -43,7 +42,11 @@ const CODE_KEYS = new Map([
   ["LAYOUT_REVIEW_DECISION_REQUIRED", "aiChat.errors.reviewDecision"],
   ["LAYOUT_OBSERVATION_UNAVAILABLE", "aiChat.errors.reviewObservation"],
   ["LAYOUT_REPAIR_ACTION_REQUIRED", "aiChat.errors.reviewAction"],
-  ["RECOVERY_REQUIRED", "aiChat.errors.recoveryRequired"]
+  ["RECOVERY_REQUIRED", "aiChat.errors.recoveryRequired"],
+  ["SCOPE_VIOLATION", "aiChat.errors.scopeViolation"],
+  ["SCOPE_CHANGED", "aiChat.errors.previewAgain"],
+  ["DEMO_SESSION_UNAVAILABLE", "aiChat.errors.demoSession"],
+  ["DEMO_SESSION_STALE", "aiChat.errors.demoSession"]
 ]);
 
 function messageOf(error) {

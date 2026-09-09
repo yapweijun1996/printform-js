@@ -4,6 +4,7 @@ import { getPaddtConfig } from "../config.js";
 import { attachPageMethods } from "./pages.js";
 import { attachSectionMethods } from "./sections.js";
 import { attachRowTypeMethods } from "./row-types.js";
+import { attachRowHeaderPolicyMethods } from "./row-header-policy.js";
 import { attachPaddtSegmentMethods } from "./segments-paddt.js";
 import { attachPtacSegmentMethods } from "./segments-ptac.js";
 import { attachRenderingMethods } from "./rendering.js";
@@ -185,6 +186,7 @@ export class PrintFormFormatter {
 attachPageMethods(PrintFormFormatter);
 attachSectionMethods(PrintFormFormatter);
 attachRowTypeMethods(PrintFormFormatter);
+attachRowHeaderPolicyMethods(PrintFormFormatter);
 attachPaddtSegmentMethods(PrintFormFormatter);
 attachPtacSegmentMethods(PrintFormFormatter);
 attachRenderingMethods(PrintFormFormatter);

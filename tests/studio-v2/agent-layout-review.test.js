@@ -65,6 +65,7 @@ async function harness(runTurn, renderer = async () => readyReport()) {
   const candidateStates = [];
   const controller = await DesignerRuntimeController.create({
     Agrun: fake.Agrun, gateway, sessionManager: { createStore: () => ({}) }, sessionId: "review-loop", profile,
+    dataPolicy: bus.dataPolicy, getDataPolicy: () => bus.dataPolicy,
     onProposal: () => {}, onCandidateState: (active) => candidateStates.push(active), onEvent: (event) => events.push(event)
   });
   return { bus, controller, events, candidateStates, fake, gatewayCalls };

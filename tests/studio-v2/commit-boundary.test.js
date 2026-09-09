@@ -7,7 +7,7 @@ import { DesignerRuntimeController } from "../../studio-v2/ui/agent-runtime.js";
 const operation = { type: "set_brand_color", hex: "#854d0e" };
 const profile = { id: "commit-boundary", provider: "openai", model: "gpt-test", apiKey: "memory-only" };
 
-function gatewayFor(bus, { loseApplyResponse = false, calls = [] } = {}) {
+function gatewayFor(bus, { loseApplyResponse = false, failValidation = false, calls = [] } = {}) {
   let lost = false;
   return {
     async execute(name, input = {}) {
@@ -17,6 +17,7 @@ function gatewayFor(bus, { loseApplyResponse = false, calls = [] } = {}) {
         lost = true;
         throw Object.assign(new Error("Synthetic commit response loss"), { code: "COMMIT_RESPONSE_LOST" });
       }
+      if (name === "validate_project" && failValidation) return { ok: false, error: { code: "VALIDATION_UNAVAILABLE", message: "Command failed" } };
       return response;
     }
   };
@@ -102,5 +103,28 @@ describe("Studio commit outcome boundary", () => {
     expect(calls.map((call) => call.name)).toEqual(["approve_transaction", "apply_changes", "get_transaction"]);
     expect(controller.pendingProposal).not.toBeNull();
     expect(proposals.at(-1).options).toMatchObject({ status: "recovery" });
+  });
+
+  it("keeps a committed result when post-commit validation response processing fails", async () => {
+    const bus = new CommandBus(createSalesInvoiceProject());
+    const calls = [];
+    const gateway = gatewayFor(bus, { failValidation: true, calls });
+    const controller = await DesignerRuntimeController.create({
+      Agrun: fakeAgrun(), gateway, sessionManager: { createStore: () => ({}) }, sessionId: "validation-after-commit", profile
+    });
+    const preview = await previewAndApprove(bus);
+    const proposal = await controller.createProposal({
+      proposalId: "proposal-validation-after-commit", revision: preview.revision, transactionId: preview.transactionId,
+      operations: [operation], candidateHash: preview.candidateHash, diff: preview.diff, validation: preview.validation
+    });
+
+    const result = await controller.applyApprovedProposal(proposal.proposalId, profile);
+
+    expect(result.applied.result).toMatchObject({ revision: 1, committed_revision: 1, transaction: { status: "committed" } });
+    expect(result.validation).toMatchObject({ ok: false, error: { code: "VALIDATION_UNAVAILABLE" } });
+    expect(result.validationUnavailable).toBe(true);
+    expect(bus.revision).toBe(1);
+    expect(calls.map((call) => call.name)).toEqual(["approve_transaction", "apply_changes", "validate_project", "get_transaction"]);
+    expect(controller.pendingProposal).toBeNull();
   });
 });

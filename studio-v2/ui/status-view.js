@@ -12,8 +12,15 @@ const PATH_EDITORS = [
   ["/theme", "theme-editor"],
   ["/template", "template-editor"],
   ["/sampleData", "sample-editor"],
-  ["/trust", "template-editor"]
+  ["/trust", "template-editor"],
+  ["/spec", "template-editor"]
 ];
+
+const ACTION_KEYS = Object.freeze({
+  HORIZONTAL_OVERFLOW: "quality.action.horizontalOverflow",
+  VERTICAL_OVERFLOW: "quality.action.verticalOverflow",
+  CONTRAST_FAILURE: "quality.action.contrast"
+});
 
 function editorForPath(path) {
   const hit = PATH_EDITORS.find(([prefix]) => String(path || "").startsWith(prefix));
@@ -25,7 +32,7 @@ function focusEditor(editorId) {
   if (!editor) return;
   const details = editor.closest("details");
   if (details) details.open = true;
-  editor.scrollIntoView({ block: "center", behavior: "smooth" });
+  editor.scrollIntoView?.({ block: "center", behavior: "smooth" });
   editor.focus({ preventScroll: true });
   editor.classList.remove("editor-flash");
   // restart the highlight animation even when re-clicking the same entry
@@ -34,25 +41,108 @@ function focusEditor(editorId) {
   editor.addEventListener("animationend", () => editor.classList.remove("editor-flash"), { once: true });
 }
 
-export function renderQualityView(validation, trust) {
+function issueDetail(item) {
+  return item?.details && typeof item.details === "object" ? item.details : {};
+}
+
+function issueTarget(item, detail) {
+  const page = Number.isInteger(detail.page) ? detail.page : item.page;
+  const rawPageIndex = Number.isInteger(detail.pageIndex) ? detail.pageIndex : item.pageIndex;
+  const pageIndex = Number.isInteger(rawPageIndex) ? rawPageIndex : Number.isInteger(page) ? page - 1 : -1;
+  const selector = detail.selector || item.selector || "";
+  const componentId = detail.component_id || detail.componentId || item.component_id || item.componentId || "";
+  if (pageIndex < 0 || (!componentId && (!selector || selector === "unknown"))) return null;
+  return { pageIndex, selector, componentId };
+}
+
+function issueLocation(item, detail, target) {
+  const page = Number.isInteger(detail.page) ? detail.page : Number.isInteger(item.page)
+    ? item.page
+    : target ? target.pageIndex + 1 : null;
+  const componentId = detail.component_id || detail.componentId || item.component_id || item.componentId || "";
+  const path = item.path || detail.path || "";
+  const parts = [];
+  if (Number.isInteger(page) && page > 0) parts.push(t("quality.locationPage", { page }));
+  if (componentId) parts.push(t("quality.locationComponent", { component: componentId }));
+  if (path && path !== "/") parts.push(t("quality.locationPath", { path }));
+  return parts.length ? parts.join(" · ") : t("quality.locationUnknown");
+}
+
+function emitIssueNavigation(target) {
+  if (!target) return;
+  window.dispatchEvent(new CustomEvent("printform:quality-navigate", { detail: target }));
+}
+
+function localizedAction(item, detail, editorId, target) {
+  const action = item.recommended_action || detail.recommended_action;
+  if (action) return ACTION_KEYS[item.code] ? t(ACTION_KEYS[item.code], {}, action) : action;
+  if (editorId) return t("quality.action.editSource");
+  if (target) return t("quality.action.inspectPreview");
+  return t("quality.action.inspectFallback");
+}
+
+function qualityItems(validation, errors, warnings) {
+  const issues = Array.isArray(validation.issues) ? validation.issues.filter((item) => item && typeof item === "object") : [];
+  const matched = new Set();
+  const entries = [...errors, ...warnings].flatMap((item) => {
+    const details = issues.filter((issue) => issue.code === item.code);
+    if (!details.length) return [item];
+    return details.map((issue) => {
+      matched.add(issue);
+      return { ...item, details: { ...issueDetail(item), ...issue } };
+    });
+  });
+  issues.forEach((issue) => {
+    if (!matched.has(issue)) entries.push({ ...issue, severity: "error", message: issue.reason || issue.recommended_action || "" });
+  });
+  return entries;
+}
+
+export function renderQualityView(validation = {}, trust) {
   const summary = $("#quality-summary");
+  const errors = Array.isArray(validation.errors) ? validation.errors : [];
+  const warnings = Array.isArray(validation.warnings) ? validation.warnings : [];
   summary.textContent = validation.productionValid
-    ? t("quality.pass", { count: validation.warnings.length })
-    : t("quality.blocked", { count: validation.errors.length });
+    ? t("quality.pass", { count: warnings.length })
+    : t("quality.blocked", { count: errors.length });
   const list = $("#issue-list");
   list.replaceChildren();
-  [...validation.errors, ...validation.warnings].slice(0, 30).forEach((item) => {
+  qualityItems(validation, errors, warnings).slice(0, 30).forEach((item) => {
+    const detail = issueDetail(item);
+    const target = issueTarget(item, detail);
+    const editorId = editorForPath(item.path || detail.path);
     const li = document.createElement("li");
-    li.className = item.severity || (validation.errors.includes(item) ? "error" : "warning");
-    li.textContent = `${item.code}: ${translateIssue(item)}`;
-    const editorId = editorForPath(item.path);
-    if (editorId) {
+    const actionable = Boolean(editorId || target);
+    li.className = item.severity || (errors.includes(item) ? "error" : "warning");
+    li.classList.add("issue-item");
+    const heading = document.createElement(actionable ? "button" : "div");
+    heading.className = actionable ? "issue-action" : "issue-heading";
+    heading.textContent = `${item.code}: ${translateIssue(item)}`;
+    if (actionable) {
       li.classList.add("clickable");
-      li.title = item.path;
-      li.tabIndex = 0;
-      li.addEventListener("click", () => focusEditor(editorId));
-      li.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); focusEditor(editorId); } });
+      heading.type = "button";
+      heading.title = t("quality.openIssue");
+      heading.addEventListener("click", () => {
+        if (editorId) focusEditor(editorId);
+        emitIssueNavigation(target);
+      });
     }
+    li.appendChild(heading);
+    const location = document.createElement("div");
+    location.className = "issue-location";
+    location.textContent = t("quality.location", { value: issueLocation(item, detail, target) });
+    li.appendChild(location);
+    const reason = item.reason || detail.reason;
+    if (reason) {
+      const reasonNode = document.createElement("div");
+      reasonNode.className = "issue-reason";
+      reasonNode.textContent = t("quality.reason", { reason });
+      li.appendChild(reasonNode);
+    }
+    const action = document.createElement("div");
+    action.className = "issue-next-action";
+    action.textContent = t("quality.nextAction", { action: localizedAction(item, detail, editorId, target) });
+    li.appendChild(action);
     list.appendChild(li);
   });
   $("#export-button").disabled = !validation.productionValid;

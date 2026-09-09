@@ -111,6 +111,24 @@ describe("E13 durable transaction, concurrency and recovery", () => {
     expect(takeover.result.transaction_id).not.toBe(started.result.transaction_id);
   });
 
+  it("returns lease expiry without rolling back the already-expired record", async () => {
+    const project = createSalesInvoiceProject();
+    const backend = createMemoryDurableBackend();
+    let current = new Date("2026-08-17T00:00:00.000Z");
+    const bus = makeSession(project, backend, { clock: () => current, leaseDurationMs: 1000 });
+    const preview = await bus.execute("preview_changes", { expectedRevision: 0, operations: [{ type: "set_brand_color", hex: "#854d0e" }] });
+    current = new Date("2026-08-17T00:00:02.000Z");
+    const expired = await bus.execute("approve_transaction", {
+      expectedRevision: 0,
+      transactionId: preview.result.transactionId,
+      expectedCandidateHash: preview.result.candidateHash,
+      requireValid: false,
+    });
+    expect(expired.error.code).toBe("LEASE_EXPIRED");
+    expect(bus.transactionStore.getTransaction(preview.result.transactionId).status).toBe("expired");
+    expect(bus.revision).toBe(0);
+  });
+
   it("expires a released lease and permits only an explicit takeover", async () => {
     const project = createSalesInvoiceProject();
     const backend = createMemoryDurableBackend();

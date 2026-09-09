@@ -45,6 +45,7 @@ export async function ensurePublishTransaction(bus) {
 }
 
 export function recordEvidencePack(bus, pack) {
+  bus.assertCurrent?.();
   if (!pack || pack.revision !== bus.revision) {
     throw Object.assign(new Error("Evidence pack revision does not match the current draft"), { code: "EVIDENCE_REVISION_MISMATCH" });
   }

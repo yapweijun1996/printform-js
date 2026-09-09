@@ -18,6 +18,10 @@ After an automatic apply it validates the change and starts the bounded
 multimodal layout review.
 Do not call another action after a successful preview and do not ask a
 clarifying question for an unambiguous colour, font or column-width request.
+When the built-in browser Demo Gateway is selected, the Provider request has no
+`tools` or `tool_choice`; return one strict JSON action envelope for the host to
+validate, such as `{"type":"action","name":"printform_preview_changes","args":{...}}`.
+This transport envelope does not grant command, scope or apply permission.
 If the provider cannot emit a tool call, return exactly one safe JSON operation or
 an `{"operations":[...]}` JSON envelope. The host may convert that constrained
 JSON into the same preview action; ordinary prose is not a terminal action. Do

@@ -47,7 +47,7 @@ Error.code uses a registered generic output-validation code during implementatio
 | RepeatedAreas | header, docinfo, rowheader, ptacRowheader, footer, footerLogo, footerPagenum: booleans only when the original producer has that setting |
 | InspectionBinding | tag: standard HTML tag name; id/className/text/each/condition/href/i18nKey/assetSlot: Ref or null. text/href here describe bindings, not permission to transmit rendered text or target URLs |
 | Binding | text, each, if, href, i18n: Ref when present. Do not dereference and include the bound value |
-| Component | id: Ref; type: one of COMPONENT_TYPES; role?: registered semantic role or null; tableId/sourceSelector/styleToken?: Ref/null; binding?: Binding/null; keepTogether?: boolean. Omit label and all extensions |
+| Component | id: Ref; type: one of COMPONENT_TYPES; role?: registered semantic role or null; tableId/sourceSelector/styleToken?: Ref/null; binding?: Binding/null; keepTogether?: boolean; repeatHeader?: boolean for a table-header local override. Omit label and all extensions |
 | Section | id: Ref; componentIds: Ref[]. Omit titles, descriptions and arbitrary section payloads |
 | FormDocument | paper: validated supported paper identifier; orientation: portrait/landscape. Omit arbitrary document.type and untyped margins; numeric page dimensions are available via inspect_design_state |
 | Pagination | repeatDocumentHeader, repeatTableHeader, footer, pageNumbers: booleans when present; keepTogether: Ref[] |

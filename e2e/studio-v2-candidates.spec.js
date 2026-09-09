@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { openEditor, openInspector } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor, openInspector } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page).toHaveTitle(/PrintForm Studio v2/);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
 });
 
 test("renders a preview_changes candidate for real before apply_changes reuses the same report", async ({ page }) => {
@@ -60,12 +61,12 @@ test("lets the end user undo and redo an automatically validated design revision
   await expect(page.locator("#ai-redo-revision")).toBeDisabled();
 
   await page.locator("#ai-undo-revision").click();
-  await expect(page.locator("#revision-label")).toHaveText("Revision 0");
+  await expect(page.locator("#revision-label")).toHaveText("Revision 2");
   await expect(page.locator("#ai-undo-revision")).toBeDisabled();
   await expect(page.locator("#ai-redo-revision")).toBeEnabled();
 
   await page.locator("#ai-redo-revision").click();
-  await expect(page.locator("#revision-label")).toHaveText("Revision 1");
+  await expect(page.locator("#revision-label")).toHaveText("Revision 3");
   await expect(page.locator("#ai-undo-revision")).toBeEnabled();
   await expect(page.locator("#ai-redo-revision")).toBeDisabled();
 });

@@ -1,16 +1,38 @@
-import { AGENT_CONTRACT_VERSION } from "../core/constants.js";
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION } from "../core/constants.js";
 import { TOOL_CONTRACTS } from "../core/tool-contracts.js";
 import { AGENT_OPERATION_DEFINITIONS } from "../core/operation-schemas.js";
 import { classifyImportedDocument, classifyRealDocument } from "../core/data-policy.js";
 import { createAgentContext, createAgentSessionId, createPassthroughReferences, createReferenceRegistry, defaultPolicyForOptions, resolveAgentInput } from "../core/agent-context.js";
 import { sanitizeAgentResponse } from "../core/agent-sanitize.js";
+import { stableStringify } from "../core/json.js";
 
 const PUBLIC_COMMANDS = new Set(TOOL_CONTRACTS.map((tool) => tool.name));
+const PUBLIC_TOOL_CATALOG = TOOL_CONTRACTS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema: structuredClone(inputSchema) }));
 const MUTATIONS = new Set(["apply_changes", "set_sample_scenario", "set_locale", "set_asset_source", "undo_revision", "redo_revision", "renew_lease", "release_lease", "recover_transaction", "resolve_conflict", "rollback_transaction", "takeover_transaction", "approve_transaction"]);
 const HUMAN_APPROVAL_COMMANDS = new Set(["approve_transaction", "apply_changes", "set_sample_scenario", "set_locale", "set_asset_source", "undo_revision"]);
 const SESSION_BINDERS = new WeakMap();
 
 function safeFailure(code) { return { ok: false, error: { code, message: "Command failed" } }; }
+
+function parseInput(input) {
+  if (typeof input !== "string") return input;
+  try { return JSON.parse(input); }
+  catch { return null; }
+}
+
+function admissionFailure(code) { return safeFailure(code); }
+
+function validateAdmission(request) {
+  if (!request || typeof request !== "object" || Array.isArray(request)) return "CLIENT_ADMISSION_INVALID";
+  if (request.protocolVersion !== PROTOCOL_VERSION) return "STUDIO_PROTOCOL_VERSION_MISMATCH";
+  if (request.contractVersion !== AGENT_CONTRACT_VERSION) return "AGENT_CONTRACT_VERSION_MISMATCH";
+  try {
+    if (stableStringify(request.tools) !== stableStringify(PUBLIC_TOOL_CATALOG)) return "AGENT_TOOL_CATALOG_MISMATCH";
+  } catch {
+    return "CLIENT_ADMISSION_INVALID";
+  }
+  return null;
+}
 
 function rejectRawAgentSurface(name, input) {
   if (name === "preview_source_edit") return { code: "AGENT_RAW_SOURCE_BLOCKED" };
@@ -76,7 +98,10 @@ export async function executeAgentCommand(bus, name, input, options = {}) {
 export function installAgentGateway(bus, globalScope = window, options = {}) {
   let fallbackPolicy = null;
   const referenceRegistries = new Map();
+  const admissions = new Map();
+  let activeAdmissionId = null;
   const defaultSessionId = options.sessionId || createAgentSessionId("gateway");
+  const requireAdmission = Boolean(options.requireAdmission);
   const gatewayOptions = {
     ...options,
     getReferences: (policy, sessionId) => {
@@ -113,24 +138,39 @@ export function installAgentGateway(bus, globalScope = window, options = {}) {
     getScopeContext: options.getScopeContext || (() => options.scope || { kind: "document" }),
     getApplyMode: options.getApplyMode || (() => options.applyMode || "preview"),
   };
-  const execute = (name, input = {}, humanApproval = false, sessionId = defaultSessionId) => {
-    let parsed = input;
-    if (typeof input === "string") {
-      try { parsed = JSON.parse(input); }
-      catch { return Promise.resolve(safeFailure("INVALID_INPUT_JSON")); }
+  const execute = (name, input = {}, humanApproval = false, sessionId = defaultSessionId, admissionId = null, enforceAdmission = false) => {
+    if (enforceAdmission && name !== "get_capabilities") {
+      if (!admissionId) return Promise.resolve(admissionFailure("CLIENT_NOT_ADMITTED"));
+      const admission = admissions.get(String(admissionId));
+      if (!admission || admission.sessionId !== sessionId || admission.documentId !== bus.project.manifest?.documentId) {
+        return Promise.resolve(admissionFailure("CLIENT_ADMISSION_INVALID"));
+      }
     }
+    const parsed = parseInput(input);
+    if (typeof input === "string" && parsed === null) return Promise.resolve(safeFailure("INVALID_INPUT_JSON"));
     return executeAgentCommand(bus, name, parsed, { ...gatewayOptions, sessionId, humanApproval });
+  };
+  const admitClient = (input = {}, sessionId = defaultSessionId) => {
+    const request = parseInput(input);
+    if (typeof input === "string" && request === null) return admissionFailure("CLIENT_ADMISSION_INVALID");
+    const error = validateAdmission(request);
+    if (error) return admissionFailure(error);
+    for (const [id, admission] of admissions) if (admission.sessionId === sessionId) admissions.delete(id);
+    const admissionId = `admission:${createAgentSessionId("client")}`;
+    admissions.set(admissionId, { sessionId, documentId: bus.project.manifest?.documentId || null });
+    activeAdmissionId = admissionId;
+    return { ok: true, result: { admissionId, protocolVersion: PROTOCOL_VERSION, contractVersion: AGENT_CONTRACT_VERSION } };
   };
   const createSession = (sessionId, includeHumanApproval) => {
     const session = {
       contractVersion: AGENT_CONTRACT_VERSION,
       listTools: () => TOOL_CONTRACTS,
-      execute: (name, input = {}) => execute(name, input, false, sessionId),
+      execute: (name, input = {}) => execute(name, input, false, sessionId, null, false),
     };
     if (includeHumanApproval) {
       session.executeHuman = (name, input = {}) => {
         if (!HUMAN_APPROVAL_COMMANDS.has(name)) return Promise.resolve(safeFailure("HUMAN_APPROVAL_NOT_APPLICABLE"));
-        return execute(name, input, true, sessionId);
+        return execute(name, input, true, sessionId, null, false);
       };
     }
     return Object.freeze(session);
@@ -140,7 +180,8 @@ export function installAgentGateway(bus, globalScope = window, options = {}) {
   const gateway = Object.freeze({
     contractVersion: AGENT_CONTRACT_VERSION,
     listTools: () => TOOL_CONTRACTS,
-    execute: (name, input = {}) => execute(name, input, false),
+    admitClient: (input = {}) => admitClient(input),
+    execute: (name, input = {}, admissionId = null) => execute(name, input, false, defaultSessionId, admissionId || activeAdmissionId, requireAdmission),
   });
   SESSION_BINDERS.set(gateway, bindSession);
   options.onUiSessionFactory?.(createUiSession);

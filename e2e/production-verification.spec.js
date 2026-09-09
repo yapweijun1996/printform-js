@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import fs from "node:fs/promises";
+import { admitPublicGateway } from "./studio-v2-helpers.js";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -93,6 +94,7 @@ test("opens the required progress claim in Chromium with a printable isolated pr
   await page.goto("/studio-v2/?sample=progress-claim");
   await expect(page).toHaveTitle(/PrintForm Studio v2/);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   const metrics = JSON.parse(await page.locator("#metrics-output").textContent());
   expect(metrics).toMatchObject({ overflowElements: 0, verticalOverflowPages: 0, contrastFailures: 0 });
   expect(metrics.logicalPages).toBeGreaterThan(0);
@@ -176,6 +178,7 @@ test("persists an approved revision-bound Evidence Pack after trusted export", a
   test.skip(browserName !== "chromium", "Trusted export evidence uses the Chromium reference environment");
   await page.goto("/studio-v2/?sample=progress-claim");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
   const flow = await page.evaluate(async () => {
     const run = (name, input) => window.PrintFormStudioAgent.execute(name, input);
     const revision = (await run("get_project_summary", {})).result.revision;

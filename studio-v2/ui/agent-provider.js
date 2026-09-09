@@ -1,3 +1,6 @@
+import { classifyImportedDocument } from "../core/data-policy.js";
+import { getDefaultDemoGatewaySession } from "./agent-demo-gateway.js";
+
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 const RECIPIENT_FIELDS = ["id", "provider", "model", "endpoint", "apiVariant", "apiKey", "authMode"];
@@ -10,18 +13,11 @@ export function isProviderRecipientCurrent(expected, profile) {
   return RECIPIENT_FIELDS.every((key) => expected[key] === (profile[key] ?? ""));
 }
 
-/**
- * Intentionally public browser credential for the owner-operated Gateway.
- * It ships in source/build and is extractable by every Studio user. The
- * Gateway must enforce quotas, abuse controls, rotation and origin policy.
- */
-export const PUBLIC_GATEWAY_CLIENT_TOKEN = "gw_524fa12f91c74c0aa21d73fbaa7b97a27a7db3b5a6b33708";
-
 export const DEFAULT_PROVIDER_PRESET = Object.freeze({
   id: "own-gpt-server",
   provider: "openai",
   model: "gpt-5.4-mini",
-  endpoint: "https://gpt.yapweijun1996.com/v1",
+  endpoint: "https://gpt.yapweijun1996.com/demo/v1",
   apiVariant: "responses",
   reasoningEffort: "medium",
   inputPricePer1M: "",
@@ -45,9 +41,8 @@ export function isDefaultGatewayProfile(profile = {}) {
     profile.apiVariant === DEFAULT_PROVIDER_PRESET.apiVariant;
 }
 
-export function publicDefaultProviderProfile(apiKey = "") {
-  const key = String(apiKey || "").trim() || PUBLIC_GATEWAY_CLIENT_TOKEN;
-  return { ...DEFAULT_PROVIDER_PRESET, apiKey: key };
+export function publicDefaultProviderProfile() {
+  return { ...DEFAULT_PROVIDER_PRESET };
 }
 
 function responsesEndpoint(endpoint) {
@@ -79,8 +74,8 @@ export function isSafeProviderEndpoint(endpoint) {
 export function validateProviderProfile(profile) {
   if (!profile || !["openai", "gemini", "custom"].includes(profile.provider)) return "Choose OpenAI, Gemini or Custom LLM.";
   if (!profile.model?.trim()) return "A model name is required.";
-  if (isCredentialFreeDefaultGatewayProfile(profile)) return "A current-session Gateway token is required.";
-  if (!profile.apiKey?.trim()) return "An API key is required.";
+  if (isDefaultGatewayProfile(profile) && profile.apiKey?.trim()) return "The browser Demo gateway does not accept a gateway key.";
+  if (!isCredentialFreeDefaultGatewayProfile(profile) && !profile.apiKey?.trim()) return "An API key is required.";
   if (profile.provider === "custom" && !profile.endpoint?.trim()) return "Custom LLM requires an HTTPS or localhost endpoint.";
   if (!isSafeProviderEndpoint(profile.endpoint)) return "Provider endpoint must use HTTPS, or HTTP on localhost only.";
   if (!["chat", "responses"].includes(profile.apiVariant || "chat")) return "API variant must be chat or responses.";
@@ -117,7 +112,32 @@ function providerPayloadError(message) {
   return Object.assign(new Error(message), { code: "PROVIDER_PAYLOAD_INVALID" });
 }
 
+function createPolicyGuardedFetch(assertCurrentPolicy = () => {}, demoGatewaySession = null) {
+  const assertBoundary = () => {
+    try {
+      assertCurrentPolicy();
+    } catch (error) {
+      const guarded = Object.assign(new Error(error?.message || "The Agent policy is no longer current"), {
+        code: error?.code || "STALE_POLICY_CONTEXT",
+        debug: { code: error?.code || "STALE_POLICY_CONTEXT" }
+      });
+      throw guarded;
+    }
+  };
+  return async (request, options) => {
+    assertBoundary();
+    const fetchImpl = globalThis.fetch;
+    if (typeof fetchImpl !== "function") throw providerPayloadError("Provider transport is unavailable.");
+    const response = demoGatewaySession
+      ? await demoGatewaySession.fetch(request, options)
+      : await fetchImpl(request, options);
+    assertBoundary();
+    return response;
+  };
+}
+
 export function projectProviderParts(parts = [], { dataPolicy = null } = {}) {
+  const effectivePolicy = dataPolicy || classifyImportedDocument();
   if (!Array.isArray(parts)) throw providerPayloadError("Provider parts must be an array.");
   if (parts.length > 16) throw providerPayloadError("Provider payload contains too many media parts.");
   return parts.map((part) => {
@@ -131,13 +151,14 @@ export function projectProviderParts(parts = [], { dataPolicy = null } = {}) {
     const pixelPart = mimeType !== "image/svg+xml" || /\.(?:png|jpe?g|webp)$/i.test(filename);
     const validPixelProvenance = pixelPart && part.source === "sandbox-pixel" && part.syntheticData === true && part.redacted === false;
     const validGeometryProvenance = !pixelPart && mimeType === "image/svg+xml" && part.source === "geometry-only" && part.redacted === true;
-    if (dataPolicy && !validGeometryProvenance && !validPixelProvenance) throw providerPayloadError("Provider media evidence provenance is invalid.");
-    if (dataPolicy?.allowPixelEvidence === false && !validGeometryProvenance) throw providerPayloadError("Pixel evidence is blocked by the current data policy.");
+    if (!validGeometryProvenance && !validPixelProvenance) throw providerPayloadError("Provider media evidence provenance is invalid.");
+    if (effectivePolicy.allowPixelEvidence === false && !validGeometryProvenance) throw providerPayloadError("Pixel evidence is blocked by the current data policy.");
     return { type: "image", url: part.url, mimeType, filename };
   });
 }
 
-export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = null } = {}) {
+export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = null, assertCurrentPolicy = null, demoGatewaySession = null } = {}) {
+  const effectivePolicy = dataPolicy || classifyImportedDocument();
   const provider = profile.provider === "custom" ? "openai" : profile.provider;
   const credentialFreeGateway = isCredentialFreeDefaultGatewayProfile(profile);
   const input = { provider, model: profile.model, prompt: String(prompt || "").slice(0, 12000) };
@@ -150,10 +171,19 @@ export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = n
   }
   if (provider === "openai") {
     input.apiVariant = profile.apiVariant || "chat";
-    const usesOwnResponsesGateway = input.apiVariant === "responses" && profile.endpoint === DEFAULT_PROVIDER_PRESET.endpoint;
+    const usesOwnResponsesGateway = input.apiVariant === "responses" && normalizedEndpoint(profile.endpoint) === normalizedEndpoint(DEFAULT_PROVIDER_PRESET.endpoint);
     const reasoningEffort = profile.reasoningEffort || (usesOwnResponsesGateway ? DEFAULT_PROVIDER_PRESET.reasoningEffort : "");
     if (reasoningEffort) input.reasoningEffort = reasoningEffort;
   }
-  if (parts.length) input.parts = projectProviderParts(parts, { dataPolicy });
+  if (parts.length) {
+    const projectedParts = projectProviderParts(parts, { dataPolicy: effectivePolicy });
+    if (credentialFreeGateway && projectedParts.some((part) => part.mimeType === "image/svg+xml")) {
+      throw providerPayloadError("The browser Demo Gateway accepts only PNG, JPEG or WebP evidence.");
+    }
+    input.parts = projectedParts;
+  }
+  if (credentialFreeGateway || typeof assertCurrentPolicy === "function") {
+    input.fetch = createPolicyGuardedFetch(assertCurrentPolicy || (() => {}), credentialFreeGateway ? (demoGatewaySession || getDefaultDemoGatewaySession()) : null);
+  }
   return input;
 }

@@ -1,8 +1,8 @@
 # PrintForm.js / Studio v2 深度生产差距审计
 
-> Current review: 2026-09-08, baseline `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Product remains **Production Pilot / bounded Production Candidate**. This record distinguishes the current authorized implementation work from historical audit findings.
+> Current review: 2026-09-09, baseline `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot. Product remains **Production Pilot / bounded Production Candidate**. This record distinguishes the current authorized implementation work from historical audit findings.
 
-> The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns criteria; the [direction review](STUDIO_V2_DIRECTION_REVIEW.md) records the latest source/probe findings. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Prior 86/454, 190/222 and 54/54 aggregate passes are historical; the latest serial lifecycle/explicit-save runs provide case-specific evidence for 13-04/07/08 but do not certify release. M1 implementation acceptance is Partial and maturity remains Production Pilot.
+> The [production plan](STUDIO_V2_PRODUCTION_PLAN.md) owns criteria; the [direction review](STUDIO_V2_DIRECTION_REVIEW.md) records the latest source/probe findings. P0: 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run. Prior 86/454, 190/222 and 54/54 aggregate passes are historical; the latest serial lifecycle/explicit-save, PROD-01 selection, PROD-02 02-01/02-02 chat/Review, 02-03 approval-provenance, 02-04 mode-change, 02-05 cancel/retry, 02-06 duplicate/unknown-outcome, 02-07 Auto-mode, 02-08 host/prompt/export and PROD-03 03-01 initial-readiness/03-02 render-failure-retry/03-03 review-lifecycle/03-04 invalidated-evidence/03-05 late-result/03-06 candidate-separation/03-07 save-independence/03-08 surface-agreement runs provide case-specific evidence for 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-04/13-07/13-08 but do not certify release. M1 implementation acceptance is Partial and maturity remains Production Pilot.
 
 > Scores 58/72/84/89/94 are historical stage assessments, not an updated readiness score. Sections 3–8 and 10 preserve the earlier proposal/baseline and must not be read as current APIs or new pending duplicates.
 
@@ -52,12 +52,12 @@ E13 新增 `get_transaction`、`list_active_transactions`、`renew_lease`、`tak
 | Finding | Code evidence | Action |
 |---|---|---|
 | Selection and scope foundation is implemented but not fully accepted | `agent-panel.js` stores structured activeScope; `agent-scope-options.js` maps stable table IDs; `agent-scope.js` rejects ambiguous/global effects | PROD-01: complete component/adapter/browser evidence |
-| Review apply policy foundation is implemented but not fully accepted | `agent-panel-runtime.js` applies mode and low-risk eligibility checks to chat and Review | PROD-02: delayed, retry and cross-entry matrix |
-| Context printability foundation is implemented but not fully accepted | `agent-document-context.js` maps render lifecycle and committed readiness to visible states | PROD-03: verify stale/delayed/error browser paths |
-| Candidate/history/draft/save acceptance | Card Undo/Redo now bind to the applied revision and retain the card on rejected results; visible save state distinguishes download-started from saved | PROD-04/08: complete browser lifecycle, disk-receipt and failure-path evidence |
-| Real-data persistence acceptance | Initial restrictive paths exist; imported provenance and delayed session-store admission have been corrected and 13-04/07/08 now have case-specific Pass evidence | PROD-13: complete remaining destinations, overwrite/recovery and broader P0 evidence before further closure |
+| Review apply policy foundation and case matrix | `agent-panel-runtime.js` applies mode and low-risk eligibility checks to chat and Review; commit recovery and human export confirmation remain explicit | PROD-02 02-01..02-08 case matrix is Pass; later PI/release gates remain |
+| Context printability foundation is implemented but not fully accepted | `agent-document-context.js` maps render lifecycle and committed readiness to visible states; `render-controller.js` now exposes committed failure/timeout and retry while `CommandBus` invalidates stale render reports and preserves the committed report during restore | PROD-03: 03-01 through 03-08 are case-specific Passes, including five-locale surface agreement; S10/PROD-08 separately closes the bounded draft/recovery paths |
+| Candidate/history/draft/save acceptance | Card Undo/Redo now bind to the applied revision and retain the card on rejected results; S09 04-01 through 04-06 pass 3/3 across the configured browsers for card target/result, candidate/Discard separation, Stop/late protection, rapid/double Apply recovery, project replacement and durable reload/restore; S10 08-01 through 08-06 pass 3/3 across Chromium, Firefox and WebKit for overwrite/import, recovery, storage/privacy and truthful file outcomes; visible save state distinguishes download-started from saved, and trusted retry reuses a revision-bound prepared artifact | S10/PROD-08 local acceptance is closed; browser download has no disk-completion receipt, and independent Changes/history search remains E14-UI-05/PROD-07 |
+| Real-data persistence acceptance | Initial restrictive paths exist; imported provenance and delayed session-store admission have been corrected, S03/M1 reconciles the application-controlled destination inventory, and 13-04/07/08 now have case-specific Pass evidence | PROD-13: complete overwrite/recovery and broader P0 evidence; provider/OS/deployment retention remains a separate evidence boundary |
 | Multi-table semantics differ from API expectations | Maximum array length; component repeat rule writes global root flag | PROD-05/06: explicit limits and repeat-rule granularity |
-| Quality/layout/release coverage is incomplete | Source-path navigation, two explicit CI pilot validations, incomplete full print matrix | PROD-07/09/10/12; PROD-11 tracks oversized JS |
+| Quality/layout/release coverage is incomplete | S11 closes actionable Quality page/component/field routing, keyboard and locale behavior; S12 closes retained current-workspace editing, desktop/mobile, locale, focus and rail acceptance; S13 closes bounded JS maintainability; CI still has two explicit pilot validations and the full print matrix is incomplete | PROD-10/12; alternative workspace reorganization and independent Changes/history search remain open |
 
 Already implemented: four-layer IA, structured cards, apply-mode controls, card-level Undo/Redo controls, Sessions drawer, Settings modal, collapsed trace, resizable rail, focus/tab handling and desktop export visibility.
 
@@ -130,7 +130,7 @@ The earlier six trust gates, E12 foundation gates and the current PROD acceptanc
 ### P2：规模化体验
 
 - 设计辅助、模板 marketplace、更多 reusable component catalog、可视化编辑增强。
-- 将 `pagination-render.js`（当前超过 300 行）继续按 page transition、row placement、diagnostics 拆分，但不能以结构重构替代功能门禁。
+- S13/PROD-11 已按 page transition、row placement 与 special-row ownership 完成 `pagination-render.js` 的兼容式拆分；后续只在出现实际缺陷时按功能门禁继续演进，不能以结构重构替代验收。
 - 1000 行、极端变量高度图片、复杂签名/附件、A3/landscape 与更多税务/ERP locale 样本。
 
 ## 4. Historical target architecture (not the current API)
@@ -236,7 +236,7 @@ P0 完成定义：每项均有单测、真实 Chromium E2E、至少一个失败�
 |---|---|---|
 | Pagination | Chromium core/golden/Active Table, PTAC/PADDT/N-up, 100/500/1000 rows | Multi-table limit policy; declared printer/font/paper combinations |
 | Pilots | Three built/static-validated pilots; Progress Claim Chromium coverage | CI explicit static validation still lists two; full browser-matrix script covers Invoice/PO |
-| Agent | Existing transaction/candidate/evidence/E14 E2E passes; fresh 86/454 serial unit suite, public-surface approval check, targeted 35-command matrix and delayed apply-mode/late-render guards pass | Full scope, cross-path preview-first, status and failure cases in PROD-01/02/03/04/08/13; page-global `executeHuman` exposure is closed in the current code |
+| Agent | Existing transaction/candidate/evidence/E14 E2E passes; S10 adds 08-01..06 three-engine draft/save/recovery acceptance, a 15/15 file-boundary matrix and a focused 9-file/82-test runtime set; page-global `executeHuman` exposure is closed in the current code | Full scope, cross-path preview-first, status and failure cases in PROD-01/02/03/04/07/13; Edge/Safari.app, print/provider and deployment retention remain open |
 | Runtime integrity | AGRUN/build/static hashes and existing negative tests pass | Fresh dependency audit and exact release artifact acceptance |
 | Browser/print | Windows combined Playwright Chromium 74/74, Firefox 58/58 applicable and WebKit 58/58 applicable on 2026-09-08; historical macOS/Linux 88/88 | Complete full Windows release matrix, Edge/Safari.app, actual printer chain and selected release profile |
 | Durable service | Existing SQLite single-writer recovery/CAS tests | Remote UI, HA/fencing/failover only for applicable shared-service scope |
@@ -246,7 +246,7 @@ Static `validate:v2` reports `layout.verified: false`; it does not certify brows
 
 ### Release blockers
 
-1. Correct scope/apply/status and multi-table semantics; verify candidate/draft/save/Quality criteria in the production plan.
+1. S13/PROD-11 bounded maintainability, S14/PI-01 isolated direct browser BYOK transport, S15/PI-02 isolated host integration and S16/PI-03 policy-bound sessions are locally closed. Continue with S17/PI-04 composed acceptance and the remaining scope/apply/status/multi-table acceptance; S10/PROD-08, S11/PROD-07 and S12/PROD-09 retained local criteria are closed.
 2. Adopt the actual supported release profile and close its browser/print/recovery evidence. A proposed single-user profile has not silently replaced broader requirements.
 3. For shared-service deployments, complete applicable E15 remote UI, recovery and concurrency acceptance. HA is not an automatic prerequisite for an explicitly single-user release.
 

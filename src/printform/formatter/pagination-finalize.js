@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 
+import { attachRowHeaderPolicyMethods } from "./row-header-policy.js";
+
 export function attachPaginationFinalizeMethods(FormatterClass) {
+  if (!FormatterClass.prototype.maxRepeatingRowHeaderHeight) attachRowHeaderPolicyMethods(FormatterClass);
+
   FormatterClass.prototype.computeHeightPerPage = function computeHeightPerPage(sections, heights) {
     let available = this.config.papersizeHeight;
     if (this.debug) {
@@ -23,9 +27,8 @@ export function attachPaginationFinalizeMethods(FormatterClass) {
         available -= h;
       }
     });
-    const rowHeaderHeights = Object.values(heights.rowHeaders || {});
-    const maxRowHeaderHeight = rowHeaderHeights.length ? Math.max(...rowHeaderHeights) : (heights.rowHeader || 0);
-    if (this.config.repeatRowheader && (sections.rowHeaders?.length || sections.rowHeader)) {
+    const maxRowHeaderHeight = this.maxRepeatingRowHeaderHeight(sections, heights);
+    if (maxRowHeaderHeight > 0) {
       if (this.debug) {
         console.log(`[printform]   - repeatRowheader (max active table): ${maxRowHeaderHeight}px`);
       }

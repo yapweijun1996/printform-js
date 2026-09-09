@@ -11,7 +11,7 @@ export function settingsModalMarkup() {
           </span>
         </div>
         <div class="ai-settings-top-actions">
-          <span id="ai-settings-badge" class="ai-setup-state" data-ui-i18n="aiSettings.publicGateway">Public gateway</span>
+          <span id="ai-settings-badge" class="ai-setup-state" data-ui-i18n="aiSettings.publicGateway">Built-in demo Gateway</span>
           <button id="ai-settings-close" class="secondary ai-settings-close" type="button" data-ui-i18n-aria-label="aiSettings.close" aria-label="Close provider settings">×</button>
         </div>
       </header>
@@ -42,16 +42,14 @@ export function settingsModalMarkup() {
                 <label><span data-ui-i18n="aiSettings.providerLabel">Provider</span><select id="ai-provider"><option value="openai" data-ui-i18n="aiSettings.providerOpenai">OpenAI</option><option value="gemini" data-ui-i18n="aiSettings.providerGemini">Gemini</option><option value="custom" data-ui-i18n="aiSettings.providerCustom">Custom LLM</option></select></label>
                 <label><span data-ui-i18n="aiSettings.model">Model</span><input id="ai-model" autocomplete="off" value="gpt-5.4-mini" data-ui-i18n-placeholder="aiSettings.modelPlaceholder" placeholder="gpt-5-mini"></label>
                 <label><span data-ui-i18n="aiSettings.apiVariant">API variant</span><select id="ai-api-variant"><option value="chat" data-ui-i18n="aiSettings.variantChat">Chat Completions</option><option value="responses" selected data-ui-i18n="aiSettings.variantResponses">OpenAI Responses</option></select></label>
-                <label class="ai-wide-field"><span data-ui-i18n="aiSettings.endpoint">Base HTTPS endpoint</span><input id="ai-endpoint" autocomplete="off" value="https://gpt.yapweijun1996.com/v1" data-ui-i18n-placeholder="aiSettings.endpointPlaceholder" placeholder="https://gateway.example/v1"></label>
-                <label class="ai-wide-field"><span data-ui-i18n="aiSettings.gatewayToken">Gateway token · current session only</span><input id="ai-public-gateway-key" type="password" autocomplete="off" data-ui-i18n-placeholder="aiSettings.gatewayTokenPlaceholder" placeholder="Paste token for this page only"></label>
-                <p class="ai-field-note ai-wide-field" data-ui-i18n="aiSettings.gatewayTokenNote">Used only for this page; never saved to the vault, transcript, or export.</p>
+                <label class="ai-wide-field"><span data-ui-i18n="aiSettings.endpoint">Base HTTPS endpoint</span><input id="ai-endpoint" autocomplete="off" value="https://gpt.yapweijun1996.com/demo/v1" data-ui-i18n-placeholder="aiSettings.endpointPlaceholder" placeholder="https://gateway.example/v1"></label>
               </div>
             </div>
           </section>
 
           <section id="ai-settings-panel-vault" class="ai-settings-section" role="tabpanel" aria-labelledby="ai-settings-tab-vault" data-ai-settings-panel="vault" hidden>
-            <div class="ai-settings-section-heading"><span><span class="ai-section-kicker" data-ui-i18n="aiSettings.vaultKicker">LOCAL ENCRYPTION</span><h3 data-ui-i18n="aiSettings.vaultHeading">Vault &amp; security</h3></span><p data-ui-i18n="aiSettings.vaultDescription">The public default gateway does not require a browser vault. Use the vault only for BYOK profiles.</p></div>
-            <p class="ai-settings-callout" data-ui-i18n="aiSettings.publicGatewayNote">Default own gateway: server-side security applies; no browser API key is stored.</p>
+            <div class="ai-settings-section-heading"><span><span class="ai-section-kicker" data-ui-i18n="aiSettings.vaultKicker">LOCAL ENCRYPTION</span><h3 data-ui-i18n="aiSettings.vaultHeading">Vault &amp; security</h3></span><p data-ui-i18n="aiSettings.vaultDescription">The built-in demo Gateway does not use the browser vault. Use the vault only for BYOK profiles.</p></div>
+            <p class="ai-settings-callout" data-ui-i18n="aiSettings.publicGatewayNote">The Gateway issues a short-lived, origin-bound demo session on demand. No gateway or provider key is stored in the browser.</p>
             <div class="ai-settings-card ai-vault-card">
               <label for="ai-vault-passphrase"><span data-ui-i18n="aiSettings.passphrase">Vault passphrase</span><input id="ai-vault-passphrase" type="password" minlength="12" autocomplete="new-password" data-ui-i18n-placeholder="aiSettings.passphrasePlaceholder" placeholder="12 or more characters"></label>
               <button id="ai-unlock-vault" type="button" data-ui-i18n="aiSettings.unlock">Unlock vault</button>

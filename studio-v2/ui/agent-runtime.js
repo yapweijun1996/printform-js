@@ -1,4 +1,4 @@
-import { buildProviderInput, buildRuntimeBudget, validateProviderProfile } from "./agent-provider.js";
+import { buildProviderInput, buildRuntimeBudget, isCredentialFreeDefaultGatewayProfile, validateProviderProfile } from "./agent-provider.js";
 import { consumeRuntimeTurn } from "./agent-runtime-consume.js";
 import { bindAgentSession } from "../adapters/gateway.js";
 import { createProposalApproval } from "./agent-approval.js";
@@ -10,7 +10,7 @@ import { createTerminalState } from "./agent-terminal-state.js";
 import { READ_ACTIONS, DISABLED_ACTIONS } from "./agent-runtime-constants.js";
 import { assertPolicyCurrent, isPolicyCurrent } from "../core/data-policy.js";
 import { approvalFrom, outputText } from "./agent-runtime-output.js";
-import { executeApplyWithResolution } from "./agent-commit-resolution.js";
+import { executeApplyWithResolution, resolvePostCommitValidation } from "./agent-commit-resolution.js";
 import { loadCurrentDesignerSkill } from "./agent-runtime-skills.js";
 
 function clone(value) { return structuredClone(value); }
@@ -48,6 +48,7 @@ export class DesignerRuntimeController {
     this.turnText = "";
     this.terminalState = createTerminalState();
     this.layoutLoop = new LayoutReviewLoop(this);
+    const providerToolMode = isCredentialFreeDefaultGatewayProfile(profile) ? "envelope" : "native_tools";
     const actions = makePrintFormActions({
       Agrun,
       gateway: this.gateway,
@@ -71,7 +72,7 @@ export class DesignerRuntimeController {
       skills: [Agrun.openaiBrowserSkill, Agrun.geminiBrowserSkill], agentSkills, customActions: actions,
       sessionStore: sessionManager.createStore(Agrun, sessionId), globalMemory: { enabled: false },
       disabledActions: DISABLED_ACTIONS, actionPolicy: Object.fromEntries(READ_ACTIONS.map((name) => [name, "allow"])),
-      plannerMode: "native_tools", nativeToolsFailurePolicy: "hard_fail",
+      plannerMode: providerToolMode, nativeToolsFailurePolicy: "hard_fail",
       approvalSigning: { ttlMs: 15 * 60 * 1000, enforceSessionBinding: true }, maxSteps,
       ...(budget.costPricing ? { costPricing: budget.costPricing } : {}),
       ...(budget.maxCostUsd ? { maxCostUsd: budget.maxCostUsd } : {})
@@ -124,15 +125,16 @@ export class DesignerRuntimeController {
         requireValid: true,
       });
       if (!approved.ok) throw Object.assign(new Error(`Approval failed (${approved.error?.code || "APPROVAL_FAILED"}).`), { code: approved.error?.code || "APPROVAL_FAILED" });
-      const applied = await executeApplyWithResolution({ gateway: this.gateway, executeApproval, proposal, input: {
+      let applied = await executeApplyWithResolution({ gateway: this.gateway, executeApproval, proposal, input: {
         expectedRevision: proposal.revision,
         transactionId: proposal.transactionId,
         expectedCandidateHash: proposal.candidateHash,
         requireValid: true,
         reason: "AI Designer auto-applied proposal"
       }});
-      const validation = await this.gateway.execute("validate_project", {});
-      if (!validation.ok) throw Object.assign(new Error(`Validation failed (${validation.error?.code || "VALIDATION_FAILED"}).`), { code: validation.error?.code || "VALIDATION_FAILED" });
+      const postCommit = await resolvePostCommitValidation({ gateway: this.gateway, proposal, applied });
+      const validation = postCommit.validation;
+      applied = postCommit.applied;
       this.proposals.delete(proposalId);
       this.pendingProposal = null;
       this.terminalState.noteApplied();
@@ -140,9 +142,9 @@ export class DesignerRuntimeController {
       const continueReview = Boolean(proposal.review && profile && this.layoutLoop.active);
       this.onProposal(null, { preserveCandidate: continueReview });
       if (!continueReview) this.onCandidateState(false);
-      this.emit({ type: "proposal_applied", detail: { revision: this.appliedRevision, validation: validation.result?.validation?.valid !== false ? "valid" : "invalid" } });
-      if (continueReview) return { applied, validation, review: await this.layoutLoop.afterApply(profile, this.appliedRevision) };
-      return { applied, validation };
+      this.emit({ type: "proposal_applied", detail: { revision: this.appliedRevision, validation: postCommit.unavailable ? "unavailable" : validation.result?.validation?.valid !== false ? "valid" : "invalid" } });
+      if (continueReview) return { applied, validation, validationUnavailable: postCommit.unavailable, review: await this.layoutLoop.afterApply(profile, this.appliedRevision) };
+      return { applied, validation, validationUnavailable: postCommit.unavailable };
     } catch (error) {
       this.layoutLoop.stop("apply_failed");
       if (error.code === "RECOVERY_REQUIRED") { this.onProposal(this.pendingProposal, { status: "recovery", preserveCandidate: false }); this.onCandidateState(false); } else this.clearProposal();
@@ -248,7 +250,10 @@ export class DesignerRuntimeController {
     this.actionFailure = null;
     this.pendingApproval = null;
     this.layoutLoop.stop("new_design_turn");
-    return this.consume(buildProviderInput(profile, prompt, parts, { dataPolicy: this.assertCurrentPolicy() }));
+    return this.consume(buildProviderInput(profile, prompt, parts, {
+      dataPolicy: this.assertCurrentPolicy(),
+      assertCurrentPolicy: () => this.assertCurrentPolicy()
+    }));
   }
 
   async resolveApproval(decision, profile) {
@@ -256,7 +261,10 @@ export class DesignerRuntimeController {
     const pending = this.pendingApproval;
     this.pendingApproval = null;
     const input = { type: "approval_resolution", decision, resumeToken: pending.resumeToken };
-    if (decision === "approve") Object.assign(input, buildProviderInput(profile, "", [], { dataPolicy: this.assertCurrentPolicy() }));
+    if (decision === "approve") Object.assign(input, buildProviderInput(profile, "", [], {
+      dataPolicy: this.assertCurrentPolicy(),
+      assertCurrentPolicy: () => this.assertCurrentPolicy()
+    }));
     const outcome = await this.consume(input);
     if (decision === "deny") this.pendingProposal = null;
     return outcome;

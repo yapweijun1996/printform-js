@@ -9,7 +9,7 @@
 
 Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence.
 
-The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) retains the existing host/gateway/domain architecture. Its classification/session findings have bounded fixes in the [resumed evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), including current tests and actual Provider prompt delivery. P0 status remains 5 Pass, 2 Fail pending complete reverification, and 28 Not run; M1 acceptance is Partial. Historical aggregate runs are not current release certificates.
+The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) retains the existing host/gateway/domain architecture. Its classification/session findings have bounded fixes in the [resumed evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), including current tests, actual Provider prompt delivery, final payload checks, stale-policy transport checks, durable history navigation, old-bus lifecycle invalidation and the reviewed Demo Gateway session path. P0 status is 8 Pass, 0 Fail and 27 Not run; M1 acceptance is Partial. The latest S05 serial unit evidence is 105 files / 548 tests. Historical aggregate runs are not current release certificates.
 
 ### 0.1 E14: implemented UI, incomplete behavioral acceptance
 
@@ -27,7 +27,7 @@ Proposed logic:
 - Share apply-policy decisions across chat, review repairs and retries; keep existing transaction/hash checks.
 - Derive application, render/readiness and save state separately from their actual owners.
 - Verify candidate cancellation, stale responses, raw draft preservation and file-save outcomes.
-- Resolve aggregate row limits and component-shaped repeatHeader semantics before expanding multi-table promises.
+- S04 resolves aggregate/per-table row limits from actual table bindings; S05 resolves component-shaped repeatHeader as a table-header-local override with the legacy root flag as default.
 
 Preview-first as the default and Windows/Chromium single-user production as the first release profile are recommendations awaiting product adoption. Current default remains auto-apply; existing broader release goals are not silently removed.
 
@@ -182,7 +182,7 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 
 ## 3. Studio v1（冻结，Current）
 
-- 单文件应用 [studio/studio.js](studio/studio.js)（约 1.5k 行；属冻结豁免，见 ROADMAP 维护策略）+ [studio/bridge.js](studio/bridge.js)（注入预览 iframe）+ [studio/mustache-lite.js](studio/mustache-lite.js)（最小 Mustache 子集）。
+- Studio v1 以 [studio/studio.js](studio/studio.js) 作为 ES module composition entry，职责分布在 `studio/studio-*.js` 模块中；行为仍保持冻结。另有 [studio/bridge.js](studio/bridge.js)（注入预览 iframe）+ [studio/mustache-lite.js](studio/mustache-lite.js)（最小 Mustache 子集）。
 - 预览 = blob iframe + bridge postMessage 回报（console/metrics/blocks）。**消息必须校验 `event.origin === location.origin`，日志 level 走白名单**（2026-07-31，`ebd5d20`）。
 - **结构模式必须加载原始模板**（不做 `renderWithData`）：bridge 的区块索引与 `withWorkingDoc` 的原始子节点索引才能对齐，`{{ }}` 绑定才不会被编辑毁掉（同上）。
 - mustache-lite：转义含 `'` 与 `` ` ``；不配对 section 抛错（`renderWithData` 已接错误 UI）。
@@ -204,7 +204,7 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 | 预览报告防伪造 | `listenForPreview` 校验 `event.source === iframe.contentWindow`（沙箱 iframe origin 为 `"null"`，payload 字符串可伪造，**只能**用 source 身份） |
 | 打印预览防逃逸 | blob: URL 继承 Studio origin，弹窗前 `target.opener = null`，untrusted 项目直接拒绝 |
 | 原型污染防护 | `setJsonPath` 拒绝 `__proto__`/`constructor`/`prototype` 路径段 |
-| 乐观锁可靠性 | revision 用 `nextRevision` 单调计数器，undo 后不复用编号 |
+| 乐观锁可靠性 | revision 用 `nextRevision` 单调计数器；Undo/Redo 选择逻辑历史状态但通过 durable CAS 产生新的 revision，不回退 durable head 或复用编号 |
 | 信任不可只翻 flag | 「重置信任」物理剥离 script/事件属性/javascript: URL；`validateProject` 从内容重推导可执行标记；themeCss `</style>` 逃逸会降级信任并在序列化时转义 |
 | operations 判别联合校验 | `core/operation-schemas.js` 按 `operation.type` 分派 schema，复用 `core/schema.js` 校验引擎；已知类型的缺字段/多字段/类型错误在任何变更执行前统一拦截（`INVALID_OPERATION_SHAPE`），未知类型仍走既有 `UNSUPPORTED_OPERATION` |
 | 高层语义工具优先复合选择器而非单表 | `set_column_widths` 的 `tableSelector` 接受逗号分隔选择器，因为真实模板把表头（`.prowheader`）与重复数据行（`.prowitem`）拆成两个独立 `<table>`；只支持单一 `<table>` 会让工具在实际模板上不可用 |
@@ -231,7 +231,7 @@ E13-SERVER 的明确部署假设是一个 SQLite writer service 持有数据库�
 
 **Historical presentation description (superseded by the current controller behavior below)**：候选渲染期间 `#candidate-preview-banner`（`.banner` 复用既有 `#update-banner`/`#restore-banner` 样式）显示"正在预览 AI 提议的改动（未提交）"提示；`pending` 清空时（成功/失败/超时）自动隐藏。下一次真正的 commit（人类编辑或 Agent apply）发生时，`schedulePreview()` 既有的防抖流程会自动把 iframe 刷新回真实已提交状态，不需要额外的"回滚"代码路径；`installBus()` 切换项目（导入/切样本/重置信任）时会拒绝并清空所有仍在等待的候选渲染，避免悬挂 Promise。
 
-Current behavior: the candidate flag is independent of the pending-request map. A successful render alone does not clear it. `restoreCommitted()` clears the flag and schedules committed output; project replacement rejects pending requests and clears candidate state. Full cancel/stop/late-response acceptance remains PROD-04.
+Current behavior: the candidate flag is independent of the pending-request map. A successful render alone does not clear it. `restoreCommitted()` clears the flag and schedules committed output; project replacement rejects pending requests and clears candidate state. S09/PROD-04 now records the six-case cancel/stop/late-response, project-replacement and durable-history acceptance; broader draft/save recovery remains PROD-08.
 
 **踩坑记录**：
 - 设计阶段曾估计"500 行样本渲染约 1 秒"，属于未经实测的乐观数字——真实测量下，500 行 + 较大字号（13pt）的候选渲染在本地沙箱浏览器里跑到 47 秒以上（`PrintForm.formatAll()` 自身的 clone/measure/place 尚未做 P2/E9 计划中的行高预测量缓存优化，见 ROADMAP.md）。候选渲染的超时不能按这个乐观估计设置——最终定为 30 秒的宽松兜底（current constant: `CANDIDATE_TIMEOUT` in `ui/render-controller.js`），只用来兜"确实卡死了"，不是性能预算；现有已提交状态的 `schedulePreview()` 路径本来就没有超时。500 行默认 9pt 场景仍稳定符合 `100/500-row render budgets` 测试的既有预算（`durationMs ≤ 5000`），说明变慢的是"大字号+大行数"这个不常见组合，不是回归。
@@ -240,7 +240,7 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 
 ### 4.5 渲染内容完整性——数量校验（Current，P0-B 部分实现）
 
-`inspectRenderedDocument(doc, manifest, { expectedRowCount })`：`.prowitem` 行由分页引擎克隆后放置、从不像 PTAC/PADDT 那样被词数切分，因此最终 DOM 里 `.prowitem_processed` 的数量必须精确等于 `bindTemplate` 通过 `data-pf-each` 绑定的行数。不一致（分页引擎丢行或重复行的 bug）报 `ROW_COUNT_MISMATCH`。`runtime.js` 的 `render()` 把 `bound.report.rows` 作为 `expectedRowCount` 传入；CLI 校验器（`validate-printform-v2.mjs`）没有真实浏览器渲染上下文，不传该参数，检查自动跳过（不误报）。
+`inspectRenderedDocument(doc, manifest, { expectedRowCount })`：`.prowitem` 行由分页引擎克隆后放置、从不像 PTAC/PADDT 那样被词数切分，因此最终 DOM 里 `.prowitem_processed` 的数量必须精确等于 `bindTemplate` 通过 table `data-pf-each` 绑定的行数。不一致（分页引擎丢行或重复行的 bug）报 `ROW_COUNT_MISMATCH`。`runtime.js` 的 `render()` 把 `bound.report.tableRows` 作为 `expectedRowCount` 传入；CLI 校验器（`validate-printform-v2.mjs`）没有真实浏览器渲染上下文，不传该参数，检查自动跳过（不误报）。
 
 **顺序/identity 校验（2026-07-31 补齐，TASK.md #16）**：`binding.js` 的 `expandRepeat` 给每个展开行打 `data-pf-row-index`（源数组下标），克隆穿过整个分页流程（clone/measure/place）后依然保留。`inspectRenderedDocument` 用这个标记做三项检查：`ROW_DUPLICATE_INDEX`（同一下标出现多次）、`ROW_MISSING_INDEX`（某下标从未出现，需要 `expectedRowCount`）、`ROW_ORDER_MISMATCH`（下标序列非严格递增——即使数量和集合都对，两行被交换顺序也能抓到，这是纯数量校验做不到的）。没有 `data-pf-row-index` 标记的旧版导出文档（该属性上线前生成的）自动跳过这三项检查，只保留数量校验，不误报。真实端到端证据来自 `e2e/studio-v2.spec.js`（Playwright 能读取沙箱 iframe 内部 DOM，jsdom 单测做不到这一步——手写脚本重新拼装 Node 全局对象验证过会撞上 jsdom 的 `performance.now()` brand-check 无限递归，遂放弃转而用 Playwright）：真实 45 行发票渲染后 `data-pf-row-index` 恰好是 `[0,1,...,44]`，与源数组顺序完全一致。
 

@@ -67,6 +67,17 @@ describe("file export policy and confirmed outcomes", () => {
     expect(f.setSaveState).toHaveBeenLastCalledWith("saved");
   });
 
+  it("reuses the revision-bound artifact after a cancelled save so retry can reach the sink", async () => {
+    const f = fixture();
+    let builds = 0;
+    createStandaloneHtml.mockImplementation(async () => ({ html: `SYNTHETIC-RETRY-${++builds}`, evidencePack: { revision: 0, hash: "sha256:retry" } }));
+    saveHtmlWithPicker.mockRejectedValueOnce(Object.assign(new Error("SYNTHETIC-CANCEL"), { name: "AbortError" })).mockResolvedValueOnce(true);
+    expect(await f.exportFile(true)).toMatchObject({ ok: false, reason: "cancelled" });
+    expect(await f.exportFile(true)).toMatchObject({ ok: true, mode: "saved", stale: false });
+    expect(createStandaloneHtml).toHaveBeenCalledOnce();
+    expect(saveHtmlWithPicker).toHaveBeenCalledTimes(2);
+  });
+
   it.each([["AbortError", undefined, "cancelled"], ["Error", "FILE_WRITE_UNCONFIRMED", "unconfirmed"]])("does not retry or download after %s/%s", async (name, code, reason) => {
     const f = fixture();
     saveHtmlWithPicker.mockRejectedValue(Object.assign(new Error("SYNTHETIC-SAVE-FAILURE"), { name, code }));

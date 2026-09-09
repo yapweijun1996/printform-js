@@ -2,7 +2,7 @@
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval.
 >
-> Last reviewed: 2026-09-08. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) keeps M1 implementation acceptance Partial, with 13-04/07/08 case-specific Pass evidence. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls; `npm run doctor` is currently 5/5, while the earlier 4/5 timeout remains historical. These results do not authorize release. Preserve private UI approval and human production-export confirmation.
+> Last reviewed: 2026-09-09. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) keeps M1 implementation acceptance Partial, with 13-04/07/08, PROD-01 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08, PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 and PROD-03 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08 case-specific Pass evidence. P0: 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run. The current `npm run doctor` passed 5/5 with 105 files / 558 tests (see [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md)); the prior 536-test standalone and 535-test doctor runs are historical. Other recorded evidence includes, 17/17 old-bus/commit-race controls, 30/30 focused transaction-context tests, 20/20 focused host-admission tests, 6/6 three-engine component-scope browser controls, 3/3 each for three-engine PROD-01 01-01 through 01-08 browser controls, 3/3 each for three-engine PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 chat, Review, approval-provenance, mode-change, cancel/retry, duplicate/unknown-outcome, Auto-mode and host/prompt/export controls, 3/3 each for PROD-03 03-01 initial-readiness, 03-02 render-failure/retry, 03-03 review-lifecycle, 03-04 invalidated-evidence, 03-05 late-result, 03-06 candidate-separation, 03-07 save-independence and 03-08 surface-agreement controls, 6/6 final Provider/outbound browser controls, 6/6 three-engine Demo Gateway browser controls, 21/21 three-engine E14/candidate history controls, 47/47 Chromium direct-gateway tests and 52 Firefox/WebKit direct-gateway passes with 10 expected skips; the earlier 102/529, 100/525, 99/523, 99/520, 99/519, 99/515, 99/513, 99/510, 99/504 and 4/5 timeout records remain historical. These results do not authorize release. Preserve private UI approval, host-bound admission and human production-export confirmation.
 
 ## Production Pilot 自动检查
 
@@ -40,7 +40,9 @@
 
 ## Production Ready 硬门
 
-Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) records 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. The remaining cases still require evidence; historical foundation completion below does not satisfy these requirements or authorize release.
+Use the [DoD](STUDIO_V2_DEFINITION_OF_DONE.md) for step closure and the [TASK ledger](../TASK.md#sequential-execution-ledger) for progress. All applicable cases, the selected PI target and this checklist must close before release. A plan percentage, including 100% local engineering closure, never substitutes for maintainer approval or a missing print/platform check.
+
+Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) records 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run. The remaining cases still require evidence; historical foundation completion below does not satisfy these requirements or authorize release.
 
 以下六项须全部由代码、自动测试和真实浏览器证据证明，不允许人工豁免。**代码部分已于 2026-07-31 全部完成**（不允许人工勾选绕过，见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)确认标准）：
 
@@ -72,19 +74,23 @@ Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md)
 
 ## Required closure checklist
 
+- [ ] Close the applicable S01-S20 engineering steps using the [sequential plan](STUDIO_V2_EXECUTION_PLAN.md); record the exact source/artifacts and all required runtime evidence under the [DoD](STUDIO_V2_DEFINITION_OF_DONE.md).
+- [ ] Complete PI-00..05: actual browser Harness, direct BYOK, host tools/approval, policy-bound sessions, composed acceptance and tested local cutover/cache rollback. Preserve historical AGRUN evidence as historical.
+
 - [ ] Adopt and record the release profile: OS/browser/version, templates, paper, locale, size limits and persistence/deployment model (PROD-10). The single-user Windows/Chromium proposal does not silently remove broader existing goals.
 - [ ] Classify unknown imports before persistence/AI; prevent unauthorized real-data copies across durable snapshots, recovery and sessions (PROD-13).
-- [ ] Enforce actual component/operation scope, including stale selection and out-of-scope rejection (PROD-01).
+- [ ] Complete the component/operation scope matrix, including stale selection, mixed batches, indirect global effects and cross-entry/browser evidence (PROD-01; the direct component-selection control is implemented and separately evidenced).
 - [ ] Preview-first blocks every automatic AI commit, including Review repairs and retries (PROD-02).
-- [ ] Context, preview, Quality and export agree on current revision/render/readiness; saved and applied remain distinct (PROD-03).
-- [ ] Card Undo verifies the intended revision and actual command outcome; cancel/Stop/project switch/late response/double Apply preserve committed state and restore the correct preview (PROD-04).
+- [x] Context, preview, Quality and export agree on current revision/render/readiness; saved and applied remain distinct (PROD-03). Evidence: 03-01 through 03-08 pass 3/3 in Chromium, Firefox and WebKit, including five-locale refresh and human-cancelled export without automatic download.
+- [x] Card Undo verifies the intended revision and actual command outcome; S09 04-01 through 04-06 each pass 3/3 with fresh Undo/Redo, stale-card `REVISION_CONFLICT`, candidate/Discard separation, Stop/late protection, rapid/double Apply recovery, project switch and durable restored committed preview (PROD-04). Independent Changes/history search remains E14-UI-05/PROD-07.
 - [ ] Bound row counts and repeatHeader rules behave correctly for multiple tables (PROD-05/06).
-- [ ] Errors locate the owning page/component/field and explain the next action (PROD-07).
-- [ ] Raw edits, recovery failure, import/switch, picker cancellation and download fallback have verified outcomes; no silent data loss or false save claim (PROD-08).
-- [ ] Adopted layout passes real editing tasks, five locales, keyboard/focus and supported viewports; preserve existing resizable rail and export visibility (PROD-09/10).
+- [x] Errors locate the owning page/component/field and explain the next action (PROD-07). Evidence: S11 07-01..02 pass 6/6 across Chromium, Firefox and WebKit; focused Quality/preview/controller checks pass 20/20. Independent Changes/history search remains E14-UI-05 backlog.
+- [x] Raw edits, recovery failure, import/switch, picker cancellation and download fallback have verified outcomes; no silent data loss or false save claim (PROD-08). Evidence: S10 08-01..06 pass across Chromium, Firefox and WebKit; browser download remains started-only, without a disk-completion claim.
+- [ ] Adopted layout passes real editing tasks, five locales, keyboard/focus and supported viewports; preserve existing resizable rail and export visibility (PROD-09/10). S12 locally verifies the retained current default at 18/18 browser cases plus 12/12 responsive/inspector regressions; the alternative proposed reorganization and release-profile adoption remain open.
 - [ ] Performance uses the existing Chromium reference budgets; actual print output is manually checked on declared targets (PROD-10).
 - [ ] All three pilots have aligned build/static/browser/release evidence; CI currently has explicit static checks for only two (PROD-12).
 - [ ] Record diagnostics, known limitations, rollback/recovery steps, exact artifacts and maintainer release approval.
+- [ ] S21: obtain maintainer approval for the exact profile and artifacts; perform deployment/publishing only with explicit applicable authorization, then verify the actual result. Keep pending approval visible in TASK.
 - [ ] For shared-service claims only: remote UI, server deployment, auth/isolation, backup/recovery and applicable HA/fencing acceptance (E15).
 
 Existing AI full-page review remains required by CommandBus readiness. Provider unavailability must be shown as incomplete review, not waived validation.

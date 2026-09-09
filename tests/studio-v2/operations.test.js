@@ -182,6 +182,39 @@ describe("set_column_widths (high-level semantic tool)", () => {
   });
 });
 
+describe("set_pagination_rule repeatHeader granularity", () => {
+  function projectWithTables() {
+    const project = createEmptyProject();
+    project.templateHtml = `<div class="printform" data-repeat-rowheader="y">
+      <table class="prowheader" data-pf-table-id="a" data-pf-component-id="table-a-header"><thead><tr><th>A</th></tr></thead></table>
+      <table class="prowitem" data-pf-table-id="a" data-pf-each="/a"></table>
+      <table class="prowheader" data-pf-table-id="b" data-pf-component-id="table-b-header"><thead><tr><th>B</th></tr></thead></table>
+      <table class="prowitem" data-pf-table-id="b" data-pf-each="/b"></table>
+    </div>`;
+    return project;
+  }
+
+  it("stores a table-header override without changing the root or neighboring table", () => {
+    const candidate = applyOperations(projectWithTables(), [{
+      type: "set_pagination_rule", componentId: "table-a-header", rule: "repeatHeader", value: false,
+    }]);
+    const template = document.createElement("template");
+    template.innerHTML = candidate.templateHtml;
+    expect(template.content.querySelector(".printform").getAttribute("data-repeat-rowheader")).toBe("y");
+    expect(template.content.querySelector('[data-pf-table-id="a"].prowheader').getAttribute("data-pf-repeat-rowheader")).toBe("n");
+    expect(template.content.querySelector('[data-pf-table-id="b"].prowheader').hasAttribute("data-pf-repeat-rowheader")).toBe(false);
+    expect(candidate.spec.pagination.rules["table-a-header"]).toEqual({ rule: "repeatHeader", value: false });
+    expect(candidate.spec.components.find((item) => item.id === "table-a-header").repeatHeader).toBe(false);
+  });
+
+  it("rejects repeatHeader for a non-table-header component", () => {
+    const project = createEmptyProject();
+    expect(() => applyOperations(project, [{
+      type: "set_pagination_rule", componentId: "document-header-1", rule: "repeatHeader", value: false,
+    }])).toThrowError(expect.objectContaining({ code: "PAGINATION_RULE_TARGET_INVALID" }));
+  });
+});
+
 describe("set_font_scale (high-level semantic tool)", () => {
   it("shifts the whole 7-step type scale from the new base, replacing the prior injection in place", () => {
     const project = createEmptyProject();

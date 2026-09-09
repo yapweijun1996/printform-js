@@ -13,9 +13,11 @@ import {
   view,
   revisionConflict,
 } from "./transaction-common.js";
+import { assertTransactionContext, bindTransactionContext, filterAgentTransactions } from "./agent-boundary.js";
 
-export function renewLease(bus, input) {
+export function renewLease(bus, input, context = null) {
   const transaction = currentTransaction(bus, input.transactionId);
+  assertTransactionContext(transaction, context);
   if (!isLeaseManagedStatus(transaction.status)) throw leaseError("LEASE_NOT_RENEWABLE", "Only active draft transactions have renewable leases");
   checkLease(bus, transaction, input);
   const heartbeat = now(bus);
@@ -25,8 +27,9 @@ export function renewLease(bus, input) {
   return view(transaction);
 }
 
-export function releaseLease(bus, input) {
+export function releaseLease(bus, input, context = null) {
   const transaction = currentTransaction(bus, input.transactionId);
+  assertTransactionContext(transaction, context);
   checkLease(bus, transaction, input);
   const leaseId = transaction.lease?.lease_id || null;
   transaction.lease = null;
@@ -39,8 +42,9 @@ export function releaseLease(bus, input) {
   return view(transaction);
 }
 
-export function takeoverTransaction(bus, input) {
+export function takeoverTransaction(bus, input, context = null) {
   const previous = currentTransaction(bus, input.transactionId);
+  assertTransactionContext(previous, context);
   if (previous.status !== "expired") throw leaseError("TAKEOVER_NOT_ALLOWED", "Only an expired transaction can be taken over");
   const baseRevision = input.baseRevision ?? previous.base_revision;
   bus.ensureRevision(baseRevision);
@@ -72,6 +76,7 @@ export function takeoverTransaction(bus, input) {
     commit_result: null,
     evidence_pack_ref: null,
   };
+  bindTransactionContext(replacement, context);
   bus.persistTransaction(replacement);
   bus.auditTransaction("lease_takeover", replacement, { supersedes_transaction_id: previous.transaction_id, lease_id: replacement.lease.lease_id });
   bus.auditTransaction("lease_acquired", replacement, { lease_id: replacement.lease.lease_id, takeover: true });
@@ -79,15 +84,20 @@ export function takeoverTransaction(bus, input) {
   return view(replacement);
 }
 
-export function listActiveTransactions(bus) {
+export function listActiveTransactions(bus, context = null) {
   bus.expireStaleTransactions(now(bus));
-  return bus.transactionStore.listActiveTransactions();
+  return filterAgentTransactions(bus.transactionStore.listActiveTransactions(), context);
 }
 
-export function getTransaction(bus, id) { return view(currentTransaction(bus, id)); }
-
-export function recoverTransaction(bus, { transactionId: id } = {}) {
+export function getTransaction(bus, id, context = null) {
   const transaction = currentTransaction(bus, id);
+  assertTransactionContext(transaction, context);
+  return view(transaction);
+}
+
+export function recoverTransaction(bus, { transactionId: id } = {}, context = null) {
+  const transaction = currentTransaction(bus, id);
+  assertTransactionContext(transaction, context);
   if (!["committing", "recovery_required"].includes(transaction.status)) return view(transaction);
   const head = bus.transactionStore.head;
   const committedRevision = transaction.base_revision + 1;
@@ -111,8 +121,9 @@ export function recoverTransaction(bus, { transactionId: id } = {}) {
   return view(transaction);
 }
 
-export function resolveConflict(bus, input) {
+export function resolveConflict(bus, input, context = null) {
   const transaction = currentTransaction(bus, input.transactionId);
+  assertTransactionContext(transaction, context);
   if (transaction.status !== "conflicted") return view(transaction);
   if (input.action !== "rollback") throw leaseError("CONFLICT_RESOLUTION_REQUIRED", "Only explicit rollback is supported for a conflicted transaction");
   transaction.conflict_resolved_at = iso(bus);

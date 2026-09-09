@@ -1,6 +1,6 @@
 # 版本与兼容矩阵
 
-> 最后核对：2026-09-07（对齐 Studio 0.11.0、Protocol 2.0.0 与 Agent Contract 4.0.0）。
+> 最后核对：2026-09-08（对齐 Studio 0.11.0、Protocol 2.0.0 与 Agent Contract 4.0.0）。
 >
 > 本仓库有**四条独立的版本线**。它们描述四种不同的东西、按四种不同的节奏变化，共用一个数字只会让其中三条被迫做无意义的跳版。
 
@@ -40,7 +40,7 @@ Studio 的 Agent 连接面板不硬编码版本号：`index.html` 里该元素�
 
 The [boundary/migration plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) narrows outputs and introduces scoped reference semantics. This implementation ships that breaking boundary as Agent Contract **4.0.0**. First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. Unsupported or mixed clients fail safely without raw-output fallback; preserve human editing and existing file-format semantics.
 
-First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. A local MCP catalog does not prove compatibility with the live page. Unsupported/mixed clients must fail safely without raw-output fallback; preserve human editing and existing file-format semantics. Engine, single-HTML protocol, Studio and MCP server implementation versions keep their independent ownership.
+First-party embedded, WebMCP and MCP/CDP consumers must migrate together with version/bootstrap checks. A local MCP catalog does not prove compatibility with the live page. The public page gateway now permits business commands only after an exact protocol/Agent Contract/catalog `admitClient` handshake; the admission is opaque, memory-only and bound to the current session/document. The CDP client performs that handshake once per connection generation and repeats it after reconnect or target replacement, so concurrent business calls cannot invalidate one another with competing admissions; MCP does not advertise business tools until the handshake succeeds. WebMCP remains host-bound registration from the canonical catalog and does not use a caller-supplied identity. Unsupported/mixed clients must fail safely without raw-output fallback; preserve human editing and existing file-format semantics. Engine, single-HTML protocol, Studio and MCP server implementation versions keep their independent ownership.
 
 ### Current file compatibility
 

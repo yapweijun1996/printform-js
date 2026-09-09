@@ -35,7 +35,7 @@ export function panelMarkup() {
   return `<div class="ai-panel">
     <!-- Gateway status: retained as a hidden live region; the visible signal is
          #ai-status-dot in the shared header. -->
-    <p id="ai-status" class="ai-status visually-hidden" role="status" aria-live="polite" data-ui-i18n="aiChat.status.publicGateway">Public gateway ready · server security applies.</p>
+    <p id="ai-status" class="ai-status visually-hidden" role="status" aria-live="polite" data-ui-i18n="aiChat.status.demoGateway">Demo Gateway ready · a short-lived origin-bound session is acquired on demand.</p>
 
     <div id="ai-sessions-drawer" class="ai-sessions-drawer hidden">
       <div class="ai-session-bar">
@@ -73,6 +73,10 @@ export function panelMarkup() {
         <div class="ai-context-item ai-context-selection">
           <span class="ai-context-label" data-ui-i18n="aiChat.context.selection">Selection:</span>
           <span id="ai-context-selection-val" class="ai-context-value" data-ui-i18n="aiChat.context.entireDocument">Entire document</span>
+        </div>
+        <div class="ai-context-item ai-context-selection-meta" aria-live="polite">
+          <span class="ai-context-label" data-ui-i18n="aiChat.card.target">Target:</span>
+          <span id="ai-context-selection-meta" class="ai-context-value">Whole document</span>
         </div>
         <div class="ai-context-item ai-context-scope">
           <label class="ai-context-label" for="ai-context-scope-select" data-ui-i18n="aiChat.context.scope">Scope:</label>

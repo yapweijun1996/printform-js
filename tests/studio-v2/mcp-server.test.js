@@ -22,7 +22,7 @@ function startServer() {
 }
 
 describe("printform-studio-mcp stdio contract", () => {
-  it("initializes and lists the shared Studio tools without opening CDP", async () => {
+  it("initializes without advertising business tools before CDP admission", async () => {
     const server = startServer();
     try {
       server.send({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } } });
@@ -30,11 +30,9 @@ describe("printform-studio-mcp stdio contract", () => {
       expect(initialized.result.serverInfo.name).toBe("printform-studio-mcp");
       server.send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
       const tools = await server.receive();
-      expect(tools.result.tools.map((tool) => tool.name)).toContain("preview_changes");
-      expect(tools.result.tools.map((tool) => tool.name)).toContain("request_export");
-      // Derived, not hardcoded: the CDP bridge must expose exactly the shared
-      // contract, so adding a tool there should never need an edit here.
-      expect(tools.result.tools).toHaveLength(TOOL_CONTRACTS.length);
+      expect(tools.error).toMatchObject({ code: -32001, data: { code: expect.any(String) } });
+      expect(tools.result).toBeUndefined();
+      expect(TOOL_CONTRACTS).toHaveLength(35);
     } finally { server.close(); }
   });
 });

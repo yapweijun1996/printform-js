@@ -54,6 +54,16 @@ function flag(value) {
   return ["1", "true", "yes", "y"].includes(String(value || "").toLowerCase());
 }
 
+function rowHeaderRepeatEnabled(templateRoot, targetTableId) {
+  if (!templateRoot) return true;
+  const header = Array.from(templateRoot.querySelectorAll(".prowheader"))
+    .find((node) => tableId(node) === targetTableId);
+  const local = header?.getAttribute("data-pf-repeat-rowheader");
+  const global = templateRoot.getAttribute("data-repeat-rowheader");
+  const value = local ?? global;
+  return value === null || value === "" ? true : flag(value);
+}
+
 function isKeepTogetherNode(node) {
   const className = String(node.getAttribute?.("class") || "").toLowerCase();
   return node.getAttribute?.("data-pf-keep-together") === "true" ||
@@ -74,6 +84,7 @@ export function collectPaginationDiagnostics(doc, manifest = {}) {
   const issues = [];
   const errors = [];
   const pageRects = pages.map(rectOf);
+  const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
   const add = (entry) => {
     issues.push(entry);
     errors.push(entry);
@@ -91,6 +102,7 @@ export function collectPaginationDiagnostics(doc, manifest = {}) {
     const rowTables = new Set(tableRows.map(tableId));
     const headerTables = new Set(headers.map(tableId));
     rowTables.forEach((table) => {
+      if (!rowHeaderRepeatEnabled(templateRoot, table)) return;
       if (!headerTables.has(table)) {
         add(issue("ACTIVE_TABLE_HEADER_MISSING", rows.find((row) => tableId(row) === table), pageIndex, pageRect,
           `Rows for active table ${table} have no matching repeated header on this page`,
@@ -99,6 +111,7 @@ export function collectPaginationDiagnostics(doc, manifest = {}) {
     });
     headers.forEach((header) => {
       const table = tableId(header);
+      if (!rowHeaderRepeatEnabled(templateRoot, table)) return;
       if (rowTables.size && !rowTables.has(table)) {
         add(issue("ACTIVE_TABLE_HEADER_INCORRECT", header, pageIndex, pageRect,
           `Header for completed or inactive table ${table} is repeated on a page containing ${Array.from(rowTables).join(", ")} rows`,
@@ -157,7 +170,6 @@ export function collectPaginationDiagnostics(doc, manifest = {}) {
     }
   });
 
-  const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
   const pageNumberSelector = ".pfooter_pagenum_processed, [data-page-number], [data-page-total]";
   const hasPageNumber = Boolean(doc.querySelector(pageNumberSelector));
   if ((hasPageNumber || flag(templateRoot?.dataset.repeatFooterPagenum)) && flag(templateRoot?.dataset.repeatFooterPagenum)) {

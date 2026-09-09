@@ -6,7 +6,7 @@
 >
 > Documentation authority follows responsibility, not language: SPEC owns Current behavior; the English production plan owns latest evidence/criteria; TASK owns execution status. README and Agent setup summarize and link to these sources.
 
-> **2026-09-08 direction correction**: implementation Partial; coding resumed; M1 bounded corrections are implemented, with 13-04/07/08 now case-specific Passes while complete P0 acceptance remains open. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. P0: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Current evidence is 97/504 serial unit tests, 36/36 composed browser controls, 24/24 explicit-save controls and 6/6 recipient controls. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. These results are not release approval.
+> **2026-09-09 direction correction**: implementation Partial; coding resumed; M1 bounded corrections, host-bound MCP/CDP admission, transaction-context binding, FormSpec component scope selection, canonical Undo/Redo revision alignment, old-bus lifecycle invalidation and the reviewed browser Demo Gateway session path are implemented, with PROD-01 01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08, PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08, PROD-03 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08 and 13-04/07/08 now case-specific Passes while complete P0 acceptance remains open. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. P0: 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run. The current `npm run doctor` passed 5/5 with 105 files / 558 tests (see [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md)); the prior 536-test standalone and 535-test doctor runs are historical. Other recorded evidence includes, 17/17 old-bus/commit-race controls, 30/30 focused transaction-context tests, 20/20 focused host-admission tests, 6/6 three-engine component-scope browser controls, 3/3 each for three-engine PROD-01 01-01 through 01-08 browser controls, 3/3 each for three-engine PROD-02 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08 chat, Review, approval-provenance, mode-change, cancel/retry, duplicate/unknown-outcome, Auto-mode and host/prompt/export controls, 3/3 each for PROD-03 03-01 initial-readiness, 03-02 render-failure/retry, 03-03 review-lifecycle, 03-04 invalidated-evidence, 03-05 late-result, 03-06 candidate-separation, 03-07 save-independence and 03-08 surface-agreement controls, 6/6 final Provider/outbound browser controls, 6/6 three-engine Demo Gateway browser controls, 47/47 Chromium direct-gateway tests and 52 Firefox/WebKit direct-gateway passes with 10 expected skips. Runtime 1.0.0, Studio 0.11.0, Protocol 2.0.0, Agent Contract 4.0.0; 35 public commands. These results are not release approval.
 
 ## 状态词
 
@@ -23,12 +23,15 @@
 
 | 目的 | 文档 | 权威范围 |
 |---|---|---|
-| Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-08 evidence, PROD requirement IDs, dependencies and proposed layout |
-| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | 35 cases: 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run |
+| Execute one step at a time | [Execution plan](STUDIO_V2_EXECUTION_PLAN.md), [TASK ledger](../TASK.md#sequential-execution-ledger) | 21 ordered packages, explicit dependencies and one live progress owner |
+| Decide whether a step is Done | [Definition of Done](STUDIO_V2_DEFINITION_OF_DONE.md) | Five evidence gates; separate step delivery, P0 case closure and release approval |
+| Start the next implementation task | [Goal Prompt](STUDIO_V2_GOAL_PROMPT.md) | Copyable execution instruction under 2000 characters with required Markdown references |
+| Current gaps and acceptance | [Production plan](STUDIO_V2_PRODUCTION_PLAN.md) | 2026-09-09 evidence, PROD requirement IDs, dependencies and proposed layout |
+| Priority acceptance cases | [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md) | 35 cases: 32 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08), 0 Fail, and 3 Not run |
 | Data classification and destinations | [Data policy](STUDIO_V2_DATA_POLICY.md) | PROD-13 Target: data classes, storage/sending rules, lifetime, transitions and mapping to eight acceptance cases |
 | Agent output fields | [35-command table](STUDIO_V2_AGENT_OUTPUT_FIELDS.md), [nested shapes](STUDIO_V2_AGENT_OUTPUT_SHAPES.md) | Implemented closed projections for the public gateway; browser/provider and full acceptance evidence remain Partial |
 | Agent enforcement and migration | [Boundary plan](STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) | M0 inventory retained; M1 case acceptance partially closed; M2/M3 acceptance Partial; M4/M5 incomplete |
-| Embedded harness replacement | [PI Agent Harness plan](STUDIO_V2_PI_HARNESS_MIGRATION.md) | Selected Target: browser-first, frontend-only BYOK; no Node.js/server runtime. PI-00 through PI-05 are Not started; Current remains AGRUN. |
+| Embedded harness replacement | [PI Agent Harness plan](STUDIO_V2_PI_HARNESS_MIGRATION.md) | Selected Target: browser-first, frontend-only BYOK; no Node.js/server runtime. PI-00 through PI-03 isolated qualifications are Done; PI-04/PI-05 remain Not started; current production entry remains AGRUN. |
 | 判断产品适用性 | [产品策略](STUDIO_V2_PRODUCT_STRATEGY.zh-CN.md) | 用户、非目标、指标、模板策略 |
 | 理解当前单 HTML | [协议 v2](PRINTFORM_V2_PROTOCOL.zh-CN.md) | Current 文件结构、绑定与 runtime API |
 | 理解 AI 与安全边界 | [信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md) | 六项 P0 信任闭环硬门（Current，代码已完成）与已评估未采纳的历史设想（Backlog） |
@@ -75,20 +78,20 @@
 
 ### Partial behavior and pending work
 
-- Selection starts as Entire document; the UI now maps available table choices to stable FormSpec IDs and the domain guard enforces the structured scope. Full component selection and browser evidence remain Partial (PROD-01).
-- The context badge now maps render lifecycle and committed readiness to visible states; stale/delayed/error browser evidence remains open (PROD-03).
-- Review-generated repairs now consult the shared apply mode and auto-eligibility guard; delayed/retry/cross-entry evidence remains open (PROD-02).
-- The panel verifies an approval token before using a UI-owned `executeHuman` capability; page-global and ordinary bound-session gateways expose only `execute`. Full PROD-02/02-03 acceptance remains open, and arbitrary browser debugging is not treated as sandboxed.
-- Candidate cancellation, raw draft protection and save outcomes need additional acceptance (PROD-04/08).
-- Card Undo currently invokes global history without card-target/result checks (PROD-04). Unknown/Real host classification now disables durable project snapshots and recovery writes before CommandBus installation; the dedicated reload and stale-context evidence passes, while remaining sink-transition evidence stays open (PROD-13).
+- Selection starts as Entire document; the UI now maps available table and component choices to stable FormSpec IDs and the domain guard enforces the structured scope. Cross-entry/browser selection evidence and the complete matrix remain Partial (PROD-01).
+- The context badge now maps render lifecycle and committed readiness to visible states; 03-01 through 03-08 initial, failure, timeout/retry, review-lifecycle, invalidated-evidence, late-result, candidate-separation, save-independence and five-locale surface-agreement browser evidence is a case-specific Pass. S10/PROD-08 now also passes its six-case overwrite, recovery, storage/privacy and file-outcome acceptance matrix; release-platform evidence remains separate.
+- Review-generated repairs now consult the shared apply mode and auto-eligibility guard; all 02-01 through 02-08 chat/Review/apply/export cases pass in three engines, while later PROD/PI/release evidence remains open (PROD-02).
+- The panel verifies an approval token before using a UI-owned `executeHuman` capability; page-global and ordinary bound-session gateways expose only `execute`. S07/PROD-02 acceptance is closed; arbitrary browser debugging is not treated as sandboxed.
+- Raw draft protection and recovery are locally closed for S10/PROD-08: 08-01..06 pass across Chromium, Firefox and WebKit, with browser download reported only as started. S09/PROD-04 retains its six-case candidate/history lifecycle evidence.
+- Card Undo/Redo now uses applied/reverted revision guards and leaves the card unchanged on a rejected result (PROD-04). Unknown/Real host classification now disables durable project snapshots and recovery writes before CommandBus installation; the dedicated reload and stale-context evidence passes, while remaining sink-transition evidence stays open (PROD-13).
 - Main-app/server/gateway/WebMCP missing policy is restrictive Unknown, and an empty current policy invalidates old context; full sink and transition evidence is still required before PROD-13 closure.
-- Independent Changes/history search, component highlighting, richer visible progress and mobile workflows remain pending.
+- Independent Changes/history search and richer visible progress remain pending; S11 covers actionable Quality component targeting, S12 validates the retained current workspace including mobile/focus behavior, and S13 closes bounded v1/formatter maintainability in the isolated preview path.
 - New Design/AI/Quality workspace and preview-first default are Proposed; current tabs/defaults are unchanged.
 - See the production plan for multi-table limits, repeat-rule semantics, Quality navigation and release tasks.
 
 ## 成熟度规则
 
-Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。当前恢复编码后的串行单测为 97 个文件 / 504 个测试通过；三项静态 pilot validation、先前完整 Windows Playwright E2E 的 190/222 通过（32 个预期跳过、0 失败）、当前 bounded 36/36 组合浏览器控制、24/24 显式保存控制和 6/6 接收方替换控制均已留证。`npm run doctor` 当前为 5/5；此前长运行事务测试超时的 4/5 结果保留为历史证据。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
+Production Pilot 可以用于受控试点，但工程师必须检查浏览器系统打印预览。当前恢复编码后的串行单测为 100 个文件 / 525 个测试通过；三项静态 pilot validation、先前完整 Windows Playwright E2E 的 190/222 通过（32 个预期跳过、0 失败）、当前 bounded 36/36 组合浏览器控制、24/24 显式保存控制、6/6 接收方替换控制、6/6 scope/component 选择控制和重建后的 21/21 三引擎 Undo/Redo 控制均已留证。`npm run doctor` 当前为 5/5；此前长运行事务测试超时的 4/5 结果保留为历史证据。Production Foundation 与 E13-SERVER 已补齐 FormSpec、Active Table、多项确定性诊断、事务门、trusted export allowlist、Evidence Pack 和 SQLite durable backend；这些证据不代表所有发布门已关闭：
 
 1. ✅ 候选项目在复用的可见预览 iframe 中执行真实分页渲染，`apply_changes` 命中同一 `candidateHash` 直接复用报告提交。
 2. ✅ revision 永不复用；写操作用 `expectedRevision` + `candidateHash` 内容寻址天然防止旧预览被提交（未做破坏性两阶段提交，评估后判定当前机制已达成同等安全目标）。

@@ -54,7 +54,7 @@ The earlier blanket "P0 completed" conclusion was too broad. Corrected acceptanc
 | Panel IA and cards | Implemented foundation | Preserve existing presentation and transaction-bound history |
 | Document context | Partial | PROD-01 component selection/scope enforcement; PROD-03 render/readiness state |
 | Apply mode | Partial | PROD-02 apply policy across chat, Review repairs and retries |
-| Candidate lifecycle | Partial | PROD-04 cancellation, stale response and duplicate-action verification |
+| Candidate lifecycle | Done for S09 | PROD-04 04-01..06 candidate/history lifecycle evidence; independent Changes/history search remains E14-UI-05/PROD-07 |
 | Session/settings/activity | Partial | Existing drawer/modal/trace; independent Changes/history search remains pending |
 | Responsive/accessibility | Partial | Existing tests/rail/focus behavior; visible progress and full workflow acceptance remain pending |
 | Data protection and Quality | Partial | PROD-07/08 actionable issues and draft/save; PROD-13 real-data import/durable persistence |
@@ -63,6 +63,8 @@ The earlier blanket "P0 completed" conclusion was too broad. Corrected acceptanc
 Dependencies: existing FormSpec, CommandBus transactions, renderer and trust/evidence gates. The project envelope remains canonical; preview DOM is visual evidence.
 
 Related work: PROD-05/06 under E8/E9 address multi-table limits and repeat-rule semantics; PROD-10/12 under E10 cover release evidence; PROD-11 under E11 addresses oversized JS.
+
+Execution and completion: the [sequential plan](docs/STUDIO_V2_EXECUTION_PLAN.md) maps these requirements and PI-00..05 to bounded packages. [TASK](TASK.md#sequential-execution-ledger) owns live progress; the [DoD](docs/STUDIO_V2_DEFINITION_OF_DONE.md) owns gate evidence and the distinction between local closure and release approval. Historical epic completion never bypasses those gates.
 
 The recommended single-user Windows/Chromium release profile and preview-first default are Proposed, not implemented or adopted release commitments. E15 is a dependency only when the selected deployment promises shared-service capabilities.
 

@@ -19,6 +19,7 @@ import { bindAgentPanelVault } from "./agent-panel-vault.js";
 import { createAgentPanelEventObserver } from "./agent-panel-events.js";
 import { classifyImportedDocument, classifyRealDocument } from "../core/data-policy.js";
 import { createAgentPanelPolicyControls } from "./agent-panel-policy.js";
+import { getFormSpec } from "../core/form-spec.js";
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -72,8 +73,7 @@ export function initAgentPanel({
     streamingNode: null,
     streamingText: "",
     usage: null,
-    publicGatewayKey: "",
-    statusKey: "aiChat.status.publicGateway",
+    statusKey: "aiChat.status.demoGateway",
     statusVariables: {},
     statusText: "",
     log: $("#ai-chat-log")
@@ -89,6 +89,31 @@ export function initAgentPanel({
     t,
     onScopeChange: applyScope
   });
+
+  function selectPreviewSelection(selection) {
+    const componentId = typeof selection?.componentId === "string" ? selection.componentId : "";
+    const project = getBaseProject();
+    const component = componentId && project ? getFormSpec(project).components.find((item) => item.id === componentId) : null;
+    if (!component) return false;
+    const tableId = component.tableId || "default";
+    const isTableComponent = ["table-header", "table-row"].includes(component.role);
+    const options = docContext.getState().scopeOptions || [];
+    const option = options.find((item) => isTableComponent
+      ? item.scope?.kind === "table" && item.scope.tableId === tableId
+      : item.scope?.kind === "component" && item.scope.componentId === componentId);
+    if (!option) return false;
+    const scope = { ...option.scope };
+    const selectionLabel = isTableComponent
+      ? `${option.selection} · ${component.type} (${component.role}) [${component.id}]`
+      : option.selection;
+    docContext.update({
+      scope: option.value,
+      selection: selectionLabel,
+      selectionDetails: { componentId, tableId, type: component.type, role: component.role, source: "preview" }
+    });
+    applyScope(scope);
+    return true;
+  }
 
   function status(key, variables = {}) {
     const localized = key.startsWith("aiChat.") || key.startsWith("aiSettings.");
@@ -158,7 +183,7 @@ export function initAgentPanel({
     onCandidateState,
     handleRuntimeEvent,
     onApplied: cardController.showApplied,
-    openProviderSettings: () => settingsModal.open({ section: "provider", focusSelector: "#ai-public-gateway-key", opener: $("#ai-settings-button") })
+    openProviderSettings: () => settingsModal.open({ section: "provider", focusSelector: "#ai-model", opener: $("#ai-settings-button") })
   });
   cardController.setRuntime(runtime);
   const policyControls = createAgentPanelPolicyControls({ state, sessions, runtime, renderProposal, renderSessions, docContext, addMessage, onDataPolicyChange, onRealDataChange, onScopeChange: applyScope, t });
@@ -258,6 +283,7 @@ export function initAgentPanel({
     getDataPolicy() { return state.dataPolicy; },
     getApplyMode() { return state.applyMode; },
     getScope() { return state.activeScope; },
+    selectPreviewSelection,
     refreshHistoryControls: historyControls.refresh,
     lock: vaultBindings.lock
   };

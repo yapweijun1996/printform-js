@@ -116,7 +116,7 @@ export const OPERATION_DEFINITIONS = Object.freeze({
     example: { type: "bind_field", componentId: "document-meta-1", bindingType: "text", pointer: "/documentNumber" }
   },
   set_pagination_rule: {
-    description: "Set a registered component's deterministic pagination rule.", risk: "medium",
+    description: "Set one registered component's deterministic pagination rule; repeatHeader overrides only that table header, while the legacy root flag remains the default.", risk: "medium",
     schema: objectSchema({ type: nonEmptyString, componentId, rule: { type: "string", enum: ["repeatHeader", "keepTogether", "pageBreakBefore"] }, value: { type: "boolean" } }, ["type", "componentId", "rule", "value"]),
     example: { type: "set_pagination_rule", componentId: "table-valuation-header", rule: "repeatHeader", value: true }
   }

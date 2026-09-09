@@ -16,7 +16,7 @@ const SECTION_META = {
   templateHtml: { editorKey: "template", labelKey: "section.template", json: false }, sampleData: { editorKey: "sampleData", labelKey: "section.sample", json: true }
 };
 
-export function createStudioActions({ getBus, getFingerprint, setFingerprint, setDirty, setSaveState = () => {}, getEditor, getDataPolicy = () => null, installBus, toast }) {
+export function createStudioActions({ getBus, getFingerprint, setFingerprint, setDirty, setSaveState = () => {}, getEditor, getDataPolicy = () => null, getDirty = () => false, installBus, toast }) {
   async function applyPreview(bus, preview, reason, requireValid = false) {
     const approved = await bus.execute("approve_transaction", {
       expectedRevision: preview.result.revision,
@@ -92,6 +92,11 @@ export function createStudioActions({ getBus, getFingerprint, setFingerprint, se
   async function applyDataContract() { try { const bus = getBus(); const result = await previewAndApply(bus, getEditor("dataContractOperations")(), "data contract edit"); if (!result.ok) throw new Error(result.error.message); toast(t("toast.dataContractApplied")); } catch (error) { toast(t("toast.dataContractFailed", { message: error.message })); } }
 
   async function importFile(file) {
+    if (!file) return;
+    if (getDirty() && !window.confirm(t("confirm.discardImport"))) {
+      const input = $("#import-file"); if (input) input.value = "";
+      return;
+    }
     try { const html = await readHtmlFile(file); const verified = await verifyImportedProject(parseProjectHtml(html), html); const migration = analyzeMigration(verified.project); if (migration.action === "read-only") throw new Error(t("error.protocolReadOnly", { source: migration.source })); let project = verified.project; if (migration.action === "preview") { if (!window.confirm(t("confirm.migration", { source: migration.source, target: migration.target }))) throw new Error(t("error.migrationRejected")); project = migration.candidate; } setFingerprint(`${file.name}:${file.size}:${file.lastModified}`); setDirty(false); installBus(project, "import", classifyImportedDocument(project.manifest?.documentId)); }
     catch (error) { toast(t("toast.importRejected", { message: error.message })); }
   }

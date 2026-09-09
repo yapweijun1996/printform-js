@@ -25,6 +25,19 @@ describe("recovery draft cache", () => {
     expect(loadRecoveryDraft({ policy: classifyRealDocument("fp-old"), explicit: true }).project).toEqual({ secret: "CANARY" });
   });
 
+  it("does not treat stored classification metadata as synthetic provenance", () => {
+    localStorage.setItem("printform-studio-v2-recovery", JSON.stringify({
+      version: 1, savedAt: Date.now(), fingerprint: "forged-synthetic",
+      classification: "synthetic", project: { manifest: { documentId: "recovered-document" }, secret: "CANARY" }
+    }));
+    const metadata = peekRecoveryDraft();
+    expect(metadata.classification).toBe("synthetic");
+    const restrictive = classifyImportedDocument("recovered-document");
+    expect(loadRecoveryDraft({ policy: restrictive, explicit: true }).project.secret).toBe("CANARY");
+    expect(restrictive.allowDurable).toBe(false);
+    expect(restrictive.allowPersistentSessions).toBe(false);
+  });
+
   it("does not throw and returns false when localStorage.setItem throws (quota exceeded / private mode)", () => {
     const spy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
       throw new DOMException("Quota exceeded", "QuotaExceededError");

@@ -44,7 +44,7 @@ export function createPurchaseOrderProject() {
       documentId: "purchase-order-crimson",
       locale: "en-MY", currency: "MYR", timeZone: "Asia/Kuala_Lumpur",
       i18n: { supportedLocales: ["en-MY", "zh-CN", "ms-MY", "ja-JP", "vi-VN"], fallbackLocale: "en-MY" },
-      acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxLogicalPages: LIMITS.logicalPages, requirePrintPreview: true },
+      acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxRowsPerTable: LIMITS.rowsPerTable, maxLogicalPages: LIMITS.logicalPages, requirePrintPreview: true },
       assets: { inlineByDefault: true, allowExternalHttps: false, requiredSlots: ["letterhead-logo", "footer-logo"] }
     },
     schema: structuredClone(PURCHASE_ORDER_SCHEMA),

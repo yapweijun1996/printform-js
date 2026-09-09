@@ -43,6 +43,13 @@ afterEach(() => {
 });
 
 describe("PrintForm AGRUN action-result contract", () => {
+  it("drops unknown runtime event types before they reach UI consumers", () => {
+    expect(projectRuntimeEvent({
+      type: "ERP CUSTOMER CANARY",
+      detail: { prompt: "ERP CUSTOMER CANARY", result: { secret: "ERP CUSTOMER CANARY" } }
+    })).toBeNull();
+  });
+
   it("terminates the real AGRUN loop with the preview terminal envelope", async () => {
     const actions = makePrintFormActions({
       Agrun,

@@ -3,11 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=22.19.0"
   },
   "license": "MIT",
   "description": "Vanilla JS print form pagination (builds to a single dist/printform.js).",
   "dependencies": {
+    "@earendil-works/pi-agent-core": "0.85.1",
+    "@earendil-works/pi-ai": "0.85.1",
     "jsdom": "^27.0.1"
   },
   "scripts": {

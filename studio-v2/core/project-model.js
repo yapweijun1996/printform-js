@@ -216,7 +216,7 @@ export async function serializeStandalone(project, sources, validation, options 
 
 export function createEmptyProject() {
   return {
-    manifest: { protocolVersion: PROTOCOL_VERSION, title: "Untitled PrintForm", locale: "en-MY", currency: "MYR", timeZone: "Asia/Kuala_Lumpur", acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxLogicalPages: LIMITS.logicalPages } },
+    manifest: { protocolVersion: PROTOCOL_VERSION, title: "Untitled PrintForm", locale: "en-MY", currency: "MYR", timeZone: "Asia/Kuala_Lumpur", acceptance: { maxHtmlBytes: LIMITS.htmlBytes, maxRows: LIMITS.rows, maxRowsPerTable: LIMITS.rowsPerTable, maxLogicalPages: LIMITS.logicalPages } },
     schema: { $schema: "https://json-schema.org/draft/2020-12/schema", type: "object", properties: {}, additionalProperties: false },
     i18n: {},
     themeCss: withPrintTypography("#pf-mount { color: #111; font-family: Arial, sans-serif; }"),

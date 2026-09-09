@@ -8,4 +8,17 @@ describe("Agent scope options", () => {
     const table = options.find((option) => option.scope.kind === "table");
     expect(table).toMatchObject({ value: "table", scope: { kind: "table", tableId: "default" } });
   });
+
+  it("derives component scopes from stable FormSpec ids without using labels as authority", () => {
+    const options = getAgentScopeOptions(createSalesInvoiceProject());
+    const component = options.find((option) => option.scope.kind === "component");
+    expect(component).toMatchObject({
+      value: `component:${component.scope.componentId}`,
+      scope: { componentId: expect.any(String) },
+    });
+    expect(component.selection).toContain(component.scope.componentId);
+    expect(options.filter((option) => option.scope.kind === "component")).toHaveLength(
+      new Set(options.filter((option) => option.scope.kind === "component").map((option) => option.scope.componentId)).size,
+    );
+  });
 });

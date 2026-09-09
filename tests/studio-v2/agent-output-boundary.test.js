@@ -137,6 +137,27 @@ describe("Studio v2 Agent output boundary", () => {
     expect(sanitizeAgentResponse("get_revision", { ok: false, error: null })).toMatchObject({ ok: false, error: { code: "COMMAND_FAILED", message: "Command failed" } });
   });
 
+  it("preserves the current readiness diagnostics through the public projection", () => {
+    const exportResult = sanitizeAgentResult("request_export", {
+      revision: 0,
+      ready: false,
+      requiresUserConfirmation: true,
+      validation: {
+        valid: false,
+        productionValid: false,
+        errors: [
+          { code: "PREVIEW_REQUIRED", path: "/", severity: "error" },
+          { code: "LAYOUT_REVIEW_REQUIRED", path: "/review", severity: "error" },
+        ],
+        warnings: [],
+      },
+    }, { context: context() });
+
+    expect(exportResult.validation.errors.map((item) => item.code)).toEqual([
+      "PREVIEW_REQUIRED", "LAYOUT_REVIEW_REQUIRED"
+    ]);
+  });
+
   it("fails closed when required output arrays have the wrong type", () => {
     expect(sanitizeAgentResponse("get_form_spec", { ok: true, result: {
       revision: 0,

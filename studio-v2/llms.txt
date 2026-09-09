@@ -15,6 +15,19 @@ When an end user gives you this Studio URL, read the machine manifest before att
 
 The manifest contains verified Codex CLI and Claude Code setup commands for Chrome DevTools MCP 1.6.0, the required Chrome WebMCP feature flags, restart instructions, verification calls, and safety policy.
 
+## Current browser Demo Gateway
+
+The default embedded Designer uses the reviewed server Demo contract, not a private browser Gateway key:
+
+- Request `POST https://gpt.yapweijun1996.com/demo/session` without `Authorization`, with only `{ "project_id": "github-pages" }`.
+- Keep the returned short-lived `dmo_...` token in memory only. Send it as `Bearer` only to `https://gpt.yapweijun1996.com/demo/v1/responses`.
+- Let the browser supply the registered `Origin`; never set a manual `Origin`, put the token in a prompt/tool argument/URL, persist it, or expose it in diagnostics.
+- Never call the private `/v1/*` route from the browser or embed a `gw_...` Gateway/Provider key. A Demo session token authorizes only that transport request; it does not authorize Studio commands, scope or apply.
+- The current Studio model remains `gpt-5.4-mini`. The external guide also lists `demo-auto`/`demo-fast`; do not guess a model alias until the server `/demo/v1/models` contract is confirmed.
+- The embedded Designer selects provider-tool-free `envelope` mode for this Demo recipient: do not send `tools` or `tool_choice`. Return one strict JSON action envelope or the constrained safe operation envelope that the host can validate and preview. The host-side MCP/WebMCP 35-command catalog is separate and is never serialized as Demo Provider tools. BYOK profiles retain native tools.
+- Demo multimodal input is restricted to validated inline PNG, JPEG or WebP evidence. Geometry-only SVG remains available only for recipients whose Provider contract permits it; do not send SVG to the Demo endpoint.
+- Use the existing streaming Responses path for reasoning turns. No live endpoint compatibility or real-data Provider test is implied by this guide.
+
 ## Required behavior
 
 1. Check Node, npm, Chrome, and the selected agent CLI before changing configuration.
@@ -22,12 +35,13 @@ The manifest contains verified Codex CLI and Claude Code setup commands for Chro
 3. Explain and obtain approval before replacing an existing user-scoped MCP entry.
 4. Use the pinned isolated-profile and URL-allowlisted configuration from the manifest.
 5. Ask the user to restart the agent client.
-6. Open Studio with new_page, call list_webmcp_tools, then execute get_capabilities.
-7. Never claim readiness unless protocol 2.0.0, contract 4.0.0, and 35 Studio WebMCP tools are confirmed.
-8. Read `get_form_spec`/`list_components` before editing and obey host scope. Use semantic operations and `preview_changes`; in Preview mode stop for human UI approval. Auto mode allows only host-eligible operations through the exact transaction/hash approval/apply sequence. Do not manufacture human permission. Raw source editing remains human-editor-only, even when requested in chat.
+6. Open Studio with new_page, call list_webmcp_tools, then execute get_capabilities. WebMCP registration is page-host-bound and comes from the canonical catalog. MCP/CDP business calls additionally require an exact live protocol, Agent Contract and complete-catalog preflight followed by the page host's in-memory admission; reconnects and page replacement repeat it.
+7. Never claim readiness unless protocol 2.0.0, contract 4.0.0, and 35 Studio WebMCP tools are confirmed. `get_capabilities` is bootstrap metadata, not business permission. Never invent, persist or reuse an admission token across a new page/document.
+8. Read `get_form_spec`/`list_components` before editing and obey host scope. A table scope using only `tableSelector` must resolve to one semantic table identity; reject selectors spanning different table IDs or unresolved selectors before preview. Use a non-empty semantic operation set with `preview_changes`; an empty or malformed set is invalid and must not create a transaction. In Preview mode stop for human UI approval. Auto mode allows only host-eligible operations through the exact transaction/hash approval/apply sequence. Do not manufacture human permission. Raw source editing remains human-editor-only, even when requested in chat.
 9. Review complete-page Studio evidence for `default` and `long-text`: pixels only for currently confirmed Synthetic data, approved geometry for Unknown/Real. Do not obtain browser screenshots or raw DOM as a fallback. Report evidence limitations instead of claiming unsupported visual verification. Only fresh clean evidence IDs can complete review; final production export remains human-controlled.
 10. Keep opaque references in their document/session/policy context. A rejected reference does not permit whole-document scope. Version mismatch requires a safe update/reconnect path, never raw-output fallback.
-11. User-entered text is sent to the chosen provider, not automatically anonymized. Sending text or explicitly saving a file does not authorize chat/recovery persistence. A recipient change requires a fresh sending context.
-12. Timeout/cancellation is not proof of no commit. Reconcile using the same transaction while its context exists; do not retry blindly or roll back a known commit. Volatile Unknown/Real state cannot promise recovery after refresh.
+11. User-entered text is sent to the chosen provider, not automatically anonymized. Sending text or explicitly saving a file does not authorize chat/recovery persistence. A recipient change requires a fresh sending context. The final Provider input builder treats a missing policy as Unknown and rejects unproven media; Synthetic pixels require an explicit Synthetic policy. Runtime/layout transport must reject stale policy before send and after asynchronous response delivery.
+12. Timeout/cancellation is not proof of no commit. Reconcile using the same transaction while its context exists; do not retry blindly or roll back a known commit. Volatile Unknown/Real state cannot promise recovery after refresh. If a resource policy is missing, treat it as Unknown and do not request external assets.
+13. A document or policy replacement invalidates the old command bus: do not reuse its references, transactions, callbacks, readiness or write results in the new context. Successful Undo/Redo selects logical history content but creates a new durable monotonic revision; report and verify that revision through the host.
 
 Do not use autoConnect with a daily Chrome profile and do not enable real ERP data unless the user explicitly authorizes it for the current session.

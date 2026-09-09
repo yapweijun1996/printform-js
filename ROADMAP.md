@@ -8,6 +8,8 @@
 
 ## 0. Current: Production Pilot behavioral and release acceptance
 
+For one-step execution, follow the [integrated 21-step plan](docs/STUDIO_V2_EXECUTION_PLAN.md), [TASK ledger](TASK.md#sequential-execution-ledger) and [DoD](docs/STUDIO_V2_DEFINITION_OF_DONE.md). This document retains milestone context; live percentages are not duplicated here. Bounded multi-table work below is scheduled serially before final indirect-scope acceptance.
+
 **Selected target (2026-09-08):** replace the embedded AGRUN runtime with [PI Agent Harness](docs/STUDIO_V2_PI_HARNESS_MIGRATION.md), browser first, frontend-only BYOK, with no Node.js/server runtime or proxy. PI-00 qualification comes first; PI-01 through PI-05 cover transport, host tools, sessions, acceptance and retirement. This is planned work; current code remains AGRUN. Existing policy gates remain mandatory, and shared-service work is not a prerequisite for this target.
 
 The [Agent boundary migration plan](docs/STUDIO_V2_AGENT_BOUNDARY_MIGRATION.md) retains M0-M5 ordering. The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) reopens M1 lifecycle; fix host provenance and session admission at the existing owners before broader M4 acceptance. M2/M3 foundations do not imply acceptance closure. Coding has resumed; do not change product defaults, expand scope or authorize rollout through documentation.
@@ -65,7 +67,7 @@ E12 的单用户路径保留兼容，不做破坏式替换。
 |---|---|---|
 | 1 | PROD-13 privacy, PROD-01 scope, PROD-02 apply policy, PROD-03 state | FormSpec/CommandBus/renderer; prove cross-path behavior |
 | 2 | PROD-04 candidate lifecycle, PROD-07 Quality, PROD-08 draft/save | Shared policy/state; no stale commit, silent overwrite or false save claim |
-| Parallel bounded work | PROD-05 total/per-table limits, PROD-06 repeat semantics | Binding/formatter investigation; explicit policy and compatibility tests |
+| Before final scope closure | S06 full scope acceptance | S04 closed PROD-05 total/per-table limits and S05 closed PROD-06 local repeat semantics; continue with the complete indirect/global-effect matrix |
 | 3 | PROD-09 workspace proposal, PROD-11 focused JS splits | Stable state/selection; user-flow and regression evidence |
 | 4 | PROD-10 certification, PROD-12 release coverage | Applicable fixes, selected release profile and real print evidence |
 | Conditional expansion | E15 remote UI / HA / recovery operations | Explicit shared-service deployment scope |

@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { openEditor, openInspector, passLayoutReview } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor, openInspector, passLayoutReview } from "./studio-v2-helpers.js";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/studio-v2/");
   await expect(page).toHaveTitle(/PrintForm Studio v2/);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
 });
 test("publishes link-only setup for Codex and Claude Code", async ({ page }) => {
   await openInspector(page);

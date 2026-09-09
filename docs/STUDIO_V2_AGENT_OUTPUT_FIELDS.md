@@ -23,7 +23,7 @@ Scope: the 35 names in [TOOL_CONTRACTS](../studio-v2/core/tool-contracts.js); ma
 | Observed path | Verified source fact | Target action |
 |---|---|---|
 | get_revision | Dispatch calls getRevision() without an argument; returns revision/projectHash/transactionId/committedAt only | Preserve this bounded metadata shape; the earlier data-policy wording implying a full project response is corrected |
-| undo_revision | History returns changed/revision/project; current sanitizer does not remove root project | Keep changed/revision; omit the project at the Agent boundary |
+| undo_revision | History returns changed/revision/project; successful navigation now reports a fresh durable monotonic revision while the internal project is the selected logical history state | Keep changed/revision; omit the project at the Agent boundary |
 | Direct transaction results | begin/approve/lease/takeover/recover/rollback return a transaction at result root | Apply Transaction shape directly; nested-transaction-only sanitization is insufficient |
 | get_transaction_history | entries and auditEvents bypass dedicated nested projections today | Project Journal and Audit item shapes individually |
 | inspect_design_state | Column inspection returns translated header labels and width strings | Generate neutral column labels and validate widths; exclude original business labels |
@@ -70,7 +70,7 @@ Static means exact repository-owned constants/schema projections, never document
 | 27 | `set_locale` | ApplyResult plus locale: Locale | Same nested projection as apply_changes; no-op must retain existing revision |
 | 28 | `set_asset_source` | ApplyResult plus slot: Ref | Source URL/data URL, alt text and fetched bytes never echoed |
 | 29 | `set_sample_scenario` | ApplyResult | Generated data remains local; generation does not certify the whole document synthetic |
-| 30 | `undo_revision` | changed: boolean; revision: R | Omit root project even for changed:false; host UI can consume its internal project result |
+| 30 | `undo_revision` | changed: boolean; revision: R | Omit root project even for changed:false; host UI can consume its internal project result. A successful Undo/Redo navigation revision is new and canonical, not the old target revision number |
 | 31 | `get_layout_review_status` | revision: R; review: ReviewStatus; checklist: Static | Preserve reviewedRevision/null; no free-text receipt summary |
 | 32 | `begin_layout_review` | revision: R; attempt: Count; checklist/requiredScenarios: Static; metrics: Metrics; issues: Issue[] | No raw render report or issue text |
 | 33 | `capture_layout_evidence` | Success: revision: R, scenario: Scenario, evidence: Evidence, requiredScenarios/capturedScenarios: Scenario[]; observation variant: revision, scenario, evidence:null, observation: Observation/null, validation?: Validation, metrics?: Metrics, pixelCapture?: PixelFailure | Observation never becomes a signed receipt; Pixel fields require current Synthetic policy |

@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { openEditor } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 test.describe("Studio v2 production boundary", () => {
   test("requires human approval for direct Agent document mutations", async ({ page }) => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    const beforeAdmission = await page.evaluate(() => window.PrintFormStudioAgent.execute("get_project_summary"));
+    expect(beforeAdmission).toMatchObject({ ok: false, error: { code: "CLIENT_NOT_ADMITTED" } });
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const run = (name, input) => window.PrintFormStudioAgent.execute(name, input);
       const initial = await run("get_revision", {});
@@ -82,6 +85,7 @@ test.describe("Studio v2 production boundary", () => {
     await page.locator("label.privacy-toggle").click();
     await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const run = (name, input) => window.PrintFormStudioAgent.execute(name, input);
       const before = Object.keys(localStorage).filter((key) => key.startsWith("printform:"));
@@ -109,6 +113,7 @@ test.describe("Studio v2 production boundary", () => {
     await openEditor(page);
     await page.locator("label.privacy-toggle").click();
     await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
+    await admitPublicGateway(page);
 
     const before = await readClientStorage(page);
     const result = await page.evaluate(async () => {
@@ -128,6 +133,7 @@ test.describe("Studio v2 production boundary", () => {
 
     await page.reload();
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await admitPublicGateway(page);
     const reloaded = await page.evaluate(async () => ({
       summary: await window.PrintFormStudioAgent.execute("get_project_summary"),
       recoveryVisible: !document.querySelector("#restore-banner")?.classList.contains("hidden")
@@ -145,6 +151,7 @@ test.describe("Studio v2 production boundary", () => {
     await page.locator("label.privacy-toggle").click();
     await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const { DesignerRuntimeController } = await import("/studio-v2/ui/agent-runtime.js");
       const { classifyRealDocument } = await import("/studio-v2/core/data-policy.js");
@@ -192,6 +199,7 @@ test.describe("Studio v2 production boundary", () => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
     await openEditor(page);
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const { DesignerRuntimeController } = await import("/studio-v2/ui/agent-runtime.js");
       const { classifyRealDocument, classifySyntheticDocument } = await import("/studio-v2/core/data-policy.js");
@@ -239,6 +247,7 @@ test.describe("Studio v2 production boundary", () => {
     await page.goto("/studio-v2/");
     await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
     await openEditor(page);
+    await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const { DesignerRuntimeController } = await import("/studio-v2/ui/agent-runtime.js");
       const { classifySyntheticDocument } = await import("/studio-v2/core/data-policy.js");

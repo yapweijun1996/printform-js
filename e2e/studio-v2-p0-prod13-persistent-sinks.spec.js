@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openEditor } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 import { readClientStorage } from "./studio-v2-storage-inspection.js";
 
 const CANARY = "REAL-SINK-CANARY-20260908";
@@ -11,6 +11,7 @@ test("PROD-13 13-02 keeps Real preview, apply and review payloads volatile", asy
   await page.locator("label.privacy-toggle").click();
   await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  await admitPublicGateway(page);
 
   const manifestEditor = page.locator("#manifest-editor");
   const manifest = JSON.parse(await manifestEditor.inputValue());

@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import { createAgentPanelRuntime } from "../../studio-v2/ui/agent-panel-runtime.js";
 
 function harness() {
-  const oldProposal = { proposalId: "proposal-pass-1", diff: { changed: true } };
+  const oldProposal = {
+    proposalId: "proposal-pass-1",
+    operations: [{ type: "set_brand_color", hex: "#854d0e" }],
+    diff: { changed: true }
+  };
   const nextProposal = { proposalId: "proposal-pass-2" };
   const state = { proposal: oldProposal, controller: null, currentRecord: { id: "chat-1" }, sessionNeedsCreate: false };
   const nodes = new Map([
@@ -60,6 +64,46 @@ describe("AI panel automatic review proposal state", () => {
     expect(result.applied.result.revision).toBe(1);
     expect(test.state.proposal).toBeNull();
     expect(test.statuses.at(-1)).toBe("aiChat.status.applied");
+  });
+
+  it("reports a committed revision when post-commit validation is unavailable", async () => {
+    const test = harness();
+    test.state.controller = {
+      async applyProposal() { return { applied: { result: { revision: 1 } }, validationUnavailable: true }; }
+    };
+
+    const result = await test.runtime.autoApplyPending({ id: "profile" });
+
+    expect(result.applied.result.revision).toBe(1);
+    expect(test.state.proposal).toBeNull();
+    expect(test.statuses.at(-1)).toBe("aiChat.status.validationUnavailable");
+  });
+
+  it("ignores a duplicate approval while the first Apply is resolving", async () => {
+    const test = harness();
+    let release;
+    let started;
+    const pending = new Promise((resolve) => { release = resolve; });
+    const startedPromise = new Promise((resolve) => { started = resolve; });
+    let applyCalls = 0;
+    test.state.controller = {
+      async applyApprovedProposal() {
+        applyCalls += 1;
+        started();
+        await pending;
+        return { applied: { result: { revision: 1 } } };
+      }
+    };
+
+    const first = test.runtime.resolveApproval("approve");
+    await startedPromise;
+    const second = test.runtime.resolveApproval("approve");
+    release();
+    await Promise.all([first, second]);
+
+    expect(applyCalls).toBe(1);
+    expect(test.statuses.at(-1)).toBe("aiChat.status.applied");
+    expect(test.state.proposal).toBeNull();
   });
 
   it("automatically starts layout review after a changed design is applied", async () => {
