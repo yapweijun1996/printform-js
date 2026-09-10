@@ -1,6 +1,6 @@
 # Studio v2 Agent Handoff
 
-Prepared: 2026-09-09. This handoff records the completed S16 requalification and the current supporting S17/PI-04 browser cases; the remaining final matrix is the next scoped step.
+Prepared: 2026-09-10. This handoff records the completed S16 requalification, the current supporting S17/PI-04 browser cases and the real Demo Gateway pilot run; the direct-BYOK final matrix is still the next scoped step.
 The continuation prompt authorizes the next agent's scoped local implementation.
 Intended operator: PI coding agent, user-selected GPT 5.6 Luna / max.
 Model choice does not change evidence, privacy or approval requirements.
@@ -23,14 +23,14 @@ Preserve conflicting dated paragraphs as history and investigate the current del
 
 ## Dated snapshot
 
-- Observed HEAD: `86591663fc6f655622ea1244e83fa8803e8685e9` plus dirty user work.
+- Observed application revision: `e4302009e461ae398476ec63043c888cd19a07a`; the documentation packet follow-up is recorded separately.
 - S01-S16 retain Done; S17 is at G1 only and is now the next dependency-ready step.
 - S18-S21 have no gate credit. Done: 16/21.
 - Plan: `(16*100 + 10)/21 = 76.7%`, rounded to one decimal.
 - P0: 35/35 Pass = 100%; 0 Fail; 0 Not run. X-01..03 are closed by `e2e/studio-v2-p0-x01.spec.js` and `e2e/studio-v2-p0-x02-x03.spec.js` through the production Studio shell; isolated PI X-01..03 runs remain supporting evidence for S17.
 - PI: PI-00..03 Done, 4/6 = 66.7%; PI-04/05 incomplete.
 - The temporary 72.4% total while S16 was reopened is superseded by current TASK credit.
-- No release approval or completed live-provider/platform/actual-print certification.
+- No release approval or completed direct-BYOK live-provider/platform/actual-print certification; the Demo Gateway run is supporting evidence only.
 - End-of-day local S20 matrix attempt: `node scripts/browser-matrix.mjs` produced 88/88 problem cells; Chromium/Firefox/WebKit returned missing Harness result fields and branded Chrome timed out settling. This earned no gate credit and must be investigated before another run.
 
 ## First action: preserve and identify the working tree
@@ -70,14 +70,15 @@ browser results recorded in the P0 register and S17 evidence.
   supporting result does not establish full P0 closure or session-close timing as the cause.
 - X-03's browser case passed cross-document delayed-callback isolation; it remains supporting evidence.
 - PI-04 cases 17-04..09 now cover synthetic direct Chat/Responses/Gemini, follow-up, commit recovery and Real-policy privacy; all remain supporting evidence.
+- The current-source Demo Gateway run covers registered-origin session/models, a 200 SSE design turn, a 200 SSE layout review, preview/apply transaction read-back, seven synthetic media request variants and no-key/private-route privacy checks; see [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md). It does not qualify the PI direct-BYOK route.
 - Other historical probes stopped before rendering at `SCOPE_VIOLATION` or `COMMAND_FAILED`.
   Unsettled top-level await is incomplete evidence, not proof of a deadlock.
 - Use actual Harness tools/events, actual rendering and final provider-wire evidence including
   follow-up requests; verify policy sinks, races, transaction scope and private approval.
 - Separate deterministic adapter tests from live HTTPS provider qualification. Record redacted
   request shape, provider/model, allowed origin and CORS behavior, never keys or Real payloads.
-- Missing key/provider access/target origin/authorization is a precise blocker, not permission
-  to add an application backend, proxy, demo gateway or mock Pass.
+- Missing direct-BYOK key/provider access/target origin/authorization is a precise blocker, not permission
+  to add an application backend, proxy or mock Pass; the available Demo Gateway remains supporting-only.
 
 ## Command entry points: instructions, not new passing results
 

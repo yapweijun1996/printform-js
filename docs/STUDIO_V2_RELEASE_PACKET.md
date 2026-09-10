@@ -3,15 +3,14 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:21:45+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
-Application delta manifest for the application review revision (non-doc tracked/untracked source, test and build paths):
-`5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
-The runner-only configuration and P0 confirmation-test commits are intentionally outside this application manifest and are recorded separately as test provenance.
-The S16/S17 implementation and evidence changes are committed in the application review revision; the
+Prepared: 2026-09-10; last audited after the local application commit. Application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
+Application source/test delta is exactly the review commit `e4302009e461ae398476ec63043c888cd19a07a`; its path list is reviewable with `git show --stat`.
+The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
+The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
-content sandboxing enabled. `main` tracks `origin/main` and contains the local review commits. No PR
-metadata or outgoing push is present in this checkout. No deployment, publish, user-data deletion, or live
-Provider acceptance was established.
+content sandboxing enabled. `main` is ahead of `origin/main` by local review commits. No PR
+metadata or outgoing push is present in this checkout. No deployment, publish, user-data deletion, or direct-BYOK
+Provider acceptance is claimed. The current Demo Gateway run is recorded below as supporting evidence.
 
 ## 1. Prompt-to-artifact completion checklist
 
@@ -26,8 +25,8 @@ Provider acceptance was established.
 | Private human approval/export and no automatic download | P0 X-01 and PI 17-01/17-08 evidence | Human Apply/review/export boundaries and uncertain-commit recovery are covered; export is confirmed-only. |
 | Unknown/Real privacy semantics and canary sinks | P0 X-01/X-02, PI 17-09, `docs/STUDIO_V2_DATA_POLICY.md` | Synthetic canary is absent from storage, prompts, bodies and qualification output; authorized export sink is the only confirmed sink. Provider retention is unverified. |
 | Old-record/protocol compatibility | S16 evidence and `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md` | Legacy records remain read-only/isolated and AGRUN remains the production entry; PI cutover is deliberately not started. |
-| Frontend-only direct BYOK | `site-dist/studio-v2/pi-04/qualification-manifest.json`, PI 17-04..07 | `appBackend:false`, `providerProxy:false`, direct Chat/Responses/Gemini and follow-up cases are recorded. Live CORS/quota/reliability is unrun. |
-| Focused and repository checks | `docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md` | Recorded: `npm run doctor` 5/5 with 106 files/567 tests, `npm run check`, focused 30/30, JS syntax checks, `git diff --check`, and <=300-line inventory passed. |
+| Frontend-only direct BYOK | `site-dist/studio-v2/pi-04/qualification-manifest.json`, PI 17-04..07 | `appBackend:false`, `providerProxy:false`, direct Chat/Responses/Gemini and follow-up cases are recorded. Direct-BYOK live CORS/quota/reliability is unrun; the separate Demo route is supporting-only. |
+| Focused and repository checks | `docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md` | Recorded: `npm run doctor` 5/5 with 106 files/571 tests, focused 57/57, `npm run check`, JS syntax checks, `git diff --check`, and <=300-line inventory passed. |
 | DoD/release evidence | `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md` | This packet indexes current evidence and open gates; it does not grant S20/S21 credit. |
 | File-size boundary | Current amended source, E2E, script and packet inventory | Every amended file is at or below 300 lines; generated ignored artifacts are tracked by their owning build. |
 
@@ -42,7 +41,7 @@ Provider acceptance was established.
 - Release: **not approved**; Production Ready is not established.
 
 This packet is independent S20 preparation only. The packet/index/checklist edits are documentation-only
-and do not change the application delta manifest. It does not bypass S17 or authorize AGRUN retirement,
+and do not change application commit `e430200`. It does not bypass S17 or authorize AGRUN retirement,
 deployment, publishing, physical print, or maintainer approval.
 
 ## 3. Recorded verification commands and results
@@ -63,6 +62,12 @@ deployment, publishing, physical print, or maintainer approval.
   for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
   a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
   live Provider reliability or retention certification.
+- Current-source Demo Gateway browser requalification: `demo-fast` design and layout-review Responses streams returned
+  **200**; Preview mode showed a pending candidate, one real UI Apply produced revision 1, and `request_export` kept
+  human confirmation required. Text-only, single-image and all-image original/resized variants passed **7/7** with
+  validated Synthetic pixels. Ten Demo request bodies had no key/session/canary markers or forbidden top-level fields;
+  private `/v1` request count was **0**, with no page or console errors. This is credential-free Demo support evidence,
+  not direct-BYOK PI-04 closure; details are in [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
   environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
@@ -76,7 +81,7 @@ deployment, publishing, physical print, or maintainer approval.
   54-test command passed **54/54** across Chromium, Firefox and WebKit with content sandboxing enabled. One preceding
   run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry
   passed **1/1**, followed by the complete **54/54** run.
-- `npm run doctor` — **5/5**, including **106 files / 567 tests** and three static validators.
+- `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **203** entries.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
@@ -97,20 +102,19 @@ or approval result.
 
 ## 4. Artifact and provenance record
 
-- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,449 bytes,
-  SHA-256 `acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`.
+- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,569 bytes,
+  SHA-256 `f90cfe2341bde485054092307c41d0180ac3fee2a37e739b83b5a1d3f03ca3f3`.
 - PI-04 manifest: `site-dist/studio-v2/pi-04/qualification-manifest.json`,
-  SHA-256 `fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`.
+  SHA-256 `2fe9be040809f02f0b96a4b41c1e704eae73767eda4935620aa0454e0875ce97`.
 - Manifest flags: static, frontend-only, actual Harness, policy-bound, private human approval,
   canonical CommandBus, `appBackend:false`, `providerProxy:false`, `providerMatrixSynthetic:true`,
   `liveByokSmoke:false`.
 - The manifest's `sourceCommit` value is the reviewed upstream pi commit
   `b2602be77cb7b0de45dd616407fd210daa48aa75`, as documented in
   `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`; it is intentionally not a local repository commit.
-- The local application source identity is repository HEAD plus the intentionally dirty worktree
-  listed by `git status --short`. The current generated artifact was rebuilt through
-  `scripts/build-pi-04.mjs`; `site-dist/` remains
-  ignored and unpublished. The production Studio entry remains AGRUN.
+- The local application source identity is commit `e4302009e461ae398476ec63043c888cd19a07a`; the
+  generated artifact was rebuilt through `scripts/build-pi-04.mjs`. `site-dist/` remains ignored and
+  unpublished. The production Studio entry remains AGRUN.
 
 ## 5. S18/PI-05 dependency inventory (preparation only)
 
@@ -119,8 +123,8 @@ or approval result.
   integrity value; generated entry SHA-256 is `cab56aecec5b68514cc9c586f8ed78b062e86f9183d53106524bcc566feb74dd`.
 - `scripts/build-site.mjs` builds isolated PI-00..PI-04 qualification artifacts and then stamps
   `studio-v2/sw.js`; it does not wire PI into the default Studio entry. The generated Service Worker
-  currently has 202 app-shell entries, includes both AGRUN and isolated PI assets, and uses local cache
-  build id `local` (`site-dist/studio-v2/sw.js` SHA-256 `c9b09bbd7c99a4b605bb57fabcb5192779376b1c673ff82112809395c883cef3`).
+  currently has 203 app-shell entries, includes both AGRUN and isolated PI assets, and uses local cache
+  build id `local` (`site-dist/studio-v2/sw.js` SHA-256 `c9572c9aeccbfada01346264ff8e08adb92a0d85f139e336dceb259bc400ba4b4`).
 - Cutover owners and rollback constraints are recorded in `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`:
   retire AGRUN only after PI-04, preserve legacy read-only history, test old-worker upgrade, and
   restore a previously verified static artifact with its matching cache manifest. No default cutover,
@@ -128,9 +132,10 @@ or approval result.
 
 ## 6. Open gates and exact unblock inputs
 
-1. **S17/PI-04:** an authorized live Provider profile: approved frontend origin/CORS behavior,
+1. **S17/PI-04:** an authorized direct-BYOK Provider profile: approved frontend origin/CORS behavior,
    credential supplied through the approved runtime store, model/quota/reliability window, and
-   redacted request/response evidence. No key belongs in this packet or prompt.
+   redacted request/response evidence. Demo Gateway origin/session evidence is complete as supporting
+   evidence only; no key belongs in this packet or prompt.
 2. **S18/PI-05:** only after S17 closure, locally test PI default entry, AGRUN retirement, service-worker
    upgrade, legacy reads and rollback; do not cut over now.
 3. **S19/PROD-10:** adopt the exact OS/browser/version/template/paper/locale/size profile and obtain

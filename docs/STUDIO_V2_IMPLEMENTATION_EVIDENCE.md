@@ -1,6 +1,6 @@
 # Studio v2 Resumed Implementation Evidence
 
-Date: 2026-09-10. Scope: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit `59f4fe7`; current status commit `bb499a9`.
+Date: 2026-09-10. Scope: application review revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit `59f4fe7`; documentation status follows this source revision.
 Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35 Pass, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
 Latest P0 register: **35 Pass, 0 Fail, 0 Not run**. The focused 13-07 run now closes the browser Demo request/disclosure path after origin registration; later PI/release evidence remains incomplete.
@@ -284,17 +284,15 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). Cases 03-01 through
   direct-browser `createPiByokAdapter`/Harness composition for Chat and Responses; 17-06 adds **3/3** for Gemini, 17-07 for
   follow-up payloads, 17-08 for commit recovery and 17-09 for Real-policy privacy. Keys are header-only and bodies exclude
   key/canary. The combined PI-04 browser command passed **27/27**, and the latest complete combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit; a 2026-09-10 repeat hit Chromium/WebKit **36/36** but all Firefox cases failed before page creation with `browserContext.newPage` and teardown hung, so that repeat is environment diagnostics only. The Windows-only Firefox runner adjustment in `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0` adds `--disable-gpu` while retaining content sandboxing; the standard 54-test command then passed **54/54** across all three engines. One preceding run was **53/54** due a Firefox teardown protocol error after page assertions passed, followed by standalone **1/1** and full **54/54** reruns. A separate Firefox-only run with `MOZ_DISABLE_CONTENT_SANDBOX=1` passed **18/18**, but it weakens browser isolation and remains diagnostic only. All nine PI cases remain supporting evidence, and candidate/committed renders now use the sandboxed iframe/geometry path.
-- Current isolated PI-04 bundle: **1,212,449 bytes**, entry SHA-256 `acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; static/frontend-only manifest has `appBackend: false`,
-  `providerProxy: false`, `directProviderChat: true`, `directProviderResponses: true`, `directProviderGemini: true`, `directProviderFollowUp: true`, `directProviderCommitRecovery: true`, `directProviderRealPrivacy: true`, `providerMatrixSynthetic: true`, `liveByokSmoke: false`, and SHA-256 `fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`.
-  `npm run check`, JS `node --check`, `git diff --check`, PI-02 **18/18**, and full **106 files / 567 tests** passed; rebuilt site has **202** SW precache entries. See [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
-- S17 remains **G1 / 10% (`x----`)** because full provider/render/privacy/transaction matrix and final PI-04 exit
-  criteria remain open; current plan credit is 76.7% with 16/21 Done and gate credit remains in TASK.
+- Current isolated PI-04 bundle: **1,212,569 bytes**, entry SHA-256 `f90cfe2341bde485054092307c41d0180ac3fee2a37e739b83b5a1d3f03ca3f3`; static/frontend-only manifest has `appBackend: false`,
+  `providerProxy: false`, `directProviderChat: true`, `directProviderResponses: true`, `directProviderGemini: true`, `directProviderFollowUp: true`, `directProviderCommitRecovery: true`, `directProviderRealPrivacy: true`, `providerMatrixSynthetic: true`, `liveByokSmoke: false`, and SHA-256 `2fe9be040809f02f0b96a4b41c1e704eae73767eda4935620aa0454e0875ce97`.
+  `npm run check`, JS `node --check`, `git diff --check`, PI-02 **18/18**, and full **106 files / 571 tests** passed; rebuilt site has **203** SW precache entries. See [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
+- S17 remains **G1 / 10% (`x----`)** because the current Demo Gateway run is supporting-only and the direct-BYOK provider/render/privacy/transaction matrix plus final PI-04 exit criteria remain open; current plan credit is 76.7% with 16/21 Done and gate credit remains in TASK.
 
 ## Remaining work and safe continuation
-1. P0 case closure is now 35/35 after the registered-origin 13-07 browser requalification; continue PI/release evidence without treating the held Demo request or controlled runtime cases as live Provider reliability certification.
+1. P0 case closure is now 35/35 after the registered-origin 13-07 browser requalification; the current Demo Gateway run is supporting transport/privacy evidence and is not direct-BYOK Provider reliability certification.
 2. Continue S17 through the remaining final provider/render/privacy/transaction matrix one case at a time, reusing PI-00..04 without cutting over AGRUN.
 3. Prepare S18 cutover, S19 print/platform certification, S20 packet and S21 approval only at their gates; do not deploy, publish or push.
 
 Rollback preserves canonical committed data and existing records; never restore permissive Unknown/Real defaults,
-raw output, unconditional pixels or an unguarded session store. No real business data, live Provider test,
-deployment, release, push or user-data deletion was performed. SCMC: **PASS WITH WARNINGS** for this bounded design; pinned runtime drift requires rerunning browser parity/CAS checks. This is not Production Ready.
+raw output, unconditional pixels or an unguarded session store. No real business data or direct-BYOK live Provider test, deployment, release, push or user-data deletion was performed. SCMC: **PASS WITH WARNINGS** for this bounded design; pinned runtime drift requires rerunning browser parity/CAS checks. This is not Production Ready.

@@ -1,13 +1,13 @@
 # S17 / PI-04 Composed Acceptance Evidence
 
-Date: 2026-09-09. Status: **Pending closure, G1 Investigated (10%); S16 prerequisite closed, X-01..03 supporting cases recorded**. This record covers the
+Date: 2026-09-10. Status: **Pending closure, G1 Investigated (10%); S16 prerequisite closed, X-01..03 supporting cases recorded**. This record covers the
 isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
 
-Source identity: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner
-verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; packet
-provenance is committed in `d87464330044ceca33eb9062bc74d6d6c3c7edd6`. S16/PI-03, S12/PROD-09 and
+Source identity: application review revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner
+verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; this evidence and the release packet are refreshed
+against that source revision. S16/PI-03, S12/PROD-09 and
 S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
 
 Owners inspected:
@@ -81,9 +81,9 @@ with a stable project hash, and left B as `unknown`, table-A scoped, Preview, re
 no Evidence Pack and zero chat entries. B remained readiness-blocked with `PREVIEW_REQUIRED` and
 `LAYOUT_REVIEW_REQUIRED`; no canary appeared in the qualification output and no external request occurred.
 
-Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,449 bytes**, SHA-256
-`acfe9ef8e2fab05797dddf72dbbcb73fc32332b3e9dc7156b62276d2cde9fdc0`; manifest SHA-256
-`fd78fafd36bab247f353066264e5e40f66f7e35d8329c46b21f344d55737fea2`; the manifest records `x01`, `x02`, `x03`,
+Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,569 bytes**, SHA-256
+`f90cfe2341bde485054092307c41d0180ac3fee2a37e739b83b5a1d3f03ca3f3`; manifest SHA-256
+`2fe9be040809f02f0b96a4b41c1e704eae73767eda4935620aa0454e0875ce97`; the manifest records `x01`, `x02`, `x03`,
 `directProviderChat`, `directProviderResponses`, `directProviderGemini`, `directProviderFollowUp`,
 `directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. The latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
 
@@ -104,6 +104,28 @@ The current-source `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` rer
 **3/3** across Chromium, Firefox and WebKit. This closes P0 13-07 browser transport/disclosure
 evidence only; it does not convert the synthetic PI provider matrix into live reliability evidence
 or award S17 gate credit.
+
+### Current-source Demo Gateway browser requalification (supporting; not PI-04 closure)
+
+Date: 2026-09-10; environment: Windows Chromium through the local static Studio at
+`http://127.0.0.1:4174`, with the registered `github-pages` Demo project. The real browser obtained a
+short-lived Demo session with **201**, read `/demo/v1/models` with **200**, and did not record the token.
+
+- The default `demo-fast` Responses design turn returned **200 SSE** and produced a bounded PrintForm
+  action; the current host applied one revision in Auto mode. A separate layout review returned **200 SSE**,
+  completed the dedicated review action, and left human print-preview/export confirmation required.
+- Preview mode kept a candidate visible before UI Apply; one real UI Apply moved revision 0 to revision 1.
+  `request_export` reported `exportReady: false` and `requiresUserConfirmation: true`; no automatic download occurred.
+- The same browser exercised text-only, single-image and all-image original/resized variants (**7/7 HTTP 200**)
+  using validated Synthetic PNG/JPEG/WebP pixels, including two-image and multi-page captures. The final payload
+  used only `/demo/v1/responses`; private `/v1` request count was **0**.
+- Ten Demo requests contained no key/session/canary markers and no forbidden top-level fields (`tools`,
+  `tool_choice`, `files`, `audio`, `background`, `web_search`, `store`); page and console error lists were empty.
+
+This validates the current credential-free Demo Gateway flow and its host-side transaction/privacy boundaries.
+It is not direct PI BYOK evidence: provider-key CORS/quota/reliability, Edge, Safari.app, physical printing,
+deployment retention and release approval remain unrun. It earns no S17 G2-G5 credit; TASK remains `x----`,
+10%, plan **76.7%**, Done **16/21**, P0 **35/35**, PI **4/6**.
 
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
@@ -178,7 +200,7 @@ retention, live CORS, live reliability, or final P0/S17 gate closure.
 ## Remaining S17 blockers
 
 - The isolated PI-04 page has no production UI shell; visible approval/export still belongs to the AGRUN Studio entry. Replacing that runtime with PI would be S18/cutover work, not an authorized PI-04 fixture shortcut.
-- The target-origin/CORS registration is now verified for the local Harness and the public Studio origin, but no authorized live Provider credential, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Synthetic interception remains explicitly supporting evidence.
+- Demo target-origin/CORS registration and a current Demo live run are verified for the local/public Studio origins, but no authorized direct-BYOK Provider credential, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Demo and synthetic results remain explicitly supporting evidence.
 
 ## X-01 — historical supporting case evidence (Pass; S17 remains in progress)
 
@@ -204,7 +226,7 @@ table scope/gateway, CommandBus transaction/CAS, private approval/apply, current
   `providerProxy: false`, `liveByokSmoke: false`. The browser bundle has no bare PI package/Node
   imports, `eval` or `new Function`; the bundle's third-party websocket status labels are non-executable
   strings. `npm run check`, PI-04 JS `node --check`, and `git diff --check` passed. The full build baseline
-  passed **106 files / 567 tests**; PI-02 host regression after the shared injection passed **18/18** across
+  passed **106 files / 571 tests**; PI-02 host regression after the shared injection passed **18/18** across
   the three engines.
 
 This records isolated X-01 supporting coverage only, not the separate production-shell P0 closure. DoD remains **G1 / 10%** (`x----`):
