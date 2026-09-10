@@ -86,6 +86,8 @@ Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,
 `directProviderChat`, `directProviderResponses`, `directProviderGemini`, `directProviderFollowUp`,
 `directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. The latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
 
+The 2026-09-10 repeat of the combined target command passed Chromium **18/18** and WebKit **18/18**, but all Firefox cases failed before page creation with `browserContext.newPage: Cannot read properties of undefined (reading '_page')`; Playwright then hung during teardown and was interrupted. This is a browser-runner diagnostic and does not invalidate the last complete 54/54 result or add S17 credit.
+
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
 Date: 2026-09-09; environment: Chromium, Firefox and WebKit through the actual static PI-04 page. The case uses the
