@@ -14,6 +14,18 @@ describe("provider text proposal recovery", () => {
     expect(result).toEqual({ expectedRevision: 4, operations: [{ type: "set_font_scale", basePt: 9.5 }] });
   });
 
+  it("accepts the bounded Demo action envelope", () => {
+    const result = parseTextProposal(JSON.stringify({ type: "action", name: "printform_preview_changes", args: {
+      expectedRevision: 2, operations: [{ type: "set_brand_color", hex: "#854d0e" }]
+    } }));
+    expect(result).toEqual({ expectedRevision: 2, operations: [{ type: "set_brand_color", hex: "#854d0e" }] });
+  });
+
+  it("recovers the bounded brand-colour action envelope into a semantic operation", () => {
+    const result = parseTextProposal(JSON.stringify({ type: "action", name: "printform_preview_brand_color", args: { hex: "#854d0e" } }));
+    expect(result).toEqual({ operations: [{ type: "set_brand_color", hex: "#854d0e" }] });
+  });
+
   it("accepts several safe semantic operations and ignores non-proposal JSON", () => {
     const result = parseTextProposal('Validation: {"valid":true}. Proposal: [{"type":"set_brand_color","hex":"#854d0e"},{"type":"set_column_widths","tableSelector":".items","widths":["8%","52%","20%","20%"]}]');
     expect(result?.operations).toEqual([

@@ -147,7 +147,7 @@ describe("AI Designer deterministic proposal workflow", () => {
   it("uses provider-tool-free envelope mode for the built-in Demo Gateway", async () => {
     const fake = fakeAgrun(async () => {});
     const demoProfile = {
-      id: "own-gpt-server", provider: "openai", model: "gpt-5.4-mini",
+      id: "own-gpt-server", provider: "openai", model: "demo-fast",
       endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses"
     };
     await DesignerRuntimeController.create({
@@ -158,6 +158,8 @@ describe("AI Designer deterministic proposal workflow", () => {
       profile: demoProfile
     });
     expect(fake.options()).toMatchObject({ plannerMode: "envelope", nativeToolsFailurePolicy: "hard_fail" });
+    expect(fake.options().skills).toEqual([]);
+    expect(fake.options().disabledActions).toContain("printform_get_operation_catalog");
     expect(fake.options().customActions.map((action) => action.name)).toContain("printform_preview_changes");
   });
 

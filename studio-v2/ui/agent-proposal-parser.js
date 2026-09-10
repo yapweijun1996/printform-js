@@ -52,21 +52,32 @@ function parseOperation(value) {
   catch { return null; }
 }
 
+function actionArgs(value) {
+  if (!isObject(value) || value.type !== "action" || !isObject(value.args)) return null;
+  if (value.name === "printform_preview_changes") return value.args;
+  if (value.name === "printform_preview_brand_color" && typeof value.args.hex === "string") {
+    return { operations: [{ type: "set_brand_color", hex: value.args.hex }] };
+  }
+  return null;
+}
+
 function operationList(value) {
   if (Array.isArray(value)) return value;
-  if (!isObject(value)) return null;
-  if (Array.isArray(value.operations)) return value.operations;
-  if (Array.isArray(value.proposal?.operations)) return value.proposal.operations;
-  if (Array.isArray(value.candidate?.operations)) return value.candidate.operations;
-  if (Array.isArray(value.operation)) return value.operation;
-  if (typeof value.type === "string") return [value];
-  if (isObject(value.proposal) && typeof value.proposal.type === "string") return [value.proposal];
-  if (isObject(value.candidate) && typeof value.candidate.type === "string") return [value.candidate];
+  const source = actionArgs(value) || value;
+  if (!isObject(source)) return null;
+  if (Array.isArray(source.operations)) return source.operations;
+  if (Array.isArray(source.proposal?.operations)) return source.proposal.operations;
+  if (Array.isArray(source.candidate?.operations)) return source.candidate.operations;
+  if (Array.isArray(source.operation)) return source.operation;
+  if (typeof source.type === "string") return [source];
+  if (isObject(source.proposal) && typeof source.proposal.type === "string") return [source.proposal];
+  if (isObject(source.candidate) && typeof source.candidate.type === "string") return [source.candidate];
   return null;
 }
 
 function expectedRevision(value) {
-  const candidates = [value, value?.proposal, value?.candidate];
+  const args = actionArgs(value);
+  const candidates = [value, args, value?.proposal, value?.candidate];
   return candidates.find((item) => Number.isInteger(item?.expectedRevision) && item.expectedRevision >= 0)?.expectedRevision;
 }
 

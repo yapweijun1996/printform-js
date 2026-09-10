@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { DESIGNER_PROMPT } from "../../studio-v2/ui/agent-designer-prompt.js";
+import { DEMO_DESIGNER_PROMPT, DESIGNER_PROMPT } from "../../studio-v2/ui/agent-designer-prompt.js";
 import { AGENT_CONTRACT_VERSION } from "../../studio-v2/core/constants.js";
 import { TOOL_CONTRACTS } from "../../studio-v2/core/tool-contracts.js";
 
@@ -19,6 +19,14 @@ describe("Agent runtime instructions follow production policy", () => {
   it("keeps the embedded runtime prompt inside host permissions", () => {
     assertPolicyInstructions(DESIGNER_PROMPT);
     expect(DESIGNER_PROMPT).toContain("human must use the Studio Production export UI");
+  });
+
+  it("keeps the Demo planner prompt compact and policy-bound", () => {
+    expect(DEMO_DESIGNER_PROMPT.length).toBeLessThan(DESIGNER_PROMPT.length);
+    expect(DEMO_DESIGNER_PROMPT).toContain("review context lists allowed operation types and field names");
+    expect(DEMO_DESIGNER_PROMPT).toContain("Demo session grants no scope or apply permission");
+    expect(DEMO_DESIGNER_PROMPT).toContain("do not request browser screenshots or reuse earlier Synthetic pixels");
+    expect(DEMO_DESIGNER_PROMPT).toContain("Human export remains required");
   });
 
   it("publishes restrictive MCP initialization instructions and all 35 tools without connecting CDP", () => {

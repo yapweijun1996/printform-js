@@ -1,6 +1,6 @@
 import { stableStringify } from "../core/json.js";
 import { prepareVisualReviewEvidence } from "../core/visual-regression.js";
-import { buildProviderInput } from "./agent-provider.js";
+import { buildProviderInput, isCredentialFreeDefaultGatewayProfile } from "./agent-provider.js";
 
 export const MAX_LAYOUT_REVIEW_PASSES = 3;
 const FALLBACK_SCENARIOS = ["default", "long-text"];
@@ -35,9 +35,57 @@ function safeResult(response) {
   return response?.ok ? response.result : null;
 }
 
-function buildReviewPrompt(state, collected) {
+function compactOperations(operations) {
+  return (Array.isArray(operations) ? operations : []).map((operation) => ({
+    type: operation.type,
+    fields: Object.keys(operation.inputSchema?.properties || {})
+  }));
+}
+
+function compactEvidence(evidence) {
+  return (Array.isArray(evidence) ? evidence : []).map(({ scenario, visualMode, coverage, metrics, visualRegression, issueCodes, validation }) => ({
+    scenario,
+    visualMode,
+    coverage: coverage && {
+      capturedPages: coverage.capturedPages,
+      totalPages: coverage.totalPages,
+      complete: coverage.complete === true
+    },
+    metrics: metrics && {
+      overflowElements: metrics.overflowElements,
+      verticalOverflowPages: metrics.verticalOverflowPages,
+      contrastFailures: metrics.contrastFailures,
+      renderedRows: metrics.renderedRows,
+      expectedRows: metrics.expectedRows
+    },
+    visualRegression: visualRegression && {
+      available: visualRegression.available === true,
+      changed: visualRegression.changed === true
+    },
+    issueCodes: Array.isArray(issueCodes) ? issueCodes : [],
+    validation: validation && {
+      valid: validation.valid,
+      productionValid: validation.productionValid,
+      errors: Array.isArray(validation.errors) ? validation.errors.map((item) => item?.code).filter(Boolean) : [],
+      warnings: Array.isArray(validation.warnings) ? validation.warnings.map((item) => item?.code).filter(Boolean) : []
+    }
+  }));
+}
+
+function buildReviewPrompt(state, collected, demoGateway = false) {
   const finalPass = state.pass >= state.maxPasses;
-  return `You are running PrintForm's bounded multimodal layout review pass ${state.pass}/${state.maxPasses}.
+  const operations = demoGateway ? compactOperations(collected.operationCatalog) : collected.operationCatalog;
+  const context = JSON.stringify({
+    pass: state.pass,
+    finalPass,
+    revision: collected.expectedRevision,
+    evidence: demoGateway ? compactEvidence(collected.context) : collected.context,
+    ...(demoGateway ? {} : { checklist: collected.begun.checklist }),
+    operations
+  });
+  const instructions = demoGateway
+    ? `Review attached synthetic PrintForm images and safe metadata for pass ${state.pass}/${state.maxPasses}. Choose exactly one: repair with printform_preview_layout_repair before the final pass; complete with printform_complete_current_layout_review when all scenarios are clean; or report with printform_report_layout_blocked when no safe repair exists. Never apply, export or return prose; the host owns revision, validation and evidence receipts.`
+    : `You are running PrintForm's bounded multimodal layout review pass ${state.pass}/${state.maxPasses}.
 Inspect every attached image and the safe metadata below. Pixel images exist only for synthetic data; geometry images never contain document text or asset pixels.
 Choose exactly one terminal PrintForm action and do not return a conversational answer:
 1. If a repair is needed and this is not the final pass, call printform_preview_layout_repair once with complete semantic operations, structured findings and a safe summary. Do not call generic preview actions.
@@ -45,15 +93,8 @@ Choose exactly one terminal PrintForm action and do not return a conversational 
 3. If a blocking issue remains on the final pass, no safe semantic repair exists, or evidence cannot become reviewable, call printform_report_layout_blocked once.
 Never apply changes or request export. The host owns automatic Apply, fresh evidence capture and export-readiness checks.
 Review clipping, overlap, overflow, readability, hierarchy, spacing, table balance, repeated areas, totals grouping, asset proportions, contrast and long-text pagination.
-Safe review context: ${JSON.stringify({
-    pass: state.pass,
-    finalPass,
-    revision: collected.expectedRevision,
-    evidence: collected.context,
-    checklist: collected.begun.checklist,
-    designState: collected.designState,
-    operations: collected.operationCatalog
-  })}`;
+Safe review context: ${context}`;
+  return `${instructions}${demoGateway ? `\nSafe review context: ${context}` : ""}`;
 }
 
 export class LayoutReviewLoop {
@@ -169,10 +210,18 @@ export class LayoutReviewLoop {
   async runPass(profile) {
     const collected = await this.collectEvidence();
     this.controller.emit({ type: "layout_multimodal_started", detail: { pass: this.state.pass, imageCount: collected.parts.length } });
-    const outcome = await this.controller.consume(buildProviderInput(profile, buildReviewPrompt(this.state, collected), collected.parts, {
+    const demoGateway = isCredentialFreeDefaultGatewayProfile(profile);
+    const reviewPrompt = buildReviewPrompt(this.state, collected, demoGateway);
+    const input = buildProviderInput(profile, demoGateway ? "Review the attached synthetic PrintForm images" : reviewPrompt, collected.parts, {
       dataPolicy: this.controller.assertCurrentPolicy(),
-      assertCurrentPolicy: () => this.controller.assertCurrentPolicy()
-    }));
+      assertCurrentPolicy: () => this.controller.assertCurrentPolicy(),
+      systemPromptSuffix: demoGateway ? reviewPrompt : ""
+    });
+    if (demoGateway) {
+      input.runtimeContextMode = "isolated";
+      input.contextSnapshot = { continuityResolution: {}, inquiryContext: {}, sessionMemory: {}, turnIntent: {} };
+    }
+    const outcome = await this.controller.consume(input);
     if (outcome?.completed?.terminalKind === "abort") {
       this.controller.onCandidateState(false);
       return { ...outcome, evidence: collected.context, readiness: null, stopped: true };

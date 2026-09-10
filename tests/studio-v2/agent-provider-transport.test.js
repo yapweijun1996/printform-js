@@ -40,13 +40,13 @@ afterEach(() => {
 describe("AI Designer provider mocked transport", () => {
   it("defaults to the browser Demo Responses profile without embedding a credential", () => {
     expect(DEFAULT_PROVIDER_PRESET).toMatchObject({
-      id: "own-gpt-server", provider: "openai", model: "gpt-5.4-mini",
-      endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses", reasoningEffort: "medium"
+      id: "own-gpt-server", provider: "openai", model: "demo-fast",
+      endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses", reasoningEffort: ""
     });
     expect(DEFAULT_PROVIDER_PRESET).not.toHaveProperty("apiKey");
     expect(chooseDefaultProviderProfile([{ id: "openai-old", provider: "openai" }, DEFAULT_PROVIDER_PRESET])).toBe(DEFAULT_PROVIDER_PRESET);
     expect(buildProviderInput(DEFAULT_PROVIDER_PRESET, "hello")).toMatchObject({
-      provider: "openai", authMode: "server", endpoint: "https://gpt.yapweijun1996.com/demo/v1/responses", apiVariant: "responses", reasoningEffort: "medium", model: "gpt-5.4-mini"
+      provider: "openai", authMode: "server", endpoint: "https://gpt.yapweijun1996.com/demo/v1/responses", apiVariant: "responses", model: "demo-fast", modelTier: "lite", compactPlannerSystemPrompt: true, compactEnvelopeExamples: true
     });
   });
 

@@ -24,6 +24,7 @@ function readyReport(overrides = {}) {
 
 function fakeAgrun(runTurn) {
   let runtimeOptions;
+  let runtimeTurns = 0;
   let turns = 0;
   const inputs = [];
   const session = {
@@ -42,14 +43,14 @@ function fakeAgrun(runTurn) {
     defineAction: (definition) => definition,
     createRuntime: (options) => {
       runtimeOptions = options;
-      return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
+      return { runStream: (input) => { runtimeTurns += 1; return session.runStream(input); }, createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
     },
     openaiBrowserSkill: {}, geminiBrowserSkill: {}
   };
-  return { Agrun, inputs, turns: () => turns, options: () => runtimeOptions };
+  return { Agrun, inputs, turns: () => turns, runtimeTurns: () => runtimeTurns, options: () => runtimeOptions };
 }
 
-async function harness(runTurn, renderer = async () => readyReport()) {
+async function harness(runTurn, renderer = async () => readyReport(), profileOverride = profile) {
   const bus = new CommandBus(createSalesInvoiceProject(), { renderCandidate: renderer, dataPolicy: classifySyntheticDocument("layout-review-fixture") });
   const initial = readyReport();
   const projectHash = await hashRenderProject(bus.project);
@@ -64,7 +65,7 @@ async function harness(runTurn, renderer = async () => readyReport()) {
   const events = [];
   const candidateStates = [];
   const controller = await DesignerRuntimeController.create({
-    Agrun: fake.Agrun, gateway, sessionManager: { createStore: () => ({}) }, sessionId: "review-loop", profile,
+    Agrun: fake.Agrun, gateway, sessionManager: { createStore: () => ({}) }, sessionId: "review-loop", profile: profileOverride,
     dataPolicy: bus.dataPolicy, getDataPolicy: () => bus.dataPolicy,
     onProposal: () => {}, onCandidateState: (active) => candidateStates.push(active), onEvent: (event) => events.push(event)
   });
@@ -88,6 +89,28 @@ describe("embedded AI multimodal layout review loop", () => {
       "layout_review_started", "layout_evidence_ready", "layout_multimodal_started", "layout_review_passed", "layout_readiness"
     ]));
     expect(test.bus.revision).toBe(0);
+  });
+
+  it("keeps the built-in Demo review context compact without exposing full catalog schemas", async () => {
+    let prompt = "";
+    let systemPrompt = "";
+    let runtimeContextMode = "";
+    let contextSnapshot = null;
+    const demoProfile = {
+      id: "own-gpt-server", provider: "openai", model: "demo-fast",
+      endpoint: "https://gpt.yapweijun1996.com/demo/v1", apiVariant: "responses"
+    };
+    const test = await harness(async ({ input }) => { prompt = input.prompt; systemPrompt = input.systemPrompt; runtimeContextMode = input.runtimeContextMode; contextSnapshot = input.contextSnapshot; }, async () => readyReport(), demoProfile);
+    await test.controller.reviewLayout(demoProfile);
+    expect(prompt).toBe("Review the attached synthetic PrintForm images");
+    expect(runtimeContextMode).toBe("isolated");
+    expect(test.fake.runtimeTurns()).toBe(1);
+    expect(contextSnapshot).toEqual({ continuityResolution: {}, inquiryContext: {}, sessionMemory: {}, turnIntent: {} });
+    expect(systemPrompt.length).toBeLessThan(6000);
+    expect(systemPrompt).toContain('"type":"set_column_widths"');
+    expect(systemPrompt).toContain('"fields":["type"');
+    expect(systemPrompt).not.toContain('"inputSchema"');
+    expect(systemPrompt).not.toContain('"designState"');
   });
 
   it("previews one visual repair, waits for approval, applies once, and automatically re-reviews fresh evidence", async () => {

@@ -135,14 +135,14 @@ invent an `Origin` header.
 The private `/v1/*` route and `gw_...` credentials are server-side only. Never
 embed a private Gateway key, call `/v1/*` from the browser, pass a Demo token to
 Studio commands, or use a rejected session as permission to broaden document
-scope. The guide advertises model discovery and `demo-auto`/`demo-fast`, while
-also documenting `gpt-5.4-mini`; this client keeps that default, while model-alias
-discovery remains unverified in this worktree. On 2026-09-10 the Gateway admin
-registered `http://127.0.0.1:4174` and `http://localhost:4174` for `github-pages`;
-real browser sessions returned `201 Created` and `/demo/v1/models` returned `200`.
-The earlier 403 was therefore an origin-registration blocker, now resolved for
-the local Harness. Full live Provider reliability and retention compatibility
-remain open.
+scope. The guide advertises model discovery and `demo-auto`/`demo-fast`, while also
+documenting `gpt-5.4-mini`. On 2026-09-10 a real registered-origin browser
+session returned `201 Created`, `/demo/v1/models` returned `200` with the public
+aliases, and a Studio request using `gpt-5.4-mini` was rejected with the redacted
+`DEMO_MODEL_NOT_ALLOWED` `400` contract error before Provider dispatch. The
+built-in profile now uses the confirmed `demo-fast` alias. The earlier 403 was
+an origin-registration blocker, resolved for the local Harness; live Provider
+reliability and retention compatibility remain open.
 
 The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
 

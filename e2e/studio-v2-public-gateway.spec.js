@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("uses an origin-bound Demo session without a browser gateway key", async ({ page }) => {
-  await expect(page.locator("#ai-profile-select option")).toHaveText("Default gateway: gpt-5.4-mini · browser demo session");
+  await expect(page.locator("#ai-profile-select option")).toHaveText("Default gateway: demo-fast · browser demo session");
   await expect(page.locator("#ai-status")).toHaveText("Demo Gateway ready · a short-lived origin-bound session is acquired on demand.");
   await page.evaluate(() => {
     window.__demoGatewayRequests = [];
@@ -34,7 +34,7 @@ test("uses an origin-bound Demo session without a browser gateway key", async ({
   const requests = await page.evaluate(() => window.__demoGatewayRequests.map((request) => ({ url: request.url, authorization: request.headers.get("authorization"), body: request.body || null })));
   expect(requests[0]).toMatchObject({ url: "https://gpt.yapweijun1996.com/demo/session", authorization: null });
   expect(requests[1]).toMatchObject({ url: "https://gpt.yapweijun1996.com/demo/v1/responses", authorization: "Bearer dmo_e2e-token" });
-  expect(requests[1].body).toMatchObject({ model: "gpt-5.4-mini", stream: true });
+  expect(requests[1].body).toMatchObject({ model: "demo-fast", stream: true });
   for (const field of ["tools", "tool_choice", "files", "audio", "background", "web_search", "store"]) {
     expect(requests[1].body).not.toHaveProperty(field);
   }
@@ -46,5 +46,5 @@ test("does not render a gateway-key override field", async ({ page }) => {
   await page.locator("#ai-settings-button").click();
   await expect(page.locator("#ai-public-gateway-key")).toHaveCount(0);
   await expect(page.locator("#ai-settings-badge")).toHaveText("Built-in demo Gateway");
-  await expect(page.locator("#ai-profile-select option")).toHaveText("Default gateway: gpt-5.4-mini · browser demo session");
+  await expect(page.locator("#ai-profile-select option")).toHaveText("Default gateway: demo-fast · browser demo session");
 });

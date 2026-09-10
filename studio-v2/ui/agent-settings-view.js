@@ -40,7 +40,7 @@ export function settingsModalMarkup() {
               <div class="ai-profile-grid">
                 <label><span data-ui-i18n="aiSettings.profileId">Profile id</span><input id="ai-profile-id" autocomplete="off" value="own-gpt-server"></label>
                 <label><span data-ui-i18n="aiSettings.providerLabel">Provider</span><select id="ai-provider"><option value="openai" data-ui-i18n="aiSettings.providerOpenai">OpenAI</option><option value="gemini" data-ui-i18n="aiSettings.providerGemini">Gemini</option><option value="custom" data-ui-i18n="aiSettings.providerCustom">Custom LLM</option></select></label>
-                <label><span data-ui-i18n="aiSettings.model">Model</span><input id="ai-model" autocomplete="off" value="gpt-5.4-mini" data-ui-i18n-placeholder="aiSettings.modelPlaceholder" placeholder="gpt-5-mini"></label>
+                <label><span data-ui-i18n="aiSettings.model">Model</span><input id="ai-model" autocomplete="off" value="demo-fast" data-ui-i18n-placeholder="aiSettings.modelPlaceholder" placeholder="gpt-5-mini"></label>
                 <label><span data-ui-i18n="aiSettings.apiVariant">API variant</span><select id="ai-api-variant"><option value="chat" data-ui-i18n="aiSettings.variantChat">Chat Completions</option><option value="responses" selected data-ui-i18n="aiSettings.variantResponses">OpenAI Responses</option></select></label>
                 <label class="ai-wide-field"><span data-ui-i18n="aiSettings.endpoint">Base HTTPS endpoint</span><input id="ai-endpoint" autocomplete="off" value="https://gpt.yapweijun1996.com/demo/v1" data-ui-i18n-placeholder="aiSettings.endpointPlaceholder" placeholder="https://gateway.example/v1"></label>
               </div>

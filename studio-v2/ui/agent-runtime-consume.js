@@ -55,6 +55,7 @@ function publicOutcome(controller, result, completed) {
 
 export async function consumeRuntimeTurn(controller, input) {
   const session = await controller.session();
+  const isolatedRuntime = input.runtimeContextMode === "isolated";
   const baselineUsage = usageFromSessionState(sessionState(session));
   if (baselineUsage?.totalTokens >= SESSION_TOKEN_LIMIT) {
     const error = Object.assign(new Error(`This chat has reached ${SESSION_TOKEN_LIMIT.toLocaleString()} tokens. Start a new chat before sending another request.`), { code: "SESSION_USAGE_LIMIT_REACHED", budget: baselineUsage });
@@ -71,7 +72,8 @@ export async function consumeRuntimeTurn(controller, input) {
   let proposalReady = false;
   try {
     controller.assertCurrentPolicy?.();
-    const stream = session.runStream(input, {
+    const runner = isolatedRuntime ? controller.runtime : session;
+    const stream = runner.runStream(input, {
       abortSignal: controller.abortController.signal,
       onStreamEvent: (event) => emitDiagnosticEvent(controller, event),
       onToken: (token) => {
@@ -130,7 +132,9 @@ export async function consumeRuntimeTurn(controller, input) {
     result = completed.result || null;
   }
   else if (proposalReady) completed = { ...completed, terminalKind: "proposal_ready" };
-  const usage = usageEvent(controller, session, baselineUsage, result);
+  const usage = isolatedRuntime
+    ? usageEvent(controller, null, null, result)
+    : usageEvent(controller, session, baselineUsage, result);
   if (!guardError && usage && guard.observeFinalUsage(usage)) {
     guardError = guard.error;
     completed = { terminalKind: "error", result, error: guardError };

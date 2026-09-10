@@ -40,11 +40,11 @@ describe("browser demo gateway", () => {
       provider: "openai",
       authMode: "server",
       endpoint: `${DEMO_GATEWAY_ENDPOINT}/responses`,
-      model: "gpt-5.4-mini",
+      model: "demo-fast",
       apiVariant: "responses",
-      reasoningEffort: "medium",
       prompt: "hello"
     });
+    expect(input).not.toHaveProperty("reasoningEffort");
     expect(input).not.toHaveProperty("apiKey");
     expect(publicDefaultProviderProfile("gw-test-key")).not.toHaveProperty("apiKey");
     expect(DEFAULT_PROVIDER_PRESET).not.toHaveProperty("apiKey");
@@ -74,7 +74,7 @@ describe("browser demo gateway", () => {
       return new Response(JSON.stringify({
         id: "public-response",
         created_at: 1770000000,
-        model: "gpt-5.4-mini",
+        model: "demo-fast",
         output: [{ type: "message", role: "assistant", id: "message-1", content: [{ type: "output_text", text: "public reply", annotations: [] }] }]
       }), { status: 200, headers: { "content-type": "application/json" } });
     });
@@ -88,7 +88,9 @@ describe("browser demo gateway", () => {
     expect(JSON.parse(sessionRequest.init.body)).toEqual({ project_id: DEMO_GATEWAY_PROJECT_ID });
     expect(providerRequest.url).toBe(`${DEMO_GATEWAY_ENDPOINT}/responses`);
     expect(providerRequest.init.headers.get("authorization")).toBe("Bearer dmo_test-token");
-    expect(JSON.parse(providerRequest.init.body)).toMatchObject({ model: "gpt-5.4-mini", reasoning: { effort: "medium" } });
+    expect(JSON.parse(providerRequest.init.body)).toMatchObject({ model: "demo-fast" });
+    expect(JSON.parse(providerRequest.init.body)).not.toHaveProperty("reasoning");
+    expect(JSON.parse(providerRequest.init.body)).not.toHaveProperty("modelTier");
     expect(result.text).toBe("public reply");
   });
 
@@ -98,7 +100,7 @@ describe("browser demo gateway", () => {
       requests.push({ url: String(url), init: { ...init, headers: new Headers(init.headers || {}) } });
       if (String(url).endsWith("/demo/session")) return new Response(JSON.stringify({ token: "dmo_stream-token", expires_in: 900 }), { status: 200, headers: { "content-type": "application/json" } });
       return streamResponse([
-        { type: "response.created", response: { id: "public-stream", created_at: 1770000000, model: "gpt-5.4-mini" } },
+        { type: "response.created", response: { id: "public-stream", created_at: 1770000000, model: "demo-fast" } },
         { type: "response.output_item.added", output_index: 0, item: { type: "message", id: "public-message", phase: "final_answer" } },
         { type: "response.output_text.delta", item_id: "public-message", delta: '{"type":"final","answer":"public stream"}' },
         { type: "response.output_item.done", output_index: 0, item: { type: "message", id: "public-message", phase: "final_answer" } },

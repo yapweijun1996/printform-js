@@ -51,7 +51,9 @@ test.describe("Studio v2 PROD-02 02-08 host/prompt/export agreement", () => {
           control.prompts.push({ prompt: input?.prompt || "", systemPrompt: input?.systemPrompt || "" });
           return (async function* () {
             runOptions.onToken?.("Controlled host agreement outcome");
-            if (input?.prompt?.includes("bounded multimodal layout review pass")) {
+            if (input?.prompt?.includes("Review the attached synthetic PrintForm images")
+              || input?.systemPrompt?.includes("Review the attached synthetic PrintForm images")
+              || input?.prompt?.includes("bounded multimodal layout review pass")) {
               control.reviewRuns += 1;
               const complete = runtimeOptions.customActions.find((item) => item.name === "printform_complete_current_layout_review");
               if (!complete) throw new Error("Layout completion action was not registered");
@@ -78,7 +80,7 @@ test.describe("Studio v2 PROD-02 02-08 host/prompt/export agreement", () => {
         createRuntime: (options) => {
           runtimeOptions = options;
           control.agentSkillCount = options.agentSkills.length;
-          return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => options.agentSkills };
+          return { runStream: (input, runOptions) => session.runStream(input, runOptions), createSession: async () => session, openSession: async () => session, getAgentSkills: () => options.agentSkills };
         },
         openaiBrowserSkill: {},
         geminiBrowserSkill: {}
@@ -92,10 +94,10 @@ test.describe("Studio v2 PROD-02 02-08 host/prompt/export agreement", () => {
     await expect(page.locator(".ai-card-pending")).toBeVisible();
     await expect(page.locator("#ai-apply-proposal")).toBeVisible();
     const promptEvidence = await page.evaluate(() => window.__p0Prod0208);
-    expect(promptEvidence.agentSkillCount).toBe(1);
-    expect(promptEvidence.skillMarkdown).toContain("human owns Production Export");
-    expect(promptEvidence.prompts[0].systemPrompt).toContain("human must use the Studio Production export UI");
-    expect(promptEvidence.prompts[0].systemPrompt).toContain("The host alone checks export readiness");
+    expect(promptEvidence.agentSkillCount).toBe(0);
+    expect(promptEvidence.skillMarkdown).toBe("");
+    expect(promptEvidence.prompts[0].systemPrompt).toContain("Human export remains required");
+    expect(promptEvidence.prompts[0].systemPrompt).toContain("Demo session grants no scope or apply permission");
 
     await page.evaluate(() => { window.__p0Prod0208.applyGate = true; });
     await page.locator("#ai-apply-proposal").click();

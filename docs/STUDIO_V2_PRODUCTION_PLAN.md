@@ -1,7 +1,7 @@
 # Studio v2 Production Plan
 
-Last reviewed: 2026-09-09. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
-The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. Coding has resumed and the [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md) records bounded corrections and fresh verification, including actual prompt delivery. Overall acceptance remains Partial. No deployment, publish or real-provider test was performed.
+Last reviewed: 2026-09-10. Source baseline: current worktree after the Demo Gateway compatibility amendment; final local application commit is recorded in the release packet.
+The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. Coding has resumed and the [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md) records bounded corrections and fresh verification, including actual prompt delivery. Overall acceptance remains Partial. No deployment, publish or direct-BYOK Provider test was performed; the bounded Demo Gateway run is supporting evidence only.
 
 ## Authority and status
 
@@ -31,9 +31,12 @@ server-side. The detailed destination rules and agent instructions are owned by
 [the data policy](STUDIO_V2_DATA_POLICY.md) and [the setup guide](../studio-v2/AGENT_SETUP.md).
 
 The guide contains conflicting model examples (`demo-auto`/`demo-fast` versus
-`gpt-5.4-mini`). The current default remains `gpt-5.4-mini` until the provider
-model contract is confirmed. This review used synthetic, intercepted requests
-only; it did not contact the live endpoint and does not change release status.
+`gpt-5.4-mini`). A real browser session on 2026-09-10 received `200` from
+`/demo/v1/models` and listed `demo-auto`, `demo-fast`, and the configured Demo
+aliases. A live Studio request using `gpt-5.4-mini` then returned the redacted
+`DEMO_MODEL_NOT_ALLOWED` `400` contract error before Provider dispatch. The
+current default is therefore the confirmed public alias `demo-fast`; this
+fix verifies model admission only and does not change release status.
 Because the guide disables Provider tools, the embedded runtime now selects
 provider-tool-free `envelope` mode for the Demo recipient and rejects
 geometry-only SVG before transport; the host-side 35-command catalog remains a
@@ -46,7 +49,7 @@ The aggregate evidence below is the historical pre-review baseline; fresh resume
 It covers prior authorized foundation changes, not the complete current worktree. The direction review
 used source inspection and isolated in-memory probes, not a new full regression run. The build path
 retains serial testing; test totals are not substitutes for case-specific side-effect evidence.
-No deployment, publish, real business data connection or real-provider test was performed. The 35-case P0
+No deployment, publish or real business data connection was used. A bounded Demo Gateway browser run is recorded as supporting evidence, not direct-BYOK Provider acceptance. The 35-case P0
 register now contains 35 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08/X-01/X-02/X-03), 0 Fail, and 0 Not run. Earlier passed sequences remain evidence only for their recorded scope,
 not release approval.
 
@@ -280,10 +283,8 @@ Use the [sequential plan](STUDIO_V2_EXECUTION_PLAN.md) for the executable order 
 | Release certification | PROD-10/12 | Prior required fixes, adopted release profile, real print and failure-path evidence |
 | Shared-service expansion | E15 | E13-SERVER foundation and explicit multi-user deployment scope |
 
-No external access blocker prevents documenting or investigating the known local issues.
-Production release remains blocked by unresolved behavior/privacy criteria and missing evidence for the selected release profile.
-Platform/default-policy proposals await product adoption before being represented as release commitments.
-HA/fencing/remote UI remain pending E15 work, not universal prerequisites for an explicitly single-user release.
+No external access blocker prevents documenting or investigating the known local issues. Production release remains blocked by unresolved behavior/privacy criteria and missing evidence for the selected release profile.
+Platform/default-policy proposals await product adoption before being represented as release commitments. HA/fencing/remote UI remain pending E15 work, not universal prerequisites for an explicitly single-user release.
 
 ## Completion rule
 

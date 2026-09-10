@@ -3,7 +3,8 @@ import { consumeRuntimeTurn } from "./agent-runtime-consume.js";
 import { bindAgentSession } from "../adapters/gateway.js";
 import { createProposalApproval } from "./agent-approval.js";
 import { makePrintFormActions } from "./agent-actions.js";
-import { DESIGNER_PROMPT } from "./agent-designer-prompt.js";
+import { compactDemoActions } from "./agent-demo-actions.js";
+import { DEMO_DESIGNER_PROMPT, DEMO_RUNTIME_PROMPTS, DESIGNER_PROMPT } from "./agent-designer-prompt.js";
 import { LayoutReviewLoop } from "./agent-layout-loop.js";
 import { parseTextProposal } from "./agent-proposal-parser.js";
 import { createTerminalState } from "./agent-terminal-state.js";
@@ -12,12 +13,11 @@ import { assertPolicyCurrent, isPolicyCurrent } from "../core/data-policy.js";
 import { approvalFrom, outputText } from "./agent-runtime-output.js";
 import { executeApplyWithResolution, resolvePostCommitValidation } from "./agent-commit-resolution.js";
 import { loadCurrentDesignerSkill } from "./agent-runtime-skills.js";
-
 function clone(value) { return structuredClone(value); }
 
 export class DesignerRuntimeController {
   static async create(options) {
-    const agentSkills = await loadCurrentDesignerSkill(options);
+    const agentSkills = isCredentialFreeDefaultGatewayProfile(options.profile) ? [] : await loadCurrentDesignerSkill(options);
     options.assertCurrentContext?.();
     if (options.dataPolicy && options.getDataPolicy) assertPolicyCurrent(options.dataPolicy, options.getDataPolicy());
     return new DesignerRuntimeController({ ...options, agentSkills });
@@ -67,11 +67,16 @@ export class DesignerRuntimeController {
         markBlocked: (input) => this.layoutLoop.markBlocked(input)
       }
     });
+    const exposedActions = isCredentialFreeDefaultGatewayProfile(profile)
+      ? actions.filter((action) => ["printform_preview_brand_color", "printform_preview_changes", "printform_preview_layout_repair", "printform_complete_current_layout_review", "printform_report_layout_blocked"].includes(action.name))
+      : actions;
+    const plannerActions = isCredentialFreeDefaultGatewayProfile(profile) ? compactDemoActions(exposedActions) : exposedActions;
     const budget = buildRuntimeBudget(profile);
     this.runtime = Agrun.createRuntime({
-      skills: [Agrun.openaiBrowserSkill, Agrun.geminiBrowserSkill], agentSkills, customActions: actions,
+      skills: isCredentialFreeDefaultGatewayProfile(profile) ? [] : [Agrun.openaiBrowserSkill, Agrun.geminiBrowserSkill], agentSkills, customActions: plannerActions,
+      ...(isCredentialFreeDefaultGatewayProfile(profile) ? { profile: "minimal", prompts: DEMO_RUNTIME_PROMPTS } : {}),
       sessionStore: sessionManager.createStore(Agrun, sessionId), globalMemory: { enabled: false },
-      disabledActions: DISABLED_ACTIONS, actionPolicy: Object.fromEntries(READ_ACTIONS.map((name) => [name, "allow"])),
+      disabledActions: isCredentialFreeDefaultGatewayProfile(profile) ? [...DISABLED_ACTIONS, "printform_get_operation_catalog"] : DISABLED_ACTIONS, actionPolicy: Object.fromEntries(READ_ACTIONS.map((name) => [name, "allow"])),
       plannerMode: providerToolMode, nativeToolsFailurePolicy: "hard_fail",
       approvalSigning: { ttlMs: 15 * 60 * 1000, enforceSessionBinding: true }, maxSteps,
       ...(budget.costPricing ? { costPricing: budget.costPricing } : {}),
@@ -90,7 +95,6 @@ export class DesignerRuntimeController {
     }
     return current;
   }
-
   async createProposal(proposal) { if (this.actionFailure) return clone(proposal);
     const approvalToken = await this.approval.issue(proposal.proposalId);
     const stored = { ...clone(proposal), approvalToken };
@@ -238,7 +242,10 @@ export class DesignerRuntimeController {
     this.actionFailure = null;
     this.turnText = "";
     this.terminalState?.reset();
-    return consumeRuntimeTurn(this, { ...input, systemPrompt: DESIGNER_PROMPT });
+    const demoPrompt = input.authMode === "server"
+      ? [DEMO_DESIGNER_PROMPT, input.systemPromptSuffix].filter(Boolean).join("\n\n")
+      : DESIGNER_PROMPT;
+    return consumeRuntimeTurn(this, { ...input, systemPrompt: demoPrompt });
   }
 
   async run(prompt, profile, parts = []) {
@@ -282,7 +289,6 @@ export class DesignerRuntimeController {
     try { return await this.layoutLoop.runPass(profile); }
     catch (error) { this.layoutLoop.stop("review_failed"); this.onCandidateState(false); throw error; }
   }
-
   stop() {
     this.layoutLoop.stop("user_stop");
     this.terminalState.noteStopped();
@@ -291,5 +297,4 @@ export class DesignerRuntimeController {
     if (this.abortController) this.abortController.abort();
   }
 }
-
 export const AGRUN_DISABLED_ACTIONS = Object.freeze([...DISABLED_ACTIONS]);

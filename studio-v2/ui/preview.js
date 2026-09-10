@@ -116,7 +116,7 @@ export const buildPreviewBridge = (revision, overlayEnabled, token, options = {}
       var width = Math.max.apply(null, sizes.map(function (size) { return size.width; }));
       var gap = 18;
       var height = sizes.reduce(function (total, size) { return total + size.height; }, 0) + gap * (sizes.length - 1);
-      var scale = Math.min(1, 1800 / width, Math.sqrt(6000000 / Math.max(1, width * height)));
+      var scale = Math.min(1, 1800 / width, Math.sqrt(1500000 / Math.max(1, width * height)));
       function renderCanvas(drawImages) {
         var canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.ceil(width * scale));
@@ -138,7 +138,7 @@ export const buildPreviewBridge = (revision, overlayEnabled, token, options = {}
       if (!canvas) { reject({ code: "PIXEL_CAPTURE_NO_CONTEXT" }); return; }
       try {
         var dataUrl = canvas.toDataURL("image/png");
-        if (dataUrl.length > 5000000) dataUrl = canvas.toDataURL("image/jpeg", 0.84);
+        if (dataUrl.length > 300000) { var compactDataUrl = canvas.toDataURL("image/webp", 0.01); dataUrl = compactDataUrl.indexOf("data:image/webp;") === 0 ? compactDataUrl : canvas.toDataURL("image/jpeg", 0.1); }
         resolve({ source: "sandbox-pixel", syntheticData: true, redacted: false, mimeType: dataUrl.slice(5, dataUrl.indexOf(";")), dataUrl: dataUrl, width: canvas.width, height: canvas.height, pageCount: pages.length });
       } catch (e) {
         canvas = renderCanvas(false);

@@ -41,7 +41,7 @@ export function prepareVisualReviewEvidence(captures, baselines) {
     imageModes.set(item.scenario, mode);
     return [{
       type: "image", url: snapshot.dataUrl, mimeType: snapshot.mimeType,
-      filename: `layout-${item.scenario}.${mode === "pixels" ? "png" : "svg"}`,
+      filename: `layout-${item.scenario}.${mode === "pixels" ? (snapshot.mimeType === "image/jpeg" ? "jpg" : snapshot.mimeType === "image/webp" ? "webp" : "png") : "svg"}`,
       source: snapshot.source, syntheticData: snapshot.syntheticData === true, redacted: snapshot.redacted === true,
     }];
   });

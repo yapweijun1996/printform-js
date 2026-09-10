@@ -16,10 +16,10 @@ export function isProviderRecipientCurrent(expected, profile) {
 export const DEFAULT_PROVIDER_PRESET = Object.freeze({
   id: "own-gpt-server",
   provider: "openai",
-  model: "gpt-5.4-mini",
+  model: "demo-fast",
   endpoint: "https://gpt.yapweijun1996.com/demo/v1",
   apiVariant: "responses",
-  reasoningEffort: "medium",
+  reasoningEffort: "",
   inputPricePer1M: "",
   outputPricePer1M: "",
   maxCostUsd: ""
@@ -157,7 +157,7 @@ export function projectProviderParts(parts = [], { dataPolicy = null } = {}) {
   });
 }
 
-export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = null, assertCurrentPolicy = null, demoGatewaySession = null } = {}) {
+export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = null, assertCurrentPolicy = null, demoGatewaySession = null, systemPromptSuffix = "" } = {}) {
   const effectivePolicy = dataPolicy || classifyImportedDocument();
   const provider = profile.provider === "custom" ? "openai" : profile.provider;
   const credentialFreeGateway = isCredentialFreeDefaultGatewayProfile(profile);
@@ -165,6 +165,10 @@ export function buildProviderInput(profile, prompt, parts = [], { dataPolicy = n
   if (credentialFreeGateway) {
     input.authMode = "server";
     input.endpoint = responsesEndpoint(profile.endpoint);
+    input.modelTier = "lite";
+    input.compactPlannerSystemPrompt = true;
+    input.compactEnvelopeExamples = true;
+    if (systemPromptSuffix) input.systemPromptSuffix = String(systemPromptSuffix).slice(0, 5000);
   } else {
     input.apiKey = profile.apiKey;
     if (profile.endpoint) input.endpoint = profile.endpoint;

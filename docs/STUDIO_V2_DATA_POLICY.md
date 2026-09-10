@@ -32,9 +32,11 @@ Agent command, document scope, apply or production export. Do not set a manual
 `Origin` header, and do not treat a 401 refresh as permission to widen scope.
 
 The external guide describes `/demo/v1/models` and both `demo-auto`/`demo-fast`
-aliases and `gpt-5.4-mini` in different sections. Studio therefore retains its
-existing `gpt-5.4-mini` default until the provider-side model contract is
-confirmed; this repository has not contacted the live endpoint.
+aliases and `gpt-5.4-mini` in different sections. A real browser read of the
+registered Demo project returned the model list with `demo-auto` and `demo-fast`,
+while a live request with `gpt-5.4-mini` returned `DEMO_MODEL_NOT_ALLOWED` before
+Provider dispatch. The built-in Demo profile therefore uses the confirmed
+public `demo-fast` alias; private BYOK profiles keep their own model values.
 
 The embedded Designer uses provider-tool-free `envelope` mode for this recipient:
 the host-side action registry and the 35-command MCP/WebMCP catalog remain local
