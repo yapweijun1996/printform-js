@@ -1,10 +1,9 @@
 # Studio v2 Resumed Implementation Evidence
 
 Date: 2026-09-09. Scope: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; packet provenance commit `d87464330044ceca33eb9062bc74d6d6c3c7edd6`.
-Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
+Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 34/35 with 13-07 Fail, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
-Latest P0 register: **35 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08/X-01/X-02/X-03), 0 Fail, 0 Not run**. This closes the
-recorded P0 case paths; later PI/release evidence remains incomplete.
+Latest P0 register: **34 Pass, 1 Fail (13-07), 0 Not run**. Current browser evidence closes the recorded P0 paths except the provider-dependent 13-07 prompt step; later PI/release evidence remains incomplete.
 
 ## Sequential handoff review (2026-09-08)
 
@@ -133,10 +132,10 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). All eight PROD-02 c
 
 ### Case-specific evidence: PROD-01 01-06 — Pass
 
-- Date: 2026-09-08; source: current uncommitted worktree based on `3a1a7dbb93de5edd7984842896afdaab42a92bed`; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; fixture: synthetic Sales Invoice followed by synthetic Purchase Order import.
+- Date: 2026-09-10; source: current local worktree after test-only confirmation handling commit `59f4fe7`; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; fixture: synthetic Sales Invoice followed by synthetic Purchase Order import.
 - The host selected the Sales Invoice table scope. A deterministic in-page Harness action created a candidate, then the scope changed before Apply. The real private UI Apply path rejected the old proposal through the existing transaction context guard; a fresh preview at the current revision was then applied, followed by a second pending candidate and an actual HTML import.
 - Expected/actual: the old proposal returned `SCOPE_CHANGED`, the panel projected the localized “preview again” message, the candidate was cleared and revision/hash/source stayed at the baseline. The fresh proposal applied once and advanced the revision by one. Document replacement cleared the pending candidate, reset scope to `all`, rendered the imported Purchase Order as Printable and did not inherit the old candidate or scope.
-- Evidence: `e2e/studio-v2-p0-prod01-06.spec.js` passed **3/3** across Chromium, Firefox and WebKit. The control recorded three Harness runs/actions and three successful action results; no page error or unknown console diagnostic occurred. `tests/studio-v2/ui-i18n.test.js` passed **7/7**; the rebuilt `npm run build:site` passed **105 files / 551 tests**. No credentials, live provider, real business data, deployment or print-platform claim was used.
+- Evidence: `e2e/studio-v2-p0-prod01-06.spec.js` passed **3/3** across Chromium, Firefox and WebKit after explicitly accepting the intentional import-confirmation dialog. The control recorded three Harness runs/actions and three successful action results; no page error or unknown console diagnostic occurred. `tests/studio-v2/ui-i18n.test.js` passed **7/7**; the rebuilt `npm run build:site` passed **105 files / 551 tests**. No credentials, live provider, real business data, deployment or print-platform claim was used.
 - Limitation: the provider action was deterministic and in-page for reproducibility; this is real-browser stale-context/UI evidence, not live-provider or PI certification. Firefox retained the known AGRUN `eval` CSP console diagnostic from `vendor/agrun.min.js`; CSP and AGRUN remain unchanged and the runtime gate stays with PI-05/S18.
 
 ### Case-specific evidence: PROD-01 01-07 — Pass
@@ -245,8 +244,9 @@ Incompatible existing schemas fail closed without deleting stores. Vendor upgrad
   three engines, covering mode/document delayed Provider results, Unknown import, quota fallback, Real durable
   transaction admission and final Provider payloads. The combined lifecycle/session set passed **30/30 serially**,
   covering missing-policy callbacks, delayed IndexedDB mode/document/generation changes, asynchronous runtime
-  write failure, panel session replacement and the actual wire request. These runs support the P0 Pass records
-  for 13-04 and 13-08; the explicit-save/prompt case supports 13-07; they do not close the remaining P0 cases.
+  write failure, panel session replacement and the actual wire request. These runs support 13-04 and 13-08;
+  the current 13-07 browser case remains **0/3** because the Demo Gateway provider turn did not establish, so its
+  prompt/body assertion is not a P0 Pass or live-provider claim.
 
 Reproduction entry points: `tests/studio-v2/agent-session-lifecycle.test.js`, `agent-session-database.test.js`,
   `agent-panel-lifecycle.test.js`, `agent-policy-owners.test.js`, `agent-prompt-policy.test.js`, `agent-output-boundary.test.js`,
@@ -291,7 +291,7 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). Cases 03-01 through
   criteria remain open; current plan credit is 76.7% with 16/21 Done and gate credit remains in TASK.
 
 ## Remaining work and safe continuation
-1. P0 case closure is complete at 35/35; continue PI/release evidence without treating controlled runtime cases as live Provider certification.
+1. P0 case closure is currently 34/35 with 13-07 Fail; continue provider investigation and PI/release evidence without treating controlled runtime cases as live Provider certification.
 2. Continue S17 through the remaining final provider/render/privacy/transaction matrix one case at a time, reusing PI-00..04 without cutting over AGRUN.
 3. Prepare S18 cutover, S19 print/platform certification, S20 packet and S21 approval only at their gates; do not deploy, publish or push.
 

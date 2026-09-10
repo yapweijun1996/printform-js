@@ -3,15 +3,15 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:21:45+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:21:45+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
 Application delta manifest for the application review revision (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
-The runner-only configuration commit is intentionally outside this application manifest and is recorded separately as test provenance.
+The runner-only configuration and P0 confirmation-test commits are intentionally outside this application manifest and are recorded separately as test provenance.
 The S16/S17 implementation and evidence changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
 content sandboxing enabled. `main` tracks `origin/main` and contains the local review commits. No PR
-metadata or outgoing push is present in this checkout. No deployment, publish, user-data deletion, or
-live Provider request was made.
+metadata or outgoing push is present in this checkout. No deployment, publish, user-data deletion, or live
+Provider acceptance was established.
 
 ## 1. Prompt-to-artifact completion checklist
 
@@ -20,7 +20,7 @@ live Provider request was made.
 | Sequential TASK ledger and dependency order | `TASK.md`, `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_EXECUTION_PLAN.md` | S01-S16 are Done; S17 is the only active step at G1/10%. S18-S21 remain dependent/open. |
 | Requalify S16 deferred-close, CAS, lifecycle and browser boundaries | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md` | G1-G5/100%; 16-01..06 passed 18/18 across Chromium, Firefox and WebKit, with focused lifecycle/privacy regressions. |
 | Actual browser Harness acceptance | `e2e/studio-v2-pi-04.spec.js`, `e2e/studio-v2-pi-04-privacy.spec.js`, `e2e/studio-v2-pi-04-transaction.spec.js` | 17-01..09 passed 27/27 across three configured engines. These are isolated PI supporting cases with synthetic Provider interception; they do not close S17 live-provider or cutover gates. |
-| Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; P0 register is 35/35. Controlled AGRUN/BYOK is not PI live-provider evidence. |
+| Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; current P0 register is 34/35 Pass with 13-07 Fail pending provider availability. Controlled AGRUN/BYOK is not PI live-provider evidence. |
 | Canonical revisions, CAS and stale-result rejection | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md`, `docs/STUDIO_V2_S17_PI04_EVIDENCE.md`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Current revision/hash ownership, atomic commit recovery, delayed policy/scope rejection and cross-document isolation are evidenced. |
 | Scope isolation | P0 X-02/X-03 and PI 17-02/17-03 browser cases | Old policy/mode/scope result and document-A callback do not change the current document; no candidate/evidence leak was observed. |
 | Private human approval/export and no automatic download | P0 X-01 and PI 17-01/17-08 evidence | Human Apply/review/export boundaries and uncertain-commit recovery are covered; export is confirmed-only. |
@@ -34,7 +34,7 @@ live Provider request was made.
 ## 2. TASK and gate snapshot
 
 - Plan: **1610/21 = 76.7%; 16/21 steps Done**.
-- P0: **35/35 Pass, 0 Fail, 0 Not run**.
+- P0: **34/35 Pass, 1 Fail (13-07), 0 Not run**.
 - PI packages: **4/6 Done** (PI-00..03); PI-04 and PI-05 are not Done.
 - S16: `xxxxx`, 100%, Done.
 - S17: `x----`, 10%, Pending closure. G2-G5 receive no credit until the remaining matrix is complete.
@@ -53,6 +53,10 @@ deployment, publishing, physical print, or maintainer approval.
   — **27/27**, Chromium/Firefox/WebKit; synthetic direct-provider wire.
 - Latest combined local target run for P0 X-01..03 and PI-04 supporting cases — **54/54**, Chromium/Firefox/WebKit;
   synthetic provider interception remains supporting evidence and does not close S17.
+- Full P0 browser sweep: **96/105** passed before the two intentional import-confirmation test fixes; the focused
+  01-06 and 13-08 reruns then passed **3/3** each across Chromium, Firefox and WebKit, while 13-07 remained **0/3**
+  because the current Demo Gateway provider turn did not establish. The current P0 register is therefore 34/35 Pass,
+  1 Fail, 0 Not run; no provider failure was converted into a mock Pass.
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
   environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
