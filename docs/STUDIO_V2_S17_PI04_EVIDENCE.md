@@ -249,6 +249,7 @@ retention, live CORS, live reliability, or final P0/S17 gate closure.
 
 - The isolated PI-04 page has no production UI shell; visible approval/export still belongs to the AGRUN Studio entry. Replacing that runtime with PI would be S18/cutover work, not an authorized PI-04 fixture shortcut.
 - Demo target-origin/CORS registration and a current Demo live run are verified for the local/public Studio origins, but no authorized direct-BYOK Provider credential, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Demo and synthetic results remain explicitly supporting evidence.
+- The available Windows Computer Use surface returned no targetable app or browser, and the three standard Edge executable paths were absent in this environment. Edge UI, Safari.app and physical-printer checks therefore remain unrun; this is an environment-capability observation, not a product failure or gate credit.
 
 ## X-01 — historical supporting case evidence (Pass; S17 remains in progress)
 

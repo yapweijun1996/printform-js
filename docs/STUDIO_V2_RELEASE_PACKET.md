@@ -105,6 +105,7 @@ deployment, publishing, physical print, or maintainer approval.
 - After the smallest runner/preview correction, `node scripts/browser-matrix.mjs` (full, not `--quick`) passed **88/88** with **0 problem cells** on Windows: Chromium, branded Chrome, Firefox and WebKit each passed 22/22 across both samples, seven boundary scenarios and four non-default locales. `empty` was expected `blocked`; all other cells were `ready` with no overflow, vertical overflow, contrast or row-count problems. This is current local render evidence only and earns no S17 direct-BYOK or S20 closure credit by itself.
 - The latest repository-wide Chromium run was **159/169 passed** with 10 failures; a serial rerun of the affected files was **17/22 passed**. The five reproduced failures are existing/environment-sensitive file-save, P0 control/pixel, and session-lifecycle cases outside the amended PI-03/PI-04 target set; this run is not release evidence and no unrelated fix was introduced.
 - Current toolchain: Node `v25.2.1`, npm `11.6.2`, Playwright `1.62.0`.
+- A 2026-09-10 platform-capability probe found no targetable Windows app/browser in the available Computer Use surface and no standard Edge executable. Edge UI, Safari.app and physical-printer checks were therefore unrun; this is environment evidence, not a product failure or gate credit.
 
 The spec audit confirms that 17-01..03 assert zero external requests, 17-04..07/17-09 use
 Playwright route interception with request-count/header/body redaction assertions, and 17-08 asserts
