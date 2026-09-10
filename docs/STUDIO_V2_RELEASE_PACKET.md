@@ -53,10 +53,9 @@ deployment, publishing, physical print, or maintainer approval.
   — **27/27**, Chromium/Firefox/WebKit; synthetic direct-provider wire.
 - Latest combined local target run for P0 X-01..03 and PI-04 supporting cases — **54/54**, Chromium/Firefox/WebKit;
   synthetic provider interception remains supporting evidence and does not close S17.
-- Full P0 browser sweep: **96/105** passed before the two intentional import-confirmation test fixes; the focused
-  01-06 and 13-08 reruns then passed **3/3** each across Chromium, Firefox and WebKit, while 13-07 remained **0/3**
-  because the current Demo Gateway provider turn did not establish. The current P0 register is therefore 34/35 Pass,
-  1 Fail, 0 Not run; no provider failure was converted into a mock Pass.
+- Latest full P0 browser sweep after the confirmation-test fixes: **102/105** passed; the only three failures were
+  13-07 across Chromium, Firefox and WebKit because the current Demo Gateway provider turn did not establish. The
+  current P0 register remains 34/35 Pass, 1 Fail, 0 Not run; no provider failure was converted into a mock Pass.
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
   environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
