@@ -63,6 +63,12 @@ deployment, publishing, physical print, or maintainer approval.
   for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
   a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
   live Provider reliability or retention certification.
+- A 2026-09-11 rerun of `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` passed **3/3** across
+  Chromium, Firefox and WebKit. This reconfirms the registered-origin Demo session/disclosure path; it does not add
+  live Provider reliability, retention or direct-BYOK evidence.
+- The current-source AI/Trace UI regression (`e2e/studio-v2-ai.spec.js` plus `e2e/studio-v2-ai-trace.spec.js`)
+  passed **26/30** across the three engines, with four intentional browser-specific skips. It confirms the
+  credential-free Demo settings/trace surface only; no live Provider reliability claim is made.
 - Current-source Chromium Demo probes against the registered local origin reached `Printable`, issued `/demo/session`
   with no Authorization and received **201**, then observed two `/demo/v1/responses` requests returning **200** with an
   in-memory Demo-session Authorization header. A fresh Preview-mode transaction used explicit `#0000ff`, the UI Apply

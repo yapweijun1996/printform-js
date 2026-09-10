@@ -106,6 +106,10 @@ The current-source `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` rer
 evidence only; it does not convert the synthetic PI provider matrix into live reliability evidence
 or award S17 gate credit.
 
+A 2026-09-11 repeat of the same current-source browser case also passed **3/3** across Chromium,
+Firefox and WebKit. This reconfirms the registered-origin Demo session/disclosure path without
+adding direct-BYOK or provider-retention evidence.
+
 ### Current-source Demo Gateway live Studio probes (supporting; does not close S17)
 
 Date: 2026-09-10; source/artifact: current local `site-dist` from application revision
