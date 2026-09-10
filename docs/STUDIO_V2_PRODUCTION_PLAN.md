@@ -42,9 +42,9 @@ geometry-only SVG before transport; the host-side 35-command catalog remains a
 separate local permission surface. BYOK remains on the existing native-tools
 path.
 A current-source real Chromium probe from the registered local origin reached `Printable`; `/demo/session` had no
-Authorization and returned `201`, then two `/demo/v1/responses` requests returned `200` with the in-memory Demo-session
-header. Auto mode committed one safe proposal (`r0` → `r1`), showed Applied/Undo and passed layout review while retaining
-human print-preview/export confirmation. No manual Apply, export, deletion, raw token, credential or response body was retained. This is supporting Demo reachability evidence only, not live direct-BYOK provider reliability, quota or retention.
+Authorization and returned `201`, then two `/demo/v1/responses` requests returned `200` with the in-memory Demo-session header. A fresh Preview-mode transaction used explicit `#0000ff`, UI Apply committed `r0` → `r1`,
+passed layout review, and the production download fallback produced a revision-1 attestation with validation `PASS`.
+No raw token, credential, provider body or exported HTML was retained; download completion, native Save As and system print preview were not certified. This is supporting Demo evidence only, not live direct-BYOK provider reliability, quota or retention.
 
 ## Evidence and current review limits
 

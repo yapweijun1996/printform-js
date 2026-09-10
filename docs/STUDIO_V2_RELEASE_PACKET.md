@@ -63,12 +63,13 @@ deployment, publishing, physical print, or maintainer approval.
   for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
   a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
   live Provider reliability or retention certification.
-- A current-source one-turn Chromium probe against the registered local origin reached `Printable`, issued
-  `/demo/session` with no Authorization and received **201**, then observed two `/demo/v1/responses` requests returning
-  **200** with an in-memory Demo-session Authorization header. Default Auto mode committed one safe proposal (`r0` → `r1`),
-  showed Applied/Undo, and completed layout review while keeping human print-preview/export confirmation required. No
-  manual Apply, export, deletion, token, credential or response body was recorded. This is supporting Demo reachability
-  evidence only and earns no S17/PI-04 direct-BYOK credit.
+- Current-source Chromium Demo probes against the registered local origin reached `Printable`, issued `/demo/session`
+  with no Authorization and received **201**, then observed two `/demo/v1/responses` requests returning **200** with an
+  in-memory Demo-session Authorization header. A fresh Preview-mode transaction used explicit `#0000ff`, the UI Apply
+  committed `r0` → `r1`, the layout review passed, and the Production export UI started the browser download fallback
+  as `sales-invoice-pilot.html`; its embedded attestation reported revision 1 and validation **PASS**. No raw token,
+  credential, provider body or exported HTML was recorded. Download completion, native Save As and system print preview
+  remain unverified; this remains supporting Demo evidence and earns no S17/PI-04 direct-BYOK credit.
 - Prior application-baseline Demo Gateway browser run (commit `e4302009e461ae398476ec63043c888cd19a07a`):
   `demo-fast` design and layout-review Responses streams returned **200**; Preview mode showed a pending candidate,
   one real UI Apply produced revision 1, `request_export` kept human confirmation required, and text-only,

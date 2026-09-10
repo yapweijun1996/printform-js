@@ -106,28 +106,34 @@ The current-source `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` rer
 evidence only; it does not convert the synthetic PI provider matrix into live reliability evidence
 or award S17 gate credit.
 
-### Current-source Demo Gateway live Studio probe (supporting; does not close S17)
+### Current-source Demo Gateway live Studio probes (supporting; does not close S17)
 
 Date: 2026-09-10; source/artifact: current local `site-dist` from application revision
-`a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: one real Chromium browser context
+`a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: real Chromium browser contexts
 against `http://127.0.0.1:4174/studio-v2/`, served by `scripts/serve-site.mjs`, with the
-registered `github-pages` Demo origin. The probe sent one generic design request, did not click
-manual Apply or export, did not delete data and did not record response bodies.
+registered `github-pages` Demo origin. The focused transport probe and the later fresh
+transaction probe both used the current source; no provider credential was supplied to the page.
 
-- Studio reached `Printable`; `POST /demo/session` was observed without an Authorization header
-  and returned **201**. Two subsequent `POST /demo/v1/responses` provider turns returned **200**;
-  both carried an Authorization header supplied by the in-memory Demo session. No raw token,
-  credential or provider body was retained.
-- In the default Auto mode, the safe proposal was automatically committed once (`r0` → `r1`);
-  the Applied card and Undo control were visible, and the automatic layout review passed. The
-  final status still required human print preview/export confirmation. This confirms the current
-  source can traverse the registered credential-free session-to-Responses path from the browser;
-  it is not a provider-quality, quota, retention or reliability certification.
+- Both probes reached `Printable`; the session request was observed without Authorization and
+  returned **201**, and the design/review requests to `/demo/v1/responses` returned **200** with
+  only the in-memory Demo-session Authorization header. No raw token, credential or provider body
+  was retained.
+- The fresh transaction probe selected Preview mode and requested an explicit `#0000ff` heading
+  color. The actual UI proposal card showed revision 0, the user-facing Apply control committed
+  exactly `r0` -> `r1`, the card showed Applied and Undo, and the committed state remained visible.
+  The UI then ran the Demo multimodal layout review and reported: layout review passed; human print
+  preview and export confirmation remain required.
+- After the passed review, the user-facing Production export button started the normal browser
+  download fallback as `sales-invoice-pilot.html`; the embedded attestation reported revision 1
+  and validation **PASS**. Download completion was intentionally not treated as confirmed file save.
+  The headless native Save As picker and system print preview were not run; no deletion occurred,
+  and the exported HTML was inspected in memory only and not retained.
 
-No manual Apply, export, deletion or raw token/credential/body was recorded. This is current-source
-Demo supporting evidence only. It does not replace direct-BYOK evidence,
-the final provider/render/privacy/transaction matrix, platform/print checks or release approval,
-and earns no S17 G2-G5 credit.
+These probes confirm that the current source traverses the registered credential-free
+session-to-Responses path and the production-shell UI transaction boundary. They remain Demo
+supporting evidence only: they do not replace direct-BYOK provider CORS/quota/reliability/retention
+evidence, the final provider/render/privacy/transaction matrix, platform/print checks or release
+approval, and earn no S17 G2-G5 credit.
 
 ### Prior application-baseline Demo Gateway browser run (supporting; superseded for changed preview path)
 
