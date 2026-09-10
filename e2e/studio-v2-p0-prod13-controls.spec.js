@@ -139,6 +139,7 @@ test("PROD-13 13-08 falls back to memory and does not inherit Synthetic policy o
   const failedStorage = await readClientStorage(page);
   expect(JSON.stringify(failedStorage)).not.toContain("STORAGE-FAILURE-CANARY-20260908");
 
+  page.on("dialog", (dialog) => dialog.accept());
   await page.locator("#import-file").setInputFiles({ name: "unclassified.html", mimeType: "text/html", buffer: importedFixture });
   await expect(page.locator("#data-policy")).toHaveText(/Unknown data|未知数据/i);
   const capabilities = await page.evaluate(() => window.PrintFormStudioAgent.execute("get_capabilities"));

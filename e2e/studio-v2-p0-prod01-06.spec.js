@@ -119,6 +119,7 @@ test.describe("Studio v2 PROD-01 01-06 stale selection", () => {
     await expect(page.locator("#ai-apply-proposal")).toBeVisible({ timeout: 20_000 });
     const replacement = await request.get("/studio-v2/samples/purchase-order-red-v2.html");
     expect(replacement.ok()).toBe(true);
+    page.on("dialog", (dialog) => dialog.accept());
     await page.locator("#import-file").setInputFiles({
       name: "stale-selection-replacement.html", mimeType: "text/html", buffer: await replacement.body()
     });
