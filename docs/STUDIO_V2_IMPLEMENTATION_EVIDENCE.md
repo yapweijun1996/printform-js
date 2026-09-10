@@ -246,7 +246,7 @@ Incompatible existing schemas fail closed without deleting stores. Vendor upgrad
   covering missing-policy callbacks, delayed IndexedDB mode/document/generation changes, asynchronous runtime
   write failure, panel session replacement and the actual wire request. These runs support 13-04 and 13-08;
   the latest full 105-test P0 sweep passed **102/105** and the current 13-07 browser case remains **0/3** because
-  the Demo Gateway provider turn did not establish, so its prompt/body assertion is not a P0 Pass or live-provider claim.
+  the Demo Gateway provider turn did not establish; a no-secret `/demo/session` probe returned HTTP 403 before any `/demo/v1/responses` request, so its prompt/body assertion is not a P0 Pass or live-provider claim.
 
 Reproduction entry points: `tests/studio-v2/agent-session-lifecycle.test.js`, `agent-session-database.test.js`,
   `agent-panel-lifecycle.test.js`, `agent-policy-owners.test.js`, `agent-prompt-policy.test.js`, `agent-output-boundary.test.js`,
