@@ -1,9 +1,9 @@
 # Studio v2 Resumed Implementation Evidence
 
 Date: 2026-09-10. Scope: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit `59f4fe7`; current status commit `bb499a9`.
-Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 34/35 with 13-07 Fail, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
+Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35 Pass, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
-Latest P0 register: **34 Pass, 1 Fail (13-07), 0 Not run**. Current browser evidence closes the recorded P0 paths except the provider-dependent 13-07 prompt step; later PI/release evidence remains incomplete.
+Latest P0 register: **35 Pass, 0 Fail, 0 Not run**. The focused 13-07 run now closes the browser Demo request/disclosure path after origin registration; later PI/release evidence remains incomplete.
 
 ## Sequential handoff review (2026-09-08)
 
@@ -245,8 +245,8 @@ Incompatible existing schemas fail closed without deleting stores. Vendor upgrad
   transaction admission and final Provider payloads. The combined lifecycle/session set passed **30/30 serially**,
   covering missing-policy callbacks, delayed IndexedDB mode/document/generation changes, asynchronous runtime
   write failure, panel session replacement and the actual wire request. These runs support 13-04 and 13-08;
-  the latest full 105-test P0 sweep passed **102/105** and the current 13-07 browser case remains **0/3** because
-  the Demo Gateway provider turn did not establish; a no-secret `/demo/session` probe returned HTTP 403 before any `/demo/v1/responses` request, and the Gateway guide maps 403 to an unregistered Demo project origin, so its prompt/body assertion is not a P0 Pass or live-provider claim.
+  the latest full 105-test P0 sweep remains historical at **102/105**, with 13-07 failing before the Gateway origin was
+  registered; that no-secret `/demo/session` 403 is superseded by the registered-origin 13-07 rerun, which passed **3/3** across all three engines and closes the P0 browser case, but not live Provider reliability or retention.
 
 Reproduction entry points: `tests/studio-v2/agent-session-lifecycle.test.js`, `agent-session-database.test.js`,
   `agent-panel-lifecycle.test.js`, `agent-policy-owners.test.js`, `agent-prompt-policy.test.js`, `agent-output-boundary.test.js`,
@@ -291,7 +291,7 @@ Status: **Done, 100%** (`G1/G2/G3/G4/G5 = 10/50/80/95/100`). Cases 03-01 through
   criteria remain open; current plan credit is 76.7% with 16/21 Done and gate credit remains in TASK.
 
 ## Remaining work and safe continuation
-1. P0 case closure is currently 34/35 with 13-07 Fail; continue provider investigation and PI/release evidence without treating controlled runtime cases as live Provider certification.
+1. P0 case closure is now 35/35 after the registered-origin 13-07 browser requalification; continue PI/release evidence without treating the held Demo request or controlled runtime cases as live Provider reliability certification.
 2. Continue S17 through the remaining final provider/render/privacy/transaction matrix one case at a time, reusing PI-00..04 without cutting over AGRUN.
 3. Prepare S18 cutover, S19 print/platform certification, S20 packet and S21 approval only at their gates; do not deploy, publish or push.
 

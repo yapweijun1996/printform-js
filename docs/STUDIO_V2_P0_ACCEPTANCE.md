@@ -1,7 +1,7 @@
 # Studio v2 Priority Acceptance Checklist
 
 Prepared: 2026-09-08. Source baseline: `d2536999ae3edd3d94e315bb245ab94f8b74e65d` plus the uncommitted amendment snapshot.
-Scope: PROD-13, PROD-01, PROD-02 and PROD-03; 35 cases: **34 Pass, 1 Fail (13-07), and 0 Not run**. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the lifecycle policy; current browser evidence closes 01-01..08, 02-01..08, 03-01..08, 13-01..06, 13-08 and X-01..03. 13-07 remains open because the current three-engine provider turn did not establish. These P0 case results still do not authorize PI cutover or release.
+Scope: PROD-13, PROD-01, PROD-02 and PROD-03; 35 cases: **35 Pass, 0 Fail, and 0 Not run**. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the lifecycle policy; current browser evidence closes 01-01..08, 02-01..08, 03-01..08, 13-01..08 and X-01..03. 13-07 was requalified after the Demo Gateway origins were registered for the local Harness. These P0 case results still do not authorize PI cutover or release.
 These are release acceptance criteria, not a Production Ready declaration or permission to deploy.
 
 ## Authority and execution rules
@@ -47,7 +47,7 @@ it must not silently enable recovery, chat or transaction persistence. Volatile 
 - [x] **13-04 In-flight mode/document/no-policy change — Pass.** Start delayed controlled AI requests in synthetic mode, then select real-data mode, replace the document, and separately make the host getter report no active policy. Old callbacks cannot use the old policy to persist or expose document values/pixels. Missing current policy rejects the old context instead of falling back to its previous Synthetic policy.
 - [x] **13-05 Existing records — Pass.** Seed old synthetic canary records, then switch classification to real. Stop new forbidden writes and automatic replay; show that old copies may remain. Do not silently delete records or claim historical copies have been erased. Any explicit cleanup identifies the exact affected project records.
 - [x] **13-06 Outbound evidence — Pass.** In real-data mode, request summaries, diagnostics, audit/recovery results and pixel evidence through each Agent entry point. Raw business values are absent from automatic outputs; pixel capture is rejected; permitted geometry is redacted. Caller-supplied synthetic flags cannot override host classification.
-- [ ] **13-07 Explicit save and user prompts — Fail (current provider run).** An intentional file save writes only the chosen artifact and does not enable other persistence. Separately verify the existing disclosure that user-entered prompt text is sent to the chosen provider; never describe real-data mode as anonymizing arbitrary user text. Use synthetic text for this test.
+- [x] **13-07 Explicit save and user prompts — Pass.** An intentional file save writes only the chosen artifact and does not enable other persistence. The real browser Demo flow also disclosed and captured the synthetic user prompt in the final `/demo/v1/responses` request body; no credential or real business data was used. Provider reliability and retention remain outside this case.
 - [x] **13-08 Control and failure paths — Pass.** A declared synthetic fixture retains supported recovery/session behavior. With storage denied/quota exceeded, no alternate forbidden sink is used; the UI states the actual persistence result. Importing a different unclassified document does not inherit synthetic classification.
 
 Pass evidence: import/write ordering, destination inventory, canary scan, controlled outgoing payloads and reload traces.
@@ -128,7 +128,7 @@ Pre-review evidence: the full Windows Playwright run passed 190/222 with 32 expe
 - Expected/actual: every successful and rejected response omitted the canary and unknown business fields; geometry returned the `geometry-only` redacted snapshot; pixel capture returned `PIXEL_EVIDENCE_SYNTHETIC_ONLY` despite the caller flag. The three entry paths returned equivalent safe outcomes. Actual result matched in all three engines, with CDP transport coverage in Chromium.
 - References: `e2e/studio-v2-p0-prod13-outbound.spec.js` (3/3 browser engines); `tests/studio-v2/agent-entry-parity.test.js` and `tests/studio-v2/public-command-matrix.test.js` (supporting closed projection and all-35 Real-policy canary evidence).
 
-The earlier observations support only the recorded paths. 13-04 and 13-08 have current case-specific Pass evidence; 13-07 is a current Fail because the Demo Gateway provider turn did not establish in any of the three engines. S03/M1 application-controlled inventory is reconciled, while PI/provider and external-retention boundaries remain open.
+The earlier observations support only the recorded paths. 13-04, 13-07 and 13-08 now have current case-specific Pass evidence. S03/M1 application-controlled inventory is reconciled, while PI/provider and external-retention boundaries remain open.
 
 `tests/studio-v2/agent-entry-parity.test.js` passes four controlled cases: three Synthetic parity cases and one Real-data diagnostic/redaction case:
 
@@ -137,7 +137,7 @@ The earlier observations support only the recorded paths. 13-04 and 13-08 have c
 - Three delayed previews started through the three paths all return `STALE_POLICY_CONTEXT` after a Synthetic-to-Real switch; the started draft traces remain draft-only, with no preview result or commit.
 - Real-data summary, validation, transaction, audit, history, Evidence Pack and geometry-evidence requests hide a canary consistently through embedded, WebMCP and CDP; geometry remains redacted, while a caller-supplied `synthetic: true` does not bypass the Real-mode pixel rejection.
 
-This is controlled adapter/domain evidence for 01-07/01-08, 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08, 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08, 13-04/13-06 and X-02. The dedicated 13-06 browser case now closes the three mapped entry paths; CDP target replacement/reconnect remains a compatibility boundary, while 13-07 remains a provider-turn failure. S03 inventory is complete for application-controlled sinks; provider/OS/deployment retention remains outside this evidence. Current register: 34 Pass, 1 Fail (13-07), and 0 Not run.
+This is controlled adapter/domain evidence for 01-07/01-08, 02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08, 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08, 13-04/13-06 and X-02. The dedicated 13-06 browser case closes the three mapped entry paths; CDP target replacement/reconnect remains a compatibility boundary, while the focused 13-07 Demo requalification now passes. S03 inventory is complete for application-controlled sinks; provider/OS/deployment retention remains outside this evidence. Current register: 35 Pass, 0 Fail, and 0 Not run.
 
 The host-admission evidence now includes the gateway admission suite, six CDP compatibility tests, two controlled local HTTP/WebSocket transport tests, MCP `tools/list` gating, and browser checks for unadmitted execution plus re-admission after reload/document/policy replacement. The client compares the complete live `get_capabilities.result.tools` catalog, obtains an opaque memory-only admission, carries it on business calls, and rejects a replaced page with a changed catalog before issuing a business command. WebMCP evidence verifies that registered tools equal the gateway catalog and that old registrations are aborted before a replacement registration. These are supporting compatibility/lifecycle records, not a P0 Pass or Production Ready decision.
 
@@ -145,12 +145,12 @@ Supporting M2 transaction-context evidence now covers Agent-created transaction 
 
 Supporting 13-05 evidence: `e2e/studio-v2-recovery-boundary.spec.js` and `e2e/studio-v2-session-policy.spec.js` pass 6/6 across Chromium, Firefox and WebKit. The dedicated existing-record case adds exact cross-store/project mapping, no-new-destination checks and scoped explicit cleanup; credential-vault contents remain a separate preference/secret destination and were not treated as document records.
 
-### Case-specific evidence: PROD-13 13-07 — Fail (current provider run)
+### Case-specific evidence: PROD-13 13-07 — Pass (Demo origin requalification)
 
-- Date: 2026-09-10; source: current local worktree; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; all fixtures and canaries synthetic.
+- Date: 2026-09-10; source: current local worktree at `482ffce`; environment: Windows Playwright Chromium, Firefox and WebKit, one worker; all fixtures and canaries synthetic. The Gateway admin report recorded `github-pages` with its existing public origins preserved and added `http://127.0.0.1:4174` and `http://localhost:4174`.
 - Steps: switch a canary document to Real mode; use a controlled `showSaveFilePicker` and inspect the selected filename, written HTML and confirmed close; compare decoded localStorage, sessionStorage, IndexedDB and Cache Storage before and after the save; inspect the privacy disclosure; submit a synthetic user prompt through a controlled Provider transport and capture the final request body.
-- Expected/actual: the selected-file save and storage checks reached their expected assertions, but the final provider step failed in all three engines: `window.__p0PromptRequest` stayed unset for 12 seconds and the panel reported `The provider turn failed`. The current Demo Gateway/provider turn was not established, so prompt disclosure and final request-body evidence are not accepted. The latest full 105-test sweep was 102/105, with only this case failing; a no-secret `/demo/session` probe returned HTTP 403 before any `/demo/v1/responses` request, and the Gateway guide maps 403 to an unregistered Demo project origin. No live Provider/CORS/reliability claim is made.
-- References: `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` (0/3 current engines), `e2e/studio-v2-file-save-policy.spec.js` (24/24 serial controls), `e2e/studio-v2-provider-wire.spec.js` and `e2e/studio-v2-recipient-policy.spec.js`. The latest full P0 command was 102/105 with this case failing in all three engines; the earlier dated 3/3 claim is superseded for the current register. The test does not claim control over operating-system file history or Provider retention.
+- Expected/actual: the selected-file save and storage checks passed; the Gateway session was established through the actual browser origin, and the synthetic prompt was captured in the final `/demo/v1/responses` request body. `npm run test:e2e -- --grep "PROD-13 13-07"` passed **3/3** across Chromium, Firefox and WebKit. The Gateway report separately verified session `201 Created` and models `200` for both local origins. The response body was held by the test transport, so this closes the browser request/disclosure case without claiming live Provider reliability, CORS beyond the registered origins, or Provider retention.
+- References: `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` (3/3 current engines), `e2e/studio-v2-file-save-policy.spec.js` (24/24 serial controls), `e2e/studio-v2-provider-wire.spec.js` and `e2e/studio-v2-recipient-policy.spec.js`. The earlier 102/105 full sweep and 403 session probe remain historical blocker evidence; they are superseded for this case by the registered-origin requalification. The test does not claim control over operating-system file history or Provider retention.
 
 ### Case-specific evidence: PROD-13 13-08 — Pass
 
@@ -229,7 +229,7 @@ the existing committed revision without a second CAS, a lost response queries th
 an unresolved recovery state is retained without automatic resubmission, a post-commit validation
 failure queries the same transaction while retaining the committed result, Stop prevents a delayed
 provider result from creating a proposal, and the public gateway cannot expose the privileged method.
-02-01 through 02-08 and 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08 are now case-specific Passes; the remaining 3 P0 cases are still Not run.
+02-01 through 02-08 and 03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08 are now case-specific Passes; all 35 P0 cases now have recorded Pass results.
 
 ## PROD-03: truthful render, readiness and save state
 
@@ -283,7 +283,7 @@ now Pass; full draft-overwrite/recovery remains under PROD-08 and later release 
 
 Reuse existing fixtures and test harnesses; do not replace domain tests with UI snapshots or certify live-provider behavior from mocks.
 Each requirement needs named implementation and verification owners before execution; both are currently unassigned.
-Current register: 34 Pass, 1 Fail (13-07), and 0 Not run. Documentation completion alone closes none of the four PROD requirements; the case results are backed by the linked three-engine browser runs and the current provider failure remains open.
+Current register: 35 Pass, 0 Fail, and 0 Not run. Documentation completion alone closes none of the four PROD requirements; the case results are backed by the linked three-engine browser runs, while live Provider/platform/release evidence remains open.
 For every Pass, attach evidence; for every Fail, record the observed result and linked fix task. Required cases cannot be waived by a green aggregate suite.
 Run relevant existing regressions after implementation and record the exact supported environment; wider browser/print release work remains PROD-10/12.
 Rollback must retain user projects and durable records. Disable the affected AI path or revert the bounded change; never use blanket storage deletion.
@@ -292,8 +292,8 @@ Rollback must retain user projects and durable records. Disable the affected AI 
 
 - Scope: four P0 acceptance contracts; evidence: linked code, targeted tests and the production plan; constraints: no deployment/provider authorization, existing trust/transaction/privacy invariants.
 - Simple: PASS. Cases extend existing workflows and add no new service or protocol.
- - Clear: PARTIAL for the current register: 34 Pass, 1 Fail (13-07), and 0 Not run; controlled-runtime limitations and missing live Provider/platform evidence remain explicit.
+ - Clear: PASS for the current register: 35 Pass, 0 Fail, and 0 Not run; controlled-runtime limitations and missing live Provider/platform evidence remain explicit.
 - Modular: PASS. Host policy, command enforcement, storage, rendering and save outcome ownership are explicit.
 - Consistent: PASS. Existing PROD IDs/status ownership and current-versus-target distinctions are retained.
 - Findings: no material SCMC issue in the checklist; scope mappings and auto eligibility still need concrete implementation specifications.
-- Overall: PARTIAL for the current P0 case checklist, not for the implementation or release. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) rates implementation conformance Partial because PI/provider, OS, deployment-retention and M4/M5 evidence remain outside these controlled browser cases; S03/M1 has reconciled the application-controlled destination inventory.
+- Overall: PASS for the current P0 case checklist, not for the implementation or release. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) rates implementation conformance Partial because PI/provider, OS, deployment-retention and M4/M5 evidence remain outside these controlled browser cases; S03/M1 has reconciled the application-controlled destination inventory.

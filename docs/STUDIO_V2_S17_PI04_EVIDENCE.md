@@ -95,6 +95,16 @@ A Firefox-only diagnostic rerun with `MOZ_DISABLE_CONTENT_SANDBOX=1` passed **18
 
 A Windows-only Playwright runner adjustment in `playwright.config.js` adds `--disable-gpu` only to Firefox and leaves content sandboxing enabled. The standard three-engine target command then passed **54/54**. One preceding full run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry passed **1/1**, followed by the complete **54/54** run. This resolves the local runner startup condition only; synthetic Provider interception remains supporting evidence and live Provider/platform/print evidence remains open.
 
+### Related Demo Gateway origin requalification (P0 only; does not close S17)
+
+Date: 2026-09-10; the Gateway admin preserved `github-pages` public origins and added
+`http://127.0.0.1:4174` plus `http://localhost:4174`. Real browser session issuance returned
+`201 Created` and `/demo/v1/models` returned `200` for both local origins; no token was recorded.
+The current-source `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` rerun passed
+**3/3** across Chromium, Firefox and WebKit. This closes P0 13-07 browser transport/disclosure
+evidence only; it does not convert the synthetic PI provider matrix into live reliability evidence
+or award S17 gate credit.
+
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
 Date: 2026-09-09; environment: Chromium, Firefox and WebKit through the actual static PI-04 page. The case uses the
@@ -168,7 +178,7 @@ retention, live CORS, live reliability, or final P0/S17 gate closure.
 ## Remaining S17 blockers
 
 - The isolated PI-04 page has no production UI shell; visible approval/export still belongs to the AGRUN Studio entry. Replacing that runtime with PI would be S18/cutover work, not an authorized PI-04 fixture shortcut.
-- No authorized live Provider credential, target-origin/CORS profile, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Synthetic interception remains explicitly supporting evidence.
+- The target-origin/CORS registration is now verified for the local Harness and the public Studio origin, but no authorized live Provider credential, quota/reliability window, Edge/Safari.app, physical printer, deployment-retention or release-approval evidence is available. Synthetic interception remains explicitly supporting evidence.
 
 ## X-01 — historical supporting case evidence (Pass; S17 remains in progress)
 

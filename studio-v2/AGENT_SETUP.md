@@ -137,10 +137,12 @@ embed a private Gateway key, call `/v1/*` from the browser, pass a Demo token to
 Studio commands, or use a rejected session as permission to broaden document
 scope. The guide advertises model discovery and `demo-auto`/`demo-fast`, while
 also documenting `gpt-5.4-mini`; this client keeps that default, while model-alias
-discovery remains unverified in this worktree. A no-secret local Harness probe on
-2026-09-10 returned HTTP 403 from `/demo/session` for the local origin; the guide
-maps that status to an unregistered Demo project origin, with CORS allow-origin
-present. Full live Provider compatibility remains open.
+discovery remains unverified in this worktree. On 2026-09-10 the Gateway admin
+registered `http://127.0.0.1:4174` and `http://localhost:4174` for `github-pages`;
+real browser sessions returned `201 Created` and `/demo/v1/models` returned `200`.
+The earlier 403 was therefore an origin-registration blocker, now resolved for
+the local Harness. Full live Provider reliability and retention compatibility
+remain open.
 
 The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
 

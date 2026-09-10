@@ -20,7 +20,7 @@ Provider acceptance was established.
 | Sequential TASK ledger and dependency order | `TASK.md`, `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_EXECUTION_PLAN.md` | S01-S16 are Done; S17 is the only active step at G1/10%. S18-S21 remain dependent/open. |
 | Requalify S16 deferred-close, CAS, lifecycle and browser boundaries | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md` | G1-G5/100%; 16-01..06 passed 18/18 across Chromium, Firefox and WebKit, with focused lifecycle/privacy regressions. |
 | Actual browser Harness acceptance | `e2e/studio-v2-pi-04.spec.js`, `e2e/studio-v2-pi-04-privacy.spec.js`, `e2e/studio-v2-pi-04-transaction.spec.js` | 17-01..09 passed 27/27 across three configured engines. These are isolated PI supporting cases with synthetic Provider interception; they do not close S17 live-provider or cutover gates. |
-| Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; current P0 register is 34/35 Pass with 13-07 Fail pending provider availability. Controlled AGRUN/BYOK is not PI live-provider evidence. |
+| Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; current P0 register is 35/35 Pass after the focused 13-07 Demo-origin requalification. Controlled AGRUN/BYOK is not PI live-provider evidence. |
 | Canonical revisions, CAS and stale-result rejection | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md`, `docs/STUDIO_V2_S17_PI04_EVIDENCE.md`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Current revision/hash ownership, atomic commit recovery, delayed policy/scope rejection and cross-document isolation are evidenced. |
 | Scope isolation | P0 X-02/X-03 and PI 17-02/17-03 browser cases | Old policy/mode/scope result and document-A callback do not change the current document; no candidate/evidence leak was observed. |
 | Private human approval/export and no automatic download | P0 X-01 and PI 17-01/17-08 evidence | Human Apply/review/export boundaries and uncertain-commit recovery are covered; export is confirmed-only. |
@@ -34,7 +34,7 @@ Provider acceptance was established.
 ## 2. TASK and gate snapshot
 
 - Plan: **1610/21 = 76.7%; 16/21 steps Done**.
-- P0: **34/35 Pass, 1 Fail (13-07), 0 Not run**.
+- P0: **35/35 Pass, 0 Fail, 0 Not run**.
 - PI packages: **4/6 Done** (PI-00..03); PI-04 and PI-05 are not Done.
 - S16: `xxxxx`, 100%, Done.
 - S17: `x----`, 10%, Pending closure. G2-G5 receive no credit until the remaining matrix is complete.
@@ -53,12 +53,16 @@ deployment, publishing, physical print, or maintainer approval.
   — **27/27**, Chromium/Firefox/WebKit; synthetic direct-provider wire.
 - Latest combined local target run for P0 X-01..03 and PI-04 supporting cases — **54/54**, Chromium/Firefox/WebKit;
   synthetic provider interception remains supporting evidence and does not close S17.
-- Latest full P0 browser sweep after the confirmation-test fixes: **102/105** passed; the only three failures were
-  13-07 across Chromium, Firefox and WebKit because the current Demo Gateway provider turn did not establish. A
-  no-secret POST probe to `/demo/session` returned HTTP **403** while allowing the Harness origin; per the Gateway
-  guide this denotes an unregistered Demo project origin, before any
-  `/demo/v1/responses` request; the current P0 register remains 34/35 Pass, 1 Fail, 0 Not run; no provider failure
-  was converted into a mock Pass.
+- Latest full P0 browser sweep before Gateway origin registration: **102/105** passed; the only three failures were
+  13-07 across Chromium, Firefox and WebKit because the local Demo project origin was not registered. The no-secret
+  `/demo/session` probe returned HTTP **403** at that time; per the Gateway guide this denoted an unregistered project
+  origin, before any `/demo/v1/responses` request. This historical failure is superseded for 13-07 by the registered-origin
+  requalification below; no provider failure was converted into a mock Pass.
+- After the Gateway admin registration, `npm run test:e2e -- --grep "PROD-13 13-07"` passed **3/3** across Chromium,
+  Firefox and WebKit on the current source. The real browser session returned `201 Created` and models returned `200`
+  for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
+  a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
+  live Provider reliability or retention certification.
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
   environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
