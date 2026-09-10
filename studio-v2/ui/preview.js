@@ -260,7 +260,7 @@ function assignPreviewSource(iframe, html) {
   // a parent navigation unless the previous srcdoc value is cleared first.
   // The render controller rejects stale writes, so this reset cannot expose
   // an older project after a newer request has taken ownership.
-  iframe.srcdoc = "";
+  if (iframe.srcdoc) iframe.srcdoc = "";
   iframe.srcdoc = html;
 }
 

@@ -46,6 +46,21 @@ const LOCALES = ["zh-CN", "ms-MY", "ja-JP", "vi-VN"]; // en-MY is covered by the
 // to ignore the report.
 const EXPECTED_BLOCKED = new Set(["empty"]);
 
+async function admitGateway(page) {
+  await page.waitForFunction(() => typeof window.PrintFormStudioAgent?.admitClient === "function", { timeout: 120_000 });
+  const request = await page.evaluate(async () => {
+    const capabilities = await window.PrintFormStudioAgent.execute("get_capabilities", {});
+    if (!capabilities?.ok || !capabilities.result) throw new Error("Agent capabilities unavailable");
+    return {
+      protocolVersion: capabilities.result.protocolVersion,
+      contractVersion: capabilities.result.contractVersion,
+      tools: capabilities.result.tools,
+    };
+  });
+  const admission = await page.evaluate((input) => window.PrintFormStudioAgent.admitClient(input), request);
+  if (!admission?.ok) throw new Error(`Agent gateway admission failed: ${admission?.error?.code || "unknown"}`);
+}
+
 function startServer() {
   // serve-site.mjs takes the root as argv[2] and the port from PORT.
   return spawn("node", ["scripts/serve-site.mjs", "site-dist"], { stdio: "ignore", env: { ...process.env, PORT: String(PORT) } });
@@ -59,11 +74,16 @@ async function waitForSettledRender(page) {
   }, { timeout: 120_000 });
 }
 
+async function openEditor(page) {
+  const panel = page.locator("#editor-panel");
+  if (await panel.getAttribute("aria-hidden") === "true") await page.locator("#editor-toggle").click();
+}
+
 async function readState(page) {
   return page.evaluate(async () => {
     const result = await window.PrintFormStudioAgent.execute("validate_project", {});
+    if (!result?.ok || !result.result?.validation) throw new Error(`validate_project failed: ${result?.error?.code || "unknown"}`);
     const validation = result.result.validation;
-    const frame = document.querySelector("#preview-frame");
     return {
       valid: validation.valid,
       metrics: validation.metrics,
@@ -82,20 +102,15 @@ async function rowsPerPage(page) {
 
 async function runCell(page, { sample, scenario, locale }) {
   await page.goto(`${BASE}/studio-v2/?sample=${sample}`);
+  await admitGateway(page);
   await waitForSettledRender(page);
+  if (locale || (scenario && scenario !== "default")) await openEditor(page);
   if (locale) {
-    const revision = await page.evaluate(async (target) => {
-      const summary = await window.PrintFormStudioAgent.execute("get_project_summary", {});
-      await window.PrintFormStudioAgent.execute("set_locale", { expectedRevision: summary.result.revision, locale: target });
-      return true;
-    }, locale);
+    await page.locator("#locale-select").selectOption(locale);
     await waitForSettledRender(page);
   }
   if (scenario && scenario !== "default") {
-    await page.evaluate(async (target) => {
-      const summary = await window.PrintFormStudioAgent.execute("get_project_summary", {});
-      await window.PrintFormStudioAgent.execute("set_sample_scenario", { expectedRevision: summary.result.revision, scenario: target });
-    }, scenario);
+    await page.locator("#scenario-select").selectOption(scenario);
     await waitForSettledRender(page);
   }
   const state = await readState(page);
