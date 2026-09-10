@@ -111,18 +111,21 @@ or award S17 gate credit.
 Date: 2026-09-10; source/artifact: current local `site-dist` from application revision
 `a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: one real Chromium browser context
 against `http://127.0.0.1:4174/studio-v2/`, served by `scripts/serve-site.mjs`, with the
-registered `github-pages` Demo origin. The probe sent one generic design request and did not
-apply, export, delete data or record response bodies.
+registered `github-pages` Demo origin. The probe sent one generic design request, did not click
+manual Apply or export, did not delete data and did not record response bodies.
 
 - Studio reached `Printable`; `POST /demo/session` was observed without an Authorization header
   and returned **201**. Two subsequent `POST /demo/v1/responses` provider turns returned **200**;
   both carried an Authorization header supplied by the in-memory Demo session. No raw token,
   credential or provider body was retained.
-- The AI turn returned its controls to idle with no failure status. This confirms the current
+- In the default Auto mode, the safe proposal was automatically committed once (`r0` → `r1`);
+  the Applied card and Undo control were visible, and the automatic layout review passed. The
+  final status still required human print preview/export confirmation. This confirms the current
   source can traverse the registered credential-free session-to-Responses path from the browser;
-  the HTTP result is not a provider-quality, quota, retention or reliability certification.
+  it is not a provider-quality, quota, retention or reliability certification.
 
-This is current-source Demo supporting evidence only. It does not replace direct-BYOK evidence,
+No manual Apply, export, deletion or raw token/credential/body was recorded. This is current-source
+Demo supporting evidence only. It does not replace direct-BYOK evidence,
 the final provider/render/privacy/transaction matrix, platform/print checks or release approval,
 and earns no S17 G2-G5 credit.
 
