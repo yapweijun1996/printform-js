@@ -8,7 +8,7 @@ isolated composed PI path; the embedded production entry remains AGRUN.
 Source identity: current review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5` (including the browser-matrix/preview-source correction); prior application review
 revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner
 verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; this evidence and the release packet are refreshed
-against that source revision. S16/PI-03, S12/PROD-09 and
+against that source revision, with documentation follow-up HEAD `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`. S16/PI-03, S12/PROD-09 and
 S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
 
 Owners inspected:

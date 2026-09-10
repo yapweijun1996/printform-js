@@ -4,7 +4,7 @@ Status: **Reviewable local packet; release not approved.** This packet is an evi
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
 Prepared: 2026-09-10; last audited after the local application/browser-matrix commit. Current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; prior application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
-The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`.
+The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`. Current checkout HEAD is `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`, a documentation-only follow-up; application source remains the a4caf93 revision.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -40,8 +40,8 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 - S18-S20: `-----`, 0%; S21: `-----`, pending approval.
 - Release: **not approved**; Production Ready is not established.
 
-This packet is independent S20 preparation only. The packet/index/checklist edits record current source commit
-`a4caf93857669e05d0d521567ecf5ab6f4389df5` and do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
+This packet is independent S20 preparation only. The packet/index/checklist edits record application source commit
+`a4caf93857669e05d0d521567ecf5ab6f4389df5` and documentation follow-up HEAD `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`; they do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
 deployment, publishing, physical print, or maintainer approval.
 
 ## 3. Recorded verification commands and results

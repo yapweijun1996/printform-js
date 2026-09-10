@@ -1,6 +1,6 @@
 # Studio v2 Resumed Implementation Evidence
 
-Date: 2026-09-10. Scope: current review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5` (prior application review baseline `e4302009e461ae398476ec63043c888cd19a07a`); Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit `59f4fe7`; documentation status follows this source revision.
+Date: 2026-09-10. Scope: current application review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5` (prior application review baseline `e4302009e461ae398476ec63043c888cd19a07a`); Windows Firefox runner verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit `59f4fe7`; documentation follow-up HEAD `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`.
 Status: **Partial**. Superseding [handoff](STUDIO_V2_AGENT_HANDOFF.md): S16 is Done at G1-G5/100%, S17 is at G1/10%; plan 76.7%, Done 16/21, P0 35/35 Pass, PI 4/6. The current S16 evidence requalifies the deferred-close and pending-open lifecycle deltas; the review commit and `npm run doctor` are now verified. See [documentation review](STUDIO_V2_HANDOFF_REVIEW.md).
 The [P0 register](STUDIO_V2_P0_ACCEPTANCE.md) alone owns case closure.
 Latest P0 register: **35 Pass, 0 Fail, 0 Not run**. The focused 13-07 run now closes the browser Demo request/disclosure path after origin registration; later PI/release evidence remains incomplete.

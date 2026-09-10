@@ -23,7 +23,7 @@ Preserve conflicting dated paragraphs as history and investigate the current del
 
 ## Dated snapshot
 
-- Observed current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; the documentation packet follow-up is recorded separately. The prior application review baseline is `e4302009e461ae398476ec63043c888cd19a07a`.
+- Observed current application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; documentation follow-up HEAD is `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`. The prior application review baseline is `e4302009e461ae398476ec63043c888cd19a07a`.
 - S01-S16 retain Done; S17 is at G1 only and is now the next dependency-ready step.
 - S18-S21 have no gate credit. Done: 16/21.
 - Plan: `(16*100 + 10)/21 = 76.7%`, rounded to one decimal.
