@@ -3,7 +3,7 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T08:54:47+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`.
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T08:58:40+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`.
 Application delta manifest (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
 The S16/S17 implementation and evidence changes are committed in the application review revision;
@@ -56,6 +56,9 @@ deployment, publishing, physical print, or maintainer approval.
 - A no-page Firefox launch smoke reproduced the same error: the main process launched, but `GeckoChildProcessHost`
   repeatedly failed to start tab/utility subprocesses and `remoteTab` became null. This confirms an external Firefox
   process/runtime condition before project code executes; no PI code change or gate credit was made.
+- A Firefox-only diagnostic with `MOZ_DISABLE_CONTENT_SANDBOX=1` then passed **18/18** for the same target cases. The
+  variable weakens browser isolation, so it was not committed or added to the default test configuration; this is not
+  native Firefox acceptance evidence and earns no gate credit.
 - `npm run doctor` — **5/5**, including **106 files / 567 tests** and three static validators.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,

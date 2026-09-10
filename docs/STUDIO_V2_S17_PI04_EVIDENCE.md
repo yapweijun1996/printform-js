@@ -90,6 +90,8 @@ The 2026-09-10 repeat of the combined target command passed Chromium **18/18** a
 
 A no-page Firefox launch smoke reproduced the error before any project page or fixture ran: the main process launched, but `GeckoChildProcessHost` repeatedly failed to start tab/utility subprocesses and `remoteTab` became null. This identifies an external Firefox process/runtime condition; no PI code change or S17 credit is justified.
 
+A Firefox-only diagnostic rerun with `MOZ_DISABLE_CONTENT_SANDBOX=1` passed **18/18**, covering P0 X-01..03, PI-03 16-01..06 and PI-04 17-01..09. The variable weakens browser isolation, so it was not committed or added to the default test configuration; this result is diagnostic only, does not replace native Firefox evidence, and earns no gate credit.
+
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
 Date: 2026-09-09; environment: Chromium, Firefox and WebKit through the actual static PI-04 page. The case uses the
