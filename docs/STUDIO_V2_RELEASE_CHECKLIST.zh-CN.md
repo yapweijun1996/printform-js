@@ -2,7 +2,7 @@
 
 > 当前成熟度：**Production Pilot**。本清单分别列出当前试点检查和 Production Ready 硬门——Foundational transaction/evidence gates exist, but behavioral gaps and selected-platform acceptance remain open. Production Ready requires closure and maintainer approval. 当前本地 review packet 草案见 [STUDIO_V2_RELEASE_PACKET.md](STUDIO_V2_RELEASE_PACKET.md)，不构成发布批准。
 >
-> Last reviewed: 2026-09-10. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) keeps M1 implementation acceptance Partial. P0 remains 35 Pass, 0 Fail, and 0 Not run. The current `npm run doctor` passed 5/5 with 106 files / 571 tests (see [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md)); the target current-source Playwright run passed 54/54. Real Demo Gateway browser evidence is supporting evidence only: session 201, models 200, design/review SSE 200, 7/7 bounded media variants, and privacy controls passed. Direct-BYOK PI-04 provider acceptance, platform/print checks, remote CI, deployment/retention and maintainer approval remain open. These results do not authorize release. Preserve private UI approval, host-bound admission and human production-export confirmation.
+> Last reviewed: 2026-09-10. The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) keeps M1 implementation acceptance Partial. P0 remains 35 Pass, 0 Fail, and 0 Not run. The current `npm run doctor` passed 5/5 with 106 files / 571 tests (see [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md)); the target current-source Playwright run passed 54/54 and the local four-target browser matrix passed 88/88. The broader Demo Gateway design/review/media/privacy run is supporting baseline evidence from e430; because a4caf93 changed preview source assignment, current-source Demo evidence is limited to the focused 13-07 rerun (session 201, models 200, synthetic final request path). Direct-BYOK PI-04 provider acceptance, platform/print checks, remote CI, deployment/retention and maintainer approval remain open. These results do not authorize release. Preserve private UI approval, host-bound admission and human production-export confirmation.
 
 ## Production Pilot 自动检查
 
@@ -53,7 +53,7 @@ Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md)
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、权威内容 hash 与由真实 evidence receipt 推导的浏览器凭证。
 6. ✅ 自动验证内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（完整浏览器矩阵、系统打印预览人工确认等）。当前 Windows Chromium/Firefox/WebKit 目标 Playwright 证据为 54/54；2026-07-31 在旧提交上完成的 macOS/Linux 历史矩阵各为 88/88 全过，仅作为 dated evidence 保留；本次 current-source 本地 88/88 尝试返回 88 个 problem cells，远程矩阵也未重新运行，均不计入当前通过。Edge、Safari.app、真实打印链、direct-BYOK PI-04、部署/留存和完整发布矩阵仍未认证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（系统打印预览人工确认、direct-BYOK provider evidence 等）。当前 Windows current-source 四目标本地矩阵为 88/88；2026-07-31 在旧提交上完成的 macOS/Linux 历史矩阵各为 88/88 全过，仅作为 dated evidence 保留；此前 current-source 本地 88/88 problem-cell 诊断已由 runner/preview 修正后的 88/88 重跑取代。远程矩阵、Edge、Safari.app、真实打印链、direct-BYOK PI-04、部署/留存和完整发布 profile 仍未认证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 

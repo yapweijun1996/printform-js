@@ -1,6 +1,6 @@
 # Studio v2 Agent Handoff
 
-Prepared: 2026-09-10. This handoff records the completed S16 requalification, the current supporting S17/PI-04 browser cases and the real Demo Gateway pilot run; the direct-BYOK final matrix is still the next scoped step.
+Prepared: 2026-09-10. This handoff records the completed S16 requalification, the current supporting S17/PI-04 browser cases, the real Demo Gateway pilot run and the current-source local render matrix; the direct-BYOK provider/privacy/transaction matrix is still the next scoped step.
 The continuation prompt authorizes the next agent's scoped local implementation.
 Intended operator: PI coding agent, user-selected GPT 5.6 Luna / max.
 Model choice does not change evidence, privacy or approval requirements.
@@ -23,7 +23,7 @@ Preserve conflicting dated paragraphs as history and investigate the current del
 
 ## Dated snapshot
 
-- Observed application revision: `e4302009e461ae398476ec63043c888cd19a07a`; the documentation packet follow-up is recorded separately.
+- Observed current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; the documentation packet follow-up is recorded separately. The prior application review baseline is `e4302009e461ae398476ec63043c888cd19a07a`.
 - S01-S16 retain Done; S17 is at G1 only and is now the next dependency-ready step.
 - S18-S21 have no gate credit. Done: 16/21.
 - Plan: `(16*100 + 10)/21 = 76.7%`, rounded to one decimal.
@@ -31,7 +31,7 @@ Preserve conflicting dated paragraphs as history and investigate the current del
 - PI: PI-00..03 Done, 4/6 = 66.7%; PI-04/05 incomplete.
 - The temporary 72.4% total while S16 was reopened is superseded by current TASK credit.
 - No release approval or completed direct-BYOK live-provider/platform/actual-print certification; the Demo Gateway run is supporting evidence only.
-- End-of-day local S20 matrix attempt: `node scripts/browser-matrix.mjs` produced 88/88 problem cells; Chromium/Firefox/WebKit returned missing Harness result fields and branded Chrome timed out settling. This earned no gate credit and must be investigated before another run.
+- Earlier local S20 matrix attempt produced 88/88 problem cells from runner admission/mutation and branded-Chrome first-render issues. After the smallest correction in `a4caf93857669e05d0d521567ecf5ab6f4389df5`, `node scripts/browser-matrix.mjs` passed **88/88** across Chromium, branded Chrome, Firefox and WebKit. This is current local render evidence only and earns no S17/S20 closure by itself.
 
 ## First action: preserve and identify the working tree
 
@@ -49,7 +49,7 @@ Read [S16 evidence](STUDIO_V2_S16_PI03_EVIDENCE.md) for the current-source recor
 [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md) for the current PI-04 limits and supporting cases.
 The deferred-close and pending-open corrections were traced, implemented and requalified in the
 actual browser Harness. Six frozen cases passed 18/18 across Chromium, Firefox and WebKit;
-focused lifecycle/privacy regressions passed 31/31, the full build passed 106 files / 567 tests,
+focused lifecycle/privacy regressions passed 31/31, the full build passed 106 files / 571 tests,
 and the final static artifact hashes are recorded in S16 evidence. Writer locks, retired sessions,
 retired databases and failed initialization paths are released without deleting user data.
 
@@ -70,7 +70,7 @@ browser results recorded in the P0 register and S17 evidence.
   supporting result does not establish full P0 closure or session-close timing as the cause.
 - X-03's browser case passed cross-document delayed-callback isolation; it remains supporting evidence.
 - PI-04 cases 17-04..09 now cover synthetic direct Chat/Responses/Gemini, follow-up, commit recovery and Real-policy privacy; all remain supporting evidence.
-- The current-source Demo Gateway run covers registered-origin session/models, a 200 SSE design turn, a 200 SSE layout review, preview/apply transaction read-back, seven synthetic media request variants and no-key/private-route privacy checks; see [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md). It does not qualify the PI direct-BYOK route.
+- The prior application-baseline Demo Gateway run at `e4302009e461ae398476ec63043c888cd19a07a` covers registered-origin session/models, a 200 SSE design turn, a 200 SSE layout review, preview/apply transaction read-back, seven synthetic media request variants and no-key/private-route privacy checks. Current `a4caf93857669e05d0d521567ecf5ab6f4389df5` changed preview source assignment, so retain that broad run as baseline supporting evidence; current-source Demo evidence is limited to the focused 13-07 rerun. See [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md). Neither qualifies the PI direct-BYOK route.
 - Other historical probes stopped before rendering at `SCOPE_VIOLATION` or `COMMAND_FAILED`.
   Unsettled top-level await is incomplete evidence, not proof of a deadlock.
 - Use actual Harness tools/events, actual rendering and final provider-wire evidence including
@@ -122,8 +122,9 @@ Do not copy this dated snapshot forward without recalculating TASK.
 
 The current local draft is [STUDIO_V2_RELEASE_PACKET.md](STUDIO_V2_RELEASE_PACKET.md); it must link exact revision/worktree/artifact hashes, adopted scope/profile, dependency gates,
 case matrix, provider/browser/OS versions, actual-print evidence, privacy/security verification,
-diagnostics, failures/unrun checks, known limitations, rollback and explicit approval request. The latest
-full matrix failure is diagnostic evidence only; do not treat it as a release result or rerun blindly.
+diagnostics, failures/unrun checks, known limitations, rollback and explicit approval request. The earlier
+full matrix failure is superseded by the current 88/88 local render result; do not treat it as provider or
+print certification.
 Unavailable provider/platform/printer evidence stays open; do not silently waive or simulate it.
 S18 cannot bypass S17. Independent S20 packet drafting is allowed but does not close later gates.
 S21 requires explicit maintainer approval for exact profile/version/artifacts.

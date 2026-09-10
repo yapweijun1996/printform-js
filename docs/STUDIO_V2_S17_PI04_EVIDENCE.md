@@ -5,7 +5,8 @@ isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
 
-Source identity: application review revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner
+Source identity: current review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5` (including the browser-matrix/preview-source correction); prior application review
+revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner
 verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; this evidence and the release packet are refreshed
 against that source revision. S16/PI-03, S12/PROD-09 and
 S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
@@ -81,11 +82,11 @@ with a stable project hash, and left B as `unknown`, table-A scoped, Preview, re
 no Evidence Pack and zero chat entries. B remained readiness-blocked with `PREVIEW_REQUIRED` and
 `LAYOUT_REVIEW_REQUIRED`; no canary appeared in the qualification output and no external request occurred.
 
-Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,569 bytes**, SHA-256
-`f90cfe2341bde485054092307c41d0180ac3fee2a37e739b83b5a1d3f03ca3f3`; manifest SHA-256
-`2fe9be040809f02f0b96a4b41c1e704eae73767eda4935620aa0454e0875ce97`; the manifest records `x01`, `x02`, `x03`,
+Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,588 bytes**, SHA-256
+`4fdf656912895823ce1c2c67856d1e643a1a5eb4a8219b8262599a3e208f099c`; manifest SHA-256
+`5ee8d01dbcb4443e6bc2a4fc0fe7b50299223a23b8c91b2787521e44363dad95`; the manifest records `x01`, `x02`, `x03`,
 `directProviderChat`, `directProviderResponses`, `directProviderGemini`, `directProviderFollowUp`,
-`directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. The latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit. This remains isolated supporting artifact evidence; the full provider/render/privacy/transaction matrix and final S17 gates remain open.
+`directProviderCommitRecovery`, `directProviderRealPrivacy` and `providerMatrixSynthetic` as isolated supporting capabilities. The latest combined local P0 plus PI target command passed **54/54** across Chromium, Firefox and WebKit. This remains isolated supporting artifact evidence; the direct-BYOK provider/privacy/transaction matrix and final S17 gates remain open.
 
 The 2026-09-10 repeat of the combined target command passed Chromium **18/18** and WebKit **18/18**, but all Firefox cases failed before page creation with `browserContext.newPage: Cannot read properties of undefined (reading '_page')`; Playwright then hung during teardown and was interrupted. This is a browser-runner diagnostic and does not invalidate the last complete 54/54 result or add S17 credit.
 
@@ -105,9 +106,9 @@ The current-source `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` rer
 evidence only; it does not convert the synthetic PI provider matrix into live reliability evidence
 or award S17 gate credit.
 
-### Current-source Demo Gateway browser requalification (supporting; not PI-04 closure)
+### Prior application-baseline Demo Gateway browser run (supporting; superseded for changed preview path)
 
-Date: 2026-09-10; environment: Windows Chromium through the local static Studio at
+Date: 2026-09-10; application baseline: `e4302009e461ae398476ec63043c888cd19a07a`; environment: Windows Chromium through the local static Studio at
 `http://127.0.0.1:4174`, with the registered `github-pages` Demo project. The real browser obtained a
 short-lived Demo session with **201**, read `/demo/v1/models` with **200**, and did not record the token.
 
@@ -122,10 +123,28 @@ short-lived Demo session with **201**, read `/demo/v1/models` with **200**, and 
 - Ten Demo requests contained no key/session/canary markers and no forbidden top-level fields (`tools`,
   `tool_choice`, `files`, `audio`, `background`, `web_search`, `store`); page and console error lists were empty.
 
-This validates the current credential-free Demo Gateway flow and its host-side transaction/privacy boundaries.
-It is not direct PI BYOK evidence: provider-key CORS/quota/reliability, Edge, Safari.app, physical printing,
+This validates the credential-free Demo Gateway flow and its host-side transaction/privacy boundaries for the
+e430 application baseline. Current commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` changes preview source
+assignment, so the broad design/layout/media flow above is retained as baseline supporting evidence and is not
+reused as current-source acceptance. Current-source Demo evidence is limited to the focused 13-07 rerun recorded
+above. It is not direct PI BYOK evidence: provider-key CORS/quota/reliability, Edge, Safari.app, physical printing,
 deployment retention and release approval remain unrun. It earns no S17 G2-G5 credit; TASK remains `x----`,
 10%, plan **76.7%**, Done **16/21**, P0 **35/35**, PI **4/6**.
+
+### Current-source browser matrix (supporting render evidence; not PI-04 closure)
+
+Date: 2026-09-10; command: `node scripts/browser-matrix.mjs`; source/runner commit:
+`a4caf93857669e05d0d521567ecf5ab6f4389df5`; current rebuilt `site-dist`. The full local Windows
+matrix passed **88/88** with **0 problem cells**: Chromium, branded Chrome, Firefox and WebKit each
+passed 22/22 across both pilot samples, seven boundary scenarios and four non-default print locales.
+`empty` was the expected `blocked` case; all other cells were `ready` with no overflow, vertical
+overflow, contrast failure or row-count mismatch. The runner completed host admission and changed
+scenario/locale through the real Editor UI, so it did not grant or forge Agent human approval.
+
+This closes the current local render-matrix diagnostic only. It does not provide a live Provider request,
+direct-BYOK CORS/quota/reliability window, Edge/Safari.app, system/physical print, deployment retention
+or maintainer approval, and earns no S17 G2-G5 credit. The earlier 88/88-problem attempt is superseded
+by this current-source rerun.
 
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
@@ -230,7 +249,7 @@ table scope/gateway, CommandBus transaction/CAS, private approval/apply, current
   the three engines.
 
 This records isolated X-01 supporting coverage only, not the separate production-shell P0 closure. DoD remains **G1 / 10%** (`x----`):
-X-02/X-03 have supporting PI browser results and separate production-shell P0 passes, but the PI-04 matrix and step closure are still open.
+X-02/X-03 have supporting PI browser results and separate production-shell P0 passes, but the direct-BYOK provider/privacy/transaction matrix and step closure are still open.
 
 ## Historical interrupted X-02 investigation
 

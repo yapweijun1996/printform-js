@@ -6,11 +6,11 @@
 >
 > 本次执行：2026-07-31（首次跑批 + 修复后复跑），构建对齐 `4b0cdc1`，macOS。**Linux 复现**：2026-07-31，GitHub Actions Ubuntu runner（`.github/workflows/browser-matrix.yml`，`workflow_dispatch`），构建对齐 `af64b25`，见下方「Linux 复现」一节。
 
-> Implementation review: 2026-09-08. Historical macOS/Linux matrix results remain 88/88. The latest complete Windows Playwright E2E passed 190/222 tests with 32 expected skips and 0 failures: Chromium 74/74, Firefox 58/58 applicable and WebKit 58/58 applicable. The full four-target Windows matrix was not run. These are Playwright engine results, not certification of Edge, Safari.app or any print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
+> Current-source review: 2026-09-10. Historical macOS/Linux matrix results remain 88/88. The Windows full four-target runner now passes **88/88** against source commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` (Chromium/Chrome/Firefox/WebKit, 22 cells each). The earlier current-source 88/88 diagnostic failure is superseded by this rerun. These are browser/render results, not certification of Edge, Safari.app or any print driver. See [current evidence](STUDIO_V2_PRODUCTION_PLAN.md).
 
 ## 结论
 
-**88 个格子全部通过，零问题**，且修复后 22 个可比格子跨引擎逐页行数完全一致（首次跑批时有 4 个格子分歧，见下方「跨引擎分页差异」）。
+**当前源码的 88 个格子全部通过，零问题**，且四个目标的逐页行数均符合各场景预期；`empty` 按设计 blocked。历史修复后的 22 个可比格子仍保持跨引擎逐页行数一致（首次跑批时有 4 个格子分歧，见下方「跨引擎分页差异」）。
 
 ## 覆盖范围
 
@@ -76,7 +76,7 @@
 - **结果：88/88 全过，零分歧**，四个目标（Chromium/Chrome/Firefox/WebKit）在 Ubuntu 上全部成功启动（含品牌版 Chrome，未出现 SKIP）。
 - **逐页行数与 macOS 结论完全一致**：Purchase Order 45 行场景四目标均为 `[14,14,14,3]`；Sales Invoice 45 行场景四目标均为 `[24,21,0]`。K=16px 的收敛修法**不是 macOS 专属的巧合**，同一份 CSS 在 Linux 上同样把所有组合收敛到边界同一侧。
 
-结论：ROADMAP/TASK.md 此前标注的"建议在 Linux/Windows 上重跑一次矩阵"，Linux 部分现已完成且通过；Windows 的完整 `browser-matrix.mjs` 仍无对应的发布自动化通道（GitHub Actions 无 Windows + 四浏览器目标的现成方案），但本轮已补充三个 Playwright 引擎的完整 E2E 回归，见下节。
+结论：ROADMAP/TASK.md 此前标注的"建议在 Linux/Windows 上重跑一次矩阵"，Linux 部分已完成且通过；Windows 现在也完成了本地完整 `browser-matrix.mjs` 复跑，但仍无对应的远程 Windows + 四目标发布自动化通道。本轮同时保留三个 Playwright 引擎的完整 E2E 回归，见下节。
 
 ## Windows Playwright 引擎回归（2026-09-08）
 
@@ -86,10 +86,20 @@
 - Firefox：58/58 个适用用例通过，另有 16 个明确标记为项目不适用的 Chromium-only 用例跳过。
 - WebKit：58/58 个适用用例通过，另有 16 个明确标记为项目不适用的 Chromium-only 用例跳过。
 
-它提供三个 Playwright 渲染引擎的 Windows 回归证据，但不证明 Edge、Safari.app、Windows 系统打印预览或真实打印机链路。完整 `browser-matrix.mjs` 仍需在声明的目标环境执行。
+它提供三个 Playwright 渲染引擎的 Windows 回归证据，但不证明 Edge、Safari.app、Windows 系统打印预览或真实打印机链路。完整四目标矩阵的 current-source 结果见下一节。
+
+## Windows current-source 完整矩阵（2026-09-10）
+
+运行命令：`node scripts/browser-matrix.mjs`，构建为当前 `site-dist`，源代码与 runner 对齐 `a4caf93857669e05d0d521567ecf5ab6f4389df5`。
+
+- 结果：**88/88 通过，0 problem cells**；Chromium、branded Chrome、Firefox、WebKit 各 **22/22**。
+- 覆盖：两个样本、`default`/`empty`/`one`/`45-rows`/`100-rows`/`500-rows`/`long-text`、以及 `zh-CN`/`ms-MY`/`ja-JP`/`vi-VN`（`en-MY` 由默认场景覆盖）。`empty` 是预期的 `blocked`，其余场景为 `ready`，无溢出、垂直溢出、对比度失败或丢行。
+- runner 先完成 host admission；场景和语言通过真实 Editor UI 控件变更，保留人类批准边界。该静态 synthetic matrix 没有 live Provider 请求，因此不替代 direct-BYOK、Provider CORS/quota/reliability、Edge、Safari.app、系统打印或 physical printer evidence。
+
+此前同一 current-source 尝试因 runner 未 admission、绕过 human-approved UI mutation 以及 Chrome 首次空 `srcdoc` race 而出现问题；本次用最小 runner/preview 修正后重跑通过，旧诊断不再作为当前失败结论。
 
 ## 对成熟度的影响
 
-退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：88/88 通过，且跨引擎分页已收敛一致，并在 macOS 与 Linux 两个操作系统上分别验证过。
+退出条件的字面要求（两模板在各浏览器**通过**全部场景）**已满足**：当前 Windows、历史 macOS 与 Linux 均有 88/88 记录，且跨引擎分页已收敛一致。
 
-但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前仍需完成 P0 个案证据、目标平台系统打印检查与明确的发布批准。本矩阵在 macOS、Linux 和当前 Windows Playwright 三引擎均有证据，但完整 `browser-matrix.mjs`、Edge、Safari.app、Windows 系统打印预览和真实打印机链路仍未认证。
+但**本记录不自行把成熟度改为 Production Ready**。Production Ready 是对外承诺，应由维护者显式宣布，不由一次自动化跑批的绿灯推导。宣布前仍需完成 P0 个案证据、direct-BYOK/provider 证据、目标平台系统打印检查与明确的发布批准。本矩阵在 macOS、Linux 和当前 Windows 已有记录，但 Edge、Safari.app、Windows 系统打印预览和真实打印机链路仍未认证。

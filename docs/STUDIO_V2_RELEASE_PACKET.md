@@ -3,8 +3,8 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-10; last audited after the local application commit. Application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
-Application source/test delta is exactly the review commit `e4302009e461ae398476ec63043c888cd19a07a`; its path list is reviewable with `git show --stat`.
+Prepared: 2026-09-10; last audited after the local application/browser-matrix commit. Current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; prior application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
+The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -26,7 +26,7 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 | Unknown/Real privacy semantics and canary sinks | P0 X-01/X-02, PI 17-09, `docs/STUDIO_V2_DATA_POLICY.md` | Synthetic canary is absent from storage, prompts, bodies and qualification output; authorized export sink is the only confirmed sink. Provider retention is unverified. |
 | Old-record/protocol compatibility | S16 evidence and `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md` | Legacy records remain read-only/isolated and AGRUN remains the production entry; PI cutover is deliberately not started. |
 | Frontend-only direct BYOK | `site-dist/studio-v2/pi-04/qualification-manifest.json`, PI 17-04..07 | `appBackend:false`, `providerProxy:false`, direct Chat/Responses/Gemini and follow-up cases are recorded. Direct-BYOK live CORS/quota/reliability is unrun; the separate Demo route is supporting-only. |
-| Focused and repository checks | `docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md` | Recorded: `npm run doctor` 5/5 with 106 files/571 tests, focused 57/57, `npm run check`, JS syntax checks, `git diff --check`, and <=300-line inventory passed. |
+| Focused and repository checks | `docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md` | Recorded: `npm run doctor` 5/5 with 106 files/571 tests, focused 57/57, current local browser matrix 88/88, `npm run check`, JS syntax checks, `git diff --check`, and <=300-line inventory passed. |
 | DoD/release evidence | `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md` | This packet indexes current evidence and open gates; it does not grant S20/S21 credit. |
 | File-size boundary | Current amended source, E2E, script and packet inventory | Every amended file is at or below 300 lines; generated ignored artifacts are tracked by their owning build. |
 
@@ -40,8 +40,8 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 - S18-S20: `-----`, 0%; S21: `-----`, pending approval.
 - Release: **not approved**; Production Ready is not established.
 
-This packet is independent S20 preparation only. The packet/index/checklist edits are documentation-only
-and do not change application commit `e430200`. It does not bypass S17 or authorize AGRUN retirement,
+This packet is independent S20 preparation only. The packet/index/checklist edits record current source commit
+`a4caf93857669e05d0d521567ecf5ab6f4389df5` and do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
 deployment, publishing, physical print, or maintainer approval.
 
 ## 3. Recorded verification commands and results
@@ -62,12 +62,14 @@ deployment, publishing, physical print, or maintainer approval.
   for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
   a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
   live Provider reliability or retention certification.
-- Current-source Demo Gateway browser requalification: `demo-fast` design and layout-review Responses streams returned
-  **200**; Preview mode showed a pending candidate, one real UI Apply produced revision 1, and `request_export` kept
-  human confirmation required. Text-only, single-image and all-image original/resized variants passed **7/7** with
-  validated Synthetic pixels. Ten Demo request bodies had no key/session/canary markers or forbidden top-level fields;
-  private `/v1` request count was **0**, with no page or console errors. This is credential-free Demo support evidence,
-  not direct-BYOK PI-04 closure; details are in [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
+- Prior application-baseline Demo Gateway browser run (commit `e4302009e461ae398476ec63043c888cd19a07a`):
+  `demo-fast` design and layout-review Responses streams returned **200**; Preview mode showed a pending candidate,
+  one real UI Apply produced revision 1, `request_export` kept human confirmation required, and text-only,
+  single-image and all-image original/resized variants passed **7/7** with validated Synthetic pixels. Ten Demo request
+  bodies had no key/session/canary markers or forbidden top-level fields; private `/v1` request count was **0**, with
+  no page or console errors. Since current commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` changes preview source
+  assignment, this broad flow is baseline supporting evidence, not current-source acceptance or direct-BYOK PI-04
+  closure; current-source Demo evidence is limited to the focused 13-07 rerun above. Details are in [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
   environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
@@ -90,7 +92,8 @@ deployment, publishing, physical print, or maintainer approval.
   so these static checks do not replace browser layout or print evidence.
 - `.github/workflows/ci.yml` now declares all three static pilot validators; a local structural check found exactly three entries. A remote CI run is intentionally unrun.
 - `npx playwright test e2e/production-verification.spec.js --grep "opens the required progress claim" --project=chromium --workers=1` passed **1/1**. The real browser observed Printable, non-overflow metrics, a non-empty page count, the Progress Claim heading and no browser errors. This is one Chromium smoke case, not the full platform/scenario matrix.
-- `node scripts/browser-matrix.mjs` (full, not `--quick`) was attempted against the current `site-dist`: **88 cells, 88 with problems**. Chromium, Firefox and WebKit reported missing `result.result` values during `validate_project`/revision calls; branded Chrome timed out waiting for the settled render status. This is failed diagnostic evidence, not a browser pass or S20 credit. The ignored `browser-matrix-result.json` is retained for the next investigation; historical 88/88 claims are not substituted.
+- An earlier `node scripts/browser-matrix.mjs` attempt against the current `site-dist` reported **88 cells with problems** because the runner had not admitted the host gateway, tried to mutate human-approved fields through the Agent surface, and exposed a branded-Chrome first-`srcdoc` render race. That is retained as superseded diagnostic history, not current acceptance.
+- After the smallest runner/preview correction, `node scripts/browser-matrix.mjs` (full, not `--quick`) passed **88/88** with **0 problem cells** on Windows: Chromium, branded Chrome, Firefox and WebKit each passed 22/22 across both samples, seven boundary scenarios and four non-default locales. `empty` was expected `blocked`; all other cells were `ready` with no overflow, vertical overflow, contrast or row-count problems. This is current local render evidence only and earns no S17 direct-BYOK or S20 closure credit by itself.
 - The latest repository-wide Chromium run was **159/169 passed** with 10 failures; a serial rerun of the affected files was **17/22 passed**. The five reproduced failures are existing/environment-sensitive file-save, P0 control/pixel, and session-lifecycle cases outside the amended PI-03/PI-04 target set; this run is not release evidence and no unrelated fix was introduced.
 - Current toolchain: Node `v25.2.1`, npm `11.6.2`, Playwright `1.62.0`.
 
@@ -102,17 +105,17 @@ or approval result.
 
 ## 4. Artifact and provenance record
 
-- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,569 bytes,
-  SHA-256 `f90cfe2341bde485054092307c41d0180ac3fee2a37e739b83b5a1d3f03ca3f3`.
+- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,588 bytes,
+  SHA-256 `4fdf656912895823ce1c2c67856d1e643a1a5eb4a8219b8262599a3e208f099c`.
 - PI-04 manifest: `site-dist/studio-v2/pi-04/qualification-manifest.json`,
-  SHA-256 `2fe9be040809f02f0b96a4b41c1e704eae73767eda4935620aa0454e0875ce97`.
+  SHA-256 `5ee8d01dbcb4443e6bc2a4fc0fe7b50299223a23b8c91b2787521e44363dad95`.
 - Manifest flags: static, frontend-only, actual Harness, policy-bound, private human approval,
   canonical CommandBus, `appBackend:false`, `providerProxy:false`, `providerMatrixSynthetic:true`,
   `liveByokSmoke:false`.
 - The manifest's `sourceCommit` value is the reviewed upstream pi commit
   `b2602be77cb7b0de45dd616407fd210daa48aa75`, as documented in
   `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`; it is intentionally not a local repository commit.
-- The local application source identity is commit `e4302009e461ae398476ec63043c888cd19a07a`; the
+- The local application source identity is commit `a4caf93857669e05d0d521567ecf5ab6f4389df5`; the
   generated artifact was rebuilt through `scripts/build-pi-04.mjs`. `site-dist/` remains ignored and
   unpublished. The production Studio entry remains AGRUN.
 
@@ -143,10 +146,9 @@ or approval result.
    evidence is currently available.
 4. **S20/S21:** reconcile the final artifacts and obtain explicit maintainer approval for the exact
    profile/version/artifacts. CI configuration now declares three pilot validators; one Progress Claim
-   Chromium smoke passes, while the full local matrix currently fails 88/88 (Harness result-shape and
-   branded-Chrome render-settle symptoms), the remote CI run and final artifact alignment remain
-   unverified. Investigate the current site/Harness/environment before rerunning; approval is not
-   inferred from counters.
+   Chromium smoke passes, and the current local full matrix passes 88/88; the remote CI run, declared
+   platform/print profile and final artifact alignment remain unverified. Approval is not inferred from
+   counters.
 
 ## 7. Rollback and decision boundary
 
