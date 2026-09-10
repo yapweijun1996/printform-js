@@ -8,7 +8,7 @@ isolated composed PI path; the embedded production entry remains AGRUN.
 Source identity: current review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5` (including the browser-matrix/preview-source correction); prior application review
 revision `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner
 verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; this evidence and the release packet are refreshed
-against that source revision, with documentation follow-up HEAD `00e2252e8acfc154205f4ccf7e8191cee5b4ffa6`. S16/PI-03, S12/PROD-09 and
+against that source revision; documentation-only follow-ups are tracked separately in Git and KB-MCP provenance. S16/PI-03, S12/PROD-09 and
 S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
 
 Owners inspected:
@@ -155,7 +155,7 @@ short-lived Demo session with **201**, read `/demo/v1/models` with **200**, and 
 This validates the credential-free Demo Gateway flow and its host-side transaction/privacy boundaries for the
 e430 application baseline. Current commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` changes preview source
 assignment, so the broad design/layout/media flow above is retained as baseline supporting evidence and is not
-reused as current-source acceptance. Current-source Demo evidence is limited to the focused 13-07 rerun recorded
+reused as current-source acceptance. Current-source Demo evidence also includes the live Chromium probes recorded
 above. It is not direct PI BYOK evidence: provider-key CORS/quota/reliability, Edge, Safari.app, physical printing,
 deployment retention and release approval remain unrun. It earns no S17 G2-G5 credit; TASK remains `x----`,
 10%, plan **76.7%**, Done **16/21**, P0 **35/35**, PI **4/6**.
