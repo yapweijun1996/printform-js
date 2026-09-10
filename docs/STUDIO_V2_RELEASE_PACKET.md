@@ -3,7 +3,7 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:20:25+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:21:45+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
 Application delta manifest for the application review revision (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
 The runner-only configuration commit is intentionally outside this application manifest and is recorded separately as test provenance.
@@ -68,6 +68,7 @@ deployment, publishing, physical print, or maintainer approval.
   passed **1/1**, followed by the complete **54/54** run.
 - `npm run doctor` — **5/5**, including **106 files / 567 tests** and three static validators.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
+- Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
   `purchase-order-red-v2.html` and `progress-claim-northpeak-v2.html`: all had valid attestation/runtime/content
   hashes and no external network or arbitrary JavaScript. Each report explicitly had `layout.verified:false`,
