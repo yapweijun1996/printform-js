@@ -50,8 +50,9 @@ deployment, publishing, physical print, or maintainer approval.
   — **9/9**, Chromium/Firefox/WebKit.
 - `npx playwright test e2e/studio-v2-pi-04.spec.js e2e/studio-v2-pi-04-privacy.spec.js e2e/studio-v2-pi-04-transaction.spec.js --workers=1`
   — **27/27**, Chromium/Firefox/WebKit; synthetic direct-provider wire.
-- Latest combined local target run for P0 X-01..03 and PI-04 supporting cases — **54/54**, Chromium/Firefox/WebKit;
-  synthetic provider interception remains supporting evidence and does not close S17.
+- Current-source combined local target run for P0 X-01..03 and PI-04 supporting cases — **36/36**, Chromium/Firefox/WebKit;
+  synthetic provider interception remains supporting evidence and does not close S17. The earlier **54/54** command
+  also included PI-03 and used the pre-a4caf93 runner/source baseline, so it is historical.
 - Latest full P0 browser sweep before Gateway origin registration: **102/105** passed; the only three failures were
   13-07 across Chromium, Firefox and WebKit because the local Demo project origin was not registered. The no-secret
   `/demo/session` probe returned HTTP **403** at that time; per the Gateway guide this denoted an unregistered project
@@ -70,19 +71,20 @@ deployment, publishing, physical print, or maintainer approval.
   no page or console errors. Since current commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` changes preview source
   assignment, this broad flow is baseline supporting evidence, not current-source acceptance or direct-BYOK PI-04
   closure; current-source Demo evidence is limited to the focused 13-07 rerun above. Details are in [S17 evidence](STUDIO_V2_S17_PI04_EVIDENCE.md).
-- The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
+- The pre-a4caf93 2026-09-10 repeat of the 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases
   failed before page creation with `browserContext.newPage`; teardown then hung and the test session was interrupted. This is
-  environment diagnostics only; the last complete 54/54 run remains the authoritative local target result.
+  environment diagnostics only; the last complete pre-a4caf93 54/54 run is historical. The current a4caf93 P0/PI-04
+  target command passed 36/36.
 - A no-page Firefox launch smoke reproduced the same error: the main process launched, but `GeckoChildProcessHost`
   repeatedly failed to start tab/utility subprocesses and `remoteTab` became null. This confirms an external Firefox
   process/runtime condition before project code executes; no PI code change or gate credit was made.
 - A Firefox-only diagnostic with `MOZ_DISABLE_CONTENT_SANDBOX=1` then passed **18/18** for the same target cases. The
   variable weakens browser isolation, so it was not committed or added to the default test configuration; this is not
   native Firefox acceptance evidence and earns no gate credit.
-- After the Windows-only Firefox runner adjustment in commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`, the standard
+- After the Windows-only Firefox runner adjustment in commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`, the pre-a4caf93 standard
   54-test command passed **54/54** across Chromium, Firefox and WebKit with content sandboxing enabled. One preceding
   run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry
-  passed **1/1**, followed by the complete **54/54** run.
+  passed **1/1**, followed by the complete **54/54** run. The current a4caf93 P0/PI-04 target command passed **36/36**.
 - `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **203** entries.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
