@@ -3,9 +3,10 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:19:04+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
-Application delta manifest (non-doc tracked/untracked source, test and build paths):
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:20:25+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
+Application delta manifest for the application review revision (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
+The runner-only configuration commit is intentionally outside this application manifest and is recorded separately as test provenance.
 The S16/S17 implementation and evidence changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
 content sandboxing enabled. `main` tracks `origin/main` and contains the local review commits. No PR
