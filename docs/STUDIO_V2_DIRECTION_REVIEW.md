@@ -6,6 +6,8 @@ Review-time SCMC implementation decision: **FAIL**. The policy direction is reta
 The user explicitly resumed coding on 2026-09-08. R1-R3/R5-R6 now have bounded code corrections and verified controls;
 see [resumed implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md). Full acceptance remains open; no release is authorized.
 
+Current-source amendment (2026-09-10): the current build/evidence supersedes the older 567-test snapshot with `npm run doctor` 5/5 and 106 files / 571 tests; the current Demo Gateway run remains supporting evidence only, and direct-BYOK/provider, platform/print and release gates remain open.
+
 ## Scope and authority
 
 - Review the current dirty worktree against PROD-13, coordinated PROD-01/02/03 and M0-M5.

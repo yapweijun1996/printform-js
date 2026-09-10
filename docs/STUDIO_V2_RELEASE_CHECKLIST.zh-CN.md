@@ -53,7 +53,7 @@ Additional behavioral acceptance: the [P0 checklist](STUDIO_V2_P0_ACCEPTANCE.md)
 5. ✅ Attestation 覆盖两段 runtime hash、CSP script hash、权威内容 hash 与由真实 evidence receipt 推导的浏览器凭证。
 6. ✅ 自动验证内容数量、顺序、重复、遗漏、重叠、越界、对比度与重复区完整性。
 
-**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（完整浏览器矩阵、系统打印预览人工确认等）。当前 Windows Chromium/Firefox/WebKit 目标 Playwright 证据为 54/54；远程 macOS/Linux 88/88 矩阵本次未运行，既有 88/88 失败记录仅作诊断，不计入通过。Edge、Safari.app、真实打印链、direct-BYOK PI-04、部署/留存和完整发布矩阵仍未认证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+**这不等于可以宣布 Production Ready**：该状态是对外承诺，由维护者显式宣布，不由代码硬门齐全或一次跑批绿灯自动推导——还需完成本清单其余的发布流程验收（完整浏览器矩阵、系统打印预览人工确认等）。当前 Windows Chromium/Firefox/WebKit 目标 Playwright 证据为 54/54；2026-07-31 在旧提交上完成的 macOS/Linux 历史矩阵各为 88/88 全过，仅作为 dated evidence 保留；本次 current-source 本地 88/88 尝试返回 88 个 problem cells，远程矩阵也未重新运行，均不计入当前通过。Edge、Safari.app、真实打印链、direct-BYOK PI-04、部署/留存和完整发布矩阵仍未认证。硬门设计和退出条件见[信任与代理模型](STUDIO_V2_TRUST_AND_AGENT_MODEL.zh-CN.md)及[工程路线图](STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
 
 ## 发布确认
 
