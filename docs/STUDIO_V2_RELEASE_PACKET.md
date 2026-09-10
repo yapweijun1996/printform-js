@@ -63,6 +63,11 @@ deployment, publishing, physical print, or maintainer approval.
   for the registered local origins; the test captured the synthetic final `/demo/v1/responses` request body before sending
   a provider turn. No token or credential was recorded, and this remains browser transport/disclosure evidence rather than
   live Provider reliability or retention certification.
+- A current-source one-turn Chromium probe against the registered local origin reached `Printable`, issued
+  `/demo/session` with no Authorization and received **201**, then observed two `/demo/v1/responses` requests returning
+  **200** with an in-memory Demo-session Authorization header. The UI turn returned idle without a failure status; no
+  Apply, export, deletion, token, credential or response body was recorded. This is supporting Demo reachability evidence
+  only and earns no S17/PI-04 direct-BYOK credit.
 - Prior application-baseline Demo Gateway browser run (commit `e4302009e461ae398476ec63043c888cd19a07a`):
   `demo-fast` design and layout-review Responses streams returned **200**; Preview mode showed a pending candidate,
   one real UI Apply produced revision 1, `request_export` kept human confirmation required, and text-only,

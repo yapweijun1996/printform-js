@@ -1,6 +1,6 @@
 # Studio v2 Production Plan
 
-Last reviewed: 2026-09-10. Source baseline: application review commit `e4302009e461ae398476ec63043c888cd19a07a`; documentation status is synchronized in the release packet.
+Last reviewed: 2026-09-10. Source baseline: current application review commit `a4caf93857669e05d0d521567ecf5ab6f4389df5` (prior application baseline `e4302009e461ae398476ec63043c888cd19a07a`); documentation status is synchronized in the release packet.
 The [direction review](STUDIO_V2_DIRECTION_REVIEW.md) retains the policy direction. Coding has resumed and the [implementation evidence](STUDIO_V2_IMPLEMENTATION_EVIDENCE.md) records bounded corrections and fresh verification, including actual prompt delivery. Overall acceptance remains Partial. No deployment, publish or direct-BYOK Provider test was performed; the bounded Demo Gateway run is supporting evidence only.
 
 ## Authority and status
@@ -29,7 +29,6 @@ without a key, keeps the returned short-lived `dmo_...` token in memory, and
 sends it only to `/demo/v1/responses`; private `/v1/*` credentials remain
 server-side. The detailed destination rules and agent instructions are owned by
 [the data policy](STUDIO_V2_DATA_POLICY.md) and [the setup guide](../studio-v2/AGENT_SETUP.md).
-
 The guide contains conflicting model examples (`demo-auto`/`demo-fast` versus
 `gpt-5.4-mini`). A real browser session on 2026-09-10 received `200` from
 `/demo/v1/models` and listed `demo-auto`, `demo-fast`, and the configured Demo
@@ -42,6 +41,10 @@ provider-tool-free `envelope` mode for the Demo recipient and rejects
 geometry-only SVG before transport; the host-side 35-command catalog remains a
 separate local permission surface. BYOK remains on the existing native-tools
 path.
+A current-source real Chromium probe from the registered local origin reached `Printable`; `/demo/session` had no
+Authorization and returned `201`, then two `/demo/v1/responses` requests returned `200` with the in-memory Demo-session
+header. No raw token, credential or response body was retained and no Apply/export/delete action was performed. This is
+supporting Demo reachability evidence only, not live direct-BYOK provider reliability, quota or retention.
 
 ## Evidence and current review limits
 
@@ -52,7 +55,6 @@ retains serial testing; test totals are not substitutes for case-specific side-e
 No deployment, publish or real business data connection was used. A bounded Demo Gateway browser run is recorded as supporting evidence, not direct-BYOK Provider acceptance. The 35-case P0
 register now contains 35 Pass (01-01/01-02/01-03/01-04/01-05/01-06/01-07/01-08/02-01/02-02/02-03/02-04/02-05/02-06/02-07/02-08/03-01/03-02/03-03/03-04/03-05/03-06/03-07/03-08/13-01/13-02/13-03/13-04/13-05/13-06/13-07/13-08/X-01/X-02/X-03), 0 Fail, and 0 Not run. Earlier passed sequences remain evidence only for their recorded scope,
 not release approval.
-
 | Check | Observed result | Limit |
 |---|---|---|
 | `npm test -- --run --maxWorkers=1 --no-file-parallelism` | **Pre-review:** 86 files / 454 tests passed | Existing coverage plus storage-failure/save-state/card-history guards, service-worker shell-only caching, WebMCP missing-policy fail-closed behavior and restrictive session-index guards, targeted boundary, public/bound-session capability checks, embedded/WebMCP/CDP entry parity and Real-data diagnostic redaction, catalog equality, CDP target replacement/reconnect, policy/session, compatibility, delayed-response, restrictive server-policy, commit-outcome, recursive unknown-field canaries, null/malformed-input handling, delayed apply-mode snapshots, late render/candidate ownership guards and 35-command matrix tests; not the complete 35-case P0 record |
@@ -77,17 +79,15 @@ not release approval.
 | Old-bus lifecycle and commit race | **17/17 focused tests passed**; deactivated buses reject later writes and policy expiry during commit/history async work is rejected before CAS | Supporting evidence only; cross-document browser case closure and full PROD-01/02/03 acceptance remain open |
 | Latest lifecycle/history browser regression | **48/48 passed** across Chromium, Firefox and WebKit; delayed policy/document results, Provider payload path, candidate history and E14 controls remain green | Supporting evidence only; no live Provider, deployment or release authorization |
 | Recovery provenance browser regression | **6/6 passed** across Chromium, Firefox and WebKit; explicit recovery does not trust stored Real/Synthetic labels, restores under Unknown and adds no localStorage destination | Supporting M1 evidence only; broader PROD-13 user classification and provider/OS/deployment retention remain open |
-| Current Demo Gateway transport regression | **28/28 focused Demo unit tests**, **6/6 public-gateway browser controls** across Chromium/Firefox/WebKit, and **2/2 Chromium AI settings/locale controls** passed with synthetic intercepted requests; the e430-baseline Demo browser run passed session/models, design, layout review, seven media variants and privacy checks, while current a4caf93 13-07 requalification passed the registered-origin request path | Confirms the no-key `/demo/session` → provider-tool-free `/demo/v1/responses` path, restricted media projection and final request body; broad preview/media results are baseline supporting evidence because preview source assignment changed in a4caf93, and neither baseline nor current 13-07 qualifies direct-BYOK PI-04 reliability/retention |
+| Current Demo Gateway transport regression | **28/28 focused Demo unit tests**, **6/6 public-gateway browser controls** across Chromium/Firefox/WebKit, **2/2 Chromium AI settings/locale controls**, current-source 13-07 **3/3**, and one real Chromium Studio probe with session **201** plus two Demo Responses **200** results; the e430-baseline Demo browser run passed session/models, design, layout review, seven media variants and privacy checks | Confirms the no-key `/demo/session` → provider-tool-free `/demo/v1/responses` path, restricted media projection and final request body; broad preview/media results are baseline supporting evidence because preview source assignment changed in a4caf93, and neither the live probe nor current 13-07 qualifies direct-BYOK PI-04 reliability/retention |
  | Latest PROD-03 readiness browser regression | **03-01 through 03-08 passed 3/3 each** across Chromium, Firefox and WebKit; the focused render/controller/CommandBus/context/status set passed **30/30**, the focused studio-file-export retry set passed **11/11**, UI i18n passed **7/7**, and the final serial unit run passed **106 files / 571 tests**. The site rebuild passed with the pinned PI-00 bundle at 823439 bytes and 203 service-worker precache entries | The 03-01..08 case matrix is closed; S10/PROD-08 is separately closed, while physical print/platform, direct-BYOK Provider and release approval remain open |
 | Latest transaction HTTP error boundary | **4/4 focused tests**, **8/8** server transaction and **1/1** restrictive server-policy regression passed after the final control-code/status amendment; fixed recovery codes remain distinguishable | Handler projection evidence only; fatal-process handlers were source-reviewed. Deployed logs, WAL, backups and OS sinks remain open |
 | Resumed doctor and browser verification | Doctor **5/5**, **104 files / 541 tests**, build and three static pilots; rebuilt Demo browser controls **6/6** across three engines | Doctor preceded the final server-only amendment, covered separately by 13/13 above. Earlier 103/537 evidence is historical; P0 status is unchanged |
-
 Historical macOS/Linux 88/88 results remain in the [browser matrix](BROWSER_MATRIX.zh-CN.md); current Windows Playwright engine smoke is recorded separately there.
 No new full Windows matrix, real printer/Safari certification, live-provider reliability evaluation,
 network vulnerability audit or HA/failover certification was performed in this review.
 Passing AI E2E assertions do not certify every live model/provider outcome.
 Historical 94/100 scoring is not a current release gate; use outstanding acceptance criteria instead.
-
 ## Architecture and existing work
 
 | Responsibility | Current owner | Boundary |
