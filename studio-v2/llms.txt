@@ -26,7 +26,7 @@ The default embedded Designer uses the reviewed server Demo contract, not a priv
 - The current Studio model remains `gpt-5.4-mini`. The external guide also lists `demo-auto`/`demo-fast`; do not guess a model alias until the server `/demo/v1/models` contract is confirmed.
 - The embedded Designer selects provider-tool-free `envelope` mode for this Demo recipient: do not send `tools` or `tool_choice`. Return one strict JSON action envelope or the constrained safe operation envelope that the host can validate and preview. The host-side MCP/WebMCP 35-command catalog is separate and is never serialized as Demo Provider tools. BYOK profiles retain native tools.
 - Demo multimodal input is restricted to validated inline PNG, JPEG or WebP evidence. Geometry-only SVG remains available only for recipients whose Provider contract permits it; do not send SVG to the Demo endpoint.
-- Use the existing streaming Responses path for reasoning turns. No live endpoint compatibility or real-data Provider test is implied by this guide.
+- Use the existing streaming Responses path for reasoning turns. A 2026-09-10 no-secret local Harness probe returned HTTP 403 from `/demo/session`; the Gateway guide maps 403 to an unregistered Demo project origin, so full live endpoint and real-data Provider compatibility remain open.
 
 ## Required behavior
 

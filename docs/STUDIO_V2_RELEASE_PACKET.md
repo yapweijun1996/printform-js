@@ -55,7 +55,8 @@ deployment, publishing, physical print, or maintainer approval.
   synthetic provider interception remains supporting evidence and does not close S17.
 - Latest full P0 browser sweep after the confirmation-test fixes: **102/105** passed; the only three failures were
   13-07 across Chromium, Firefox and WebKit because the current Demo Gateway provider turn did not establish. A
-  no-secret POST probe to `/demo/session` returned HTTP **403** while allowing the Harness origin, before any
+  no-secret POST probe to `/demo/session` returned HTTP **403** while allowing the Harness origin; per the Gateway
+  guide this denotes an unregistered Demo project origin, before any
   `/demo/v1/responses` request; the current P0 register remains 34/35 Pass, 1 Fail, 0 Not run; no provider failure
   was converted into a mock Pass.
 - The 2026-09-10 repeat of that 54-test command reached Chromium **18/18** and WebKit **18/18**, while all Firefox cases

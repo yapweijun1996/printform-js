@@ -136,9 +136,11 @@ The private `/v1/*` route and `gw_...` credentials are server-side only. Never
 embed a private Gateway key, call `/v1/*` from the browser, pass a Demo token to
 Studio commands, or use a rejected session as permission to broaden document
 scope. The guide advertises model discovery and `demo-auto`/`demo-fast`, while
-also documenting `gpt-5.4-mini`; this client deliberately keeps its existing
-`gpt-5.4-mini` default until the provider-side model contract is confirmed.
-Live Demo endpoint compatibility was not tested in this worktree.
+also documenting `gpt-5.4-mini`; this client keeps that default, while model-alias
+discovery remains unverified in this worktree. A no-secret local Harness probe on
+2026-09-10 returned HTTP 403 from `/demo/session` for the local origin; the guide
+maps that status to an unregistered Demo project origin, with CORS allow-origin
+present. Full live Provider compatibility remains open.
 
 The default auto-apply flow is shown below. Ordinary chat and Review-generated repairs use the same apply-mode decision: preview-first leaves the proposal pending human Apply, while Auto mode is limited to the explicit low-risk operation allowlist. Scope selection and card-target Undo still require the remaining PROD-01/04 acceptance evidence. All paths still use the existing transaction/hash checks.
 
