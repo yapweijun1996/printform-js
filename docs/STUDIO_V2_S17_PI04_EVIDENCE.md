@@ -88,6 +88,8 @@ Current PI-04 artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,
 
 The 2026-09-10 repeat of the combined target command passed Chromium **18/18** and WebKit **18/18**, but all Firefox cases failed before page creation with `browserContext.newPage: Cannot read properties of undefined (reading '_page')`; Playwright then hung during teardown and was interrupted. This is a browser-runner diagnostic and does not invalidate the last complete 54/54 result or add S17 credit.
 
+A no-page Firefox launch smoke reproduced the error before any project page or fixture ran: the main process launched, but `GeckoChildProcessHost` repeatedly failed to start tab/utility subprocesses and `remoteTab` became null. This identifies an external Firefox process/runtime condition; no PI code change or S17 credit is justified.
+
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 
 Date: 2026-09-09; environment: Chromium, Firefox and WebKit through the actual static PI-04 page. The case uses the
