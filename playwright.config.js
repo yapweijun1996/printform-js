@@ -1,5 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Keep Firefox content sandboxing enabled; the current Windows headless runner
+// cannot start its tab/utility subprocesses when GPU initialization is enabled.
+const firefoxUse = {
+  ...devices["Desktop Firefox"],
+  ...(process.platform === "win32" ? { launchOptions: { args: ["--disable-gpu"] } } : {})
+};
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 45_000,
@@ -21,7 +28,7 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "firefox", use: firefoxUse },
     { name: "webkit", use: { ...devices["Desktop Safari"] } }
   ],
   webServer: {
