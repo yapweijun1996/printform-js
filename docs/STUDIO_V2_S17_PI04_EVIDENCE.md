@@ -5,7 +5,8 @@ isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
 
-Source identity: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; packet
+Source identity: application review revision `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner
+verification commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; packet
 provenance is committed in `d87464330044ceca33eb9062bc74d6d6c3c7edd6`. S16/PI-03, S12/PROD-09 and
 S13/PROD-11 are Done. No unrelated user changes were reverted or overwritten.
 
@@ -91,6 +92,8 @@ The 2026-09-10 repeat of the combined target command passed Chromium **18/18** a
 A no-page Firefox launch smoke reproduced the error before any project page or fixture ran: the main process launched, but `GeckoChildProcessHost` repeatedly failed to start tab/utility subprocesses and `remoteTab` became null. This identifies an external Firefox process/runtime condition; no PI code change or S17 credit is justified.
 
 A Firefox-only diagnostic rerun with `MOZ_DISABLE_CONTENT_SANDBOX=1` passed **18/18**, covering P0 X-01..03, PI-03 16-01..06 and PI-04 17-01..09. The variable weakens browser isolation, so it was not committed or added to the default test configuration; this result is diagnostic only, does not replace native Firefox evidence, and earns no gate credit.
+
+A Windows-only Playwright runner adjustment in `playwright.config.js` adds `--disable-gpu` only to Firefox and leaves content sandboxing enabled. The standard three-engine target command then passed **54/54**. One preceding full run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry passed **1/1**, followed by the complete **54/54** run. This resolves the local runner startup condition only; synthetic Provider interception remains supporting evidence and live Provider/platform/print evidence remains open.
 
 ### Case 17-04 — direct browser Provider composition (supporting; synthetic response)
 

@@ -3,12 +3,14 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:04:26+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`.
+Prepared: 2026-09-09T16:44:39+08:00; last audited 2026-09-10T09:19:04+08:00. Application review revision: `7361f3e9d422861dbce38b54ef10b7945de923b0`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`.
 Application delta manifest (non-doc tracked/untracked source, test and build paths):
 `5ba8a9d695f80b739b90b94394c6a156e0907b814b4bb2a92d5fa1a88e66357e`.
-The S16/S17 implementation and evidence changes are committed in the application review revision;
-`main` tracks `origin/main` and contains the local review commit. No PR metadata or outgoing push is
-present in this checkout. No deployment, publish, user-data deletion, or live Provider request was made.
+The S16/S17 implementation and evidence changes are committed in the application review revision; the
+Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
+content sandboxing enabled. `main` tracks `origin/main` and contains the local review commits. No PR
+metadata or outgoing push is present in this checkout. No deployment, publish, user-data deletion, or
+live Provider request was made.
 
 ## 1. Prompt-to-artifact completion checklist
 
@@ -59,6 +61,10 @@ deployment, publishing, physical print, or maintainer approval.
 - A Firefox-only diagnostic with `MOZ_DISABLE_CONTENT_SANDBOX=1` then passed **18/18** for the same target cases. The
   variable weakens browser isolation, so it was not committed or added to the default test configuration; this is not
   native Firefox acceptance evidence and earns no gate credit.
+- After the Windows-only Firefox runner adjustment in commit `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`, the standard
+  54-test command passed **54/54** across Chromium, Firefox and WebKit with content sandboxing enabled. One preceding
+  run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry
+  passed **1/1**, followed by the complete **54/54** run.
 - `npm run doctor` — **5/5**, including **106 files / 567 tests** and three static validators.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
