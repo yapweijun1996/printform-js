@@ -196,6 +196,7 @@ Current implementation provides a collapsible AI Designer panel; visual IA exist
 Known Current limitations:
 
 - The topbar Print preview action is icon-only with an inline printer SVG; its existing `#print-button` click contract and localized `aria-label`/`title` remain unchanged.
+- The topbar Validate action is icon-only with an inline check SVG; its existing `#validate-button` click contract and localized `aria-label`/`title` remain unchanged.
 - The AI Designer launch surface is topbar-only. The former bottom-right floating launcher is intentionally absent; the topbar toggle remains the single accessible open/restore-focus entry.
 - Scope selection is carried into the Agent context and enforced at the command/domain boundary for document, layout, theme, table and component-shaped targets. Theme permits brand colour, Layout permits typography/table layout plus layout-only component patches, Table permits selected-table semantic operations, and Component permits selected-component binding/property/pagination operations; cross-table reassignment is rejected. The UI exposes document/layout/theme plus FormSpec-derived table and component scopes; cross-entry/browser selection evidence and the complete selection matrix remain acceptance work (PROD-01).
 - Context consumes render state and document validation while keeping export-only review gates separate: waiting/rendering/candidate are non-final, document errors show Blocked, and `CommandBus.readiness().productionValid` remains authoritative for export controls (PROD-03).
