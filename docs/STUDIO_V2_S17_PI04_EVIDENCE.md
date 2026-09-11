@@ -232,7 +232,7 @@ transaction resolver queried the same transaction, observed the committed candid
 was exposed. The intercepted request carried the synthetic key only in Authorization and its body contained neither
 key nor canary. Manifest capability `directProviderCommitRecovery: true` is recorded with
 `providerMatrixSynthetic: true`. This is supporting transaction-recovery evidence, not the separate production-shell P0 human UI acceptance,
-live Provider reliability, or final S17 gate credit.
+live Provider reliability, or final S17 gate credit. Current generated artifact 17-08 Chromium requalification passed **1/1**.
 
 ### Case 17-09 — direct-provider Real-policy privacy boundary (supporting; synthetic response)
 
