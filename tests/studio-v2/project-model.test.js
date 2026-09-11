@@ -8,6 +8,7 @@ describe("PrintForm v2 single HTML protocol", () => {
     const project = createSalesInvoiceProject();
     const validation = validateProject(project);
     const html = await serializeStandalone(project, { documentRuntime: "window.runtimeLoaded=true;", printform: "window.printformLoaded=true;", runtimeVersion: "2.0.0" }, validation);
+    expect(html.indexOf('id="pf-printform-runtime"')).toBeLessThan(html.indexOf('id="pf-document-runtime"'));
     const parsed = parseProjectHtml(html);
     expect(parsed.manifest).toEqual(project.manifest);
     expect(parsed.schema).toEqual(project.schema);

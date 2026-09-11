@@ -3,6 +3,7 @@ vi.mock("../../studio-v2/core/exporter.js", () => ({ createStandaloneHtml: vi.fn
 vi.mock("../../studio-v2/ui/file-io.js", () => ({ downloadHtml: vi.fn(), saveHtmlWithPicker: vi.fn() }));
 import { createStandaloneHtml } from "../../studio-v2/core/exporter.js";
 import { downloadHtml, saveHtmlWithPicker } from "../../studio-v2/ui/file-io.js";
+import { PREVIEW_SCRIPT_NONCE } from "../../studio-v2/ui/preview.js";
 import { createFileExport, createPrintPreview } from "../../studio-v2/ui/studio-file-export.js";
 import { classifyRealDocument, nextDataPolicy } from "../../studio-v2/core/data-policy.js";
 
@@ -102,6 +103,7 @@ describe("file export policy and confirmed outcomes", () => {
     createStandaloneHtml.mockImplementation(async () => { policy = nextDataPolicy(policy, "unknown"); return { html: "SYNTHETIC-PRINT-CANARY" }; });
     const preview = createPrintPreview({ getBus: () => bus, getDataPolicy: () => policy, toast: vi.fn() });
     await preview();
+    expect(createStandaloneHtml).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ scriptNonce: PREVIEW_SCRIPT_NONCE }));
     expect(popup.opener).toBeNull();
     expect(popup.location).toBe("");
     expect(popup.close).toHaveBeenCalledOnce();

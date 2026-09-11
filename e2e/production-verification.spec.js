@@ -103,6 +103,25 @@ test("opens the required progress claim in Chromium with a printable isolated pr
   expect(browserErrors).toEqual([]);
 });
 
+test("opens a populated standalone print preview from the Print preview action", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Standalone print preview uses the Chromium reference runtime");
+  const browserErrors = collectBrowserErrors(page);
+  await page.goto("/studio-v2/?sample=sales-invoice");
+  await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
+  const popupPromise = page.waitForEvent("popup");
+  await page.locator("#print-button").click();
+  const popup = await popupPromise;
+  const popupErrors = collectBrowserErrors(popup);
+  await popup.waitForLoadState("domcontentloaded");
+  await expect(popup).toHaveTitle(/Sales Invoice/);
+  await expect(popup.locator(".printform_page").first()).toBeVisible({ timeout: 20_000 });
+  expect(await popup.locator(".printform_page").count()).toBeGreaterThan(0);
+  expect(await popup.locator("body").innerText()).toContain("Sales Invoice");
+  expect(browserErrors).toEqual([]);
+  expect(popupErrors).toEqual([]);
+  await popup.close();
+});
+
 test("renders 100, 500 and 1000 rows deterministically in the browser", async ({ page, browserName }, testInfo) => {
   test.skip(browserName !== "chromium", "Large dataset budgets use the Chromium reference environment");
   const browserErrors = collectBrowserErrors(page);

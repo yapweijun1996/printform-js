@@ -1,6 +1,7 @@
 import { createStandaloneHtml } from "../core/exporter.js";
 import { assertPolicyCurrent, isPolicyCurrent, policyError } from "../core/data-policy.js";
 import { downloadHtml, saveHtmlWithPicker } from "./file-io.js";
+import { PREVIEW_SCRIPT_NONCE } from "./preview.js";
 import { t } from "./ui-i18n.js";
 
 function captureFileContext(getBus, getDataPolicy) {
@@ -107,7 +108,7 @@ export function createPrintPreview({ getBus, getDataPolicy, toast }) {
       if (!target) return toast(t("toast.popupBlocked"));
       target.opener = null;
       const result = await createStandaloneHtml(structuredClone(bus.project), {
-        requireTrusted: false, networkDisabled: true, dataPolicy: policy, assertCurrent
+        requireTrusted: false, networkDisabled: true, scriptNonce: PREVIEW_SCRIPT_NONCE, dataPolicy: policy, assertCurrent
       });
       assertCurrent();
       if (target.closed) return;

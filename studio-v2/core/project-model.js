@@ -207,8 +207,9 @@ export async function serializeStandalone(project, sources, validation, options 
   <template id="${SECTION_IDS.template}">\n${project.templateHtml.trim()}\n</template>
   ${jsonBlock(SECTION_IDS.sampleData, "application/json", project.sampleData, scriptNonce)}
   ${jsonBlock(SECTION_IDS.attestation, "application/json", attestation, scriptNonce)}
-  <script${scriptNonceAttribute(scriptNonce)} id="pf-document-runtime" data-version="${escapeHtml(runtimeVersion)}" data-hash="${runtimeHash}">${inlineDocumentRuntime}</script>
+  <!-- The pagination runtime must load before document runtime auto-render. -->
   <script${scriptNonceAttribute(scriptNonce)} id="pf-printform-runtime">${inlinePrintformRuntime}</script>
+  <script${scriptNonceAttribute(scriptNonce)} id="pf-document-runtime" data-version="${escapeHtml(runtimeVersion)}" data-hash="${runtimeHash}">${inlineDocumentRuntime}</script>
   ${customScripts}
 </body>
 </html>\n`;
