@@ -39,6 +39,7 @@
 - Service Worker response-clone regression: policy unit 2/2 and Chromium cache-boundary E2E 1/1; no gate credit.
 - Topbar language control: SVG globe-only button, five-locale listbox, ARIA state and keyboard navigation verified in the Chromium AI/localization regression 10/10; no gate credit.
 - Standalone Print preview: inherited CSP nonce and runtime order corrected; Chromium popup rendered populated `.printform_page` content with no page or console errors, 2/2 regression cases passed; no gate credit.
+- AI Designer launcher: removed the bottom-right floating `#ai-floating-launcher` markup, styles and binding while preserving the topbar open/close/focus cycle; Chromium topbar/layout regression passed 4/4 and asserted zero floating nodes; no gate credit.
 - P0 register: 35 Pass, 0 Fail, 0 Not run.
 
 ## Blockers and next action
