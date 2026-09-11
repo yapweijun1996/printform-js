@@ -142,7 +142,7 @@ test("presents a chat-first AI Designer with provider setup tucked away", async 
   await page.locator("#inspector-toggle").click();
   await page.locator("#ai-designer-tab").click();
 
-  await expect(page.getByText("PrintForm Designer", { exact: true })).toBeVisible();
+  await expect(page.getByText("PrintForm Designer", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Design your print form" })).toBeVisible();
   await expect(page.locator("#ai-provider-details")).toBeHidden();
   await expect(page.locator("#ai-settings-button")).toHaveAttribute("aria-expanded", "false");

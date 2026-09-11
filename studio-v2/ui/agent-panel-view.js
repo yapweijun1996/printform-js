@@ -14,11 +14,10 @@ export function renderSafeText(container, text) {
   }
 }
 
-// The panel's top chrome (brand + gateway status dot + primary actions) lives
-// in the shared `.inspector-header` alongside the view switcher, not inside the
-// tabpanel. initAgentPanel injects `brand` into [data-slot="brand"] and
-// `actions` into [data-slot="actions"]; every control keeps its id so the
-// existing querySelector wiring is unaffected.
+// The panel's primary actions live in the shared `.inspector-header` alongside
+// the view switcher, not inside the tabpanel. initAgentPanel injects `actions`
+// into [data-slot="actions"]; every control keeps its id so the existing
+// querySelector wiring is unaffected.
 const HEADER_ACTION_ICONS = Object.freeze({
   newSession: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>',
   review: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0 .1 2.5"></path><path d="m20 5 0 6-6 0"></path></svg>',
@@ -28,9 +27,6 @@ const HEADER_ACTION_ICONS = Object.freeze({
 
 export function headerClusterMarkup() {
   return {
-    brand: `<span class="ai-avatar" aria-hidden="true">✦</span>
-      <span id="ai-status-dot" class="ai-status-dot" data-tone="ready" aria-hidden="true"></span>
-      <strong class="ai-brand-title" data-ui-i18n="aiChat.identity" data-ui-i18n-title="aiChat.identity">PrintForm Designer</strong>`,
     actions: `<button id="ai-new-session" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.newAria" data-ui-i18n-title="aiChat.newAria" aria-label="Start a new AI chat">${HEADER_ACTION_ICONS.newSession}<span class="ai-btn-label" data-ui-i18n="aiChat.new">New</span></button>
       <button id="ai-review-layout" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.review.buttonAria" data-ui-i18n-title="aiChat.review.buttonAria" aria-label="Review layout">${HEADER_ACTION_ICONS.review}<span class="ai-btn-label" data-ui-i18n="aiChat.review.button">Review</span></button>
       <button id="ai-sessions-toggle" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.nav.sessions" data-ui-i18n-title="aiChat.nav.sessionsTitle" aria-expanded="false" aria-controls="ai-sessions-drawer" aria-label="Sessions" title="Toggle sessions drawer">${HEADER_ACTION_ICONS.sessions}<span class="ai-btn-label" data-ui-i18n="aiChat.nav.sessions">Sessions</span></button>
@@ -40,8 +36,7 @@ export function headerClusterMarkup() {
 
 export function panelMarkup() {
   return `<div class="ai-panel">
-    <!-- Gateway status: retained as a hidden live region; the visible signal is
-         #ai-status-dot in the shared header. -->
+    <!-- Gateway status is retained as a hidden live region for assistive technology. -->
     <p id="ai-status" class="ai-status visually-hidden" role="status" aria-live="polite" data-ui-i18n="aiChat.status.demoGateway">Demo Gateway ready · a short-lived origin-bound session is acquired on demand.</p>
 
     <div id="ai-sessions-drawer" class="ai-sessions-drawer hidden">

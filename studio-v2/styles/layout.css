@@ -85,13 +85,10 @@ body.editor-closed .workspace { grid-template-columns: minmax(480px, 1fr); }
 body.inspector-closed .inspector-resize-handle { display: none; }
 body.is-resizing-inspector { cursor: col-resize; user-select: none; }
 body.is-resizing-inspector iframe { pointer-events: none; }
-/* Single consolidated panel header: brand + gateway dot + view switcher + AI
-   action cluster + Close. One row on the docked desktop rail; wraps to two
-   (brand+Close / switcher+actions) on the narrow overlay + mobile sheet. AI
-   slots hide on the Quality/Agent tabs. */
+/* Single consolidated panel header: view switcher + AI action cluster + Close.
+   One row on the docked desktop rail; wraps to two on the narrow overlay +
+   mobile sheet. AI slots hide on the Quality/Agent tabs. */
 .inspector-header { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; row-gap: 6px; gap: 8px; padding: 8px 10px 8px 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.inspector-header .ai-panel-nav { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 7px; }
-.inspector-header .ai-brand-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .inspector-header .ai-nav-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
 .inspector-close-slot { margin-left: auto; flex: 0 0 auto; }
 .inspector-header[data-active-tab="quality-tab"] .inspector-ai-slot,
@@ -101,19 +98,10 @@ body.is-resizing-inspector iframe { pointer-events: none; }
 .inspector-tabs button[aria-selected="true"] { color: #fff; background: var(--blue); }
 .inspector-close { min-height: 30px; margin: 0; padding: 0 9px; font-size: 13px; line-height: 1; white-space: nowrap; }
 .inspector-close-icon { width: 16px; height: 16px; flex: 0 0 auto; }
-.ai-status-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #16a34a; }
-.ai-status-dot[data-tone="busy"] { background: #d97706; }
-.ai-status-dot[data-tone="error"] { background: #dc2626; }
-.ai-status-dot[data-tone="idle"] { background: #94a3b8; }
-/* Docked desktop rail: keep the header on one row. On a narrow rail the brand
-   collapses to the avatar + status dot; the "PrintForm Designer" wordmark and
-   the action-button labels reappear as the rail is dragged wider. */
+/* Docked desktop rail: keep the header on one row. Action-button labels reappear
+   as the rail is dragged wider. */
 @media (min-width: 1081px) {
   .inspector-header { flex-wrap: nowrap; }
-  .inspector-header .ai-panel-nav { flex: 0 1 auto; }
-  @container inspector (max-width: 500px) {
-    .inspector-header .ai-brand-title { display: none; }
-  }
 }
 body.inspector-closed .topbar { padding-right: 18px; }
 body.inspector-closed .workspace { padding-right: 0; }

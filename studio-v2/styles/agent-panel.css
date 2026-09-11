@@ -1,11 +1,9 @@
 #ai-designer-tabpanel:not([hidden]) { display: flex; overflow: hidden; padding: 0; background: #f6f8fc; }
 .ai-panel { display: flex; flex: 1; flex-direction: column; width: 100%; min-width: 0; min-height: 0; color: #172033; background: #f6f8fc; }
 
-/* Layer 1: Panel Navigation — brand + actions render into the shared
-   .inspector-header (see layout.css); these rules style the injected pieces. */
-.ai-brand-title { overflow: hidden; font-size: 12px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; color: #172033; }
-.ai-avatar, .ai-welcome-mark { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; color: #fff; background: linear-gradient(145deg, #173d9a, #5d4ee8); box-shadow: 0 4px 12px #173d9a33; }
-.ai-avatar { width: 24px; height: 24px; border-radius: 7px; font-size: 13px; }
+/* Layer 1: Panel Navigation — actions render into the shared .inspector-header
+   (see layout.css); these rules style the injected pieces. */
+.ai-welcome-mark { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; color: #fff; background: linear-gradient(145deg, #173d9a, #5d4ee8); box-shadow: 0 4px 12px #173d9a33; }
 .ai-compact-button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
 .ai-compact-button.ai-icon-first { display: inline-flex; align-items: center; gap: 4px; }
 .ai-btn-icon { width: 14px; height: 14px; flex: 0 0 auto; }
@@ -90,8 +88,8 @@
 .ai-card-apply-btn { min-height: 28px; font-size: 9px; padding: 0 10px; }
 .ai-card-discard-btn, .ai-card-undo, .ai-card-redo { min-height: 28px; font-size: 9px; padding: 0 8px; }
 
-/* #ai-status is a hidden live region only (see .visually-hidden in base.css);
-   the visible gateway signal is #ai-status-dot in the shared header. */
+/* #ai-status is the hidden live region for gateway and turn status (see
+   .visually-hidden in base.css). */
 
 /* Apply mode + revision history relocated into the document context panel */
 .ai-context-apply { justify-content: flex-start; gap: 6px; }
@@ -128,8 +126,8 @@
   .ai-compact-button { padding-inline: 6px; font-size: 9px; }
 }
 
-/* Header action buttons are icon-only by default so the brand + switcher + Close
-   always fit; the text labels reappear only when the rail is dragged wide. The
+/* Header action buttons are icon-only by default so the switcher + Close always
+   fit; the text labels reappear only when the rail is dragged wide. The
    panel is a fixed-width container independent of the viewport, so this keys off
    the panel's own width. */
 .inspector-panel { container-type: inline-size; container-name: inspector; }

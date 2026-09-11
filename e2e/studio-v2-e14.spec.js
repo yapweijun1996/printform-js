@@ -15,7 +15,7 @@ test("presents the 4-layer E14 IA: Navigation -> Document Context -> Conversatio
   // Layer 1: Panel Navigation — consolidated into the shared inspector header
   const header = page.locator(".inspector-header");
   await expect(header).toBeVisible();
-  await expect(header.locator(".ai-panel-nav .ai-brand-title")).toHaveText("PrintForm Designer");
+  await expect(header.locator(".ai-panel-nav")).toHaveCount(0);
   await expect(header.locator("#ai-new-session")).toBeVisible();
   await expect(header.locator("#ai-review-layout")).toBeVisible();
   await expect(header.locator("#ai-sessions-toggle")).toBeVisible();

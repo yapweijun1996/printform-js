@@ -93,9 +93,10 @@ describe("Studio UI i18n", () => {
 
   it("localizes the complete AI Chatbox shell, prompts, and accessibility attributes", async () => {
     document.body.insertAdjacentHTML("beforeend", panelMarkup());
-    // Brand + primary actions render into the shared inspector header at runtime.
+    // Primary actions render into the shared inspector header at runtime.
     const cluster = headerClusterMarkup();
-    document.body.insertAdjacentHTML("beforeend", cluster.brand + cluster.actions);
+    expect(cluster.brand).toBeUndefined();
+    document.body.insertAdjacentHTML("beforeend", cluster.actions);
     const expected = {
       "en-MY": { title: "Design your print form", send: "Send", aria: "Start a new AI chat", placeholder: "Ask AI to redesign this print form…", prompt: "Make the Description column wider and keep the table within the page." },
       "zh-CN": { title: "设计你的打印表单", send: "发送", aria: "开始新的 AI 聊天", placeholder: "让 AI 重新设计这个打印表单…", prompt: "加宽 Description 列，并确保表格仍在页面范围内。" },

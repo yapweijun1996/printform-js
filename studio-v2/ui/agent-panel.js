@@ -4,7 +4,6 @@ import { DEFAULT_PROVIDER_PRESET, publicDefaultProviderProfile } from "./agent-p
 import { populateProviderForm } from "./agent-settings-form.js";
 import { createAgentPanelRuntime } from "./agent-panel-runtime.js";
 import { panelMarkup, headerClusterMarkup } from "./agent-panel-view.js";
-import { toneForStatusKey } from "./agent-status-tone.js";
 import { createDocumentContextView } from "./agent-document-context.js";
 import { createAgentCardController } from "./agent-card-controller.js";
 import { bindAgentSettingsModal } from "./agent-settings-modal.js";
@@ -37,21 +36,14 @@ export function initAgentPanel({
 }) {
   const host = $("#ai-designer-tabpanel");
   host.innerHTML = panelMarkup();
-  // Brand + primary actions live in the shared inspector header, not the
-  // tabpanel; inject them into the static slots before applyUiI18n localizes.
+  // Primary actions live in the shared inspector header, not the tabpanel;
+  // inject them into the static slot before applyUiI18n localizes.
   const cluster = headerClusterMarkup();
-  const brandSlot = $('.inspector-header [data-slot="brand"]');
   const actionSlot = $('.inspector-header [data-slot="actions"]');
-  if (brandSlot) brandSlot.innerHTML = cluster.brand;
   if (actionSlot) actionSlot.innerHTML = cluster.actions;
   $("#ai-provider-details")?.remove();
   document.body.insertAdjacentHTML("beforeend", settingsModalMarkup());
   applyUiI18n(document);
-  // Seed the header status dot from the localized gateway line before the first
-  // status() call fires.
-  const bootDot = $("#ai-status-dot");
-  if (bootDot) bootDot.title = $("#ai-status")?.textContent.trim() || "";
-
   const trace = bindAgentTrace({ get: $ });
   const vault = new ByokVault();
   const initialPolicy = dataPolicy || (realData ? classifyRealDocument() : classifyImportedDocument());
@@ -124,9 +116,7 @@ export function initAgentPanel({
     state.statusText = text;
     const statusEl = $("#ai-status");
     if (statusEl) statusEl.textContent = text;
-    // #ai-status is a hidden live region; the visible signal is the header dot.
-    const dot = $("#ai-status-dot");
-    if (dot) { dot.dataset.tone = toneForStatusKey(state.statusKey); dot.title = text; }
+    // #ai-status remains the accessible status live region for the panel.
     const modalStatus = $("#ai-settings-status");
     if (modalStatus && !$("#ai-provider-details")?.hidden) modalStatus.textContent = text;
   }
