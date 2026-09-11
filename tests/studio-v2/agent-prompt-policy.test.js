@@ -41,7 +41,9 @@ describe("Agent runtime instructions follow production policy", () => {
     assertPolicyInstructions(prompt);
     expect(prompt).toContain(`PrintForm Agent Contract ${AGENT_CONTRACT_VERSION}`);
     expect(prompt).toContain("Production export still requires a human click");
-    expect(replies.find((reply) => reply.id === 2).error).toMatchObject({ code: -32001, data: { code: expect.any(String) } });
+    const compatibility = replies.find((reply) => reply.id === 2);
+    expect(compatibility).toBeDefined();
+    expect(compatibility.error).toMatchObject({ code: -32001, data: { code: expect.any(String) } });
     expect(TOOL_CONTRACTS).toHaveLength(35);
   });
 });

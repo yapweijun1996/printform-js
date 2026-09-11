@@ -57,10 +57,29 @@ async function handle(request) {
 }
 
 const input = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+const pendingRequests = new Set();
+let shutdownPromise = null;
+
+function trackRequest(request) {
+  const task = Promise.resolve(handle(request)).catch(() => console.error("MCP request failed"));
+  pendingRequests.add(task);
+  task.then(() => pendingRequests.delete(task), () => pendingRequests.delete(task));
+}
+
+async function shutdown() {
+  if (shutdownPromise) return shutdownPromise;
+  shutdownPromise = (async () => {
+    await Promise.allSettled([...pendingRequests]);
+    client.close();
+    process.exitCode = 0;
+  })();
+  return shutdownPromise;
+}
+
 input.on("line", (line) => {
   if (!line.trim()) return;
-  try { Promise.resolve(handle(JSON.parse(line))).catch(() => console.error("MCP request failed")); }
+  try { trackRequest(JSON.parse(line)); }
   catch { failure(null, -32700, "Parse error"); }
 });
-input.on("close", () => { client.close(); process.exit(0); });
-process.on("SIGINT", () => { client.close(); process.exit(0); });
+input.on("close", () => { void shutdown(); });
+process.on("SIGINT", () => { void shutdown(); });
