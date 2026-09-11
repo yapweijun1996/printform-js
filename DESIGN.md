@@ -281,7 +281,7 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 
 ### 4.9 Studio 顶栏信息架构（Current）
 
-`.topbar` 是单条 56px 栏（渐变已压平；brand 精简为 `Studio v2 [Protocol 2.0]`，`PRINTFORM STUDIO` eyebrow 全宽移除以让出行内空间）。`.actions` 顺序：`#ui-locale-button`（globe SVG + `#ui-locale-menu` listbox）→ `#inspector-toggle`（图标 `✦`，仅 `body.inspector-closed` 显示，位置固定为第 2 个可见子元素）→ `#editor-toggle` → `#validate-button` → `#print-button` → `⋯ More` → `#export-readiness` → `.export-split`。AI Designer 入口仅保留顶部 `#inspector-toggle`；页面不再渲染右下角浮动 launcher。
+`.topbar` 是单条 56px 栏（渐变已压平；brand 精简为 `Studio v2 [Protocol 2.0]`，`PRINTFORM STUDIO` eyebrow 全宽移除以让出行内空间）。`.actions` 顺序：`#ui-locale-button`（globe SVG + `#ui-locale-menu` listbox）→ `#inspector-toggle`（图标 `✦`，仅 `body.inspector-closed` 显示，位置固定为第 2 个可见子元素）→ `#editor-toggle` → `#validate-button` → `#print-button`（printer SVG icon-only）→ `⋯ More` → `#export-readiness` → `.export-split`。AI Designer 入口仅保留顶部 `#inspector-toggle`；页面不再渲染右下角浮动 launcher。
 
 - **层级**：深色栏上唯一 filled primary 是 `#export-button`（白底蓝字）；其余 secondary 按钮为半透明白 ghost。
 - **语言菜单**：`#ui-locale-button` 只显示 globe SVG，`#ui-locale-menu` 使用 `listbox/option` 语义；点击、方向键、Home/End、Esc 和外点关闭均可用，菜单固定定位在按钮下方。隐藏的 `#ui-locale-select` 仅作为现有 UI i18n/change contract 的同步源，不改变五种语言与持久化行为。**`⋯ More`** 弹出菜单只放 `Import HTML`；**`▾`** 拆分箭头弹出 `Export Untrusted`（同一个"其他导出方式"入口，不在 `⋯ More` 里重复）。两个菜单用原生 HTML Popover API（`popover` + `popovertarget`），顶层渲染绕开 `.topbar`/`.actions` 的 overflow 裁剪，Esc / 外点关闭；`ui/app.js` 的 `bindTopbarMenu` 只做定位（fixed，贴触发器下方右对齐）+ 同步 `aria-expanded` + Esc 后回焦。
