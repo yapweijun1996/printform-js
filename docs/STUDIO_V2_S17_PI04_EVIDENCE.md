@@ -1,6 +1,6 @@
 # S17 / PI-04 Composed Acceptance Evidence
 
-Date: 2026-09-10. Status: **Pending closure, G1 Investigated (10%); S16 prerequisite closed, X-01..03 supporting cases recorded**. This record covers the
+Date: 2026-09-11. Status: **Pending closure, G1 Investigated (10%); S16 prerequisite closed, X-01..03 supporting cases recorded**. This record covers the
 isolated composed PI path; the embedded production entry remains AGRUN.
 
 ## G1 — investigation and frozen acceptance
@@ -112,11 +112,10 @@ adding direct-BYOK or provider-retention evidence.
 
 ### Current-source Demo Gateway live Studio probes (supporting; does not close S17)
 
-Date: 2026-09-10; source/artifact: current local `site-dist` from application revision
-`a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: real Chromium browser contexts
+Dates: 2026-09-10 to 2026-09-11; source/artifact: current local `site-dist` from application revision `a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: real Chromium browser contexts
 against `http://127.0.0.1:4174/studio-v2/`, served by `scripts/serve-site.mjs`, with the
 registered `github-pages` Demo origin. The focused transport probe and the later fresh
-transaction probe both used the current source; no provider credential was supplied to the page.
+transaction probe both used the current source; no provider credential was supplied to the page. The 2026-09-11 real Chromium smoke also used this origin and supplied no credential.
 
 - Both probes reached `Printable`; the session request was observed without Authorization and
   returned **201**, and the design/review requests to `/demo/v1/responses` returned **200** with
@@ -135,9 +134,9 @@ transaction probe both used the current source; no provider credential was suppl
 
 These probes confirm that the current source traverses the registered credential-free
 session-to-Responses path and the production-shell UI transaction boundary. They remain Demo
-supporting evidence only: they do not replace direct-BYOK provider CORS/quota/reliability/retention
-evidence, the final provider/render/privacy/transaction matrix, platform/print checks or release
-approval, and earn no S17 G2-G5 credit.
+supporting evidence only: they do not replace direct-BYOK provider CORS/quota/reliability/retention evidence,
+the final provider/render/privacy/transaction matrix, platform/print checks or release approval, and earn no
+S17 G2-G5 credit.
 
 ### Prior application-baseline Demo Gateway browser run (supporting; superseded for changed preview path)
 

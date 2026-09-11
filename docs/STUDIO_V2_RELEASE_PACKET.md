@@ -67,6 +67,9 @@ deployment, publishing, physical print, or maintainer approval.
 - A 2026-09-11 rerun of `e2e/studio-v2-p0-prod13-controls.spec.js --grep "13-07"` passed **3/3** across
   Chromium, Firefox and WebKit. This reconfirms the registered-origin Demo session/disclosure path; it does not add
   live Provider reliability, retention or direct-BYOK evidence.
+- A separate 2026-09-11 real Chromium smoke from `http://127.0.0.1:4174/studio-v2/` obtained a Demo session (**201**),
+  read models (**200**, including `demo-fast`), and received the first `response.created` frame from a `demo-fast`
+  Responses stream (**200 text/event-stream**). No credential or token was retained; this remains supporting evidence.
 - The current-source AI/Trace UI regression (`e2e/studio-v2-ai.spec.js` plus `e2e/studio-v2-ai-trace.spec.js`)
   passed **26/30** across the three engines, with four intentional browser-specific skips. It confirms the
   credential-free Demo settings/trace surface only; no live Provider reliability claim is made.
