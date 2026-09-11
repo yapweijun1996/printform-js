@@ -23,7 +23,7 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 | Sequential TASK ledger and dependency order | `TASK.md`, `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_EXECUTION_PLAN.md` | S01-S16 are Done; S17 is the only active step at G1/10%. S18-S21 remain dependent/open. |
 | Current goal and progress control | `GOAL.md`, `PROGRESS.md`, `GOAL_PROMPT.md` | These root documents mirror the current ledger, evidence ownership, no-push boundary, and the four progress denominators; they are control/navigation docs only. |
 | Requalify S16 deferred-close, CAS, lifecycle and browser boundaries | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md` | G1-G5/100%; 16-01..06 passed 18/18 across Chromium, Firefox and WebKit, with focused lifecycle/privacy regressions. |
-| Actual browser Harness acceptance | `e2e/studio-v2-pi-04.spec.js`, `e2e/studio-v2-pi-04-privacy.spec.js`, `e2e/studio-v2-pi-04-transaction.spec.js` | 17-01..09 passed 27/27 across three configured engines. These are isolated PI supporting cases with synthetic Provider interception; they do not close S17 live-provider or cutover gates. |
+| Actual browser Harness acceptance | `e2e/studio-v2-pi-04.spec.js`, `e2e/studio-v2-pi-04-privacy.spec.js`, `e2e/studio-v2-pi-04-transaction.spec.js` | Prior 17-01..09 passed 27/27 across three configured engines; current generated artifact requalification has 17-01 Chromium 1/1. These are isolated PI supporting cases with synthetic Provider interception; they do not close S17 live-provider or cutover gates. |
 | Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; current P0 register is 35/35 Pass after the focused 13-07 Demo-origin requalification. Controlled AGRUN/BYOK is not PI live-provider evidence. |
 | Canonical revisions, CAS and stale-result rejection | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md`, `docs/STUDIO_V2_S17_PI04_EVIDENCE.md`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Current revision/hash ownership, atomic commit recovery, delayed policy/scope rejection and cross-document isolation are evidenced. |
 | Scope isolation | P0 X-02/X-03 and PI 17-02/17-03 browser cases | Old policy/mode/scope result and document-A callback do not change the current document; no candidate/evidence leak was observed. |
@@ -135,8 +135,8 @@ or approval result.
 
 ## 4. Artifact and provenance record
 
-- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,588 bytes,
-  SHA-256 `4fdf656912895823ce1c2c67856d1e643a1a5eb4a8219b8262599a3e208f099c`.
+- PI-04 entry: `site-dist/studio-v2/pi-04/qualification-entry.js`, 1,212,669 bytes,
+  SHA-256 `f6940ab8c9c28307e43fcb70040e2d92165d7780da6624bdcfbbcb5d9a3c4856`.
 - PI-04 manifest: `site-dist/studio-v2/pi-04/qualification-manifest.json`,
   SHA-256 `5ee8d01dbcb4443e6bc2a4fc0fe7b50299223a23b8c91b2787521e44363dad95`.
 - Manifest flags: static, frontend-only, actual Harness, policy-bound, private human approval,
