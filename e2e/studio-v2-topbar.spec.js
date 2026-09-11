@@ -5,6 +5,8 @@ test("keeps the topbar in one horizontal row and never scrolls the primary actio
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   await expect(page.locator("#print-button svg")).toHaveCount(1);
   await expect(page.locator("#print-button")).toHaveAccessibleName("Print preview");
+  await expect(page.locator("#validate-button svg")).toHaveCount(1);
+  await expect(page.locator("#validate-button")).toHaveAccessibleName("Validate");
 
   for (const viewport of [{ width: 995, height: 778 }, { width: 720, height: 812 }, { width: 375, height: 812 }]) {
     await page.setViewportSize(viewport);

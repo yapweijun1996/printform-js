@@ -39,6 +39,8 @@ body.inspector-closed .actions > .inspector-toggle { display: inline-flex; }
 .topbar .actions button, .topbar .actions .button { min-height: 34px; padding: 0 10px; }
 .topbar .actions .ui-locale-button { min-height: 34px; color: #fff; background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); }
 .topbar .actions .ui-locale-button:hover { background: rgba(255, 255, 255, 0.18); filter: none; }
+.topbar .actions .validate-button { width: 38px; min-width: 38px; gap: 0; padding: 0 7px; }
+.validate-button-icon { width: 18px; height: 18px; flex: 0 0 auto; }
 .topbar .actions .print-button { width: 38px; min-width: 38px; gap: 0; padding: 0 7px; }
 .print-button-icon { width: 18px; height: 18px; flex: 0 0 auto; }
 /* The topbar AI-Designer button is icon-only; the label was redundant and
