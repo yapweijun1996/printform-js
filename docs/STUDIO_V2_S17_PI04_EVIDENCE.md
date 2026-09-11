@@ -241,7 +241,7 @@ Real data policy. The policy-bound session remained `memory` with `allowPersiste
 one revision-0 candidate through the actual sandboxed candidate renderer and did not commit. The synthetic key appeared
 only in Authorization; the intercepted JSON body and qualification output contained neither the key nor
 `PI04-PRIVATE-CANARY-20260909`. This verifies local frontend policy/wire redaction only; it does not prove provider
-retention, live CORS, live reliability, or final P0/S17 gate closure.
+retention, live CORS, live reliability, or final P0/S17 gate closure. Current generated artifact 17-09 Chromium requalification passed **1/1**.
 
 ## Separate production-shell P0 X-01..03 evidence
 
