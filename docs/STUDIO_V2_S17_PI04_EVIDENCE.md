@@ -211,8 +211,7 @@ Date: 2026-09-09; Chromium, Firefox and WebKit each issued one direct `POST` to 
 function-call SSE event, produced one revision-0 proposal, retained the memory-only session and excluded the canary and
 synthetic key from qualification output and JSON body. The key appeared only in the intercepted `x-goog-api-key` header.
 Manifest capability `directProviderGemini: true` is recorded with `providerMatrixSynthetic: true` and `liveByokSmoke: false`.
-This remains supporting adapter/Harness coverage, not live CORS/reliability, human UI approval/export, P0 closure, or
-final S17 gate credit.
+Current generated artifact 17-06 Chromium requalification passed **1/1**. This remains supporting adapter/Harness coverage, not live CORS/reliability, human UI approval/export, P0 closure, or final S17 gate credit.
 
 ### Case 17-07 — direct-provider follow-up payload (supporting; synthetic response)
 
