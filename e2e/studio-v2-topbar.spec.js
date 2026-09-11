@@ -88,7 +88,7 @@ test("keeps the topbar in one horizontal row and never scrolls the primary actio
   await page.locator("#preview-panel").click({ position: { x: 12, y: 12 } });
   await expect.poll(() => page.locator("#export-menu").evaluate((node) => node.matches(":popover-open"))).toBe(false);
 
-  // The AI-launcher / close / focus cycle is unchanged.
+  // The topbar AI Designer entry owns the open / close / focus cycle.
   await page.setViewportSize({ width: 995, height: 778 });
   await page.locator("#inspector-toggle").click();
   await expect(page.locator("#inspector-panel")).toBeVisible();
@@ -96,11 +96,11 @@ test("keeps the topbar in one horizontal row and never scrolls the primary actio
   await expect(page.locator("#ai-prompt")).toBeVisible();
   await expect(page.locator("#inspector-close")).toBeFocused();
   await page.locator("#inspector-close").click();
-  await expect(page.locator("#ai-floating-launcher")).toBeVisible();
-  await expect(page.locator("#ai-floating-launcher")).toHaveAttribute("title", /AI Designer/);
-  await page.locator("#ai-floating-launcher").click();
+  await expect(page.locator("#ai-floating-launcher")).toHaveCount(0);
+  await expect(page.locator("#inspector-toggle")).toBeFocused();
+  await page.locator("#inspector-toggle").click();
   await expect(page.locator("#ai-designer-tab")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#inspector-close")).toBeFocused();
   await page.locator("#inspector-close").click();
-  await expect(page.locator("#ai-floating-launcher")).toBeFocused();
+  await expect(page.locator("#inspector-toggle")).toBeFocused();
 });
