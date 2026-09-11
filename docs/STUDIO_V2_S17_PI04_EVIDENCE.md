@@ -192,7 +192,7 @@ nor the PI-04 canary.
 in memory, and left the canonical revision unchanged. The qualification output contained neither canary nor credential.
 - The generated manifest records `directProviderChat: true`, `providerMatrixSynthetic: true` and `liveByokSmoke: false`.
 This is direct-browser adapter/Harness evidence only; it does not prove live CORS, quota, provider reliability, human
-approval/export UI, or the separate production-shell P0 X-01 closure. The remaining provider variants and final privacy/transaction matrix stay open.
+approval/export UI, or the separate production-shell P0 X-01 closure. Current generated artifact 17-04 Chromium requalification passed **1/1**; the remaining provider variants and final privacy/transaction matrix stay open.
 
 ### Case 17-05 — direct OpenAI Responses composition (supporting; synthetic response)
 
