@@ -11,11 +11,19 @@ import { applyUiI18n, currentUiLocale, initUiI18n, setUiLocale, t } from "../../
 
 function fixture() {
   document.body.innerHTML = `
+    <button id="ui-locale-button" data-ui-i18n-aria-label="ui.language" data-ui-i18n-title="ui.language"></button>
+    <div id="ui-locale-menu" role="listbox" data-ui-i18n-aria-label="ui.language" hidden>
+      <button role="option" data-locale="en-MY" aria-selected="true">English</button>
+      <button role="option" data-locale="zh-CN" aria-selected="false">中文</button>
+      <button role="option" data-locale="ms-MY" aria-selected="false">Melayu</button>
+      <button role="option" data-locale="ja-JP" aria-selected="false">日本語</button>
+      <button role="option" data-locale="vi-VN" aria-selected="false">Việt</button>
+    </div>
     <select id="ui-locale-select"><option value="en-MY">English</option><option value="zh-CN">中文</option><option value="ms-MY">Melayu</option><option value="ja-JP">日本語</option><option value="vi-VN">Việt</option></select>
     <h2 data-ui-i18n="editor.projectSource">stale</h2>
     <textarea id="source"></textarea>
     <input data-ui-i18n-placeholder="editor.assetPlaceholder">
-    <button data-ui-i18n-aria-label="actions.aria">Action</button>`;
+    <button id="action-button" data-ui-i18n-aria-label="actions.aria">Action</button>`;
 }
 
 describe("Studio UI i18n", () => {
@@ -45,7 +53,10 @@ describe("Studio UI i18n", () => {
     expect(document.activeElement).toBe(editor);
     expect(document.querySelector("h2").textContent).toBe("项目源");
     expect(document.querySelector("input").placeholder).toContain("HTTPS");
-    expect(document.querySelector("button").getAttribute("aria-label")).toBe("文件与验证操作");
+    expect(document.querySelector("#action-button").getAttribute("aria-label")).toBe("文件与验证操作");
+    expect(document.querySelector("#ui-locale-button").getAttribute("aria-label")).toBe("Studio 界面语言: 中文");
+    expect(document.querySelector('#ui-locale-menu [data-locale="zh-CN"]').getAttribute("aria-selected")).toBe("true");
+    expect(document.querySelector('#ui-locale-menu [data-locale="en-MY"]').getAttribute("aria-selected")).toBe("false");
     expect(localStorage.getItem("printform-studio-v2-ui-locale")).toBe("zh-CN");
   });
 

@@ -29,6 +29,19 @@ function applyMessages(root) {
   root.documentElement.lang = locale;
   const select = root.getElementById("ui-locale-select");
   if (select) select.value = locale;
+  const button = root.getElementById("ui-locale-button");
+  const options = Array.from(root.querySelectorAll("#ui-locale-menu [data-locale]"));
+  const selected = options.find((option) => option.dataset.locale === locale);
+  if (button) {
+    const label = `${t("ui.language")}: ${selected?.textContent.trim() || locale}`;
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+  }
+  options.forEach((option) => {
+    const isSelected = option.dataset.locale === locale;
+    option.setAttribute("aria-selected", String(isSelected));
+    option.tabIndex = isSelected ? 0 : -1;
+  });
 }
 
 export function applyUiI18n(root = document) { applyMessages(root); }

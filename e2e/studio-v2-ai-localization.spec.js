@@ -8,6 +8,18 @@ test.beforeEach(async ({ page }) => {
 test("localizes the complete AI Chatbox across all supported languages", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "AI Chatbox locale smoke runs once in Chromium");
   await page.setViewportSize({ width: 995, height: 778 });
+  const localeButton = page.locator("#ui-locale-button");
+  await expect(localeButton).toBeVisible();
+  await expect(localeButton).toHaveAttribute("aria-label", /Studio language: English/);
+  await localeButton.click();
+  await expect(page.locator("#ui-locale-menu")).toBeVisible();
+  await expect(page.locator('#ui-locale-menu [data-locale="zh-CN"]')).toHaveAttribute("aria-selected", "false");
+  await page.locator('#ui-locale-menu [data-locale="zh-CN"]').click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await localeButton.press("ArrowDown");
+  await expect(page.locator("#ui-locale-menu")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#ui-locale-menu")).toBeHidden();
   await page.locator("#inspector-toggle").click();
   await page.locator("#ai-designer-tab").click();
 

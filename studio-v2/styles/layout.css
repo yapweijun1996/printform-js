@@ -32,13 +32,17 @@ body.inspector-closed .actions > .inspector-toggle { display: inline-flex; }
 .ai-floating-launcher { position: fixed; z-index: 25; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); display: inline-grid; place-items: center; width: 54px; height: 54px; min-height: 54px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(145deg, #3c52e4, #2435b9); box-shadow: 0 12px 28px #10226b55; font-size: 24px; transition: opacity .18s ease, transform .18s ease, visibility .18s ease; }
 body:not(.inspector-closed) .ai-floating-launcher { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(8px); }
 .ai-floating-launcher:hover { filter: brightness(1.06); }
-.ui-locale-select { min-height: 38px; padding: 0 30px 0 10px; border: 1px solid #b9c8e9; border-radius: 8px; color: var(--blue); background: #fff; font-weight: 700; }
+.ui-locale-picker { position: relative; display: inline-flex; flex: 0 0 auto; }
+.ui-locale-button { width: 38px; min-width: 38px; gap: 4px; padding: 0 7px; }
+.ui-locale-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+.ui-locale-chevron { width: 9px; height: 7px; flex: 0 0 auto; }
 /* Topbar action hierarchy: ghost secondary buttons on the dark bar, one filled
    primary (the Export split button). Scoped to `.topbar .actions >` so it never
    leaks into the inspector panel, editor panel, banners or the popover menus. */
 .topbar .actions { gap: 6px; padding-bottom: 3px; }
 .topbar .actions button, .topbar .actions .button { min-height: 34px; padding: 0 10px; }
-.topbar .actions .ui-locale-select { min-height: 34px; width: 108px; }
+.topbar .actions .ui-locale-button { min-height: 34px; color: #fff; background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); }
+.topbar .actions .ui-locale-button:hover { background: rgba(255, 255, 255, 0.18); filter: none; }
 /* The topbar AI-Designer button is icon-only (the ✦ + tooltip mirror the
    floating launcher); the label was redundant and cost ~85px on the row. */
 .topbar .actions .inspector-toggle > span[data-ui-i18n="inspector.open"] { display: none; }
@@ -62,6 +66,8 @@ body:not(.inspector-closed) .ai-floating-launcher { visibility: hidden; opacity:
 .topbar-menu { margin: 0; inset: auto; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--blue); box-shadow: 0 14px 34px #0b173840; min-width: 200px; }
 .topbar-menu-item { display: flex; width: 100%; min-height: 36px; justify-content: flex-start; padding: 0 10px; color: var(--blue); background: #fff; border: 0; border-radius: 6px; font-weight: 700; cursor: pointer; }
 .topbar-menu-item:hover, .topbar-menu-item:focus-visible { background: #eef2fb; }
+.ui-locale-menu { position: fixed; z-index: 60; min-width: 170px; }
+.ui-locale-option[aria-selected="true"] { color: #fff; background: var(--blue-2); }
 .workspace { display: grid; flex: 1 1 auto; grid-template-columns: minmax(300px, 24vw) minmax(0, 1fr); min-height: 0; overflow: hidden; padding-right: var(--inspector-width); }
 .editor-panel { min-width: 0; overflow: auto; padding: 14px; background: var(--surface); scrollbar-gutter: stable; }
 .editor-panel { border-right: 1px solid var(--border); }
@@ -149,11 +155,10 @@ body.inspector-closed .workspace { padding-right: 0; }
   .topbar-brand h1 { font-size: 15px; }
   .topbar-brand .badge { padding: 2px 5px; font-size: 9px; }
   .actions { gap: 5px; padding: 1px 0; }
-  .actions button, .actions .button, .ui-locale-select { min-height: 34px; font-size: 12px; }
+  .actions button, .actions .button { min-height: 34px; font-size: 12px; }
   .actions button, .actions .button { padding: 0 10px; }
   .export-split .export-menu-button, .more-menu-button { min-height: 34px; }
   #export-readiness { font-size: 10px; padding: 3px 6px; }
-  .ui-locale-select { padding-right: 24px; padding-left: 8px; }
   .ai-floating-launcher { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 50px; height: 50px; min-height: 50px; font-size: 22px; }
   .workspace { display: block; height: auto; overflow: visible; }
   .editor-panel, .preview-panel { height: auto; max-height: none; border: 0; border-bottom: 1px solid var(--border); }
