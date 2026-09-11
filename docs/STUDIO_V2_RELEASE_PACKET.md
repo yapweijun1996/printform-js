@@ -3,8 +3,8 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-11; last audited after the current-source application/browser-matrix, Demo transaction evidence and the Service Worker correction. Current review revision: `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; prior application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
-The current local amendment is exactly `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; its path list is reviewable with `git show --stat`. It fixes Service Worker response cloning before cache writes and narrows one flaky cache-body assertion to the cache-key boundary; it does not change application gate credit.
+Prepared: 2026-09-11; last audited after the current-source application/browser-matrix, Demo transaction evidence, the Service Worker correction and the locale-menu UI correction. Current review revision: `7628a96`; prior Service Worker amendment: `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; prior application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
+The current local UI amendment is exactly `7628a96`; its path list is reviewable with `git show --stat`. It replaces the visible topbar locale select with an SVG globe/chevron button and accessible listbox while retaining the hidden select as the existing i18n/change synchronization source. It does not change application gate credit.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -105,6 +105,7 @@ deployment, publishing, physical print, or maintainer approval.
 - `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **203** entries.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Service Worker response-clone regression: policy unit **2/2** and Chromium cache-boundary E2E **1/1** passed; no gate credit.
+- Topbar locale menu: focused i18n unit **7/7**, Chromium AI/localization plus AI regression **10/10**, and real Chromium DOM/visual probe passed; the SVG globe/chevron control exposes five locale options, updates ARIA selection state and preserves the existing change path. This is UI evidence only and earns no S17/PI-04 credit.
 - Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
   `purchase-order-red-v2.html` and `progress-claim-northpeak-v2.html`: all had valid attestation/runtime/content
