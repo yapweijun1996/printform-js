@@ -2,7 +2,7 @@
 
 > 如何保持 PrintForm.js 文档的更新和同步
 >
-> 最后核对：2026-09-07。Studio v2 的 Current/Target/Backlog 状态必须以代码、测试和下方 SSOT 分工为依据，不能只更新单个摘要页面。
+> Last reviewed: 2026-09-11. Studio v2 Current/Target/Backlog status must follow code, tests and the ownership map below; updating one summary page alone is insufficient.
 
 ---
 
@@ -24,6 +24,9 @@
 | **EPIC.md** | Epic 状态与范围 | 手动 | 每次 Epic 状态变化 |
 | **ROADMAP.md** | 阶段顺序与维护策略 | 手动 | 每次优先级或阻塞变化 |
 | **TASK.md** | 可执行任务、验收和回滚 | 手动 | 每次任务开始或完成 |
+| **GOAL.md** | Objective, scope, non-goals and invariants | Manual | Goal or boundary changes |
+| **PROGRESS.md** | Derived percentages, step dashboard and blockers | Manual projection | After TASK/DoD/P0/PI status changes |
+| **GOAL_PROMPT.md** | Project-level continuation prompt under 2000 characters | Manual | Goal, authority or safety-boundary changes |
 | **docs/STUDIO_V2_PRODUCTION_PLAN.md** | Latest evidence, PROD criteria, dependencies and proposals | Manual | Review or acceptance changes |
 | **docs/STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md** | Release checks for the declared environment | Manual | Release criteria/evidence changes |
 
@@ -237,7 +240,7 @@ printform-js/
 
 ### Q: 文档太多了怎么办?
 
-**A:** Assign one owner per fact. SPEC owns implemented behavior; the production plan owns current evidence and acceptance IDs; TASK owns execution status. Link summaries to those owners instead of copying long status histories.
+**A:** Assign one owner per fact. GOAL owns intent; DESIGN owns architecture; SPEC owns implemented behavior; EPIC owns outcomes; ROADMAP owns order; the production plan owns current evidence and acceptance IDs; TASK owns execution status; PROGRESS only projects it. Link summaries to those owners instead of copying long status histories.
 
 ### Q: 如何确保文档同步?
 

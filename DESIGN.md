@@ -2,14 +2,14 @@
 
 > 状态词沿用 [docs/STUDIO_V2_INDEX.zh-CN.md](docs/STUDIO_V2_INDEX.zh-CN.md)：**Current** = 代码已实现；**Target** = 已决定未实现；**Backlog** = 方向性。
 >
-> Last reviewed: 2026-09-08. Code is authoritative. Current evidence, open requirements and proposed layout are maintained in the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md); dated implementation history below is not a fresh release certificate.
+> Last reviewed: 2026-09-11. Code is authoritative. Live execution status is derived in [PROGRESS.md](PROGRESS.md) from [TASK.md](TASK.md); acceptance evidence and requirements remain in the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Dated history below is not a fresh release certificate.
 > Selected runtime Target: [PI Agent Harness migration](docs/STUDIO_V2_PI_HARNESS_MIGRATION.md), browser-first, frontend-only BYOK, no Node.js/server runtime. Current embedded runtime remains AGRUN; PI-00 browser qualification precedes implementation.
 
 ## 0. Current architecture and maturity
 
-Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence.
+Runtime `1.0.0`, Studio `0.11.0`, Protocol `2.0.0`, Agent Contract `4.0.0`; 35 public tools. Product maturity remains **Production Pilot**, with bounded Production Candidate evidence. Current dashboard: plan 76.7% (1610/21), Done 16/21, P0 35/35, PI 4/6.
 
-The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) retains the existing host/gateway/domain architecture. Its classification/session findings have bounded fixes in the [resumed evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), including current tests, actual Provider prompt delivery, final payload checks, stale-policy transport checks, durable history navigation, old-bus lifecycle invalidation and the reviewed Demo Gateway session path. P0 status is 8 Pass, 0 Fail and 27 Not run; M1 acceptance is Partial. The latest S05 serial unit evidence is 105 files / 548 tests. Historical aggregate runs are not current release certificates.
+The [direction review](docs/STUDIO_V2_DIRECTION_REVIEW.md) retains the existing host/gateway/domain architecture. Its classification/session findings have bounded fixes in the [resumed evidence](docs/STUDIO_V2_IMPLEMENTATION_EVIDENCE.md), including current tests, actual Provider prompt delivery, final payload checks, stale-policy transport checks, durable history navigation, old-bus lifecycle invalidation and the reviewed Demo Gateway session path. The current P0 register is 35 Pass, 0 Fail and 0 Not run; PI is 4/6 Done and S17/PI-04 remains open. `npm run doctor` is 5/5 with 106 files / 571 tests; historical aggregate runs are not current release certificates.
 
 ### 0.1 E14: implemented UI, incomplete behavioral acceptance
 

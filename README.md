@@ -25,7 +25,7 @@ Studio v2 is a Production Pilot for ERP engineers. It builds inspectable, self-c
 |--------------|-----------|
 | **Build a Pilot single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
 | **Understand v2 status and roadmap** | [Studio v2 documentation index](docs/STUDIO_V2_INDEX.zh-CN.md) (authoritative Chinese) |
-| **Review architecture and task status** | [DESIGN.md](DESIGN.md) · [SPEC.md](SPEC.md) · [EPIC.md](EPIC.md) · [ROADMAP.md](ROADMAP.md) · [TASK.md](TASK.md) |
+| **Review architecture and task status** | [GOAL.md](GOAL.md) · [DESIGN.md](DESIGN.md) · [SPEC.md](SPEC.md) · [EPIC.md](EPIC.md) · [ROADMAP.md](ROADMAP.md) · [TASK.md](TASK.md) · [PROGRESS.md](PROGRESS.md) · [GOAL_PROMPT.md](GOAL_PROMPT.md) |
 | **Understand the v2 single-HTML contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
 | **Connect Codex or Claude Code** | [Agent setup](studio-v2/AGENT_SETUP.md) |
 | **Maintain the legacy v1 Studio** | [Studio v1 Design Doc](docs/STUDIO_DESIGN.zh-CN.md) (Chinese) |

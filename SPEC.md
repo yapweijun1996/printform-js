@@ -1,8 +1,8 @@
 # SPEC.md — PrintForm.js 行为规格
 
-> 全部条目为 **Current**（代码已实现并有测试或人工验证）。Target 行为不写入本文，见[工程路线图](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)。
+> This document owns implemented behavior and public contracts. Current means code exists with relevant test or runtime evidence; Target and Backlog do not become Current by appearing in prose. See [ROADMAP.md](ROADMAP.md) and [GOAL.md](GOAL.md) for planned work.
 >
-> 最后核对：2026-09-08。配置全表以 `npm run docs` 生成的 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) 为准；本文只描述已经存在的行为，不把未来 UX 目标当成 Current 契约。
+> Last reviewed: 2026-09-11. Configuration is owned by the generated [docs/CONFIGURATION.md](docs/CONFIGURATION.md); this file describes existing behavior and does not turn future UX goals into a Current contract. Live task status is in [TASK.md](TASK.md), with the derived view in [PROGRESS.md](PROGRESS.md).
 
 ---
 
@@ -10,7 +10,7 @@
 
 ### 0.0 Verification evidence and known implementation limits (2026-09-08)
 
-Pre-review evidence: 86 files / 454 unit tests, generated assets/site, 190/222 combined browser tests with 32 expected skips, 54/54 targeted tests and earlier three-engine 13-01..06 sequences. The latest serial lifecycle and explicit-save runs close 13-04, 13-07 and 13-08 for their mapped cases; current P0 status is 8 Pass (13-01/02/03/04/05/06/07/08), 0 Fail, and 27 Not run. Earlier aggregate runs remain historical and no release, real Provider test or system-print certification is claimed.
+Current-source evidence: `npm run doctor` 5/5, 106 files / 571 tests, local browser matrix 88/88, current-source 13-07 3/3 across Chromium/Firefox/WebKit, and S17/PI-04 supporting cases 17-01..09 at 27/27. The P0 register is 35 Pass, 0 Fail and 0 Not run; PI is 4/6 Done. These results do not claim live Provider reliability, direct-BYOK completion, system print certification, deployment retention or maintainer approval.
 
 Browser verification matrix:
 
@@ -218,8 +218,8 @@ Rail 可通过左缘手柄拖拽调宽（`--inspector-width`，320–900px，持
 
 | 检查 | 命令 | 当前状态 |
 |---|---|---|
-| 单元测试（439 个，84 文件） | `npm test -- --run --maxWorkers=1 --no-file-parallelism` | 当前全绿 |
+| Unit/build health | `npm run doctor` | 5/5 PASS; 106 files / 571 tests |
 | 语法检查产物 | `npm run check` | 构建后 |
-| E2E（当前 74 条/项目） | `npx playwright test --project=<chromium|firefox|webkit> --workers=1` | 先生成 `site-dist`；2026-09-08 Windows combined 190/222 passed, 32 expected skips, 0 failures：Chromium 74/74、Firefox 58/58 适用用例、WebKit 58/58 适用用例；各非 Chromium 项目另有 16 个明确跳过的 Chromium-only 用例。完整发布矩阵仍需按 [浏览器矩阵](docs/BROWSER_MATRIX.zh-CN.md) 单独执行；直接运行 `npx playwright test` 前必须先生成当前 site artifact |
+| Browser/render evidence | `npm run test:e2e` or `node scripts/browser-matrix.mjs` | Current bounded checks include 88/88 local matrix and 3/3 current-source 13-07; release/platform/provider evidence remains open |
 | v2 导出校验 | `npm run validate:v2 -- <file>` | 未签名报 `ATTESTATION_MISSING`，签名后 hash 全验 |
 | 站点构建 | `npm run build:site` | 含三个带 attestation 的试点导出 |

@@ -2,7 +2,7 @@
 
 > 状态：✅ 完成 · 🔶 部分完成 · ⬜ 未开始。逐条任务见 [TASK.md](TASK.md)，时间线见 [ROADMAP.md](ROADMAP.md)。
 >
-> Last reviewed: 2026-09-07. E12/E13 foundation is implemented; E14 UI exists but behavioral acceptance is Partial. Current evidence and PROD requirements: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Dated counts below are historical.
+> Last reviewed: 2026-09-11. E12/E13 foundation is implemented; E14 UI exists but behavioral acceptance is Partial. S01-S16 are closed; S17/PI-04 is the active closure step. Current evidence and PROD requirements: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Live counters are derived in [PROGRESS.md](PROGRESS.md); dated counts below are historical.
 
 ## E12：Studio v2 Production Foundation（2026-08-17，已完成）
 
@@ -87,7 +87,7 @@ Keep the pagination engine, protocol compatibility, semantic Agent boundary, rea
 | E7 | P0-B 信任闭环（证据体系） | ✅ | `event.source` 目标 iframe 校验、元素级越界/对比度定位、渲染内容数量+顺序+identity 完整性校验（`ROW_*` 四项）、重复区缺失+重叠检测（`535c58c`）、Studio 签发布局证据 receipt + Agent Contract 2.0.0（#18，`1e6cb3e`，证据形态经确认为几何指纹而非像素截图）、attestation 覆盖两段 runtime hash + CSP script hash + 真实浏览器凭证（#19，`63513b2`）。原 nonce 需求（原 #15）已并入 E6/#12。**代码硬门全完成；当时仍是 Production Pilot**——更广浏览器/打印链发布流程须另行认证，当前 E12 已在受控 Chromium 范围进入 Production Candidate |
 | E8 | P1 工程师结构化工作流 | 🔶 | 六个结构化面板已完成：Table columns、Print font scale、Page settings、Repeated areas、Brand color、Data contract；剩余 Raw editor Advanced 化、图片资源校验、ERP 接入片段和连接状态细化。AI Designer IA redesign 另归 E14 |
 | E9 | P2 分页引擎演进 | ✅ | 核心退出条件（100 行首屏 ≤2s、500 行完整分页 ≤5s、v1 无回归）已达成：行高预测量缓存（`4c50a35`，先用 spike 画像定位真因——72% 耗时在 `getBoundingClientRect`——再动手，不猜架构；金标准分页断言三引擎逐页行分布字节不差，新增"500 行+放大字号"回归护栏）。`PaginationSession`/`PageContext`/`LayoutPlan`/`RenderResult` 类重构与结构化 trace 事件经评估（无代码改动）判定暂不值得做——退出条件不要求这批类存在，现有轻量 `pageContext` 纯对象已过充分测试，且无具体消费方需求驱动，改动只会再次触碰刚验证过的热路径；非放弃，是主动的"无驱动力不为假设需求设计"决定，详见 TASK.md。硬约束（v1 ERP DOM 行为不变）全程未破 |
-| E10 | P3 发布治理 | 🔶 | LICENSE、SW precache manifest、CHANGELOG、独立 SemVer 和兼容矩阵已完成；当前版本线为 runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 3.0.0。待办：GitHub Release 附试点导出、版本化模板目录 |
+| E10 | P3 发布治理 | 🔶 | LICENSE、SW precache manifest、CHANGELOG、独立 SemVer 和兼容矩阵已完成；当前版本线为 runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0。待办：GitHub Release 附试点导出、版本化模板目录 |
 | E11 | 维护成本优化 | 🔶 | 已完成：v2 安全回归测试固化 + v1 mustache-lite 测试 + 修复 vitest 环境 localStorage 遮蔽问题（`4806408`，136 测试）、`examples/README.md` 演示页目录（`d78bd51`）、CI 增加 validate:v2 两试点 + 核心库/v1 冒烟 5 条（`4a0c5e0`）、PR 模板（`c081a91`）、3 页分页黄金样本（`c081a91`，Playwright 共 21 测试）、`studio-v1.spec.js` 满载并行 flake 修复（`94f2c7e`）、`npm run doctor` 一键体检脚本（`07b3947`）。待办：文档 SSOT 持续治理（见 [ROADMAP.md](ROADMAP.md) 第 2 节） |
-| E14 | AI Designer and production workflow | 🔶 | UI foundation implemented; PROD-01/02/03/04/07/08/13 pending; PROD-09 layout proposed. See corrected acceptance above. |
+| E14 | AI Designer and production workflow | 🔶 | UI foundation and P0 case register are implemented/closed within scope; S17/PI-04 provider/render/privacy/transaction and platform evidence remain open. See corrected acceptance above. |
 | E15 | Durable Service Hardening | ⬜ | 原 E14 后续项：HA/fencing、外部数据库、remote UI store、recovery operations 和 artifact registry。 |

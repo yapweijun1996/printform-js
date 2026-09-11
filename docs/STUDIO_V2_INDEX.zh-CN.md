@@ -4,7 +4,7 @@
 >
 > 目标用户：熟悉 ERP、HTML/CSS 与 JSON 的工程师
 >
-> Documentation authority follows responsibility, not language: SPEC owns Current behavior; the English production plan owns latest evidence/criteria; TASK owns execution status. README and Agent setup summarize and link to these sources.
+> Documentation authority follows responsibility, not language: GOAL owns intent, DESIGN owns architecture, SPEC owns Current behavior, EPIC owns outcomes, ROADMAP owns order, TASK owns live execution status, and PROGRESS is derived only. The production plan owns latest evidence/criteria. README and Agent setup summarize and link to these sources.
 
 > Current-source amendment (2026-09-10): the current build supersedes the older 567-test snapshot with `npm run doctor` 5/5, 106 files / 571 tests and 203 Service Worker entries. The reviewed Demo Gateway path remains supporting evidence only; direct-BYOK PI-04, platform/print and release acceptance remain open.
 
@@ -25,6 +25,9 @@
 
 | 目的 | 文档 | 权威范围 |
 |---|---|---|
+| Project intent and boundaries | [GOAL](../GOAL.md) | Objective, scope, non-goals and invariants |
+| Derived project status | [PROGRESS](../PROGRESS.md) | Percentages and blockers projected from TASK/DoD/P0/PI |
+| Continue the project locally | [GOAL_PROMPT](../GOAL_PROMPT.md) | Project-level prompt under 2000 characters; detailed v2 prompt remains below |
 | Execute one step at a time | [Execution plan](STUDIO_V2_EXECUTION_PLAN.md), [TASK ledger](../TASK.md#sequential-execution-ledger) | 21 ordered packages, explicit dependencies and one live progress owner |
 | Decide whether a step is Done | [Definition of Done](STUDIO_V2_DEFINITION_OF_DONE.md) | Five evidence gates; separate step delivery, P0 case closure and release approval |
 | Start the next implementation task | [Goal Prompt](STUDIO_V2_GOAL_PROMPT.md) | Copyable execution instruction under 2000 characters with required Markdown references |
