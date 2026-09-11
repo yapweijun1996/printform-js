@@ -10,6 +10,7 @@ test("does not cache an arbitrary same-origin document navigation", async ({ pag
   await page.goto("/studio-v2/samples/sales-invoice-v2.html");
 
   const after = await readClientStorage(page);
-  expect(after.cacheEntries).toEqual(before.cacheEntries);
+  const cacheUrls = (entries) => entries.map(({ cache, url }) => `${cache}:${url}`).sort();
+  expect(cacheUrls(after.cacheEntries)).toEqual(cacheUrls(before.cacheEntries));
   expect(after.cacheEntries.some(({ url }) => url.endsWith("/samples/sales-invoice-v2.html"))).toBe(false);
 });

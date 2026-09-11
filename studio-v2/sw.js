@@ -43,7 +43,15 @@ self.addEventListener("fetch", (event) => {
   const isShellRequest = shellPaths.has(requestUrl.pathname);
   const matchOptions = isShellRequest ? { ignoreSearch: true } : undefined;
   const fromNetwork = () => fetch(event.request).then((response) => {
-    if (response.ok && isShellRequest) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+    if (response.ok && isShellRequest) {
+      // Clone before respondWith exposes the original body to the page. Waiting
+      // until caches.open resolves creates a race with the page consuming it.
+      const cacheResponse = response.clone();
+      const cacheWrite = caches.open(CACHE_NAME)
+        .then((cache) => cache.put(event.request, cacheResponse))
+        .catch(() => {});
+      if (typeof event.waitUntil === "function") event.waitUntil(cacheWrite);
+    }
     return response;
   });
   if (DEV_MODE) {

@@ -8,7 +8,8 @@ const source = fs.readFileSync("studio-v2/sw.js", "utf8")
 function setup() {
   const listeners = new Map();
   const put = vi.fn(async () => {});
-  const response = { ok: true, clone: () => response };
+  let clonedBeforeCacheOpen = false;
+  const response = { ok: true, clone: () => { clonedBeforeCacheOpen = true; return response; } };
   const context = {
     URL,
     Promise,
@@ -21,7 +22,7 @@ function setup() {
       skipWaiting: vi.fn()
     },
     caches: {
-      open: vi.fn(async () => ({ addAll: vi.fn(), put })),
+      open: vi.fn(async () => { expect(clonedBeforeCacheOpen).toBe(true); return { addAll: vi.fn(), put }; }),
       match: vi.fn(async () => null),
       keys: vi.fn(async () => [])
     },
@@ -37,15 +38,17 @@ function request(url, mode = "navigate") {
 
 async function dispatch(fetchHandler, requestValue) {
   let result;
-  fetchHandler({ request: requestValue, respondWith: (promise) => { result = promise; } });
-  return result;
+  const waits = [];
+  fetchHandler({ request: requestValue, respondWith: (promise) => { result = promise; }, waitUntil: (promise) => waits.push(promise) });
+  return { result, waits };
 }
 
 describe("service worker cache policy", () => {
   it("does not cache an arbitrary same-origin document navigation", async () => {
     const { fetch, put, fetchHandler } = setup();
 
-    await dispatch(fetchHandler, request("https://studio.test/studio-v2/imported-customer.html"));
+    const outcome = await dispatch(fetchHandler, request("https://studio.test/studio-v2/imported-customer.html"));
+    await outcome.result;
 
     expect(fetch).toHaveBeenCalledOnce();
     expect(put).not.toHaveBeenCalled();
@@ -54,8 +57,12 @@ describe("service worker cache policy", () => {
   it("caches only generated shell paths and ignores their query string", async () => {
     const { put, fetchHandler } = setup();
 
-    await dispatch(fetchHandler, request("https://studio.test/studio-v2/?sample=synthetic"));
-    await dispatch(fetchHandler, request("https://studio.test/studio-v2/app.js", "no-cors"));
+    const first = await dispatch(fetchHandler, request("https://studio.test/studio-v2/?sample=synthetic"));
+    await first.result;
+    await Promise.all(first.waits);
+    const second = await dispatch(fetchHandler, request("https://studio.test/studio-v2/app.js", "no-cors"));
+    await second.result;
+    await Promise.all(second.waits);
 
     expect(put).toHaveBeenCalledTimes(2);
   });
