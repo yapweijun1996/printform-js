@@ -3,8 +3,8 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-11; last audited after the current-source application/browser-matrix and Demo transaction evidence. Current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; prior application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
-The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`. The later `60c28dd0a863c72918273fa0ab87830f940aceb` commit is documentation/navigation-only and does not change application-source evidence or gate credit. Application source remains the a4caf93 revision.
+Prepared: 2026-09-11; last audited after the current-source application/browser-matrix, Demo transaction evidence and the Service Worker correction. Current review revision: `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; prior application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
+The current local amendment is exactly `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; its path list is reviewable with `git show --stat`. It fixes Service Worker response cloning before cache writes and narrows one flaky cache-body assertion to the cache-key boundary; it does not change application gate credit.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -104,6 +104,7 @@ deployment, publishing, physical print, or maintainer approval.
   passed **1/1**, followed by the complete **54/54** run. The current a4caf93 P0/PI-04 target command passed **36/36**.
 - `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **203** entries.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
+- Service Worker response-clone regression: policy unit **2/2** and Chromium cache-boundary E2E **1/1** passed; no gate credit.
 - Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
   `purchase-order-red-v2.html` and `progress-claim-northpeak-v2.html`: all had valid attestation/runtime/content
@@ -147,7 +148,8 @@ or approval result.
 - `scripts/build-site.mjs` builds isolated PI-00..PI-04 qualification artifacts and then stamps
   `studio-v2/sw.js`; it does not wire PI into the default Studio entry. The generated Service Worker
   currently has 203 app-shell entries, includes both AGRUN and isolated PI assets, and uses local cache
-  build id `local` (`site-dist/studio-v2/sw.js` SHA-256 `c9572c9aeccbfada01346264ff8e08adb92a0d85f139e336dceb259bc400ba4b4`).
+  build id `local`; network responses are cloned before cache writes (`site-dist/studio-v2/sw.js` SHA-256
+  `69e286718416d6836891adc4c3bf4c99d0ca6cdde56ca7f5ed458a5205d44caa`).
 - Cutover owners and rollback constraints are recorded in `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`:
   retire AGRUN only after PI-04, preserve legacy read-only history, test old-worker upgrade, and
   restore a previously verified static artifact with its matching cache manifest. No default cutover,

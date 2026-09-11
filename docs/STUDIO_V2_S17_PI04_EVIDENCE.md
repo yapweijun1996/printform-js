@@ -115,7 +115,7 @@ adding direct-BYOK or provider-retention evidence.
 Dates: 2026-09-10 to 2026-09-11; source/artifact: current local `site-dist` from application revision `a4caf93857669e05d0d521567ecf5ab6f4389df5`; environment: real Chromium browser contexts
 against `http://127.0.0.1:4174/studio-v2/`, served by `scripts/serve-site.mjs`, with the
 registered `github-pages` Demo origin. The focused transport probe and the later fresh
-transaction probe both used the current source; no provider credential was supplied to the page. The 2026-09-11 real Chromium smoke also used this origin and supplied no credential.
+transaction probe both used the current source; no provider credential was supplied to the page. The 2026-09-11 real Chromium smoke also used this origin and supplied no credential. The later `5341d7a` Service Worker correction was verified separately with policy unit **2/2**, Chromium cache-boundary E2E **1/1**, and a rebuilt artifact; these checks add no S17 gate credit.
 
 - Both probes reached `Printable`; the session request was observed without Authorization and
   returned **201**, and the design/review requests to `/demo/v1/responses` returned **200** with

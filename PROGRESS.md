@@ -36,6 +36,7 @@
 - `node scripts/browser-matrix.mjs`: 88/88 current local render matrix.
 - Current-source 13-07: 3/3 across Chromium, Firefox and WebKit.
 - S17 cases 17-01..09: 27/27 supporting evidence across three engines.
+- Service Worker response-clone regression: policy unit 2/2 and Chromium cache-boundary E2E 1/1; no gate credit.
 - P0 register: 35 Pass, 0 Fail, 0 Not run.
 
 ## Blockers and next action
