@@ -195,6 +195,8 @@ Current implementation provides a collapsible AI Designer panel; visual IA exist
 
 Known Current limitations:
 
+- Inspector header actions (`#ai-new-session`, `#ai-review-layout`, `#ai-sessions-toggle`, `#ai-settings-button` and `#inspector-close`) use inline SVG icons with preserved IDs, bindings and accessible names; visible action labels remain localized where present, while the `Designer / Quality / Agent` role tabs remain text-labelled.
+
 - The topbar Print preview action is icon-only with an inline printer SVG; its existing `#print-button` click contract and localized `aria-label`/`title` remain unchanged.
 - The topbar Validate action is icon-only with an inline check SVG; its existing `#validate-button` click contract and localized `aria-label`/`title` remain unchanged.
 - The AI Designer launch surface is topbar-only. The former bottom-right floating launcher is intentionally absent; the topbar toggle remains the single accessible open/restore-focus entry.
