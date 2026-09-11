@@ -40,7 +40,7 @@
 - Topbar language control: SVG globe-only button, five-locale listbox, ARIA state and keyboard navigation verified in the Chromium AI/localization regression 10/10; no gate credit.
 - Standalone Print preview: inherited CSP nonce and runtime order corrected; the topbar action is now an inline printer SVG with localized accessible labeling; Chromium popup rendered populated `.printform_page` content with no page or console errors, 2/2 regression cases passed; no gate credit.
 - Topbar Validate control: inline check SVG with localized accessible labeling; Chromium topbar regression including the click/Toast path passed; no gate credit.
-- Inspector header actions: New, Review, Sessions, Settings and Close now use inline SVG icons; focused panel/i18n unit suite 25/25 (UI i18n 7/7) and current Chromium E14/AI/Inspector regressions 16/16 passed; no gate credit.
+- Inspector header actions: New, Review, Sessions, Settings and Close now use inline SVG icons; Settings uses a centered standard cog path; focused panel/i18n unit suite 25/25 (UI i18n 7/7) and current Chromium E14/AI/Inspector regressions 16/16 passed; no gate credit.
 - Current PI-04 generated artifact: cases 17-01..09 requalified serially in Chromium **9/9**; synthetic supporting evidence only, no S17 gate credit.
 - AI Designer launcher: removed the bottom-right floating `#ai-floating-launcher` markup, styles and binding while preserving the topbar open/close/focus cycle; Chromium topbar/layout regression passed 4/4 and asserted zero floating nodes; no gate credit.
 - P0 register: 35 Pass, 0 Fail, 0 Not run.
