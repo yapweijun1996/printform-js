@@ -10,6 +10,7 @@ test("localizes the complete AI Chatbox across all supported languages", async (
   await page.setViewportSize({ width: 995, height: 778 });
   const localeButton = page.locator("#ui-locale-button");
   await expect(localeButton).toBeVisible();
+  await expect(localeButton.locator("svg")).toHaveCount(1);
   await expect(localeButton).toHaveAttribute("aria-label", /Studio language: English/);
   await localeButton.click();
   await expect(page.locator("#ui-locale-menu")).toBeVisible();

@@ -37,7 +37,7 @@
 - Current-source 13-07: 3/3 across Chromium, Firefox and WebKit.
 - S17 cases 17-01..09: 27/27 supporting evidence across three engines.
 - Service Worker response-clone regression: policy unit 2/2 and Chromium cache-boundary E2E 1/1; no gate credit.
-- Topbar language control: SVG globe/chevron button, five-locale listbox, ARIA state and keyboard navigation verified in the Chromium AI/localization regression 10/10; no gate credit.
+- Topbar language control: SVG globe-only button, five-locale listbox, ARIA state and keyboard navigation verified in the Chromium AI/localization regression 10/10; no gate credit.
 - P0 register: 35 Pass, 0 Fail, 0 Not run.
 
 ## Blockers and next action

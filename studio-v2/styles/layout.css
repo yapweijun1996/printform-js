@@ -35,7 +35,6 @@ body:not(.inspector-closed) .ai-floating-launcher { visibility: hidden; opacity:
 .ui-locale-picker { position: relative; display: inline-flex; flex: 0 0 auto; }
 .ui-locale-button { width: 38px; min-width: 38px; gap: 4px; padding: 0 7px; }
 .ui-locale-icon { width: 18px; height: 18px; flex: 0 0 auto; }
-.ui-locale-chevron { width: 9px; height: 7px; flex: 0 0 auto; }
 /* Topbar action hierarchy: ghost secondary buttons on the dark bar, one filled
    primary (the Export split button). Scoped to `.topbar .actions >` so it never
    leaks into the inspector panel, editor panel, banners or the popover menus. */
