@@ -67,7 +67,7 @@ mode. Provider context and qualification output contained no canary; no external
 
 X-02 run artifact: `site-dist/studio-v2/pi-04/qualification-entry.js`, **1,212,252 bytes**, SHA-256
 `165de582678b90395b25ad5b78f538b615fde3186af7dc76f3fbaef43ce164d7`; manifest SHA-256
-`46701249fe242b338b3c205574e2fd8833ec2f35fbd672d10d4e7f7e184e5a0b`. This remains supporting X-02 evidence;
+`46701249fe242b338b3c205574e2fd8833ec2f35fbd672d10d4e7f7e184e5a0b`. Current generated artifact 17-02 Chromium requalification passed **1/1**. This remains supporting X-02 evidence;
 the later X-03 result is recorded below, while the full provider/render/privacy/transaction matrix and final S17 gates remain open.
 
 ### Case 17-03 — cross-document isolation
