@@ -8,7 +8,7 @@
 .ai-avatar { width: 24px; height: 24px; border-radius: 7px; font-size: 13px; }
 .ai-compact-button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
 .ai-compact-button.ai-icon-first { display: inline-flex; align-items: center; gap: 4px; }
-.ai-btn-glyph { font-size: 12px; line-height: 1; }
+.ai-btn-icon { width: 14px; height: 14px; flex: 0 0 auto; }
 .ai-sessions-drawer { flex: 0 0 auto; background: #fff; border-bottom: 1px solid #e7ebf3; }
 .ai-sessions-drawer.hidden { display: none; }
 .ai-session-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; padding: 8px 14px; }

@@ -100,6 +100,7 @@ body.is-resizing-inspector iframe { pointer-events: none; }
 .inspector-tabs button { min-height: 28px; padding: 0 10px; border: 0; border-radius: 7px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .inspector-tabs button[aria-selected="true"] { color: #fff; background: var(--blue); }
 .inspector-close { min-height: 30px; margin: 0; padding: 0 9px; font-size: 13px; line-height: 1; white-space: nowrap; }
+.inspector-close-icon { width: 16px; height: 16px; flex: 0 0 auto; }
 .ai-status-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #16a34a; }
 .ai-status-dot[data-tone="busy"] { background: #d97706; }
 .ai-status-dot[data-tone="error"] { background: #dc2626; }

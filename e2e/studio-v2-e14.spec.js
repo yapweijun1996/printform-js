@@ -21,6 +21,9 @@ test("presents the 4-layer E14 IA: Navigation -> Document Context -> Conversatio
   await expect(header.locator("#ai-sessions-toggle")).toBeVisible();
   await expect(header.locator("#ai-settings-button")).toBeVisible();
   await expect(header.locator("#inspector-close")).toBeVisible();
+  for (const id of ["#ai-new-session", "#ai-review-layout", "#ai-sessions-toggle", "#ai-settings-button", "#inspector-close"]) {
+    await expect(header.locator(`${id} svg`)).toHaveCount(1);
+  }
 
   // Layer 2: Current Document Context
   const docContext = page.locator("#ai-document-context");

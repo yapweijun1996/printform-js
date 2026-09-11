@@ -19,15 +19,22 @@ export function renderSafeText(container, text) {
 // tabpanel. initAgentPanel injects `brand` into [data-slot="brand"] and
 // `actions` into [data-slot="actions"]; every control keeps its id so the
 // existing querySelector wiring is unaffected.
+const HEADER_ACTION_ICONS = Object.freeze({
+  newSession: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>',
+  review: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0 .1 2.5"></path><path d="m20 5 0 6-6 0"></path></svg>',
+  sessions: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 7h14M5 12h14M5 17h14"></path></svg>',
+  settings: '<svg class="ai-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.4 1.4-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L9 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H7.7v-2h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L9 9l1.4-1.4.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 9l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v2h-.2a1.7 1.7 0 0 0-1.5 1Z"></path></svg>'
+});
+
 export function headerClusterMarkup() {
   return {
     brand: `<span class="ai-avatar" aria-hidden="true">✦</span>
       <span id="ai-status-dot" class="ai-status-dot" data-tone="ready" aria-hidden="true"></span>
       <strong class="ai-brand-title" data-ui-i18n="aiChat.identity" data-ui-i18n-title="aiChat.identity">PrintForm Designer</strong>`,
-    actions: `<button id="ai-new-session" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.newAria" data-ui-i18n-title="aiChat.newAria" aria-label="Start a new AI chat"><span class="ai-btn-glyph" aria-hidden="true">＋</span><span class="ai-btn-label" data-ui-i18n="aiChat.new">New</span></button>
-      <button id="ai-review-layout" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.review.buttonAria" data-ui-i18n-title="aiChat.review.buttonAria" aria-label="Review layout"><span class="ai-btn-glyph" aria-hidden="true">⟳</span><span class="ai-btn-label" data-ui-i18n="aiChat.review.button">Review</span></button>
-      <button id="ai-sessions-toggle" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.nav.sessions" data-ui-i18n-title="aiChat.nav.sessionsTitle" aria-expanded="false" aria-controls="ai-sessions-drawer" aria-label="Sessions" title="Toggle sessions drawer"><span class="ai-btn-glyph" aria-hidden="true">☰</span><span class="ai-btn-label" data-ui-i18n="aiChat.nav.sessions">Sessions</span></button>
-      <button id="ai-settings-button" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.settings" data-ui-i18n-title="aiChat.settings" aria-controls="ai-provider-details" aria-expanded="false" aria-haspopup="dialog" aria-label="Settings"><span class="ai-btn-glyph" aria-hidden="true">⚙</span><span class="ai-btn-label" data-ui-i18n="aiChat.settings">Settings</span></button>`
+    actions: `<button id="ai-new-session" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.newAria" data-ui-i18n-title="aiChat.newAria" aria-label="Start a new AI chat">${HEADER_ACTION_ICONS.newSession}<span class="ai-btn-label" data-ui-i18n="aiChat.new">New</span></button>
+      <button id="ai-review-layout" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.review.buttonAria" data-ui-i18n-title="aiChat.review.buttonAria" aria-label="Review layout">${HEADER_ACTION_ICONS.review}<span class="ai-btn-label" data-ui-i18n="aiChat.review.button">Review</span></button>
+      <button id="ai-sessions-toggle" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.nav.sessions" data-ui-i18n-title="aiChat.nav.sessionsTitle" aria-expanded="false" aria-controls="ai-sessions-drawer" aria-label="Sessions" title="Toggle sessions drawer">${HEADER_ACTION_ICONS.sessions}<span class="ai-btn-label" data-ui-i18n="aiChat.nav.sessions">Sessions</span></button>
+      <button id="ai-settings-button" class="secondary ai-compact-button ai-icon-first" type="button" data-ui-i18n-aria-label="aiChat.settings" data-ui-i18n-title="aiChat.settings" aria-controls="ai-provider-details" aria-expanded="false" aria-haspopup="dialog" aria-label="Settings">${HEADER_ACTION_ICONS.settings}<span class="ai-btn-label" data-ui-i18n="aiChat.settings">Settings</span></button>`
   };
 }
 

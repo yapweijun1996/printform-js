@@ -109,6 +109,9 @@ describe("Studio UI i18n", () => {
       expect(document.querySelector("#ai-send").textContent.trim()).toContain(copy.send);
       expect(document.querySelector("#ai-prompt").placeholder).toBe(copy.placeholder);
       expect(document.querySelector("#ai-new-session").getAttribute("aria-label")).toBe(copy.aria);
+      for (const id of ["ai-new-session", "ai-review-layout", "ai-sessions-toggle", "ai-settings-button"]) {
+        expect(document.querySelector(`#${id} svg`)).not.toBeNull();
+      }
       expect(document.querySelector("#ai-proposal-card h3").textContent).toBe(t("aiChat.proposal.title"));
       expect(document.querySelector(".ai-auto-apply-note").textContent).toBe(t("aiChat.proposal.autoApply"));
       expect(document.querySelector("#ai-undo-revision").getAttribute("aria-label")).toBe(t("aiChat.undo"));
