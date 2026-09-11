@@ -183,7 +183,7 @@ E13-SERVER 接受测试位于 `tests/studio-v2/server-transaction.test.js`，覆
 Current implementation provides a collapsible AI Designer panel; visual IA exists, but E14 behavioral acceptance is Partial:
 固定 4 层信息架构：`Panel navigation → Current document context → Conversation → Composer`。
 
-- **Layer 1: Panel navigation**：与 Inspector 视图切换器合并为**单条 header**（`.inspector-header`，三个 Inspector tab 共用）：AI identity + Gateway 状态圆点（green ready / amber busy / red error；`#ai-status` 保留为隐藏的 `role="status"` live region，同时驱动圆点与其 `title`）+ 分段式视图切换器（`Designer / Quality / Agent`，保留 `role="tab"` 语义）+ 图标动作簇（`＋ New` / `⟳ Review` / `☰ Sessions` / `⚙ Settings`，窄轨宽度下折叠为纯图标）+ `Close`。AI identity 与动作簇仅在 `Designer` tab 激活时显示；session 管理与删除仍收纳在抽屉；Provider 设置在 Settings modal。
+- **Layer 1: Panel navigation**：与 Inspector 视图切换器合并为**单条 header**（`.inspector-header`，三个 Inspector tab 共用）：分段式视图切换器（`Designer / Quality / Agent`，保留 `role="tab"` 语义）+ 图标动作簇（`＋ New` / `⟳ Review` / `☰ Sessions` / `⚙ Settings`，窄轨宽度下折叠为纯图标）+ `Close`。冗余 AI identity/status block 不再渲染；`#ai-status` 仍保留为隐藏的 `role="status"` live region；session 管理与删除仍收纳在抽屉；Provider 设置在 Settings modal。
 - **Layer 2: Current document context**：固定在 header 下方，展示当前活动文档标题（如 `Sales Invoice`）、版本号（如 `r0`）、Draft history（`#ai-undo-revision` / `#ai-redo-revision` 图标按钮）、状态模式（`Committed` 或 `Candidate preview (rX)`）、排版状态（`Printable` / `Blocked` / 警告数）、Apply mode 选择器（`Auto-apply safe changes` 默认 / `Preview before applying`）、活动选区（默认 `Entire document`）与设计范围选择器（`Scope: All sections / Layout / Table columns / Theme`）。
 - **Layer 3: Conversation**：包含 welcome state、建议提示词、对话流、Multimodal layout review card 与结构化 Proposal/Change/Validation cards。
   - **Change Card**：结构化展示变更目标（Target）、实际变更内容（What，包含可测量的 Before → After 或目标值，不伪造不可测量的值）、安全标记（Safety，如安全语义主题变量或边界检查）；

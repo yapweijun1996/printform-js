@@ -3,7 +3,7 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-11; last audited after the current-source application/browser-matrix, Demo transaction evidence, the Service Worker correction, the locale-menu UI correction, the standalone Print preview correction, the floating AI launcher removal, the Print preview SVG conversion, the Validate SVG conversion and the Inspector header SVG conversion. Current review revision: `ce07ee3`; Inspector header SVG amendment: `f9abc49`; Settings SVG correction: `ce07ee3`; Validate SVG amendment: `e62a6db`; Validate regression-test commit: `16e6982`; prior Print preview SVG amendment: `1470b03`; prior floating-launcher amendment: `f7ece3e`; prior Print preview amendment: `b89eb09`; prior locale-menu UI amendment: `7628a96`; prior Service Worker amendment: `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; prior application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
+Prepared: 2026-09-11; last audited after the current-source application/browser-matrix, Demo transaction evidence, the Service Worker correction, the locale-menu UI correction, the standalone Print preview correction, the floating AI launcher removal, the Print preview SVG conversion, the Validate SVG conversion, the Inspector header SVG conversion and the redundant Inspector brand/status removal. Current review revision: `568160c`; Inspector brand/status removal: `568160c`; Inspector header SVG amendment: `f9abc49`; Settings SVG correction: `ce07ee3`; Validate SVG amendment: `e62a6db`; Validate regression-test commit: `16e6982`; prior Print preview SVG amendment: `1470b03`; prior floating-launcher amendment: `f7ece3e`; prior Print preview amendment: `b89eb09`; prior locale-menu UI amendment: `7628a96`; prior Service Worker amendment: `5341d7acf1cbf7b9f3911015fc31ffcba469b67c`; prior application review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
 The current local Print preview amendment is exactly `b89eb09`; its path list is reviewable with `git show --stat`. It fixes the inherited parent-CSP nonce and standalone runtime ordering so the popup's inline runtimes execute and populate `.printform_page`; it does not change application gate credit.
 The prior local UI amendment `7628a96` replaces the visible topbar locale select with an SVG globe-only button and accessible listbox while retaining the hidden select as the existing i18n/change synchronization source.
 The current local UI amendment `f7ece3e` removes the bottom-right floating AI Designer launcher and its dead binding/styles; the topbar AI Designer toggle remains the sole launch surface and its Chromium focus cycle is covered by `e2e/studio-v2-topbar.spec.js`.
@@ -11,6 +11,7 @@ The current local UI amendment `1470b03` converts `#print-button` to an inline p
 The current local UI amendment `e62a6db` converts `#validate-button` to an inline check SVG icon button, preserves the existing validation click binding, and keeps localized accessible labeling through `data-ui-i18n-aria-label/title`.
 The current local UI amendment `f9abc49` converts the Inspector header actions and Close control to inline SVG icons, preserves the dynamic/static bindings and accessible names, and keeps visible action labels localized where present.
 The follow-up local UI correction `ce07ee3` replaces the Settings action's visually undersized hand-drawn path with a centered standard cog path; button size, accessible labeling and behavior are unchanged.
+The current local UI amendment removes the redundant Inspector brand/status block, leaves the view tabs/actions/Close controls intact, and retains the hidden `#ai-status` live region for accessible status updates.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -48,7 +49,7 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 - Release: **not approved**; Production Ready is not established.
 
 This packet is independent S20 preparation only. The packet/index/checklist edits record application source commit
-`a4caf93857669e05d0d521567ecf5ab6f4389df5` plus documentation control commit `60c28dd0a863c72918273fa0ab87830f940aceb`; they do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
+`a4caf93857669e05d0d521567ecf5ab6f4389df5` plus local UI amendment `568160c` and documentation control commit `60c28dd0a863c72918273fa0ab87830f940aceb`; they do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
 deployment, publishing, physical print, or maintainer approval.
 
 ## 3. Recorded verification commands and results
@@ -108,15 +109,15 @@ deployment, publishing, physical print, or maintainer approval.
   54-test command passed **54/54** across Chromium, Firefox and WebKit with content sandboxing enabled. One preceding
   run was **53/54** because Firefox teardown raised a protocol error after page assertions passed; a standalone retry
   passed **1/1**, followed by the complete **54/54** run. The current a4caf93 P0/PI-04 target command passed **36/36**.
-- `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **203** entries.
+- `npm run doctor` — **5/5**; its unit/build stage passed **106 files / 571 tests**, rebuilt the three PI bundles and produced a Service Worker with **202** entries.
 - `npm run check` — pass; PI-04 source/build `node --check` — pass; `git diff --check` — pass.
 - Service Worker response-clone regression: policy unit **2/2** and Chromium cache-boundary E2E **1/1** passed; no gate credit.
 - Topbar locale menu: focused i18n unit **7/7**, Chromium AI/localization plus AI regression **10/10**, and real Chromium DOM/visual probe passed; the SVG globe-only control exposes five locale options, updates ARIA selection state and preserves the existing change path. This is UI evidence only and earns no S17/PI-04 credit.
-- Standalone Print preview: full Vitest **106/106 files, 571/571 tests**, build regenerated the 203-entry Service Worker, and Chromium Print preview regression **2/2** passed; the popup rendered populated `.printform_page` content with inherited CSP nonce and no page/console errors. This is UI/runtime evidence only and earns no S17/PI-04 credit.
+- Standalone Print preview: full Vitest **106/106 files, 571/571 tests**, build regenerated the 202-entry Service Worker, and Chromium Print preview regression **2/2** passed; the popup rendered populated `.printform_page` content with inherited CSP nonce and no page/console errors. This is UI/runtime evidence only and earns no S17/PI-04 credit.
 - AI Designer launcher removal: `e2e/studio-v2-topbar.spec.js` plus `e2e/studio-v2-ai-layout.spec.js` passed **4/4** in Chromium; the live DOM contained zero `#ai-floating-launcher` nodes, while the topbar toggle opened the AI panel, selected Designer, and restored focus after close. This is UI evidence only and earns no S17/PI-04 credit.
 - Print preview SVG conversion: `e2e/studio-v2-topbar.spec.js` and the populated popup regression passed **2/2** in Chromium; `#print-button` exposed one inline printer SVG, retained accessible name `Print preview`, and still opened the populated standalone preview. This is UI evidence only and earns no S17/PI-04 credit.
 - Validate SVG conversion: `e2e/studio-v2-topbar.spec.js` and the populated popup regression passed **2/2** in Chromium; the latest topbar rerun also clicked `#validate-button` and observed the localized completion Toast **1/1**. The button exposed one inline check SVG, retained accessible name `Validate`, and preserved the existing click contract. This is UI evidence only and earns no S17/PI-04 credit.
-- Inspector header SVG conversion: focused panel/i18n unit suite **25/25** (UI i18n **7/7**), full build **106 files / 571 tests**, E14 + Inspector layout regression **7/7** and AI panel regression **9/9** passed in Chromium. All five header controls expose one inline SVG; IDs, accessible names and existing action/focus behavior remain intact. This is UI evidence only and earns no S17/PI-04 credit.
+- Inspector header SVG conversion and brand/status removal: focused panel/i18n unit suite **25/25** (UI i18n **7/7**), full build **106 files / 571 tests**, E14 + Inspector layout regression **7/7** and AI panel regression **9/9** passed in Chromium. All five header controls expose one inline SVG; IDs, accessible names and existing action/focus behavior remain intact; the redundant brand/status block is absent and hidden `#ai-status` remains. This is UI evidence only and earns no S17/PI-04 credit.
 - Current generated artifact hash readback matched the recorded PI-04 entry, PI-04 manifest, default Studio entry and Service Worker: **4/4**, with no hash drift.
 - Sequential `npm run validate:v2 -- ...` passed for `sales-invoice-v2.html`,
   `purchase-order-red-v2.html` and `progress-claim-northpeak-v2.html`: all had valid attestation/runtime/content
@@ -148,7 +149,7 @@ or approval result.
 - The manifest's `sourceCommit` value is the reviewed upstream pi commit
   `b2602be77cb7b0de45dd616407fd210daa48aa75`, as documented in
   `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`; it is intentionally not a local repository commit.
-- The local application source identity is commit `a4caf93857669e05d0d521567ecf5ab6f4389df5`; the
+- The local application source identity is commit `568160c` (based on application review revision `a4caf93857669e05d0d521567ecf5ab6f4389df5`); the
   generated artifact was rebuilt through `scripts/build-pi-04.mjs`. `site-dist/` remains ignored and
   unpublished. The production Studio entry remains AGRUN.
 
@@ -159,7 +160,7 @@ or approval result.
   integrity value; generated entry SHA-256 is `cab56aecec5b68514cc9c586f8ed78b062e86f9183d53106524bcc566feb74dd`.
 - `scripts/build-site.mjs` builds isolated PI-00..PI-04 qualification artifacts and then stamps
   `studio-v2/sw.js`; it does not wire PI into the default Studio entry. The generated Service Worker
-  currently has 203 app-shell entries, includes both AGRUN and isolated PI assets, and uses local cache
+  currently has 202 app-shell entries, includes both AGRUN and isolated PI assets, and uses local cache
   build id `local`; network responses are cloned before cache writes (`site-dist/studio-v2/sw.js` SHA-256
   `69e286718416d6836891adc4c3bf4c99d0ca6cdde56ca7f5ed458a5205d44caa`).
 - Cutover owners and rollback constraints are recorded in `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md`:

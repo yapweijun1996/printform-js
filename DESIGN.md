@@ -17,7 +17,7 @@ Current: four-layer AI panel (`Navigation → Document context → Conversation 
 
 Partial: PROD-01/02/03 domain scope/apply/readiness foundations exist, but composed acceptance is incomplete. The host now owns current-document reclassification; the session manager defaults to Unknown and uses guarded index/runtime adapters. One panel session-lifecycle owner rejects stale creation/list/controller results. This addresses the reproduced defects without moving policy into prompts or changing private UI approval, canonical transactions or human export controls.
 
-The project envelope is canonical, CommandBus owns committed state, and preview DOM is derived visual evidence. Neither chat messages nor preview DOM create another project source of truth. Inspector header actions use inline SVG icons while preserving their IDs, bindings and accessible labels.
+The project envelope is canonical, CommandBus owns committed state, and preview DOM is derived visual evidence. Neither chat messages nor preview DOM create another project source of truth. The Inspector header keeps the view tabs, SVG action controls and Close control; the redundant AI brand/status block is removed while the hidden status live region remains available to assistive technology.
 
 Proposed workspace: full-width global actions, dominant central preview, one right panel (`Design / AI / Quality`), on-demand component tree and Advanced source editor. Current tabs remain `Designer / Quality / Agent`; the proposed rearrangement is not implemented. Preserve access to Agent integration details.
 
