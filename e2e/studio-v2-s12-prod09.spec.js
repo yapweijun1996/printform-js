@@ -32,7 +32,7 @@ test("09-03 keeps the desktop inspector rail, preview and export geometry aligne
   expect(initial.export.right).toBeLessThanOrEqual(initial.topbar.right + 1);
 
   await page.locator("#inspector-resize-handle").focus();
-  await page.keyboard.press("ArrowLeft");
+  await page.locator("#inspector-resize-handle").press("ArrowLeft");
   await expect.poll(async () => (await geometry()).rail.width).toBeGreaterThan(initial.rail.width);
   const widened = await geometry();
   expect(widened.rail.right).toBeCloseTo(widened.viewport, 0);
@@ -40,7 +40,7 @@ test("09-03 keeps the desktop inspector rail, preview and export geometry aligne
   expect(widened.export.right).toBeLessThanOrEqual(widened.topbar.right + 1);
   expect(widened.documentWidth).toBeLessThanOrEqual(widened.viewport);
 
-  await page.keyboard.press("End");
+  await page.locator("#inspector-resize-handle").press("End");
   const minimum = await geometry();
   expect(Number(minimum.handle)).toBe(320);
   expect(minimum.rail.width).toBe(320);

@@ -57,7 +57,7 @@ test.describe("Studio v2 PROD-03 03-04 invalidated evidence", () => {
         createInMemorySessionStore: () => ({}),
         createRuntime: (options) => {
           runtimeOptions = options;
-          return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
+          return { runStream: (input, runOptions) => session.runStream(input, runOptions), createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
         },
         openaiBrowserSkill: {},
         geminiBrowserSkill: {}

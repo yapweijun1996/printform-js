@@ -42,7 +42,8 @@ test.describe("Studio v2 PROD-02 02-07 Auto-mode control", () => {
           control.prompts.push(input?.prompt || "");
           return (async function* () {
             runOptions.onToken?.("Controlled Auto-mode outcome");
-            if (input?.prompt?.includes("bounded multimodal layout review pass")) {
+            if (input?.prompt?.includes("bounded multimodal layout review pass")
+              || input?.systemPromptSuffix?.includes("Review attached synthetic PrintForm images")) {
               const complete = runtimeOptions.customActions.find((item) => item.name === "printform_complete_current_layout_review");
               if (!complete) throw new Error("Layout completion action was not registered");
               control.reviewRuns += 1;
@@ -75,7 +76,7 @@ test.describe("Studio v2 PROD-02 02-07 Auto-mode control", () => {
         createInMemorySessionStore: () => ({}),
         createRuntime: (options) => {
           runtimeOptions = options;
-          return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
+          return { runStream: (input, runOptions) => session.runStream(input, runOptions), createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
         },
         openaiBrowserSkill: {},
         geminiBrowserSkill: {}

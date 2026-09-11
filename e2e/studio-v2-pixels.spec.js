@@ -34,6 +34,7 @@ test.describe("synthetic pixel evidence boundary", () => {
     await admitPublicGateway(page);
     const result = await page.evaluate(async () => {
       const { DesignerRuntimeController } = await import("/studio-v2/ui/agent-runtime.js");
+      const { classifySyntheticDocument } = await import("/studio-v2/core/data-policy.js");
       let runtimeOptions;
       let turn = 0;
       const images = [];
@@ -70,9 +71,11 @@ test.describe("synthetic pixel evidence boundary", () => {
       };
       const events = [];
       const profile = { id: "pixel-loop", provider: "openai", model: "mock-vision", apiKey: "memory-only" };
+      const dataPolicy = classifySyntheticDocument("pixel-loop");
       const controller = await DesignerRuntimeController.create({
         Agrun, gateway: window.PrintFormStudioAgent, sessionManager: { createStore: () => ({}) },
-        sessionId: crypto.randomUUID(), profile, onEvent: (event) => events.push(event.type)
+        sessionId: crypto.randomUUID(), profile, dataPolicy, getDataPolicy: () => dataPolicy,
+        onEvent: (event) => events.push(event.type)
       });
       const first = await controller.reviewLayout(profile);
       const proposalId = controller.pendingProposal?.proposalId;

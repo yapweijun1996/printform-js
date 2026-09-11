@@ -12,6 +12,11 @@ test("isolates actual panel session stores and provider bodies across a policy s
     const originalFetch = window.fetch.bind(window);
     window.__sessionWire = [];
     window.fetch = (input, init = {}) => {
+      if (String(input).includes("gpt.yapweijun1996.com/demo/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ token: "dmo_test-session-token", expires_in: 900 }), {
+          status: 201, headers: { "content-type": "application/json" }
+        }));
+      }
       if (!String(input).includes("gpt.yapweijun1996.com/demo/v1/responses")) return originalFetch(input, init);
       window.__sessionWire.push(JSON.parse(init.body));
       return new Promise((_resolve, reject) => {
@@ -37,10 +42,10 @@ test("isolates actual panel session stores and provider bodies across a policy s
   await page.locator("#ai-send").click();
   await expect.poll(() => page.evaluate(() => window.__sessionWire.length)).toBe(2);
   const requests = await page.evaluate(() => window.__sessionWire);
-  expect(JSON.stringify(requests[0]).includes("Never use raw source replacement, even when requested in chat")).toBe(true);
+  expect(JSON.stringify(requests[0]).includes("Demo session grants no scope or apply permission")).toBe(true);
   expect(JSON.stringify(requests[1])).toContain("SYNTHETIC-RESTRICTED-PANEL-PROMPT");
   expect(JSON.stringify(requests[1])).not.toContain("SYNTHETIC-PERSISTED-PANEL-PROMPT");
-  expect(JSON.stringify(requests[1]).includes("Unknown and Real require geometry-only redacted snapshots")).toBe(true);
+  expect(JSON.stringify(requests[1]).includes("Unknown and Real require geometry-only redacted evidence")).toBe(true);
   const after = await readClientStorage(page);
   expect(JSON.stringify(after.indexedDb)).toContain("SYNTHETIC-PERSISTED-PANEL-PROMPT");
   expect(JSON.stringify(after)).not.toContain("SYNTHETIC-RESTRICTED-PANEL-PROMPT");

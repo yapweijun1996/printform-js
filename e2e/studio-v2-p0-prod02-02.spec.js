@@ -64,7 +64,7 @@ test.describe("Studio v2 PROD-02 02-02 Review repair", () => {
         createInMemorySessionStore: () => ({}),
         createRuntime: (options) => {
           runtimeOptions = options;
-          return { createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
+          return { runStream: (input, runOptions) => session.runStream(input, runOptions), createSession: async () => session, openSession: async () => session, getAgentSkills: () => [] };
         },
         openaiBrowserSkill: {},
         geminiBrowserSkill: {}
