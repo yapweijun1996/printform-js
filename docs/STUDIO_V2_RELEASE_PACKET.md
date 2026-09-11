@@ -3,8 +3,8 @@
 Status: **Reviewable local packet; release not approved.** This packet is an evidence index and
 completion audit, not a Production Ready declaration, deployment authorization, or maintainer decision.
 
-Prepared: 2026-09-10; last audited after the current-source application/browser-matrix and Demo transaction evidence. Current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; prior application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`.
-The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`. Documentation-only follow-ups are tracked separately in Git and KB-MCP provenance; application source remains the a4caf93 revision.
+Prepared: 2026-09-11; last audited after the current-source application/browser-matrix and Demo transaction evidence. Current review revision: `a4caf93857669e05d0d521567ecf5ab6f4389df5`; prior application review revision: `e4302009e461ae398476ec63043c888cd19a07a`; Windows Firefox runner commit: `93a4f2055f9e30dc75f7df06c9e4ba3c1baebff0`; P0 confirmation-test commit: `59f4fe7`; documentation control commit: `60c28dd0a863c72918273fa0ab87830f940aceb`.
+The current source/runner delta is exactly `a4caf93857669e05d0d521567ecf5ab6f4389df5`; its path list is reviewable with `git show --stat`. The later `60c28dd0a863c72918273fa0ab87830f940aceb` commit is documentation/navigation-only and does not change application-source evidence or gate credit. Application source remains the a4caf93 revision.
 The runner-only configuration and P0 confirmation-test commits are recorded separately as test provenance.
 The S16/S17 application changes are committed in the application review revision; the
 Windows-only Firefox `--disable-gpu` runner adjustment is a separate test-only local commit and keeps
@@ -17,6 +17,7 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 | Requirement | Evidence owner | Current result and limitation |
 |---|---|---|
 | Sequential TASK ledger and dependency order | `TASK.md`, `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_EXECUTION_PLAN.md` | S01-S16 are Done; S17 is the only active step at G1/10%. S18-S21 remain dependent/open. |
+| Current goal and progress control | `GOAL.md`, `PROGRESS.md`, `GOAL_PROMPT.md` | These root documents mirror the current ledger, evidence ownership, no-push boundary, and the four progress denominators; they are control/navigation docs only. |
 | Requalify S16 deferred-close, CAS, lifecycle and browser boundaries | `docs/STUDIO_V2_S16_PI03_EVIDENCE.md` | G1-G5/100%; 16-01..06 passed 18/18 across Chromium, Firefox and WebKit, with focused lifecycle/privacy regressions. |
 | Actual browser Harness acceptance | `e2e/studio-v2-pi-04.spec.js`, `e2e/studio-v2-pi-04-privacy.spec.js`, `e2e/studio-v2-pi-04-transaction.spec.js` | 17-01..09 passed 27/27 across three configured engines. These are isolated PI supporting cases with synthetic Provider interception; they do not close S17 live-provider or cutover gates. |
 | Production-shell X-01..03 | `e2e/studio-v2-p0-x01.spec.js`, `e2e/studio-v2-p0-x02-x03.spec.js`, `docs/STUDIO_V2_P0_ACCEPTANCE.md` | Combined command passed 9/9 across Chromium, Firefox and WebKit; current P0 register is 35/35 Pass after the focused 13-07 Demo-origin requalification. Controlled AGRUN/BYOK is not PI live-provider evidence. |
@@ -41,7 +42,7 @@ Provider acceptance is claimed. The current Demo Gateway run is recorded below a
 - Release: **not approved**; Production Ready is not established.
 
 This packet is independent S20 preparation only. The packet/index/checklist edits record application source commit
-`a4caf93857669e05d0d521567ecf5ab6f4389df5` plus documentation-only follow-ups; they do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
+`a4caf93857669e05d0d521567ecf5ab6f4389df5` plus documentation control commit `60c28dd0a863c72918273fa0ab87830f940aceb`; they do not grant gate credit. It does not bypass S17 or authorize AGRUN retirement,
 deployment, publishing, physical print, or maintainer approval.
 
 ## 3. Recorded verification commands and results
