@@ -221,7 +221,7 @@ carried into the second request; the second request produced one revision-0 prop
 requests carried the synthetic key only in Authorization, and neither JSON body contained the PI-04 canary or key.
 Manifest capability `directProviderFollowUp: true` is recorded with `providerMatrixSynthetic: true`. This proves the
 composed follow-up/payload boundary only; provider live behavior, broader privacy sinks, approval/export UI and final
-S17 PI credit remains open.
+Current generated artifact 17-07 Chromium requalification passed **1/1**. S17 PI credit remains open.
 
 ### Case 17-08 — direct-provider commit uncertainty and recovery (supporting; synthetic response)
 
