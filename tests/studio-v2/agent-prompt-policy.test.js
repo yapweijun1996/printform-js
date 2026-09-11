@@ -30,7 +30,8 @@ describe("Agent runtime instructions follow production policy", () => {
   });
 
   it("publishes restrictive MCP initialization instructions and all 35 tools without connecting CDP", () => {
-    const process = spawnSync(globalThis.process.execPath, ["mcp/server.mjs"], {
+    // Keep the negative-path assertion independent of any runner service on the default CDP port.
+    const process = spawnSync(globalThis.process.execPath, ["mcp/server.mjs", "--cdp-url", "http://127.0.0.1:0"], {
       input: [{ jsonrpc: "2.0", id: 1, method: "initialize" }, { jsonrpc: "2.0", id: 2, method: "tools/list" }].map(JSON.stringify).join("\n") + "\n",
       encoding: "utf8", timeout: 5000, windowsHide: true
     });

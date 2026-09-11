@@ -43,7 +43,7 @@
 - Inspector header actions: New, Review, Sessions, Settings and Close now use inline SVG icons; Settings uses a centered standard cog path; the redundant AI brand/status block is removed while hidden `#ai-status` remains the live region; focused panel/i18n unit suite 25/25 (UI i18n 7/7) and current Chromium E14/AI/Inspector regressions 16/16 passed; no gate credit.
 - Current PI-04 generated artifact: cases 17-01..09 requalified serially in Chromium **9/9**; synthetic supporting evidence only, no S17 gate credit.
 - AI Designer launcher: removed the bottom-right floating `#ai-floating-launcher` markup, styles and binding while preserving the topbar open/close/focus cycle; Chromium topbar/layout regression passed 4/4 and asserted zero floating nodes; no gate credit.
-- CI lockfile repair: remote CI #50-#54 all stopped at `npm ci` with npm 10 missing `@emnapi/core@2.0.0-alpha.5` and `@emnapi/runtime@2.0.0-alpha.5`; local repair commit `18fd2f8` adds the lock entries and npm 10 dry-run passes. Remote rerun is unrun; no gate credit.
+- CI repair: remote CI #50-#54 stopped at `npm ci` with npm 10 missing `@emnapi/core@2.0.0-alpha.5` and `@emnapi/runtime@2.0.0-alpha.5`; local repair commit `18fd2f8` adds the lock entries and npm 10 dry-run passes. CI #55 passed `npm ci` but exposed a separate `agent-prompt-policy.test.js` assumption about the shared default CDP port; the test now uses explicit isolated `http://127.0.0.1:0`. Node 22/25 focused tests and the full local build pass; the amended commit is local-only and remote rerun remains unrun. No gate credit.
 - P0 register: 35 Pass, 0 Fail, 0 Not run.
 
 ## Blockers and next action
