@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
+import { publicDemoPlanner } from './studio-v3-live-redesign.js';
 import { readFileSync } from 'node:fs';
 
-test.use({serviceWorkers:'block',viewport:{width:1440,height:900}});
-test.setTimeout(120000);
+test.use({trace:process.env.PRINTFORM_LIVE_REDESIGN ? 'off' : 'retain-on-failure',serviceWorkers:'block',viewport:{width:1440,height:900}});
+test.setTimeout(process.env.PRINTFORM_LIVE_REDESIGN ? 240000 : 120000);
 const frame = page => page.frameLocator('#preview-frame');
 const ready = page => expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const proposal = operations => ({kind:'proposal',summary:'Complete synthetic invoice redesign',operations});
@@ -32,6 +33,14 @@ const redesigns = process.env.PRINTFORM_REAL_PROPOSALS
   : syntheticRedesigns;
 async function inspect(page) {
   const result = await frame(page).locator('.printform_page').evaluateAll(pages=>({
+    structure: {
+      headerFields:[...pages[0].querySelectorAll('.v3-header [data-v3-field]')].map(n=>n.dataset.v3Field),
+      tableFields:[...pages.find(p=>p.querySelector('.prowheader_processed'))?.querySelectorAll('.prowheader_processed [data-v3-role=label]') || []].map(n=>n.dataset.v3Id),
+      grids:['.v3-header .company-fields','.v3-customer','.v3-notes'].map(selector=>{
+        const node=pages.map(p=>p.querySelector(selector)).find(Boolean);
+        return node ? getComputedStyle(node).gridTemplateColumns.split(/\s+/).length : 0;
+      })
+    },
     pages:pages.map(p=>({headers:p.querySelectorAll('.pheader_processed').length,
       tableHeaders:p.querySelectorAll('.prowheader_processed').length,
       rows:[...p.querySelectorAll('.prowitem_processed')].map(n=>Number(n.dataset.pfRowIndex)),
@@ -43,8 +52,9 @@ async function inspect(page) {
   expect(result.pages.flatMap(p=>p.rows)).toEqual(Array.from({length:45},(_,i)=>i));
   return result;
 }
-test('structural redesign fixtures: Preview Apply Undo Save Open preserve one header and all 45 rows', async ({page},info)=> {
-  const requests = [], errors = []; let index = 0;
+test('structural redesign fixtures: Preview Apply Undo Save Open preserve one header and all 45 rows', async ({page,context},info)=> {
+  const requests = [], errors = [], modelReplies = []; let index = 0;
+  const livePlan = process.env.PRINTFORM_LIVE_REDESIGN ? await publicDemoPlanner(context) : null;
   page.on('pageerror', e=>errors.push(e.message)); page.on('dialog', d=>d.accept());
   // Deterministic model replies cover broad structural operations. No real
   // demo request, origin spoofing, credentials or server changes are involved.
@@ -54,8 +64,11 @@ test('structural redesign fixtures: Preview Apply Undo Save Open preserve one he
     if (path.endsWith('/session')) body={token:'dmo_synthetic123456',expires_in:900};
     else if (path.endsWith('/models')) body={data:[{id:'demo-fast'},{id:'demo-auto'}]};
     else {
-      requests.push(route.request().postDataJSON());
-      body={choices:[{finish_reason:'stop',message:{content:JSON.stringify(redesigns[Math.min(index++,1)])}}],usage:{total_tokens:20}};
+      const wire=route.request().postDataJSON();requests.push(wire);
+      body=livePlan ? await livePlan(wire) : {choices:[{finish_reason:'stop',message:{content:JSON.stringify(redesigns[Math.min(index++,1)])}}],usage:{total_tokens:20}};
+      modelReplies.push(body.choices?.[0]?.message?.content);
+      await fs.writeFile(info.outputPath('model-replies.json'),JSON.stringify(modelReplies,null,2));
+      await fs.writeFile(info.outputPath('repair-diagnostics.json'),JSON.stringify(requests.map(r=>JSON.parse(r.messages[1].content).repair || null),null,2));
     }
     await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(body)});
   });
@@ -65,24 +78,37 @@ test('structural redesign fixtures: Preview Apply Undo Save Open preserve one he
   const evidence = {baseline,rounds:[]};
   for (const prompt of ['Redesign this invoice freely. Rebuild its structure, layout and typography, not just its colors.','Redesign it again with a different structure and typography.'].slice(0,redesigns.length)) {
     await page.locator('#ai-prompt').fill(prompt); await page.locator('[data-ai-send]').click();
-    await expect(page.locator('[data-ai-proposal]')).toBeVisible({timeout:45000});
+    await expect(page.locator('[data-ai-proposal]')).toBeVisible({timeout:livePlan ? 150000 : 45000});
+    if (livePlan) {
+      const operations=JSON.parse(modelReplies.at(-1)).operations || [];
+      expect(operations.length).toBeLessThanOrEqual(24);
+      expect(operations.some(o=>o.type==='set_section' && o.patch?.layout)).toBe(true);
+      expect(operations.some(o=>['reorder_fields','reorder_sections'].includes(o.type))).toBe(true);
+      expect(operations.some(o=>o.type==='set_element_style' || (o.type==='set_style' && o.patch?.font!==undefined))).toBe(true);
+    }
     await expect(page.locator('[data-ai=apply]')).toBeDisabled();
     await page.locator('[data-ai=preview]').click(); await expect(page.locator('[data-ai=apply]')).toBeEnabled();
     const preview = await inspect(page);
     await page.locator('[data-ai=apply]').click(); await ready(page);
     const applied = await inspect(page); expect(applied).toEqual(preview);
+    if (livePlan) expect(applied.structure).not.toEqual((evidence.rounds.at(-1)?.applied || baseline).structure);
     expect(await frame(page).locator('[data-v3-id=totals-total]').textContent()).toBe(total);
     evidence.rounds.push({prompt,preview,applied});
   }
-  expect(requests).toHaveLength(redesigns.length);
+  if (livePlan) { expect(requests.length).toBeGreaterThanOrEqual(2);expect(requests.length).toBeLessThanOrEqual(6); }
+  else expect(requests).toHaveLength(redesigns.length);
   await page.locator('[data-ai=undo]').click(); await ready(page);
   expect(await inspect(page)).toEqual(evidence.rounds.length > 1 ? evidence.rounds.at(-2).applied : baseline);
   await page.locator('[data-action=redo]').click(); await ready(page);
   const final = await inspect(page); expect(final).toEqual(evidence.rounds.at(-1).applied);
   const pending = page.waitForEvent('download'); await page.locator('[data-action=save]').click();
   const download = await pending, saved = info.outputPath('redesign.printform.json'); await download.saveAs(saved);
+  const savedProject=JSON.parse(await fs.readFile(saved,'utf8'));
   await page.locator('[data-action=new]').click(); await page.locator('[data-template=purchase]').click(); await ready(page);
-  const chooser = page.waitForEvent('filechooser'); await page.locator('[data-action=open]').click(); await (await chooser).setFiles(saved); await ready(page);
+  const chooser = page.waitForEvent('filechooser'); await page.locator('[data-action=open]').click(); await (await chooser).setFiles(saved);
+  await expect(page.locator('#document-name')).toHaveValue(savedProject.project.manifest.title);
+  await expect(page.locator('#revision')).toContainText(`r${savedProject.project.revision}`);
+  await ready(page);
   expect(await inspect(page)).toEqual(final);
   await page.locator('[data-mode=validate]').click();
   await expect(page.locator('#right-panel')).toContainText('Current browser layout passed.');
