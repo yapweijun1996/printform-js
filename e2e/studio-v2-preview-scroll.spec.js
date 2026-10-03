@@ -7,9 +7,15 @@ test("maps vertical mouse-wheel movement to horizontal preview scrolling", async
 
   const preview = page.locator(".preview-viewport");
   await preview.evaluate((viewport) => { viewport.scrollLeft = 0; });
+  // Exercise the parent event path explicitly: WebKit also bubbles iframe
+  // wheel input to it. A second binding must not apply the delta twice.
+  await preview.dispatchEvent("wheel", { deltaY: 120, deltaX: 0 });
+  await expect.poll(() => preview.evaluate(viewport=>viewport.scrollLeft)).toBe(120);
+  await preview.evaluate((viewport) => { viewport.scrollLeft = 0; });
   const box = await preview.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.wheel(0, 120);
+  await expect.poll(() => preview.evaluate(viewport=>viewport.scrollLeft)).toBe(120);
   const result = await preview.evaluate((viewport) => ({
     scrollLeft: viewport.scrollLeft,
     maxScrollLeft: viewport.scrollWidth - viewport.clientWidth,
