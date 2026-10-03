@@ -25,6 +25,7 @@ test('clipped currency blocks evidence and trusted export until corrected and fr
   };
   await apply(originalTheme+'\n.monetary-clip-fixture {display:block;height:5px;overflow-y:hidden;white-space:nowrap}');
   await expect(page.locator('#render-status')).toHaveText('Blocked');await expect(page.locator('#issue-list')).toContainText('MONETARY_TOKEN_UNREADABLE');
+  await page.frameLocator('#preview-frame').locator('body').screenshot({path:info.outputPath('currency-clipped-preview.png')});
   const blocked=await page.evaluate(async()=> {
     const run=(name,input)=>window.PrintFormStudioAgent.execute(name,input);
     const revision=(await run('get_project_summary',{})).result.revision;
@@ -37,6 +38,7 @@ test('clipped currency blocks evidence and trusted export until corrected and fr
   await expect(page.locator('#export-button')).toBeDisabled();
   await apply(originalTheme+'\n.monetary-clip-fixture {display:block;white-space:nowrap}');
   await expect(page.locator('#render-status')).toHaveText('Printable');expect(await page.locator('#sample-editor').inputValue()).toBe(data);
+  await page.frameLocator('#preview-frame').locator('body').screenshot({path:info.outputPath('currency-corrected-preview.png')});
   const fixed=await page.evaluate(async()=> {
     const run=(name,input)=>window.PrintFormStudioAgent.execute(name,input);
     const revision=(await run('get_project_summary',{})).result.revision;
