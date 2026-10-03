@@ -1,3 +1,4 @@
+import {syntheticDemoTransport} from './synthetic-demo-transport.js';
 import {test,expect} from '@playwright/test';
 test.use({serviceWorkers:'block'});
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -73,8 +74,8 @@ test('timeout stops a held request and retry requires another deliberate Send',a
 });
 test.describe('normal browser context',()=> {
   test.use({serviceWorkers:'allow'});
-  test('read-only chat and print renders have no page errors with normal service-worker permissions',async({page})=> {
-    const errors=[];page.on('pageerror',e=>errors.push(e.message));await mock(page,[answer,proposal]);await page.reload();await ready(page);await page.locator('[data-ai-toggle]').click();await send(page,'What are the current font sizes?');await expect(page.locator('[data-ai-status]')).toContainText('Read-only answer');
-    await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await ready(page);await page.locator('[data-ai=undo]').click();await ready(page);expect(errors).toEqual([]);
+  test('read-only chat and print renders have no page errors with normal service-worker permissions',async({page,context})=> {
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));const transport=await syntheticDemoTransport(context,[answer,proposal]);await page.reload();await ready(page);await page.locator('[data-ai-toggle]').click();await send(page,'What are the current font sizes?');await expect(page.locator('[data-ai-status]')).toContainText('Read-only answer');
+    await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await ready(page);await page.locator('[data-ai=undo]').click();await ready(page);expect(errors).toEqual([]);expect(transport.requests).toHaveLength(2);expect(transport.unexpected).toEqual([]);
   });
 });

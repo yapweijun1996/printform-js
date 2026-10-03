@@ -43,11 +43,19 @@ async function inspect(page, scope=frame(page)) {
         return node ? getComputedStyle(node).gridTemplateColumns.split(/\s+/).length : 0;
       })
     },
+    money:[...pages.flatMap(p=>[...p.querySelectorAll('[data-pf-format=currency]')])].map(n=>{
+      const range=document.createRange();range.selectNodeContents(n);const rs=[...range.getClientRects()].filter(r=>r.width&&r.height);
+      const box=(n.closest('td,th,.field') || n.parentElement).getBoundingClientRect();
+      return {id:n.dataset.v3Id,lines:new Set(rs.map(r=>Math.round(r.top))).size,
+        fits:rs.every(r=>r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1)};
+    }),
     pages:pages.map(p=>({headers:p.querySelectorAll('.pheader_processed').length,
       tableHeaders:p.querySelectorAll('.prowheader_processed').length,
       rows:[...p.querySelectorAll('.prowitem_processed')].map(n=>Number(n.dataset.pfRowIndex)),
       text:p.innerText.replace(/\s+/g,' ').trim()}))
   }));
+  expect(result.money.length).toBeGreaterThan(0);
+  expect(result.money.every(m=>m.lines===1 && m.fits)).toBe(true);
   expect(result.pages.length).toBeGreaterThan(1);
   expect(result.pages.every(p=>p.headers===1)).toBe(true);
   expect(result.pages.filter(p=>p.rows.length).every(p=>p.tableHeaders===1)).toBe(true);
@@ -57,7 +65,7 @@ async function inspect(page, scope=frame(page)) {
 export async function runRedesignLifecycle({page,context},info,fixtures) {
   const redesigns=fixtures || defaultRedesigns;
   const requests = [], errors = [], modelReplies = []; let index = 0;
-  const livePlan = process.env.PRINTFORM_LIVE_REDESIGN ? await publicDemoPlanner(context) : null;
+  const livePlan = !fixtures && process.env.PRINTFORM_LIVE_REDESIGN ? await publicDemoPlanner(context) : null;
   page.on('pageerror', e=>errors.push(e.message)); page.on('dialog', d=>d.accept());
   // Deterministic model replies cover broad structural operations. No real
   // demo request, origin spoofing, credentials or server changes are involved.
@@ -97,7 +105,11 @@ export async function runRedesignLifecycle({page,context},info,fixtures) {
     const preview = await inspect(page);
     await page.locator('[data-ai=apply]').click(); await ready(page);
     const applied = await inspect(page); expect(applied).toEqual(preview);
-    if (livePlan) expect(applied.structure).not.toEqual((evidence.rounds.at(-1)?.applied || baseline).structure);
+    expect(applied.structure).not.toEqual((evidence.rounds.at(-1)?.applied || baseline).structure);
+    if (fixtures) {
+      expect(applied.structure.grids[0]).toBe(evidence.rounds.length===0 ? 2 : 3);
+      expect(applied.geometry.every(g=>g.margins.every(m=>m===14))).toBe(true);
+    }
     expect(await frame(page).locator('[data-v3-id=totals-total]').textContent()).toBe(total);
     evidence.rounds.push({prompt,preview,applied});
   }
