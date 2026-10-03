@@ -115,6 +115,9 @@ test.describe("Studio v2 production boundary", () => {
     await expect(page.locator("#data-policy")).toHaveText(/Real data|真实数据/i);
     await admitPublicGateway(page);
 
+    // The shell cache is populated asynchronously during worker install.
+    // Compare the operation's writes only after that independent work is ready.
+    await page.evaluate(() => navigator.serviceWorker.ready);
     const before = await readClientStorage(page);
     const result = await page.evaluate(async () => {
       const canary = "CANARY-REAL-20260907";
