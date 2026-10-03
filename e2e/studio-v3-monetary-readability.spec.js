@@ -11,6 +11,8 @@ test('financial acceptance rejects wrapped, clipped and overlapping tokens witho
   const value=page.locator('[data-pf-format=currency]');
   await value.evaluate(n=>n.style.cssText='width:35px;overflow-wrap:anywhere');
   expect(await codes()).toContain('MONETARY_TOKEN_UNREADABLE');
+  await value.evaluate(n=>n.style.cssText='width:35px;flex-shrink:0;white-space:nowrap;overflow-x:hidden');
+  expect(await codes()).toContain('MONETARY_TOKEN_UNREADABLE');
   await value.evaluate(n=>n.style.cssText='white-space:nowrap;font-size:64px');
   expect(await codes()).toContain('MONETARY_TOKEN_UNREADABLE');
   await value.evaluate(n=>n.style.cssText='position:absolute;left:8px;top:8px');
