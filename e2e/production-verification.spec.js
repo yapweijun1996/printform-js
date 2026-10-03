@@ -249,3 +249,18 @@ test('keeps physically oversized progress-claim long-text rows unsigned and expo
   expect(result.capture.result.metrics.verticalOverflowPages).toBeGreaterThan(0);
   expect(result.export.result.ready).toBe(false);
 });
+
+test('keeps the frozen Chromium legacy progress-claim long-text overflow unsigned and export blocked',async({page,browserName})=> {
+  test.skip(browserName!=='chromium','Historical Chromium font-metric regression; the separate explicit-height negative runs in every engine');
+  await page.goto('/studio-v2/?sample=progress-claim');
+  await expect(page.locator('#render-status')).toHaveText('Printable',{timeout:20000});
+  await admitPublicGateway(page);
+  const result=await page.evaluate(async()=> {
+    const agent=window.PrintFormStudioAgent,revision=(await agent.execute('get_project_summary')).result.revision;
+    return {capture:await agent.execute('capture_layout_evidence',{expectedRevision:revision,scenario:'long-text'}),export:await agent.execute('request_export')};
+  });
+  expect(result.capture.ok).toBe(true);
+  expect(result.capture.result).toMatchObject({evidence:null,validation:{valid:false,productionValid:false}});
+  expect(result.capture.result.metrics.verticalOverflowPages).toBeGreaterThan(0);
+  expect(result.export.result.ready).toBe(false);
+});
