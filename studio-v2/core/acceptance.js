@@ -1,3 +1,4 @@
+import { inspectPageChrome } from "./page-chrome-inspection.js";
 import { LIMITS, PROTOCOL_VERSION, TRUST, protocolMajor } from "./constants.js";
 import { validateData, validateSchemaProfile } from "./schema.js";
 import { validateAssetSlots } from "./assets.js";
@@ -174,6 +175,7 @@ export function inspectRenderedDocument(doc, manifest, options = {}) {
   });
   if (overflow.length) errors.push(error("HORIZONTAL_OVERFLOW", `${overflow.length} rendered elements overflow horizontally`));
   const templateRoot = doc.getElementById("pf-template")?.content?.querySelector(".printform");
+  errors.push(...inspectPageChrome(pageList));
   // Repeated-region completeness: data-repeat-header/-docinfo are simple
   // page-wide flags with no per-row exception (unlike rowheader, which row
   // classes like without_prowheader can opt out of) — if the template
