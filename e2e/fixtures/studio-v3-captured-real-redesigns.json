@@ -1,0 +1,32 @@
+[
+{"kind":"proposal","summary":"Compact editorial invoice redesign with stronger hierarchy, tighter page margins, two-column metadata sections, reordered fields, and a light table row fill for improved scanability.","operations":[
+  {"type":"set_page","patch":{"paper":"A4","orientation":"portrait","margins":{"top":14,"right":14,"bottom":14,"left":14}}},
+  {"type":"set_style","patch":{"color":"#1763dc","font":8,"padding":6,"striped":false,"borders":true,"repeatHeader":true,"repeatTable":true,"pageNumbers":true,"breakBefore":false}},
+  {"type":"set_element_style","target":"header-title","patch":{"fontSize":20,"bold":true,"color":"#163a65","align":"left"}},
+  {"type":"set_element_style","target":"page-number","patch":{"fontSize":8,"color":"#163a65","align":"right"}},
+  {"type":"set_section","target":"header","patch":{"layout":{"columns":2,"gap":12},"keepTogether":true}},
+  {"type":"set_section","target":"customer","patch":{"layout":{"columns":2,"gap":12},"keepTogether":true}},
+  {"type":"set_section","target":"totals","patch":{"layout":{"columns":1,"gap":8},"keepTogether":true}},
+  {"type":"set_section","target":"footer","patch":{"layout":{"columns":2,"gap":12},"keepTogether":true}},
+  {"type":"reorder_fields","section":"header","order":["header-company","header-number","header-date","header-due","header-reference","header-registration","header-address"]},
+  {"type":"reorder_fields","section":"customer","order":["customer-bill","customer-bill-address","customer-ship","customer-ship-address"]},
+  {"type":"reorder_fields","section":"totals","order":["totals-subtotal","totals-tax","totals-total"]},
+  {"type":"reorder_fields","section":"footer","order":["footer-notes","footer-signature"]},
+  {"type":"set_table_style","target":"items","patch":{"rowBackground":"#f7f9fc"}}
+]},
+{"kind":"proposal","summary":"Compact redesign with stronger hierarchy, revised section order, denser header/customer grids, and updated typography while preserving bindings and supported table styling.","operations":[
+  {"type":"set_style","patch":{"color":"#1763dc","font":9,"padding":8,"striped":false,"borders":true,"repeatHeader":true,"repeatTable":true,"pageNumbers":true,"breakBefore":false}},
+  {"type":"set_element_style","target":"header-title","patch":{"fontSize":18,"bold":true,"color":"#163a65","align":"left"}},
+  {"type":"set_element_style","target":"page-number","patch":{"fontSize":7,"color":"#163a65","align":"right"}},
+  {"type":"set_section","target":"header","patch":{"layout":{"columns":3,"gap":10},"keepTogether":true}},
+  {"type":"set_section","target":"customer","patch":{"layout":{"columns":2,"gap":8},"keepTogether":true}},
+  {"type":"set_section","target":"totals","patch":{"layout":{"columns":2,"gap":10},"keepTogether":true}},
+  {"type":"set_section","target":"footer","patch":{"layout":{"columns":1,"gap":8},"keepTogether":true}},
+  {"type":"reorder_sections","order":["header","customer","items","totals","footer"]},
+  {"type":"reorder_fields","section":"header","order":["header-company","header-number","header-date","header-due","header-reference","header-registration","header-address"]},
+  {"type":"reorder_fields","section":"customer","order":["customer-bill","customer-bill-address","customer-ship","customer-ship-address"]},
+  {"type":"reorder_fields","section":"totals","order":["totals-subtotal","totals-tax","totals-total"]},
+  {"type":"reorder_fields","section":"footer","order":["footer-notes","footer-signature"]},
+  {"type":"set_table_style","target":"items","patch":{"rowBackground":"#f7f9fc"}}
+]}
+]
