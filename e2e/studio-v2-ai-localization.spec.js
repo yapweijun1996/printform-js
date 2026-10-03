@@ -6,7 +6,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("localizes the complete AI Chatbox across all supported languages", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "AI Chatbox locale smoke runs once in Chromium");
   await page.setViewportSize({ width: 995, height: 778 });
   const localeButton = page.locator("#ui-locale-button");
   await expect(localeButton).toBeVisible();

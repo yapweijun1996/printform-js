@@ -137,7 +137,6 @@ test("opens the generated Crimson purchase order as one self-contained HTML", as
 });
 
 test("covers Crimson purchase order empty, 1, 45 and 500-row boundaries", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "Large boundary budgets use the Chromium reference environment");
   await page.goto("/studio-v2/?sample=purchase-order-red");
   await openEditor(page);
   await page.locator("#scenario-select").selectOption("empty");
@@ -222,7 +221,6 @@ test("uses the public command gateway for transactional changes", async ({ page 
 });
 
 test("requires a human confirmation and downloads one trusted HTML", async ({ page, context, browserName }) => {
-  test.skip(browserName !== "chromium", "Download contract is covered once; render invariants run in every engine");
   expect((await passLayoutReview(page)).ok).toBe(true);
   page.on("dialog", (dialog) => /Save As|另存为/.test(dialog.message()) ? dialog.dismiss() : dialog.accept());
   const downloadEvent = page.waitForEvent("download");

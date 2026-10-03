@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 
 test.describe("synthetic pixel evidence boundary", () => {
-  test.skip(({ browserName }) => browserName !== "chromium", "Sandbox pixel rasterization is validated in Chromium; geometry evidence covers other engines.");
 
   test("captures synthetic pixels and rejects pixel evidence in real-data mode", async ({ page }) => {
     await page.goto("/studio-v2/");

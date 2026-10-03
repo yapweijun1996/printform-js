@@ -35,7 +35,7 @@ test("demo001 (45-row ERP sales invoice + PTAC): fixed page count, item rows on 
   expect(perPage.reduce((sum, entry) => sum + entry.ptac, 0)).toBe(17);
 });
 
-test("delivery_order_test (PTAC+PADDT combination): PADDT segments render after every regular footer, on their own trailing pages", async ({ page, browserName }) => {
+async function deliveryDistribution(page) {
   await page.goto("/delivery_order_test.html");
   const pages = page.locator(".printform_page");
   await expect(pages).toHaveCount(4, { timeout: 15_000 });
@@ -55,17 +55,14 @@ test("delivery_order_test (PTAC+PADDT combination): PADDT segments render after 
   // with prowitem/ptac content or appear before the final footer.
   expect(paddtPerPage).toEqual([0, 0, 0, 4]);
 
-  // The exact split is pinned to the Chromium reference only. This document
-  // sits right on a page-boundary threshold, so where the break falls is a
-  // function of font metrics: measured Chromium [17,21,10,0], WebKit
-  // [17,21,10,0], but Firefox [15,20,13,0] on macOS and [16,20,12,0] on CI's
-  // Linux. Per-engine golden numbers would therefore be flaky too — it varies
-  // by HOST, not just by engine. ROADMAP P3 says the same thing as policy:
-  // keep per-browser baselines, never assert cross-engine pixel identity.
-  // (demo001 and index015 below do agree on all three engines, so they keep
-  // their unconditional assertions — this is the one document that doesn't.)
-  test.skip(browserName !== "chromium", "Exact page split is font-metric dependent; invariants above cover every engine");
-  expect(rowsPerPage).toEqual([17, 21, 10, 0]);
+  return rowsPerPage;
+}
+test('delivery order preserves all rows, PTAC and trailing PADDT content in every engine',async({page})=> {
+  await deliveryDistribution(page);
+});
+test('delivery order exact Chromium font-metric split reference',async({page,browserName})=> {
+  test.skip(browserName !== 'chromium','Exact page split is font-metric dependent; separate semantic invariants run in every engine');
+  expect(await deliveryDistribution(page)).toEqual([17,21,10,0]);
 });
 
 test("index015 (2-up A5-on-A4): logical/physical page split stays 2-per-sheet with a partial final sheet", async ({ page }) => {

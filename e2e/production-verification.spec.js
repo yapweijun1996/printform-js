@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import fs from "node:fs/promises";
-import { admitPublicGateway } from "./studio-v2-helpers.js";
+import { admitPublicGateway, openEditor } from "./studio-v2-helpers.js";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -88,8 +88,7 @@ async function renderSyntheticRows(page, count, { width = 600, height = 780 } = 
   }, { count, width, height });
 }
 
-test("opens the required progress claim in Chromium with a printable isolated preview", async ({ page, browserName }, testInfo) => {
-  test.skip(browserName !== "chromium", "Production verification uses Chromium as the certified reference runtime");
+test("opens the required progress claim in the executing browser with a printable isolated preview", async ({ page, browserName }, testInfo) => {
   const browserErrors = collectBrowserErrors(page);
   await page.goto("/studio-v2/?sample=progress-claim");
   await expect(page).toHaveTitle(/PrintForm Studio v2/);
@@ -104,7 +103,6 @@ test("opens the required progress claim in Chromium with a printable isolated pr
 });
 
 test("opens a populated standalone print preview from the Print preview action", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "Standalone print preview uses the Chromium reference runtime");
   const browserErrors = collectBrowserErrors(page);
   await page.goto("/studio-v2/?sample=sales-invoice");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
@@ -123,7 +121,6 @@ test("opens a populated standalone print preview from the Print preview action",
 });
 
 test("renders 100, 500 and 1000 rows deterministically in the browser", async ({ page, browserName }, testInfo) => {
-  test.skip(browserName !== "chromium", "Large dataset budgets use the Chromium reference environment");
   const browserErrors = collectBrowserErrors(page);
   await page.goto("/index001.html");
   for (const count of [100, 500, 1000]) {
@@ -141,7 +138,6 @@ test("renders 100, 500 and 1000 rows deterministically in the browser", async ({
 });
 
 test("keeps A4 portrait and landscape pages inside paper bounds", async ({ page, browserName }, testInfo) => {
-  test.skip(browserName !== "chromium", "Paper certification uses the Chromium reference environment");
   const browserErrors = collectBrowserErrors(page);
   await page.goto("/index001.html");
   const results = {};
@@ -155,8 +151,7 @@ test("keeps A4 portrait and landscape pages inside paper bounds", async ({ page,
   expect(browserErrors).toEqual([]);
 });
 
-test("reports pagination diagnostics with page and component context in Chromium", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "Diagnostic contract uses the Chromium reference environment");
+test("reports pagination diagnostics with page and component context in every engine", async ({ page, browserName }) => {
   await page.goto("/studio-v2/?sample=progress-claim");
   const result = await page.evaluate(async () => {
     const { collectPaginationDiagnostics } = await import("/studio-v2/core/render-diagnostics.js");
@@ -194,7 +189,6 @@ test("reports pagination diagnostics with page and component context in Chromium
 });
 
 test("persists an approved revision-bound Evidence Pack after trusted export", async ({ page, context, browserName }, testInfo) => {
-  test.skip(browserName !== "chromium", "Trusted export evidence uses the Chromium reference environment");
   await page.goto("/studio-v2/");
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
   await admitPublicGateway(page);
@@ -208,7 +202,7 @@ test("persists an approved revision-bound Evidence Pack after trusted export", a
     }
     await run("begin_layout_review", { expectedRevision: revision });
     const evidenceIds = Object.values(captured).map((entry) => entry.result.evidence.evidenceId);
-    const review = await run("complete_layout_review", { expectedRevision: revision, reviewer: "ai-agent", findings: [], summary: "real Chromium evidence", evidenceIds });
+    const review = await run("complete_layout_review", { expectedRevision: revision, reviewer: "ai-agent", findings: [], summary: "actual executing-browser evidence", evidenceIds });
     const readiness = await run("request_export", {});
     return { revision, captured, review, readiness };
   });
@@ -227,15 +221,25 @@ test("persists an approved revision-bound Evidence Pack after trusted export", a
   await persistEvidence(testInfo, "evidence-pack.json", JSON.stringify(evidence, null, 2), "application/json");
   await persistEvidence(testInfo, "approved-invoice.png", await page.screenshot(), "image/png");
   expect(pack).toMatchObject({ revision: flow.revision, formSpecHash: expect.stringMatching(/^sha256:/), previewHash: expect.any(String), exportHtmlHash: expect.stringMatching(/^sha256:/), runtimeHash: expect.stringMatching(/^sha256:/), printformRuntimeHash: expect.stringMatching(/^sha256:/), pageCount: expect.any(Number), timestamp: expect.any(String), hash: expect.stringMatching(/^sha256:/), validation: { status: "PASS" }, security: { status: "PASS", externalNetwork: false, arbitraryJavascript: false } });
-  expect(evidence.browser.userAgent).toContain("Chrome");
+  expect(context.browser().browserType().name()).toBe(browserName);
+  expect(evidence.browser.userAgent).toMatch({chromium:/Chrome\//,firefox:/Firefox\//,webkit:/AppleWebKit\/.*Safari\//}[browserName]);
   expect(html).toContain('id="pf-manifest"');
 });
 
-test('keeps the legacy progress-claim long-text overflow unsigned and export blocked',async({page,browserName})=>{
-  test.skip(browserName !== 'chromium','Legacy overflow regression uses the Chromium reference environment');
+test('keeps physically oversized progress-claim long-text rows unsigned and export blocked',async({page,browserName})=>{
   await page.goto('/studio-v2/?sample=progress-claim');
   await expect(page.locator('#render-status')).toHaveText('Printable',{timeout:20000});
   await admitPublicGateway(page);
+  // Font metrics differ by engine: make the negative geometry explicit rather
+  // than assuming the unmodified sample must overflow in every browser.
+  await openEditor(page);
+  const theme=page.locator('#theme-editor');
+  await theme.evaluate(n=>n.closest('details').open=true);
+  await theme.fill(await theme.inputValue()+'\n#pf-mount .pf-valuation-row td { height:1400px !important; }');
+  await page.locator('#apply-source-button').click();
+  await expect(page.locator('#source-diff-modal')).toBeVisible();
+  await page.locator('#source-diff-apply').click();
+  await expect(page.locator('#render-status')).toHaveText('Blocked');
   const result=await page.evaluate(async()=>{
     const agent=window.PrintFormStudioAgent, revision=(await agent.execute('get_project_summary')).result.revision;
     return {capture:await agent.execute('capture_layout_evidence',{expectedRevision:revision,scenario:'long-text'}),export:await agent.execute('request_export')};
