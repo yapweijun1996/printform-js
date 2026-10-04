@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { AGRUN_V4_COMMIT, AGRUN_V4_UPSTREAM, buildAgrun, verifyDerivation } from "./agrun-source-build.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VENDOR_DIR = path.join(ROOT, "studio-v2", "vendor");
@@ -58,10 +59,18 @@ async function verifyLocal() {
 
   if (provenance.repository !== REPOSITORY) errors.push("provenance repository is not the approved AGRUN repository");
   if (!/^[0-9a-f]{40}$/.test(provenance.commit || "")) errors.push("provenance commit is not a full SHA-1");
+  if (provenance.commit === AGRUN_V4_COMMIT && provenance.upstreamSha256 !== AGRUN_V4_UPSTREAM) errors.push("the fixed V4 upstream hash changed");
   if (provenance.sha256 !== actual.sha256) errors.push("provenance sha256 does not match agRun.min.js");
-  if (provenance.upstreamSha256 !== actual.sha256) errors.push("upstreamSha256 does not match the exact vendored upstream bundle");
+  if (provenance.derivation) {
+    try {
+      verifyDerivation(provenance);
+      if (!(await buildAgrun()).equals(bytes)) errors.push("vendored AGRUN differs from the audited source rebuild");
+    } catch (error) { errors.push(error.message); }
+  } else {
+    if (provenance.upstreamSha256 !== actual.sha256) errors.push("upstreamSha256 does not match the exact vendored upstream bundle");
+    if (Array.isArray(provenance.patches) && provenance.patches.length > 0) errors.push("unapproved local AGRUN patches are present");
+  }
   if (provenance.sri !== actual.sri) errors.push("provenance SRI does not match agRun.min.js");
-  if (Array.isArray(provenance.patches) && provenance.patches.length > 0) errors.push("local AGRUN patches are present; vendor the upstream bundle instead");
   if (BUNDLE_MARKERS.some((marker) => !source.includes(marker))) errors.push("bundle is missing the expected inline image transport markers");
   if (integrityFromHtml(html) !== actual.sri) errors.push("studio-v2/index.html integrity does not match agRun.min.js");
 
@@ -119,6 +128,7 @@ function updateHtmlIntegrity(html, sri) {
 
 async function applyBundle(commit) {
   const current = await readProvenance();
+  if (current.derivation) throw new Error("The compatible V4 source build must not be replaced by sync:agrun; review a source/API migration separately");
   const bundle = await fetchBundle(commit);
   const html = fs.readFileSync(INDEX_PATH, "utf8");
   fs.writeFileSync(BUNDLE_PATH, bundle.bytes);
@@ -152,10 +162,10 @@ async function main() {
 
   const upstreamCommit = await resolveHead();
   const upstream = await fetchBundle(upstreamCommit);
-  const matches = local.provenance.commit === upstreamCommit && local.sha256 === upstream.sha256;
+  const matches = local.provenance.commit === upstreamCommit && local.provenance.upstreamSha256 === upstream.sha256;
   console.log(`AGRUN upstream: ${upstreamCommit} (${upstream.sha256})`);
   console.log(`AGRUN vendored: ${local.provenance.commit} (${local.sha256})`);
-  if (!matches) throw new Error("AGRUN upstream changed; run npm run sync:agrun -- --apply and review the diff");
+  if (!matches) throw new Error("AGRUN upstream changed; review source and API compatibility before updating the pin");
 }
 
 main().catch((error) => {

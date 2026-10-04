@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildProviderInput, projectProviderParts } from "../../studio-v2/ui/agent-provider.js";
 import { AGRUN_VENDOR_PROVENANCE } from "../../studio-v2/vendor/agrun.provenance.js";
+import { AGRUN_CSP_PATCH, AGRUN_V4_UPSTREAM, verifyDerivation } from "../../scripts/agrun-source-build.mjs";
 
 function loadAgrun() {
   const source = fs.readFileSync(path.resolve(process.cwd(), "studio-v2/vendor/agrun.min.js"), "utf8");
@@ -33,8 +34,9 @@ describe("AI Designer inline media transport", () => {
 
     expect(AGRUN_VENDOR_PROVENANCE.sha256).toBe(sha256);
     expect(AGRUN_VENDOR_PROVENANCE.sri).toBe(sri);
-    expect(AGRUN_VENDOR_PROVENANCE.upstreamSha256).toBe(sha256);
-    expect(AGRUN_VENDOR_PROVENANCE.patches).toEqual([]);
+    expect(AGRUN_VENDOR_PROVENANCE.upstreamSha256).toBe(AGRUN_V4_UPSTREAM);
+    expect(AGRUN_VENDOR_PROVENANCE.patches).toEqual([{ id: "zod-jitless", sha256: AGRUN_CSP_PATCH }]);
+    expect(() => verifyDerivation(AGRUN_VENDOR_PROVENANCE)).not.toThrow();
     expect(html).toContain(`integrity="${sri}"`);
   });
 

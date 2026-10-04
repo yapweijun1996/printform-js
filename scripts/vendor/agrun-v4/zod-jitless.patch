@@ -1,0 +1,11 @@
+--- zod-4.3.6/v4/core/core.js
++++ zod-4.3.6/v4/core/core.js
+@@ -68,7 +68,7 @@
+         this.name = "ZodEncodeError";
+     }
+ }
+-export const globalConfig = {};
++export const globalConfig = { jitless: true };
+ export function config(newConfig) {
+     if (newConfig)
+         Object.assign(globalConfig, newConfig);

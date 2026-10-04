@@ -30,6 +30,7 @@
     "test:e2e:chromium": "npm run e2e:install:chromium && playwright test --project=chromium",
     "validate:v2": "node scripts/validate-printform-v2.mjs",
     "sync:agrun": "node scripts/sync-agrun.mjs",
+    "build:agrun": "node scripts/build-agrun.mjs",
     "check:agrun": "node scripts/sync-agrun.mjs",
     "check:agrun:upstream": "node scripts/sync-agrun.mjs --check-upstream",
     "doctor": "node scripts/doctor.mjs",
