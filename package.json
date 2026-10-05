@@ -37,7 +37,10 @@
     "studio:transaction-server": "node scripts/transaction-server.mjs",
     "studio:mcp": "node mcp/server.mjs",
     "studio:agent-browser": "node scripts/launch-studio-agent-browser.mjs",
-    "docs": "node scripts/generate-config-docs.js"
+    "docs": "node scripts/generate-config-docs.js",
+    "verify": "npm run check:agrun && npm run test:e2e -- --workers=1 && npm run verify:samples",
+    "verify:quick": "npm run check:agrun && npm run test:e2e:chromium && npm run verify:samples",
+    "verify:samples": "node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/sales-invoice-v2.html && node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/purchase-order-red-v2.html && node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/progress-claim-northpeak-v2.html"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.0",

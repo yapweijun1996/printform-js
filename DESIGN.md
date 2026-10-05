@@ -297,6 +297,6 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 - `npm run build` = 测试 → Vite 打包 `dist/printform.js` → 构建 `dist/printform-document.js`（v2 文档 runtime）→ 生成预览页。
 - `npm run build:site` = 上述 + 拷贝白名单目录到 `site-dist/` + 生成三个带 attestation 的试点导出 + 给 `sw.js` 盖 build id（占位符缺失会**构建失败**，防止缓存永不更新的静默部署）。
 - `npm run doctor`：一条命令跑AGRUN integrity + unit/build:site + 三个试点样本 `validate:v2`（5 steps），结尾一页 PASS/FAIL 汇总（`scripts/doctor.mjs`，2026-07-31）；刻意不含 e2e，那是 CI 每次 push 都跑的三引擎慢检查。
-- `dist/` 不进 git（`.gitignore`），由 CI（`.github/workflows/ci.yml`）构建。
-- `.github/workflows/browser-matrix.yml`（`workflow_dispatch` 手动触发，2026-07-31）：在 GitHub Actions 的 Ubuntu runner 上按需复现 `scripts/browser-matrix.mjs` 的完整 88 格矩阵，用于验证发布前的跨引擎收敛在 Linux 上同样成立（已实测 88/88 通过），不进 push/PR 常规门槛。
+- `dist/` 不进 git（`.gitignore`），由本地 `npm run build` 构建；项目不再使用 GitHub Actions，验证统一走本地 `npm run verify`（全部三引擎）或 `npm run verify:quick`（仅 Chromium）。
+- 已移除的 `.github/workflows/browser-matrix.yml`（当时为 `workflow_dispatch` 手动触发，2026-07-31；现改为本地运行 `node scripts/browser-matrix.mjs`）：在 GitHub Actions 的 Ubuntu runner 上按需复现 `scripts/browser-matrix.mjs` 的完整 88 格矩阵，用于验证发布前的跨引擎收敛在 Linux 上同样成立（已实测 88/88 通过），不进 push/PR 常规门槛。
 - 本地开发服务器：`node scripts/serve-site.mjs .`（`.claude/launch.json` 已配置，端口 4174）。
