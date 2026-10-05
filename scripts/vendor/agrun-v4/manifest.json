@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "repository": "https://github.com/yapweijun1996/Agent-Runtime-JavaScript",
+  "commit": "c631669ac927ff734a37eeef863941f040445182",
+  "upstreamSha256": "377b8fd0186fdef8e5e521c1b6fd69ebe4f2ed18538cb3c4c76948f34e906195",
+  "inputsSha256": "37da219b43fce0c46aa2bbdb98959c62880b80a5532a17adb403918f192df719",
+  "inputsFiles": 675,
+  "patchSha256": "83de172fd0d4d5d9d249869dfa1c78f38d6ab2e3938c75543cc761533c16b281",
+  "origins": [
+    {
+      "url": "https://codeload.github.com/yapweijun1996/Agent-Runtime-JavaScript/tar.gz/c631669ac927ff734a37eeef863941f040445182",
+      "sha256": "fbc95f94150c8f0b683df144b38edbfb2c62a995c4765575e79ef01c1731faf5",
+      "bytes": 10297487
+    },
+    {
+      "url": "https://raw.githubusercontent.com/yapweijun1996/Agent-Runtime-JavaScript/c631669ac927ff734a37eeef863941f040445182/agrun.min.js.map",
+      "sha256": "48d5e6ffc9ceaa1c722c1314778d154da95b10a3ca5cc6f5e08c0aeca509c04a",
+      "bytes": 6976974
+    },
+    {
+      "url": "https://registry.npmjs.org/zod/-/zod-4.3.6.tgz",
+      "sha256": "29ee4d2418c0fb6ddc545c28c03ec80b701e345a3f779e50ae23cda0700b1682",
+      "bytes": 715997
+    },
+    {
+      "url": "https://registry.npmjs.org/@opentelemetry/api/-/api-1.9.0.tgz",
+      "sha256": "19a3321bfb87b4ab24532233c6014916a3c711af071959d9147ddf96d8a3da8b",
+      "bytes": 126777
+    }
+  ],
+  "verification": "Every ESM file matches the pinned Git tree blob. Dependencies come from sourcesContent in its fixed source map. Missing Zod/OpenTelemetry modules come from exact-version npm archives; every overlapping module matches source-map bytes. Only core.globalConfig.jitless is changed at build time."
+}

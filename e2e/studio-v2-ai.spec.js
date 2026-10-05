@@ -8,7 +8,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("loads the embedded agrun Designer skill and keeps BYOK ciphertext secret", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "The browser storage smoke runs once in Chromium");
   await openInspector(page);
   await page.locator("#ai-designer-tab").click();
   await expect(page.locator("#ai-designer-tabpanel")).toBeVisible();
@@ -221,7 +220,6 @@ test("provides an accessible provider settings modal shell", async ({ page }) =>
 });
 
 test("localizes provider settings modal across all supported languages", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "Locale modal smoke runs once in Chromium");
   await page.setViewportSize({ width: 995, height: 778 });
   await page.locator("#inspector-toggle").click();
   await page.locator("#ai-designer-tab").click();
