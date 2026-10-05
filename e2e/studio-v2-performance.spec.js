@@ -47,6 +47,7 @@ test("meets the render budget for 500 rows at an enlarged font scale", async ({ 
 });
 
 test("serves the installed PWA shell while offline", async ({ page, context, browserName }) => {
+  test.skip(browserName === "webkit", "Playwright WebKit throws an internal error on a service-worker navigation after setOffline(true); offline shell is covered by Chromium and Firefox");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 20_000 });
