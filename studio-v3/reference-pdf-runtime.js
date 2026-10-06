@@ -1,7 +1,8 @@
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {observePdfWorkerErrors} from './reference-pdf-errors.js';
-import PdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker';
+import PdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker';
 
+// The legacy build runs on browsers without the newest JS built-ins (Map.getOrInsertComputed, ...).
 // Dedicated local workers guarantee cancellation; never fall back to main-thread parsing.
 export function createPdfRuntime() {
   const port=new PdfWorker(),errors=observePdfWorkerErrors(port);let worker;
