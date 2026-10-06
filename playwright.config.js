@@ -1,4 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
+
+// Golden layouts assume Arial metrics. Pin Linux font resolution to an Arial-compatible font unless the
+// caller already chose a fontconfig file (the browsers inherit this environment).
+if (process.platform === "linux" && !process.env.FONTCONFIG_FILE) {
+  process.env.FONTCONFIG_FILE = path.resolve(__dirname, "e2e/fonts-arial-compatible.conf");
+}
 
 // Keep Firefox content sandboxing enabled; the current Windows headless runner
 // cannot start its tab/utility subprocesses when GPU initialization is enabled.
