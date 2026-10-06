@@ -38,6 +38,8 @@ test("meets the render budget for 500 rows at an enlarged font scale", async ({ 
   await openEditor(page);
   // This exact combination previously took 47+ seconds in a real browser.
   await page.locator("#scenario-select").selectOption("500-rows");
+  // The scenario loads asynchronously and resets the font base; apply the font only once it has landed.
+  await expect.poll(async () => JSON.parse(await page.locator("#metrics-output").textContent()).rows, { timeout: 20_000 }).toBe(500);
   await applyLargeFont(page);
   await expect(page.locator("#render-status")).toHaveText("Printable", { timeout: 15_000 });
   await expect.poll(async () => JSON.parse(await page.locator("#metrics-output").textContent()).rows, { timeout: 20_000 }).toBe(500);

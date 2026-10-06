@@ -36,6 +36,9 @@ and Properties open as drawers with Escape/backdrop close and focus return.
 Fit page, Fit width, 100%, incremental zoom and panel/thumbnail toggles affect
 only the editor view; the validated last zoom choice is kept in localStorage,
 defaulting to Fit page, and fit modes recompute when the viewport/panels change; horizontal paper panning never changes print geometry.
+In Design the structure panel starts hidden; the Structure toggle opens it and that
+choice is remembered in localStorage (a `0/1` UI preference, never document data).
+Data and Validate always show their left panel, which holds the sample and dataset lists.
 The current-page indicator follows navigation and scrolling. The UI uses English; user data
 supports bilingual text and the existing five print locales.
 
@@ -51,10 +54,23 @@ This slice does not claim completion of v2's full direct-BYOK migration.
 The owner-selected GPT Server Demo is the only v3 provider. Existing
 `github-pages` registration is reused: browser CORS supplies the exact Origin;
 `POST /demo/session` issues a short-lived memory-only token, `/demo/v1/models`
-checks `demo-fast`/`demo-auto`, and `/demo/v1/chat/completions` returns a text
-JSON envelope per bounded step. No native provider tools, arbitrary schema, files, background,
+supplies the model aliases (only `demo-` aliases of a safe shape, at most eight; `demo-auto`
+is the default and is listed first), and `/demo/v1/responses` returns `output_text` carrying a JSON envelope per bounded step.
+Text requests stream server-sent events, but only to show progress ("Waiting for the AI
+service", then received characters and seconds, silent for screen readers): the envelope is
+parsed once, from the `response.completed` event, by the same rules as a plain body. Image
+requests are not streamed until streamed images are verified, and a JSON answer to a stream
+request is read as a plain body. Reasoning is opaque (encrypted) and never shown. Failures
+are named from the HTTP status and the gateway's own code (network unreachable, origin not
+registered, rate limit, service disabled, no provider available, slow gateway) and each
+has its own message. Every gateway request has its own timeout (15 s for model discovery,
+60 s for a model request, including its session and the one 401 refresh); one Send is bounded
+by their sum (225 s). A timeout is a failure, never a retry, so a Send still makes at most
+three model requests. No native provider tools, arbitrary schema, files, background,
 web search, gateway key or private `/v1/*` request is sent. A first 401 refreshes
-once; no model fallback occurs; authoring repair is capped and disclosed.
+once; authoring repair is capped and disclosed. No model fallback occurs: a default the
+user never changed adapts to the aliases the gateway offers, but a model the user chose
+that is no longer offered stops the Send, refreshes the list and waits for a new Send.
 
 The panel displays the selected alias, recipient and exact initial JSON.
 Send deliberately accepts the adjacent notice; there is no consent checkbox.
@@ -67,7 +83,10 @@ One explicit Send is bounded to three model requests and three real local
 preview inspections, with a code/geometry-only dynamic diagnostic boundary.
 The previous reviewed context and model proposal may be resent for repair.
 Questions remain read-only. Local tools build one unapplied candidate and a
-complete diff; Preview and explicit Apply remain required. CommandBus commits
+complete diff. Above 900 px the unapplied candidate is previewed on paper and
+locally checked automatically once the response arrives; at 900 px and below
+Preview stays a button because it reveals the full-screen paper. Apply is always an
+explicit click and stays disabled until that preview check passes. CommandBus commits
 one revision with scoped Undo after current validation and draft protection.
 ERP data/calculations do not change, and existing financial-bound fields cannot
 be replaced by model-authored literal values. There is no model code, shell,
@@ -103,6 +122,14 @@ The main preview iframe allows scripts and the native print dialog, uses an
 opaque sandbox origin, and disallows network access. Host messages validate
 the sender window and a monotonic render token. Superseded renders cannot
 replace current reports. A new document invalidates queued edits and file reads.
+
+The document is assigned to the frame once, never through an empty reset. A
+busy browser can drop a `srcdoc` navigation, leaving an empty document that
+never reports, so the bridge sends `hello` on start. Without it within 4 s the
+document is assigned again (twice in total), after which the render is blocked
+as `PREVIEW_NOT_STARTED`. A started preview that still fails to finish within
+25 s is blocked as `RENDER_TIMEOUT`. A repeated `rendered` message for one
+token is ignored. All timings live in `studio-v3/preview-launch.js`.
 
 Amounts, rates, taxes, rounding and totals are supplied by the ERP. `/summary`
 and item `rate`/`amount` bindings intentionally avoid the v2 sample-specific

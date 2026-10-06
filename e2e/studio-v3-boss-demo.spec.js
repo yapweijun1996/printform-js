@@ -1,8 +1,9 @@
-import {test,expect} from '@playwright/test';
+import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
+import { test, expect } from './studio-v3-test.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {syntheticPdf,syntheticPng} from './fixtures/reference-documents.js';
-test.use({serviceWorkers:'block'});test.setTimeout(90000);
+test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
 const proposal={summary:'Use the fictional reference navy',edits:[{target:'style',property:'color',value:'#163a65'}]};
@@ -10,7 +11,7 @@ async function mockProvider(page,{images=false}={}) {
  const calls=[];
  await page.route('https://gpt.yapweijun1996.com/demo/**',async route=>{
   const path=new URL(route.request().url()).pathname,payload=route.request().postDataJSON();calls.push({path,payload});
-  const value=path.endsWith('/session')?{token:'dmo_synthetic_demo123',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast',...(images?{input_modalities:['text','image']}:{})}]}:path.endsWith('/responses')?{status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(proposal)}]}],usage:{total_tokens:20}}:{choices:[{finish_reason:'stop',message:{content:JSON.stringify(proposal)}}],usage:{total_tokens:20}};
+  const value=path.endsWith('/session')?{token:'dmo_synthetic_demo123',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast',...(images?{input_modalities:['text','image']}:{})}]}:responsesReply(proposal,{total_tokens:20});
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(value)});
  });return calls;
 }
@@ -43,7 +44,7 @@ test('real PDF parsing -> explicit text-only sharing -> mocked AI Preview Apply 
  const calls=await mockProvider(page);await openReferences(page);await attach(page,syntheticPdf());
  await expect(page.locator('.ai-reference-card')).toContainText('2 page(s)');await expect(page.locator('#ai-share')).toContainText('FICTIONAL REFERENCE');await expect(page.locator('#ai-share')).toContainText('extracted-text-and-positions');expect(calls).toHaveLength(0);
  await page.locator('#ai-prompt').fill('Use navy #163a65 based on the reference structure.');await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
- const wire=calls.find(c=>c.path.endsWith('/chat/completions')).payload;expect(wire.messages[1].content).toContain('DEMO-REF-001');expect(JSON.stringify(wire)).not.toContain('base64');expect(JSON.stringify(wire)).not.toContain('ACME Industrial');
+ const wire=calls.find(c=>isInference(c.path)).payload;expect(userText(wire)).toContain('DEMO-REF-001');expect(JSON.stringify(wire)).not.toContain('base64');expect(JSON.stringify(wire)).not.toContain('ACME Industrial');
  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await expect(page.locator('#revision')).toContainText('r1');
  const savePromise=page.waitForEvent('download');await page.locator('[data-action=save]').click();const saved=await savePromise,savedPath=info.outputPath('pdf-authored.printform.json');await saved.saveAs(savedPath);
  const authored=JSON.parse(await fs.readFile(savedPath,'utf8')).project;expect(authored.manifest.studioV3.color).toBe('#163a65');expect(authored.manifest.currency).toBe('MYR');expect(authored.sampleData.summary.total).toBe(12150);expect(authored.manifest.studioV3.columns.find(f=>f.id==='amount').pointer).toBe('./amount');

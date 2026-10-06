@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 const frame = page => page.frameLocator('#preview-frame');
 const label = page => page.getByLabel('Label',{exact:true});
 const choice = (page,value) => page.locator(`[data-draft-choice=${value}]`).click();
 async function ready(page) { await expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000}); }
-test.beforeEach(async ({page}) => {page.on('dialog',d=>d.accept());await page.goto('/studio-v3/');await ready(page);});
+test.beforeEach(async ({page}) => {page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
 
 test('P0 Item code label → Qty: Stay retains focus, Apply commits and Discard restores; history is correct', async ({page},info) => {
   await page.locator('#left-panel [data-select=items-sku]').click();

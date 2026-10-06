@@ -98,3 +98,33 @@ draft Stay visibility/focus and mobile Tab trapping. Final independent source re
 reviewer verified the repaired state with Node/JSDOM checks. The draft PR
 records this review and the exact commit. No merge or Pages/public release is authorized here.
 The live session blocker and native printer/production qualification remain open.
+
+## Live gateway probe, 2026-10-06
+
+Dated evidence, not a guarantee of future behaviour. Taken from the registered page with
+fictional one-line prompts only; no document data and no credential was sent. The samples are
+kept, with the opaque blobs replaced, in `tests/studio-v3-ai-gateway-samples.test.js`.
+
+Confirmed:
+
+- `GET /demo/v1/models` lists `demo-fast`, `demo-auto`, `demo-openai-mini`,
+  `demo-openai-quality`, `demo-groq`, `demo-gemini`. Every one advertises `responses` and
+  `streaming`; all but `demo-groq` advertise `multimodal`.
+- `POST /demo/v1/responses` with a `system` input item returns HTTP 200 (accepted; that the model
+  obeys it was not tested). The `instructions` field is accepted too.
+- Responses come in two shapes: gateway-synthesised (no reasoning item) and provider-native
+  (an opaque `reasoning` item before the message). Both parse to the same text and usage.
+- `stream:true` returns standard server-sent events: `response.created`, `response.in_progress`,
+  `response.output_item.added/done`, `response.content_part.added/done`,
+  `response.output_text.delta/done`, `response.completed` (which carries the final usage).
+- Error bodies are `{"error":{"message","code","type"}}`. `DEMO_MODEL_NOT_ALLOWED`,
+  `DEMO_INPUT_INVALID` and `DEMO_MEDIA_DISABLED` were observed; an invalid session returns a
+  message without a code.
+
+Not available: reasoning content. Reasoning items carry `encrypted_content` with empty `content`
+and `summary`; the echoed `reasoning.summary` stays `null` and `effort` is fixed to `low`, so a
+requested summary is not honoured. Only `usage.output_tokens_details.reasoning_tokens` is visible.
+
+Not probed: image requests (streaming or not), 403/429/503 bodies, response size under heavy
+reasoning, and whether the model obeys the system prompt.
+

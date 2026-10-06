@@ -1,4 +1,6 @@
+import { replyText, responsesReply, userText } from './demo-gateway-fixture.js';
 import { expect } from '@playwright/test';
+import { reviewCandidate } from './studio-v3-scope.js';
 import fs from 'node:fs/promises';
 import { publicDemoPlanner } from './studio-v3-live-redesign.js';
 import { readFileSync } from 'node:fs';
@@ -76,10 +78,10 @@ export async function runRedesignLifecycle({page,context},info,fixtures) {
     else if (path.endsWith('/models')) body={data:[{id:'demo-fast'},{id:'demo-auto'}]};
     else {
       const wire=route.request().postDataJSON();requests.push(wire);
-      body=livePlan ? await livePlan(wire) : {choices:[{finish_reason:'stop',message:{content:JSON.stringify(redesigns[Math.min(index++,1)])}}],usage:{total_tokens:20}};
-      modelReplies.push(body.choices?.[0]?.message?.content);
+      body=livePlan ? await livePlan(wire) : responsesReply(redesigns[Math.min(index++,1)],{total_tokens:20});
+      modelReplies.push(replyText(body));
       await fs.writeFile(info.outputPath('model-replies.json'),JSON.stringify(modelReplies,null,2));
-      await fs.writeFile(info.outputPath('repair-diagnostics.json'),JSON.stringify(requests.map(r=>JSON.parse(r.messages[1].content).repair || null),null,2));
+      await fs.writeFile(info.outputPath('repair-diagnostics.json'),JSON.stringify(requests.map(r=>JSON.parse(userText(r)).repair || null),null,2));
     }
     await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(body)});
   });
@@ -100,8 +102,7 @@ export async function runRedesignLifecycle({page,context},info,fixtures) {
       expect(operations.some(o=>['reorder_fields','reorder_sections'].includes(o.type))).toBe(true);
       expect(operations.some(o=>o.type==='set_element_style' || (o.type==='set_style' && o.patch?.font!==undefined))).toBe(true);
     }
-    await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-    await page.locator('[data-ai=preview]').click(); await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+    await reviewCandidate(page);
     const preview = await inspect(page);
     await page.locator('[data-ai=apply]').click(); await ready(page);
     const applied = await inspect(page); expect(applied).toEqual(preview);

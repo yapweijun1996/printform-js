@@ -30,10 +30,9 @@ export function renderConversation(panel) {
       article.append(card);
     }
     if (message.status === 'error' || message.status === 'cancelled') {
-      const button = node('button','ai-retry','Retry with review'); button.type = 'button'; button.dataset.ai = 'retry'; button.dataset.cardId = message.id; article.append(button);
+      const button = node('button','ai-retry','Edit & resend'); button.type = 'button'; button.dataset.ai = 'retry'; button.dataset.cardId = message.id; article.append(button);
     }
-    const time = node('time','ai-message-meta',`${message.role === 'user' ? 'You' : 'AI assistant'} · ${new Date(message.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`);
-    time.dateTime = new Date(message.time).toISOString(); article.append(time); log.append(article);
+    article.setAttribute('aria-label',message.role === 'user' ? 'You' : 'AI assistant'); log.append(article);
   }
   if (atEnd) log.scrollTop = log.scrollHeight;
 }

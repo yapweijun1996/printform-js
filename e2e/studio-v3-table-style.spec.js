@@ -1,7 +1,10 @@
-import {test,expect} from '@playwright/test';
+import { responsesReply } from './demo-gateway-fixture.js';
+import { test, expect } from './studio-v3-test.js';
+import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
-test.use({serviceWorkers:'block'});
+
 test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
@@ -14,7 +17,7 @@ async function mock(page,replies){
     const path=new URL(route.request().url()).pathname;
     let body;if(path.endsWith('/session'))body={token:'dmo_synthetic123456',expires_in:900};
     else if(path.endsWith('/models'))body={data:[{id:'demo-fast'}]};
-    else{calls.push(route.request().postDataJSON());body={choices:[{finish_reason:'stop',message:{content:JSON.stringify(replies[Math.min(calls.length-1,replies.length-1)])}}]};}
+    else{calls.push(route.request().postDataJSON());body=responsesReply(replies[Math.min(calls.length-1,replies.length-1)]);}
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   });return calls;
 }
@@ -29,7 +32,7 @@ async function expectYellow(locator){
   await expect(locator.first()).toHaveCSS('background-color','rgb(255, 255, 0)');
   expect(await locator.evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).backgroundColor==='rgb(255, 255, 0)'))).toBe(true);
 }
-test.beforeEach(async({page})=>{page.on('dialog',dialog=>dialog.accept());await page.goto('/studio-v3/');await ready(page);});
+test.beforeEach(async({page})=>{page.on('dialog',dialog=>dialog.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
 test('yellow rows are rendered across pages; Preview Apply Undo and save/reopen retain data and template identity',async({page,context,browserName},info)=>{
   const calls=await mock(page,[wrong,fill]);const before=await save(page,info,'before-row-fill.printform.json');
   const totals=await paper(page).locator('[data-v3-id=totals-total]').allTextContents();
@@ -38,9 +41,8 @@ test('yellow rows are rendered across pages; Preview Apply Undo and save/reopen 
   await page.locator('[data-ai-toggle]').click();await page.locator('#ai-prompt').fill(request);await page.locator('[data-ai-send]').click();
   await expect(page.locator('[data-ai-proposal]')).toBeVisible();expect(calls).toHaveLength(2);expect(JSON.stringify(calls[1])).toContain('TABLE_BACKGROUND_INTENT');
   await expect(page.locator('.ai-diff')).toContainText('tableStyle.rowBackground');await expect(page.locator('#revision')).toHaveText('r0');
-  // The bounded inspection already displays an unapplied candidate; only explicit Preview enables Apply.
-  await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  // On wide screens the candidate is previewed and checked automatically; Apply is still an explicit click.
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
   await expectYellow(paper(page).locator('.prowitem_processed'));await expectYellow(paper(page).locator('.prowitem_processed tr'));await expectYellow(paper(page).locator('.prowitem_processed td'));
   await expect(page.locator('#revision')).toHaveText('r0');await page.screenshot({path:info.outputPath('yellow-table-row-preview.png')});
   await page.locator('[data-ai=apply]').click();await ready(page);await expect(page.locator('#revision')).toHaveText('r1 · unsaved template');
@@ -64,7 +66,7 @@ test('yellow rows are rendered across pages; Preview Apply Undo and save/reopen 
   expect(reopened.project.manifest.studioV3).toEqual(authored.project.manifest.studioV3);expect(reopened.project.manifest.title).toBe(authored.project.manifest.title);expect(reopened.project.sampleData).toEqual(authored.project.sampleData);
 });
 test('table selection permits row fill; manual property clearing restores existing stripes',async({page})=>{
-  await mock(page,[fill]);await page.locator('#left-panel [data-select=items]').click();await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
+  await mock(page,[fill]);await page.locator('#left-panel [data-select=items]').click();await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await page.locator('#ai-prompt').fill(request);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
   await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await ready(page);
   await expectYellow(paper(page).locator('.prowitem_processed tr'));await page.locator('[data-ai=close]').click();
@@ -82,15 +84,14 @@ test('padding-only and wrong-color results are repaired before a natural yellow-
  await expect(page.locator('[data-ai-proposal]')).toBeVisible();expect(calls).toHaveLength(3);
  expect(JSON.stringify(calls[1])).toContain('TABLE_BACKGROUND_INTENT');expect(JSON.stringify(calls[2])).toContain('TABLE_BACKGROUND_INTENT');
  await expect(page.locator('.ai-diff')).toContainText('tableStyle.rowBackground');await expect(page.locator('.ai-diff')).not.toContainText('padding');
- await expect(page.locator('[data-ai=apply]')).toBeDisabled();await expect(page.locator('#revision')).toHaveText('r0');
- await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+ await expect(page.locator('[data-ai=apply]')).toBeEnabled();await expect(page.locator('#revision')).toHaveText('r0');
  await expectYellow(paper(page).locator('.prowitem_processed td'));await page.locator('[data-ai=apply]').click();await ready(page);
  await expect(page.locator('#revision')).toHaveText('r1 · unsaved template');await expectYellow(paper(page).locator('.prowitem_processed td'));
 });
 test('comments-only table requests reject unrelated field styling before previewing the requested fill',async({page})=>{
  const unrelated={kind:'proposal',summary:'Made data rows yellow',operations:[{type:'set_field',target:'items-description',patch:{valueStyle:{fontSize:12}}}]};
  const calls=await mock(page,[unrelated,fill]);await page.locator('#left-panel [data-select=items]').click();await page.locator('#left-panel [data-ai-add]').click();
- await page.locator('#ai-scope').selectOption('selected');await page.getByLabel('Comment for items',{exact:true}).fill('Make this background yellow');
+ await page.getByLabel('Comment for items',{exact:true}).fill('Make this background yellow');
  await expect(page.locator('#ai-prompt')).toHaveValue('');await page.locator('[data-ai-send]').click();
  await expect(page.locator('[data-ai-proposal]')).toBeVisible();expect(calls).toHaveLength(2);expect(JSON.stringify(calls[1])).toContain('TABLE_BACKGROUND_INTENT');
  await expect(page.locator('.ai-diff')).toContainText('tableStyle.rowBackground');await expect(page.locator('#revision')).toHaveText('r0');

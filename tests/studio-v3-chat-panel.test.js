@@ -90,7 +90,79 @@ it('reveals the complete input group on prompt or Send focus without sending or 
  for(const selector of ['#ai-prompt','[data-ai-send]'])panel.node(selector).getBoundingClientRect=()=>({top:280,bottom:350});
  panel.node('#ai-prompt').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));
  expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(input.scrollIntoView).toHaveBeenLastCalledWith({block:'nearest',inline:'nearest'});
- panel.node('#ai-scope').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').getBoundingClientRect=()=>({top:200,bottom:240});panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(calls()).toBe(0);
+ panel.node('[data-prompt]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').getBoundingClientRect=()=>({top:200,bottom:240});panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(calls()).toBe(0);
+});
+it('previews the unapplied candidate automatically on wide screens, leaving Apply explicit',async()=> {
+  const {panel}=setup();await panel.send();
+  expect(panel.proposal).toBeTruthy();expect(panel.checked).toBe(true);expect(panel.viewing).toBe(true);
+  expect(panel.node('[data-ai=apply]').disabled).toBe(false);
+  expect(panel.node('[data-ai-status]').textContent).toContain('Review the paper preview, then Apply.');
+  expect(panel.getBus().revision).toBe(0);
+});
+it('keeps Preview manual on narrow screens where it reveals the full-screen paper',async()=> {
+  const width=window.innerWidth;
+  try {
+    window.innerWidth=600;const {panel}=setup();await panel.send();
+    expect(panel.checked).toBe(false);expect(panel.node('[data-ai=apply]').disabled).toBe(true);
+    expect(panel.node('[data-ai-status]').textContent).toContain('Preview before Apply.');
+    await panel.preview();expect(panel.checked).toBe(true);expect(panel.getBus().revision).toBe(0);
+  } finally { window.innerWidth=width; }
+});
+const gatewayWith=(aliases,planned=[])=>({clear:()=>{},clearSession:()=>{},discover:async()=>aliases,plan:async alias=> {planned.push(alias);return {text:JSON.stringify({kind:'answer',message:'ok'})};}});
+const chooseModel=(panel,alias)=> {const select=panel.node('#ai-model');panel.setModels(['demo-auto',alias]);select.value=alias;select.dispatchEvent(new Event('input',{bubbles:true}));};
+const askAgain=panel=> {panel.node('#ai-prompt').value='Use navy accents.';panel.share();};
+it('adapts an untouched default model to what the gateway offers',async()=> {
+  const planned=[];const {panel}=setup({transport:gatewayWith(['demo-openai-mini','demo-groq'],planned)});
+  expect(panel.node('#ai-model').value).toBe('demo-auto');
+  await panel.send();
+  expect(planned).toEqual(['demo-openai-mini']);expect(panel.node('#ai-model').value).toBe('demo-openai-mini');
+  expect([...panel.node('#ai-model').options].map(o=>o.value)).toEqual(['demo-openai-mini','demo-groq']);
+  expect(panel.node('[data-ai-status]').textContent).toContain('demo-openai-mini');
+});
+it('keeps the routing alias and lists it first when the gateway offers it',async()=> {
+  const planned=[];const {panel}=setup({transport:gatewayWith(['demo-groq','demo-auto'],planned)});
+  await panel.send();expect(planned).toEqual(['demo-auto']);expect([...panel.node('#ai-model').options].map(o=>o.value)).toEqual(['demo-auto','demo-groq']);
+});
+it('never replaces a model the user chose: it stops, refreshes the list, and sends only after a new Send',async()=> {
+  const planned=[],offered=['demo-auto'];const {panel}=setup({transport:{...gatewayWith(offered,planned),discover:async()=>offered}});
+  chooseModel(panel,'demo-groq');expect(panel.modelChosen).toBe(true);
+  await panel.send();
+  expect(planned).toEqual([]);
+  expect(panel.conversation.messages.at(-1).text).toContain('no longer available');
+  expect(panel.node('#ai-model').value).toBe('demo-auto');
+  askAgain(panel);await panel.send();
+  expect(planned).toEqual(['demo-auto']);
+});
+it('treats a restored non-default model as a deliberate choice and never trusts an unsafe one',()=> {
+  const {panel}=setup();const select=panel.node('#ai-model');
+  panel.restoreSnapshot({prompt:'',alias:'demo-groq',messages:[],references:[],open:false});
+  expect(select.value).toBe('demo-groq');expect(panel.modelChosen).toBe(true);
+  panel.restoreSnapshot({prompt:'',alias:'demo-auto',messages:[],references:[],open:false});
+  expect(select.value).toBe('demo-auto');expect(panel.modelChosen).toBe(false);
+  for(const alias of ['private-model','<script>','demo-x"}',undefined,42]) {
+    panel.restoreSnapshot({prompt:'',alias,messages:[],references:[],open:false});
+    expect(select.value).toBe('demo-auto');expect(panel.modelChosen).toBe(false);
+    expect([...select.options].every(o=>/^demo-[a-z0-9-]+$/.test(o.value))).toBe(true);
+  }
+});
+it('keeps progress ticks silent for screen readers but announces phase changes',async()=> {
+  const status=()=>panel.node('[data-ai-status]');
+  const {panel}=setup({transport:{clear:()=>{},clearSession:()=>{},discover:async()=>['demo-auto'],plan:async(alias,request,signal,media,{onProgress})=> {
+    onProgress({chars:0,elapsedMs:0});expect(status().getAttribute('aria-live')).toBe('off');expect(status().textContent).toContain('Waiting for the AI service');
+    onProgress({chars:1204,elapsedMs:6900});expect(status().textContent).toContain('Receiving response · 1,204 characters · 6 s');expect(status().getAttribute('aria-live')).toBe('off');
+    return {text:JSON.stringify({kind:'answer',message:'ok'})}; }}});
+  await panel.send();
+  expect(status().getAttribute('aria-live')).toBe('polite');expect(status().textContent).toContain('Read-only answer');
+});
+it('derives scope from referenced elements instead of a selector',()=>{
+ const {panel}=setup();expect(panel.node('#ai-scope')).toBeNull();
+ expect(panel.scope()).toEqual({mode:'whole'});expect(panel.scopeHint()).toContain('whole form');
+ const original=panel.elementTags;
+ panel.elementTags={snapshot:()=>[{id:'label-customer-bill'}]};
+ expect(panel.scope()).toEqual({mode:'selected',id:'label-customer-bill',ids:['label-customer-bill']});expect(panel.scopeHint()).toContain('1 selected element.');
+ panel.elementTags={snapshot:()=>[{id:'label-customer-bill'},{id:'items-description'}]};
+ expect(panel.scope().ids).toEqual(['label-customer-bill','items-description']);expect(panel.scopeHint()).toContain('2 selected elements.');
+ panel.elementTags=original;
 });
 
 function visualPanel(kind='image') {
@@ -120,7 +192,7 @@ it.each(['image','pdf'])('keeps discovered image permission after token cleanup 
 it('fresh capability revocation blocks attached pixels before any inference request',async()=>{
  const {panel,calls,state}=visualPanel();await panel.discover();state.enabled=false;await panel.send();
  expect(calls.some(c=>c.url.endsWith('/responses') || c.url.endsWith('/chat/completions'))).toBe(false);
- expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(panel.node('[data-ai-status]').textContent).toContain('Image analysis is unavailable');expect(panel.getBus().revision).toBe(0);
+ expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(panel.conversation.messages.at(-1).text).toContain('Image analysis is unavailable');expect(panel.getBus().revision).toBe(0);
 });
 it('failed rediscovery closes image Send until a later successful check',async()=>{
  const {panel,transport,state}=visualPanel();await panel.discover();state.status=500;await panel.discover();
@@ -153,5 +225,5 @@ it('unknown support stays blocked after checking, and a revoked grant exposes th
  button.click();await vi.waitFor(()=>expect(panel.busy).toBe(false));expect(button.hidden).toBe(false);expect(panel.node('[data-ai-send]').disabled).toBe(true);
  state.enabled=true;button.click();await vi.waitFor(()=>expect(button.hidden).toBe(true));state.enabled=false;await panel.send();
  expect(button.hidden).toBe(false);expect(button.disabled).toBe(false);expect(panel.node('[data-ai-send]').disabled).toBe(true);
- expect(panel.node('[data-ai-status]').textContent).toContain('Check image support');expect(calls.every(c=>c.url.endsWith('/session') || c.url.endsWith('/models'))).toBe(true);
+ expect(panel.conversation.messages.at(-1).text).toContain('Check image support');expect(calls.every(c=>c.url.endsWith('/session') || c.url.endsWith('/models'))).toBe(true);
 });

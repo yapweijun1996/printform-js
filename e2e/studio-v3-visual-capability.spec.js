@@ -1,7 +1,9 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
+import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
+import { clickPaper } from './studio-v3-paper-click.js';
 import {syntheticPng} from './fixtures/reference-documents.js';
 import {rasterPdf} from './fixtures/raster-reference-documents.js';
-test.use({serviceWorkers:'block'});test.setTimeout(90000);
+test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
 const label={kind:'proposal',summary:'Style only the selected label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};
@@ -17,8 +19,8 @@ async function provider(page,{reply=label,hold=false,revoke=false}={}) {
  });return {calls,release};
 }
 async function prepare(page,fixture=syntheticPng()) {
- await paper(page).locator('[data-v3-id=label-customer-ship]').first().click();
- await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
+ await clickPaper(page,paper(page).locator('[data-v3-id=label-customer-ship]').first());
+ await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
  await page.getByText('References · PDF / image',{exact:true}).click();
  if(fixture.mimeType==='application/pdf')await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');
  await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(fixture);
@@ -52,13 +54,13 @@ for(const kind of ['image','scanned-pdf'])test(`verified ${kind} uses bounded Re
 });
 test('fresh discovery revocation blocks image inference after an earlier positive result',async({page})=>{
  const {calls}=await provider(page,{revoke:true});await prepare(page);await page.locator('[data-ai-send]').click();
- await expect(page.locator('[data-ai-status]')).toContainText('Image analysis is unavailable');await expect(page.locator('[data-ai-send]')).toBeDisabled();
+ await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Image analysis is unavailable');await expect(page.locator('[data-ai-send]')).toBeDisabled();
  expect(calls.some(c=>c.path.endsWith('/responses'))).toBe(false);await expect(page.locator('#revision')).toHaveText('r0');
 });
 test('Stop rejects a late visual reply without applying or retaining authority',async({page})=>{
  const pending=await provider(page,{hold:true});await prepare(page);await page.locator('[data-ai-send]').click();
  await expect.poll(()=>pending.calls.filter(c=>c.path.endsWith('/responses')).length).toBe(1);
- await page.locator('[data-ai=cancel]').click();pending.release();await expect(page.locator('[data-ai-status]')).toContainText('Cancelled');
+ await page.locator('[data-ai=cancel]').click();pending.release();await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Cancelled');
  await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');await ready(page);
 });
 for(const invalid of [
@@ -67,7 +69,7 @@ for(const invalid of [
 ])test(`visual input cannot ${invalid.name}`,async({page})=>{
  const total=await paper(page).locator('[data-v3-id=totals-total]').textContent();
  await provider(page,{reply:{kind:'proposal',summary:'Untrusted reference asks for unrelated value mutation',operations:[invalid.operation]}});
- await prepare(page);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-status]')).toContainText(invalid.message);
+ await prepare(page);await page.locator('[data-ai-send]').click();await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText(invalid.message);
  await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');
  expect(await paper(page).locator('[data-v3-id=totals-total]').textContent()).toBe(total);
 });

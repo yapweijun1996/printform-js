@@ -1,9 +1,11 @@
+import { isInference, responsesReply } from './demo-gateway-fixture.js';
 import {test,expect} from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import {upgradeServer,NEXT} from './studio-v3-upgrade-server.js';
 import {newProject} from '../studio-v3/model.js';
 import {saveProject} from '../studio-v3/file-io.js';
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
-async function start(page,server) {page.on('dialog',d=>d.accept());await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
+async function start(page,server) {page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
 async function update(page,server) {
   server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`,{timeout:30000});
   await page.locator('#update-button').click();await page.locator('[data-update-choice=keep]').click();
@@ -71,7 +73,7 @@ test('AI conversation recovers without token or consent and old candidates remai
   try {
     await demoMock(page,path=> {
       calls++;
-      const body=path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:{choices:[{message:{content:JSON.stringify({summary:'Fictional navy proposal',edits:[{target:'style',property:'color',value:'#163a65'}]})},finish_reason:'stop'}]};
+      const body=path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:responsesReply({summary:'Fictional navy proposal',edits:[{target:'style',property:'color',value:'#163a65'}]});
       return {status:path.endsWith('/session')?201:200,body};
     });
     await start(page,server);
@@ -89,7 +91,7 @@ test('pending AI request is cancelled only on confirmed update and never resumes
   const server=await upgradeServer();let release,requests=0;const held=new Promise(resolve=>release=resolve);
   try {
     await demoMock(page,async path=> {
-      if (path.endsWith('/chat/completions')) {requests++;await held;return {status:500,body:{}};}
+      if (isInference(path)) {requests++;await held;return {status:500,body:{}};}
       return {status:path.endsWith('/session')?201:200,body:path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:{data:[{id:'demo-fast'}]}};
     });
     await start(page,server);

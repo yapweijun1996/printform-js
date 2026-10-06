@@ -1,9 +1,13 @@
 import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
-import { createDemoGatewaySession, DEMO_GATEWAY_ENDPOINT } from '../studio-v2/ui/agent-demo-gateway.js';
+import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
+import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
+import { classifyFailure } from './ai-gateway-errors.js';
+import { withTimeout } from './ai-request-timeout.js';
+import { createProgress, readEventStream, readJsonBody } from './ai-response-reader.js';
+import { assertImageParts, buildResponsesBody, responsesResult } from './ai-responses-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
-export const DEMO_ALIASES = ['demo-fast','demo-auto'];
 const assertDispatch = Symbol('assertDemoDispatch');
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
   let imageModels = new Set(), capabilityFacts=[], discoveryGeneration=0;
@@ -12,24 +16,35 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     // Recheck after session acquisition/refresh; keep the guard off the wire.
     const {[assertDispatch]:assertCurrent,...init}=options;
     assertCurrent?.();
-    const response = await fetchImpl(url,init);
-    if (String(url).endsWith('/demo/session') && response.status === 403) throw fail('DEMO_SESSION_FORBIDDEN');
+    let response;
+    try { response = await fetchImpl(url,init); }
+    catch (error) { throw error?.code || ['AbortError','TimeoutError'].includes(error?.name) ? error : fail('DEMO_NETWORK_UNREACHABLE'); }
+    // Session failures are named here; unknown ones fall through to the shared session error.
+    // Model requests are classified in json(), after the session's single 401 refresh.
+    if (String(url).endsWith('/demo/session') && !response.ok) {
+      const code = await classifyFailure(response);
+      if (!['DEMO_REQUEST_FAILED','DEMO_SESSION_EXPIRED'].includes(code)) throw fail(code);
+    }
     return response;
   }});
-  async function json(path, options) {
-    const response = await session.fetch(`${DEMO_GATEWAY_ENDPOINT}/${path}`,options);
-    if (!response.ok) throw fail(response.status === 401 ? 'DEMO_SESSION_EXPIRED' : response.status === 429 ? 'DEMO_RATE_LIMIT' : 'DEMO_REQUEST_FAILED');
-    const reader = response.body.getReader(), decoder = new TextDecoder();
-    let source = '';
+  // One gateway request with its own cap: session acquisition, the single 401 refresh and the body read.
+  // A timeout is a failure, never a retry; a caller's Stop stays a cancellation.
+  async function json(path, options, timeoutMs, progress) {
+    const guard = withTimeout(options.signal,timeoutMs);
+    try { return await read(path,{...options,signal:guard.signal},progress); }
+    catch (error) { throw guard.timedOut() ? fail('AI_TIMEOUT') : error; }
+    finally { guard.done(); }
+  }
+  // The body is read as an event stream when the gateway answers with one, otherwise as plain JSON.
+  async function read(path, options, progress) {
+    const response = await session.fetch(`${DEMO_CONFIG.apiBase}/${path}`,options);
+    if (!response.ok) throw fail(await classifyFailure(response));
+    const reader = response.body.getReader(), stop = () => reader.cancel().catch(()=>{});
+    options.signal.addEventListener('abort',stop,{once:true});
     try {
-      while (true) {
-        const part = await reader.read(); if (part.done) break;
-        source += decoder.decode(part.value,{stream:true});
-        if (source.length > 64000) throw fail('DEMO_RESPONSE_LIMIT');
-      }
-      source += decoder.decode(); return JSON.parse(source);
-    } catch (error) { if (error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
-    finally { await reader.cancel().catch(()=>{}); }
+      return /text\/event-stream/i.test(response.headers?.get('content-type') || '') ? await readEventStream(reader,options.signal,progress) : await readJsonBody(reader,options.signal);
+    } catch (error) { if (options.signal.aborted || error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
+    finally { options.signal.removeEventListener('abort',stop); await reader.cancel().catch(()=>{}); }
   }
   return {
     clear:() => { resetCapabilities(); session.clear(); },
@@ -39,39 +54,29 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     capabilityDiagnostics:()=>structuredClone(capabilityFacts),
     async discover(signal) {
       const generation=resetCapabilities();
-      const payload = await json('models',{method:'GET',signal});
+      const payload = await json('models',{method:'GET',signal},DEMO_CONFIG.discoverTimeoutMs,createProgress());
       signal?.throwIfAborted();
       if(generation!==discoveryGeneration)throw fail('DEMO_MODEL_UNAVAILABLE');
-      const models = Array.isArray(payload?.data) ? payload.data.filter(model=>DEMO_ALIASES.includes(model?.id)) : [];
-      const aliases = [...new Set(models.map(model=>model.id))];
+      const advertised = Array.isArray(payload?.data) ? payload.data.filter(model=>isDemoAlias(model?.id)) : [];
+      const aliases = [...new Set(advertised.map(model=>model.id))].slice(0,DEMO_CONFIG.maxAliases), models = advertised.filter(model=>aliases.includes(model.id));
       if (!aliases.length) throw fail('DEMO_MODEL_UNAVAILABLE');
       imageModels = new Set(aliases.filter(alias=>models.filter(model=>model.id===alias).every(imageCapability)));
       capabilityFacts=models.map(model=>({alias:model.id,facts:modelCapabilityFacts(model)}));
       return aliases;
     },
-    async plan(alias, request, signal, media = []) {
-      if (!DEMO_ALIASES.includes(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
+    async plan(alias, request, signal, media = [], {onProgress} = {}) {
+      if (!isDemoAlias(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
+      let guard;
       if (media.length) {
         if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
         const generation=discoveryGeneration;
-        const assertImages=()=>{if(generation!==discoveryGeneration || !imageModels.has(alias))throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');};
-        if (media.length > 4 || media.some(part => Object.keys(part).some(key=>!['type','image_url'].includes(key)) || part.type !== 'input_image' || typeof part.image_url !== 'string' || part.image_url.length > 5592508 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(part.image_url)) || JSON.stringify(media).length > 8*1024*1024) throw fail('UNSAFE_PROPOSAL');
-        const body=JSON.stringify({model:alias,stream:false,input:[{role:'system',content:[{type:'input_text',text:CHAT_PROMPT}]},{role:'user',content:[{type:'input_text',text:request},...media]}]});
-        if(new TextEncoder().encode(body).length>12*1024*1024)throw fail('UNSAFE_PROPOSAL');
-        const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:assertImages});
-        if (payload.status !== 'completed' || !Array.isArray(payload.output) || payload.output.some(item=>item.type !== 'message' && item.type !== 'reasoning')) throw fail('MALFORMED_PROPOSAL');
-        const content = payload.output.filter(item=>item.type === 'message').flatMap(item=>item.content || []);
-        if (!content.length || content.some(part=>part.type !== 'output_text' || typeof part.text !== 'string')) throw fail('MALFORMED_PROPOSAL');
-        return {text:content.map(part=>part.text).join(''),usage:{prompt_tokens:payload.usage?.input_tokens,completion_tokens:payload.usage?.output_tokens,total_tokens:payload.usage?.total_tokens}};
+        guard=()=>{if(generation!==discoveryGeneration || !imageModels.has(alias))throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');};
+        assertImageParts(media);
       }
-      // Closed Demo wire contract; local tools and tokens never enter messages.
-      const payload = await json('chat/completions',{
-        method:'POST',signal,headers:{'content-type':'application/json'},
-        body:JSON.stringify({model:alias,stream:false,messages:[{role:'system',content:CHAT_PROMPT},{role:'user',content:request}]})
-      });
-      const choice = payload.choices?.[0], message = choice?.message;
-      if (choice?.finish_reason !== 'stop' || message?.tool_calls || typeof message?.content !== 'string') throw fail('MALFORMED_PROPOSAL');
-      return {text:message.content,usage:payload.usage};
+      // One closed Demo wire contract for text and images; local tools and tokens never enter it.
+      const body = buildResponsesBody({alias,system:CHAT_PROMPT,request,media,stream:media.length ? DEMO_CONFIG.stream.images : DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
+      try { return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs,progress)); }
+      finally { progress.stop(); }
     }
   };
 }

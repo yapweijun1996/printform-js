@@ -1,7 +1,10 @@
-import { test,expect } from '@playwright/test';
+import { reviewCandidate } from './studio-v3-scope.js';
+import { isInference, responsesReply } from './demo-gateway-fixture.js';
+import { test, expect } from './studio-v3-test.js';
+import { keepStructureOpen } from './studio-v3-structure.js';
 // These deterministic transport tests need interception before a worker claims
 // the client; real worker+AI recovery is covered in the upgrade tests.
-test.use({serviceWorkers:'block'});
+
 const proposal = {summary:'Use navy and compact spacing',edits:[{target:'style',property:'color',value:'#163a65'},{target:'style',property:'padding',value:5}]};
 const frame = page=>page.frameLocator('#preview-frame');
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -18,24 +21,24 @@ async function mock(page,{reply = proposal,status = 200,sessionStatus = 201,hold
     else if (path.endsWith('/models')) await fulfill({data:[{id:'demo-fast'},{id:'demo-auto'}]});
     else {
       plans++; if (hold) await hold;
-      await fulfill(unauthorized && plans===1 ? {} : {choices:[{finish_reason:'stop',message:{content:typeof reply === 'string' ? reply : JSON.stringify(reply)}}],usage:{total_tokens:25}},unauthorized && plans===1 ? 401 : status);
+      await fulfill(unauthorized && plans===1 ? {} : responsesReply(reply,{total_tokens:25}),unauthorized && plans===1 ? 401 : status);
     }
   });
   return {calls,sessions:()=>sessions,plans:()=>plans};
 }
-test.beforeEach(async({page})=> { page.on('dialog',d=>d.accept()); await page.goto('/studio-v3/'); await ready(page); });
+test.beforeEach(async({page})=> { page.on('dialog',d=>d.accept()); await keepStructureOpen(page);await page.goto('/studio-v3/'); await ready(page); });
 test('explicit sharing -> actual Harness local proposal -> real preview -> apply -> undo; ERP and print dimensions survive',async({page},info)=> {
   const m = await mock(page); const before = await frame(page).locator('.printform_page').first().evaluate(n=>({width:n.offsetWidth,height:n.offsetHeight}));
   const total = await frame(page).locator('[data-v3-id=totals-total]').textContent();
   await openAI(page); await expect(page.locator('#ai-share')).not.toContainText('ACME');
   expect(m.calls).toHaveLength(0); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await send(page); await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  await expect(page.locator('[data-ai-status]')).toContainText('demo-fast'); await expect(page.locator('#revision')).toHaveText('r0');
+  // The mock offers both aliases, so the default routing alias demo-auto is used and shown.
+  await expect(page.locator('[data-ai-status]')).toContainText('demo-auto'); await expect(page.locator('#ai-model')).toHaveValue('demo-auto'); await expect(page.locator('#revision')).toHaveText('r0');
   expect(m.plans()).toBe(1); expect(m.calls[0].payload).toEqual({project_id:'github-pages'}); expect(m.calls[0].auth).toBe(false);
-  const wire = m.calls.find(c=>c.path.endsWith('/chat/completions')).payload;
-  expect(Object.keys(wire).sort()).toEqual(['messages','model','stream']); expect(JSON.stringify(wire)).not.toContain('ACME');
-  await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-  await page.locator('[data-ai=preview]').click(); await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  const wire = m.calls.find(c=>isInference(c.path)).payload;
+  expect(Object.keys(wire).sort()).toEqual(['input','model','stream']); expect(wire.model).toBe('demo-auto'); expect(JSON.stringify(wire)).not.toContain('ACME');
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
   await expect(page.locator('[data-action=print]')).toBeDisabled(); await expect(page.locator('[data-action=export]')).toBeDisabled();
   expect(await frame(page).locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(22, 58, 101)');
   await page.screenshot({path:info.outputPath('ai-unapplied-preview.png')});
@@ -49,24 +52,34 @@ test('explicit sharing -> actual Harness local proposal -> real preview -> apply
 for (const [name,reply] of [['malformed','hello'],['unsafe',{summary:'Change money',edits:[{target:'data',property:'total',value:0}]}]]) {
   test(`${name} proposal cannot mutate the form`,async({page})=> {
     await mock(page,{reply}); await openAI(page); await send(page);
-    await expect(page.locator('[data-ai-status]')).toContainText('Nothing changed.'); await expect(page.locator('#revision')).toHaveText('r0'); await expect(page.locator('[data-ai-proposal]')).toBeHidden(); await ready(page);
+    await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Nothing changed.'); await expect(page.locator('#revision')).toHaveText('r0'); await expect(page.locator('[data-ai-proposal]')).toBeHidden(); await ready(page);
   });
 }
+test('narrow screens keep Preview manual: Apply waits for the Preview button, which reveals the paper',async({page})=> {
+  await page.setViewportSize({width:390,height:844});
+  await mock(page); await openAI(page); await send(page);
+  await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  await reviewCandidate(page);
+  await expect(page.locator('#ai-preview-banner')).toBeVisible();
+  await page.locator('[data-ai-return]').click();
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  await expect(page.locator('#revision')).toHaveText('r0');
+});
 test('session registration blocker and token expiry retry are explicit',async({page})=> {
   await mock(page,{sessionStatus:403}); await openAI(page); await send(page);
-  await expect(page.locator('[data-ai-status]')).toContainText('HTTP 403'); await expect(page.locator('#revision')).toHaveText('r0');
+  await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('HTTP 403'); await expect(page.locator('#revision')).toHaveText('r0');
   await page.unrouteAll(); const m = await mock(page,{unauthorized:true}); await page.locator('[data-ai=retry]').last().click(); await send(page);
   await expect(page.locator('[data-ai-proposal]')).toBeVisible(); expect(m.sessions()).toBe(2); expect(m.plans()).toBe(2);
 });
 test('cancel and a changed revision reject late responses; replaced form gets fresh disclosure',async({page})=> {
   let release; const hold = new Promise(r=>release=r); const m = await mock(page,{hold});
   await openAI(page); await send(page); await expect.poll(()=>m.plans()).toBe(1);
-  await page.locator('[data-ai=cancel]').click(); release(); await expect(page.locator('[data-ai-status]')).toContainText('Cancelled');
+  await page.locator('[data-ai=cancel]').click(); release(); await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Cancelled');
   await page.locator('[data-ai=retry]').last().click(); await page.unrouteAll(); let release2; const hold2 = new Promise(r=>release2=r); const m2 = await mock(page,{hold:hold2});
   await send(page); await expect.poll(()=>m2.plans()).toBe(1);
   await page.locator('#document-name').fill('Fictional renamed form'); await page.locator('#document-name').press('Tab'); release2();
   await expect(page.locator('#revision')).toContainText('r1'); await expect(page.locator('[data-ai-proposal]')).toBeHidden();
-  await expect(page.locator('[data-ai-status]')).toContainText('Form changed'); await expect(page.locator('#ai-consent')).toHaveCount(0);
+  await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Form changed'); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('[data-action=new]').click(); await page.locator('[data-template=delivery]').click(); await ready(page);
   await expect(page.locator('#ai-share')).not.toContainText('items-amount');
 });

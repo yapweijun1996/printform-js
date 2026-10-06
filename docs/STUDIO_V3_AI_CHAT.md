@@ -6,6 +6,10 @@ or background send is used. Enter sends; Shift+Enter and IME Enter do not.
 Exact initial JSON remains inspectable in Sharing details. If current context
 differs from the displayed request, Send refreshes it and stops before inference.
 
+Edit scope is derived, not chosen: elements added with Add to chat limit the edit to
+those references; with none, the whole form is editable. A proposal that touches
+anything outside the references is rejected (`UNSAFE_SCOPE`).
+
 ## Authoring and questions
 
 Ordinary questions use a closed answer envelope and remain read-only. Font

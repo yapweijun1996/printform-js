@@ -8,7 +8,8 @@ function collectBrowserErrors(page) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+    // Chromium asks for /favicon.ico once per browser process; these pages have none. Not a render error.
+    if (message.type() === "error" && !/\/favicon\.ico$/.test(message.location().url)) errors.push(`console: ${message.text()}`);
   });
   return errors;
 }

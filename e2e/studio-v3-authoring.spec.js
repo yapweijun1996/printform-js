@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { newProject, designOf, compileProject, sampleData } from '../studio-v3/model.js';
 import { saveProject } from '../studio-v3/file-io.js';
 import { pageDimensions, contentDimensions } from '../studio-v3/design-authoring.js';
+import { clickPaper } from './studio-v3-paper-click.js';
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 const preview = page => page.frameLocator('#preview-frame');
 async function open(page,project) {
@@ -27,7 +28,7 @@ test('selected customer label gets 12pt bold while the value and supplied amount
   const value=preview(page).locator('[data-v3-id="customer-bill"]').first();
   expect(await label.evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}))).toEqual({font:'16px',weight:'700'});
   expect(await value.evaluate(n=>getComputedStyle(n).fontSize)).toBe('12px');
-  await label.click();
+  await clickPaper(page,label);
   await expect(page.locator('#right-panel .inspector-title')).toContainText('Bill to');
   await expect(preview(page).locator('[data-v3-id="totals-total"]')).toContainText('12,150');
   await page.screenshot({path:info.outputPath('selected-customer-label-12pt-bold.png')});

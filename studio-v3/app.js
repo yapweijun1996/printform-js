@@ -61,7 +61,7 @@ const paper = new PaperPreview($('#preview-frame'), (report,view) => {
 }, selection => {
   drafts.guard(() => { state.selected = selection.id; goPage(Math.max(0,selection.page),false); renderPanels(); canvas.selectionMade(); }).catch(e=>status(e.message));
 });
-const canvas = new CanvasControls({resize:resizePaper,guard:work => drafts.guard(work),report:status,context:()=>bus,upload:(file,target)=> {const context = bus; ++state.fileReads; return queueEdit(async()=> {const design = await importRasterAsset(context.project,file,target); if (bus !== context) throw new Error('The document changed. Upload the image again.'); await mutate(designOperations(bus.project,design),'embedded image');}).finally(()=>--state.fileReads);}});
+const canvas = new CanvasControls({mode:()=>state.mode,resize:resizePaper,guard:work => drafts.guard(work),report:status,context:()=>bus,upload:(file,target)=> {const context = bus; ++state.fileReads; return queueEdit(async()=> {const design = await importRasterAsset(context.project,file,target); if (bus !== context) throw new Error('The document changed. Upload the image again.'); await mutate(designOperations(bus.project,design),'embedded image');}).finally(()=>--state.fileReads);}});
 const elementTags = new AIElementTags({bus:()=>bus,selection:()=>state.selected,guard:work=>drafts.guard(work),report:status,onChange:()=>ai.contextChanged(true),open:()=> {canvas.close(false); ai.show();},highlight:id=>canvas.highlightElement(paper,id || state.selected),select:id=> {state.selected = id; state.mode = 'design'; renderPanels(); goPage(canvas.elementPage(paper,id)); canvas.highlightElement(paper,id); if (innerWidth <= 900) ai.suspend();}});
 const ai = new AIPanel({bus:()=>bus,selection:()=>state.selected,elementTags,facts:()=>paper.factsFor(bus.project),guard:work=>drafts.guard(work),sync:syncControls,
   preview:async project=> { stopRun(); state.mode = 'design'; renderPanels(); return render(project); },restore:()=>render(),
@@ -93,7 +93,7 @@ function renderPanels() {
   database.render();
   drafts.restore();
   $('#left-panel').scrollTop = leftScroll; $('#right-panel').scrollTop = rightScroll;
-  elementTags.updateAddButtons();
+  elementTags.updateAddButtons(); canvas.syncStructure();
 }
 function updateQuality() {
   const current = $('#right-panel details.quality-panel');

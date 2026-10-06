@@ -1,6 +1,9 @@
+import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
 import {syntheticDemoTransport} from './synthetic-demo-transport.js';
-import {test,expect} from '@playwright/test';
-test.use({serviceWorkers:'block'});
+import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
+import { keepStructureOpen } from './studio-v3-structure.js';
+import { test, expect } from './studio-v3-test.js';
+
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const answer={kind:'answer',message:'The supplied facts show the current font sizes.'};
 const proposal={kind:'proposal',summary:'Use navy accents',edits:[{target:'style',property:'color',value:'#163a65'}]};
@@ -11,36 +14,36 @@ async function mock(page,replies=[answer]) {
     let body;
     if(path.endsWith('/session'))body={token:'dmo_synthetic123456',expires_in:900};
     else if(path.endsWith('/models'))body={data:[{id:'demo-fast'},{id:'demo-auto'}]};
-    else {requests.push(JSON.parse(route.request().postData()).messages);const value=replies[Math.min(index++,replies.length-1)];body={choices:[{finish_reason:'stop',message:{content:JSON.stringify(value)}}]};}
+    else {requests.push(JSON.parse(route.request().postData()));const value=replies[Math.min(index++,replies.length-1)];body=responsesReply(value);}
     await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(body)});
   });return requests;
 }
 async function send(page,text) {await page.locator('#ai-prompt').fill(text);await page.locator('[data-ai-send]').click();}
-test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await page.goto('/studio-v3/');await ready(page);});
+test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
 test('grounded font Q&A and follow-up proposal form a real conversation with explicit Send payload and one-step Undo',async({page},info)=> {
   const requests=await mock(page,[answer,proposal]);
   const original=await page.frameLocator('#preview-frame').locator('[data-v3-id=totals-total]').textContent();
   await page.locator('[data-ai-toggle]').click();await send(page,'What are the current font sizes?');
   const log=page.locator('[data-ai-log]');await expect(log).toContainText('header-title · title: 18 pt');await expect(log).toContainText('header-company · value: 12 pt');await expect(log).toContainText('items · column heading: 8 pt');await expect(log).toContainText('computed styles');
   await expect(page.locator('#revision')).toHaveText('r0');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
-  const context=JSON.parse(requests[0][1].content);expect(context.typography.length).toBeGreaterThan(5);expect(context.typography.every(f=>Object.keys(f).sort().join(',')==='id,pt,role')).toBe(true);expect(JSON.stringify(context)).not.toMatch(/ACME|125|sampleData/);
+  const context=JSON.parse(userText(requests[0]));expect(context.typography.length).toBeGreaterThan(5);expect(context.typography.every(f=>Object.keys(f).sort().join(',')==='id,pt,role')).toBe(true);expect(JSON.stringify(context)).not.toMatch(/ACME|125|sampleData/);
   await page.locator('#ai-prompt').fill('Use navy accents #163a65 instead.');await expect(page.locator('#ai-share')).toContainText('What are the current font sizes?');await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('#ai-prompt').press('Enter');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  expect(JSON.parse(requests[1][1].content).conversation).toHaveLength(2);await expect(page.locator('.ai-diff')).toContainText('#1763dc');await expect(page.locator('.ai-diff')).toContainText('#163a65');
+  expect(JSON.parse(userText(requests[1])).conversation).toHaveLength(2);await expect(page.locator('.ai-diff')).toContainText('#1763dc');await expect(page.locator('.ai-diff')).toContainText('#163a65');
   await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.screenshot({path:info.outputPath('chat-desktop-preview.png')});
   await page.locator('[data-ai=apply]').click();await ready(page);await expect(log).toContainText('Applied to the form');await expect(page.locator('[data-ai=undo]')).toBeVisible();
   await page.locator('[data-ai=undo]').click();await ready(page);expect(await page.frameLocator('#preview-frame').locator('[data-v3-id=totals-total]').textContent()).toBe(original);
   expect(await page.frameLocator('#preview-frame').locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(23, 99, 220)');
 });
-test('selected scope rejects global styles, exposes live selection and expires an earlier card on selection navigation',async({page})=> {
-  await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
-  await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: items');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-status]')).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
-  await page.locator('#ai-scope').selectOption('whole');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: customer');await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
+test('a referenced scope rejects global styles, the hint tracks scope and an earlier card expires on selection navigation',async({page})=> {
+  await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
+  await expect(page.locator('[data-ai-scope]')).toContainText('Editing 1 selected element');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
+  await limitToWholeForm(page);await expect(page.locator('[data-ai-scope]')).toContainText('whole form');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
   await page.locator('#left-panel [data-select=items]').click();await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
 });
 test('font answers use selected field facts, remain plain text and do not treat Shift+Enter or IME Enter as Send',async({page})=> {
-  const requests=await mock(page,[{kind:'answer',message:'<img src=x onerror=alert(1)>'}]);await page.locator('#left-panel [data-select=header-company]').click();await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
+  const requests=await mock(page,[{kind:'answer',message:'<img src=x onerror=alert(1)>'}]);await page.locator('#left-panel [data-select=header-company]').click();await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await page.locator('#ai-prompt').fill('What is the current font size?');await page.locator('#ai-prompt').press('Shift+Enter');expect(requests).toHaveLength(0);
   await page.locator('#ai-prompt').evaluate(n=>n.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true})));expect(requests).toHaveLength(0);
   await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-log]')).toContainText('header-company · value: 12 pt');await expect(page.locator('[data-ai-log] img')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');
@@ -65,15 +68,15 @@ test('explicit Clear removes conversation without changing the template or sendi
 });
 
 test('timeout stops a held request and retry requires another deliberate Send',async({page})=> {
-  await page.addInitScript(()=> {const original=window.setTimeout;window.setTimeout=(callback,ms,...args)=>original(callback,ms===60000?30:ms,...args);});await page.reload();await ready(page);
+  await page.addInitScript(()=> {const original=window.setTimeout;window.setTimeout=(callback,ms,...args)=>original(callback,ms>=60000?30:ms,...args);});await page.reload();await ready(page);
   let release;const held=new Promise(r=>release=r);await page.route('https://gpt.yapweijun1996.com/demo/**',async route=> {
-    const path=new URL(route.request().url()).pathname;if(path.endsWith('/chat/completions'))await held;
-    await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:{choices:[]})}).catch(()=>{});
+    const path=new URL(route.request().url()).pathname;if(isInference(path))await held;
+    await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:{output:[]})}).catch(()=>{});
   });
-  try {await page.locator('[data-ai-toggle]').click();await send(page,'Fictional held request');await expect(page.locator('[data-ai-status]')).toContainText('timed out');await expect(page.locator('#revision')).toHaveText('r0');await page.locator('[data-ai=retry]').last().click();await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('#ai-consent')).toHaveCount(0);}finally{release();}
+  try {await page.locator('[data-ai-toggle]').click();await send(page,'Fictional held request');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('timed out');await expect(page.locator('#revision')).toHaveText('r0');await page.locator('[data-ai=retry]').last().click();await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('#ai-consent')).toHaveCount(0);}finally{release();}
 });
 test.describe('normal browser context',()=> {
-  test.use({serviceWorkers:'allow'});
+  test.use({blockServiceWorkers:false});
   test('read-only chat and print renders have no page errors with normal service-worker permissions',async({page,context})=> {
     const errors=[];page.on('pageerror',e=>errors.push(e.message));const transport=await syntheticDemoTransport(context,[answer,proposal]);await page.reload();await ready(page);await page.locator('[data-ai-toggle]').click();await send(page,'What are the current font sizes?');await expect(page.locator('[data-ai-status]')).toContainText('Read-only answer');
     await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await ready(page);await page.locator('[data-ai=undo]').click();await ready(page);expect(errors).toEqual([]);expect(transport.requests).toHaveLength(2);expect(transport.unexpected).toEqual([]);
