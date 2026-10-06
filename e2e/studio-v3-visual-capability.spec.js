@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
+import { clickPaper } from './studio-v3-paper-click.js';
 import {syntheticPng} from './fixtures/reference-documents.js';
 import {rasterPdf} from './fixtures/raster-reference-documents.js';
 test.use({serviceWorkers:'block'});test.setTimeout(90000);
@@ -18,7 +19,7 @@ async function provider(page,{reply=label,hold=false,revoke=false}={}) {
  });return {calls,release};
 }
 async function prepare(page,fixture=syntheticPng()) {
- await paper(page).locator('[data-v3-id=label-customer-ship]').first().click();
+ await clickPaper(page,paper(page).locator('[data-v3-id=label-customer-ship]').first());
  await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
  await page.getByText('References · PDF / image',{exact:true}).click();
  if(fixture.mimeType==='application/pdf')await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');

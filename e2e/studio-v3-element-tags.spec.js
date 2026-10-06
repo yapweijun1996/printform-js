@@ -1,6 +1,7 @@
 import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
 import { test, expect } from '@playwright/test';
 import { keepStructureOpen } from './studio-v3-structure.js';
+import { clickPaper } from './studio-v3-paper-click.js';
 test.use({serviceWorkers:'block'});
 const frame = page=>page.frameLocator('#preview-frame');
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -23,7 +24,7 @@ test.beforeEach(async({page})=> { page.on('dialog',dialog=>dialog.accept()); awa
 
 test('canvas label and structure value become removable composer references; only explicit Send transmits comments',async({page},info)=> {
   const calls = await mock(page), errors = []; page.on('pageerror',error=>errors.push(error.message));
-  await frame(page).locator('[data-v3-id="label-customer-bill"]').first().click();
+  await clickPaper(page,frame(page).locator('[data-v3-id="label-customer-bill"]').first());
   await page.locator('.paper-toolbar [data-ai-add]').click();
   await expect(page.locator('[data-ai-tag-id="label-customer-bill"]')).toBeVisible();
   await page.getByLabel('Comment for label-customer-bill',{exact:true}).fill('Make this label 12pt, bold and navy.');
@@ -78,7 +79,7 @@ test('deleted and cross-document references never target a neighboring field wit
 });
 test('mobile Add from the inspector opens the composer and clicking a chip returns to the highlighted paper',async({page},info)=> {
   const calls = await mock(page); await page.setViewportSize({width:390,height:844});
-  await frame(page).locator('[data-v3-id="label-customer-bill"]').first().click();
+  await clickPaper(page,frame(page).locator('[data-v3-id="label-customer-bill"]').first());
   await expect(page.locator('body')).toHaveClass(/drawer-properties/);
   await page.locator('#right-panel [data-ai-add]').click();
   await expect(page.locator('#ai-panel')).toBeVisible();
@@ -106,7 +107,7 @@ test('plain-language selected label request supplies its exact target and stays 
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
  });
  const valueBefore=await frame(page).locator('[data-v3-id=customer-ship]').first().textContent();
- await frame(page).locator('[data-v3-id=label-customer-ship]').first().click();await page.locator('.paper-toolbar [data-ai-add]').click();
+ await clickPaper(page,frame(page).locator('[data-v3-id=label-customer-ship]').first());await page.locator('.paper-toolbar [data-ai-add]').click();
  await page.locator('#ai-prompt').fill(wording);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();
  await expect(frame(page).locator('[data-v3-id=label-customer-ship]').first()).toHaveCSS('font-size','16px');await expect(frame(page).locator('[data-v3-id=label-customer-ship]').first()).toHaveCSS('font-weight','700');
