@@ -145,6 +145,15 @@ it('treats a restored non-default model as a deliberate choice and never trusts 
     expect([...select.options].every(o=>/^demo-[a-z0-9-]+$/.test(o.value))).toBe(true);
   }
 });
+it('keeps progress ticks silent for screen readers but announces phase changes',async()=> {
+  const status=()=>panel.node('[data-ai-status]');
+  const {panel}=setup({transport:{clear:()=>{},clearSession:()=>{},discover:async()=>['demo-auto'],plan:async(alias,request,signal,media,{onProgress})=> {
+    onProgress({chars:0,elapsedMs:0});expect(status().getAttribute('aria-live')).toBe('off');expect(status().textContent).toContain('Waiting for the AI service');
+    onProgress({chars:1204,elapsedMs:6900});expect(status().textContent).toContain('Receiving response · 1,204 characters · 6 s');expect(status().getAttribute('aria-live')).toBe('off');
+    return {text:JSON.stringify({kind:'answer',message:'ok'})}; }}});
+  await panel.send();
+  expect(status().getAttribute('aria-live')).toBe('polite');expect(status().textContent).toContain('Read-only answer');
+});
 it('derives scope from referenced elements instead of a selector',()=>{
  const {panel}=setup();expect(panel.node('#ai-scope')).toBeNull();
  expect(panel.scope()).toEqual({mode:'whole'});expect(panel.scopeHint()).toContain('whole form');

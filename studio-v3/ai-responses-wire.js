@@ -8,9 +8,9 @@ export function assertImageParts(media) {
     || typeof part.image_url !== 'string' || part.image_url.length > IMAGE.maxUrlChars || !IMAGE_URL.test(part.image_url);
   if (media.length > IMAGE.maxCount || media.some(bad) || JSON.stringify(media).length > IMAGE.maxTotalBytes) throw fail('UNSAFE_PROPOSAL');
 }
-// One closed request shape for text and image requests: no tools, no streaming, no Origin.
-export function buildResponsesBody({alias, system, request, media = []}) {
-  const body = JSON.stringify({model:alias,stream:false,input:[
+// One closed request shape for text and image requests: no tools, no Origin.
+export function buildResponsesBody({alias, system, request, media = [], stream = false}) {
+  const body = JSON.stringify({model:alias,stream,input:[
     {role:'system',content:[{type:'input_text',text:system}]},
     {role:'user',content:[{type:'input_text',text:request},...media]}
   ]});

@@ -3,6 +3,7 @@ import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js'
 import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
 import { withTimeout } from './ai-request-timeout.js';
+import { createProgress, readEventStream, readJsonBody } from './ai-response-reader.js';
 import { assertImageParts, buildResponsesBody, responsesResult } from './ai-responses-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
@@ -28,26 +29,20 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
   }});
   // One gateway request with its own cap: session acquisition, the single 401 refresh and the body read.
   // A timeout is a failure, never a retry; a caller's Stop stays a cancellation.
-  async function json(path, options, timeoutMs) {
+  async function json(path, options, timeoutMs, progress) {
     const guard = withTimeout(options.signal,timeoutMs);
-    try { return await read(path,{...options,signal:guard.signal}); }
+    try { return await read(path,{...options,signal:guard.signal},progress); }
     catch (error) { throw guard.timedOut() ? fail('AI_TIMEOUT') : error; }
     finally { guard.done(); }
   }
-  async function read(path, options) {
+  // The body is read as an event stream when the gateway answers with one, otherwise as plain JSON.
+  async function read(path, options, progress) {
     const response = await session.fetch(`${DEMO_CONFIG.apiBase}/${path}`,options);
     if (!response.ok) throw fail(await classifyFailure(response));
-    const reader = response.body.getReader(), decoder = new TextDecoder(), stop = () => reader.cancel().catch(()=>{});
+    const reader = response.body.getReader(), stop = () => reader.cancel().catch(()=>{});
     options.signal.addEventListener('abort',stop,{once:true});
-    let source = '';
     try {
-      while (true) {
-        const part = await reader.read(); if (part.done) break;
-        source += decoder.decode(part.value,{stream:true});
-        if (source.length > DEMO_CONFIG.responseLimitChars) throw fail('DEMO_RESPONSE_LIMIT');
-      }
-      options.signal.throwIfAborted();
-      source += decoder.decode(); return JSON.parse(source);
+      return /text\/event-stream/i.test(response.headers?.get('content-type') || '') ? await readEventStream(reader,options.signal,progress) : await readJsonBody(reader,options.signal);
     } catch (error) { if (options.signal.aborted || error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
     finally { options.signal.removeEventListener('abort',stop); await reader.cancel().catch(()=>{}); }
   }
@@ -59,7 +54,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     capabilityDiagnostics:()=>structuredClone(capabilityFacts),
     async discover(signal) {
       const generation=resetCapabilities();
-      const payload = await json('models',{method:'GET',signal},DEMO_CONFIG.discoverTimeoutMs);
+      const payload = await json('models',{method:'GET',signal},DEMO_CONFIG.discoverTimeoutMs,createProgress());
       signal?.throwIfAborted();
       if(generation!==discoveryGeneration)throw fail('DEMO_MODEL_UNAVAILABLE');
       const advertised = Array.isArray(payload?.data) ? payload.data.filter(model=>isDemoAlias(model?.id)) : [];
@@ -69,7 +64,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       capabilityFacts=models.map(model=>({alias:model.id,facts:modelCapabilityFacts(model)}));
       return aliases;
     },
-    async plan(alias, request, signal, media = []) {
+    async plan(alias, request, signal, media = [], {onProgress} = {}) {
       if (!isDemoAlias(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
       let guard;
       if (media.length) {
@@ -79,8 +74,9 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
         assertImageParts(media);
       }
       // One closed Demo wire contract for text and images; local tools and tokens never enter it.
-      const body = buildResponsesBody({alias,system:CHAT_PROMPT,request,media});
-      return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs));
+      const body = buildResponsesBody({alias,system:CHAT_PROMPT,request,media,stream:media.length ? DEMO_CONFIG.stream.images : DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
+      try { return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs,progress)); }
+      finally { progress.stop(); }
     }
   };
 }

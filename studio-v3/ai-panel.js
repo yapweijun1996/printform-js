@@ -38,7 +38,8 @@ export class AIPanel {
     this.referenceFiles = new AIReferenceFiles(this); setupPanelLayout(this); this.update();
   }
   node(selector) { return this.root.querySelector(selector); }
-  message(text) { this.node('[data-ai-status]').textContent = text; }
+  // Progress ticks twice a second; they stay silent for screen readers, phase changes are announced.
+  message(text,{progress = false} = {}) { const status = this.node('[data-ai-status]'); status.setAttribute('aria-live',progress ? 'off' : 'polite'); status.textContent = text; }
   error(error) { this.message(errorMessage(error)); }
   // Scope is derived, never chosen: referenced elements limit the edit, otherwise the whole form is editable.
   scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return ids.length ? {mode:'selected',id:ids[0],ids} : {mode:'whole'}; }
@@ -139,7 +140,7 @@ export class AIPanel {
           assertContext(); this.viewing = true; this.update(); this.sync();
           const report = await this.renderPreview(proposal.candidate); assertContext(); signal.throwIfAborted();
           return {report,quality:inspectProject(proposal.candidate,report)};
-        },onPhase:text=> { if (id === this.generation) this.message(`${alias} · ${text}`); }});
+        },onPhase:(text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); }});
       if (id !== this.generation) return;
       assertProposalCurrent(this.getBus(),{bus,revision,baseDesign});
       if (epoch !== this.epoch || selection !== this.getSelection() || scope !== JSON.stringify(this.scope())) throw fail('STALE_PROPOSAL');

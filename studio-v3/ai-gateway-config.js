@@ -27,6 +27,10 @@ export const DEMO_CONFIG = Object.freeze({
   aliasPattern: /^demo-[a-z0-9][a-z0-9-]{0,39}$/,
   maxAliases: 8,
   responseLimitChars: 64_000,
+  // Text requests stream (progress only; the envelope is still parsed once complete). Images stay
+  // non-streaming until streamed images are verified. A stream repeats the response configuration in
+  // several events, so it gets a larger limit than a plain body.
+  stream: Object.freeze({text: true, images: false, limitChars: 256_000, progressIntervalMs: 500}),
   maxBodyBytes: 12 * MIB,
   errorBodyLimitChars: 8_192,
   image: Object.freeze({

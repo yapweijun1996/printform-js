@@ -1,5 +1,6 @@
 import { AgentHarness, MemorySessionRepo, BACKGROUND_CONTEXT, withAbortSignal } from '@earendil-works/pi-agent-core';
 import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { progressText } from './ai-response-reader.js';
 import { createModels, createProvider, createAssistantMessageEventStream, Type } from '@earendil-works/pi-ai';
 import { fail } from './ai-edits.js';
 import { parseChatReply } from './ai-chat-protocol.js';
@@ -20,7 +21,7 @@ async function runStepHarness({transport,alias,request,project,signal,chat={},me
         if (++calls > 1) throw fail('AI_STEP_LIMIT');
         assertContext();
         onPhase('Requesting layout suggestion');
-        const reply = await transport.plan(alias,request,options.signal || signal,media);
+        const reply = await transport.plan(alias,request,options.signal || signal,media,{onProgress:progress=>onPhase(progressText(progress),{progress:true})});
         envelope = reply.text;
         signal.throwIfAborted();
         const parsed = parseChatReply(reply.text,project,chat);

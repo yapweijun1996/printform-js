@@ -55,8 +55,12 @@ The owner-selected GPT Server Demo is the only v3 provider. Existing
 `github-pages` registration is reused: browser CORS supplies the exact Origin;
 `POST /demo/session` issues a short-lived memory-only token, `/demo/v1/models`
 supplies the model aliases (only `demo-` aliases of a safe shape, at most eight; `demo-auto`
-is the default and is listed first), and `/demo/v1/responses` (text and image requests alike,
-non-streaming) returns `output_text` carrying a JSON envelope per bounded step. Failures
+is the default and is listed first), and `/demo/v1/responses` returns `output_text` carrying a JSON envelope per bounded step.
+Text requests stream server-sent events, but only to show progress ("Waiting for the AI
+service", then received characters and seconds, silent for screen readers): the envelope is
+parsed once, from the `response.completed` event, by the same rules as a plain body. Image
+requests are not streamed until streamed images are verified, and a JSON answer to a stream
+request is read as a plain body. Reasoning is opaque (encrypted) and never shown. Failures
 are named from the HTTP status and the gateway's own code (network unreachable, origin not
 registered, rate limit, service disabled, no provider available, slow gateway) and each
 has its own message. Every gateway request has its own timeout (15 s for model discovery,
