@@ -3,6 +3,7 @@ import { assertTrustedContent } from '../studio-v2/core/content-security.js';
 import { bindingValidation, validatePaperReport } from './validation.js';
 import { runtimeSources } from './runtime-assets.js';
 import { measureTypography, validateTypography } from './ai-typography.js';
+import { PreviewLaunch } from './preview-launch.js';
 
 const SOURCE = 'printform-studio-v3-preview';
 const NONCE = 'cHJpbnRmb3JtLXN0dWRpby12Mw==';
@@ -12,6 +13,7 @@ function bridge(token) {
     const send = (type,payload) => parent.postMessage({source:'${SOURCE}',token,type,payload},'*');
     const measureTypography = ${measureTypography.toString()};
     let pages = [];
+    send('hello');
     function select(id) {
       document.querySelectorAll('[data-v3-selection]').forEach(n => n.remove());
       document.querySelectorAll('[data-v3-id]').forEach(n => { n.style.outline = ''; });
@@ -46,13 +48,14 @@ function bridge(token) {
 
 export class PaperPreview {
   constructor(frame, onReport, onSelect) {
-    this.frame = frame; this.token = 0; this.onReport = onReport; this.onSelect = onSelect; this.pages = []; this.committedFacts = null;
+    this.frame = frame; this.token = 0; this.onReport = onReport; this.onSelect = onSelect; this.pages = []; this.committedFacts = null; this.launch = new PreviewLaunch(frame);
     window.addEventListener('message', e => {
       const d = e.data;
       if (e.source !== frame.contentWindow || d?.source !== SOURCE || d.token !== this.token) return;
+      if (d.type === 'hello') this.launch.hello();
       if (d.type === 'selection') onSelect(d.payload);
-      if (d.type === 'rendered') {
-        this.pages = d.payload.pages; this.height = d.payload.height;
+      if (d.type === 'rendered' && !this.reported) {
+        this.reported = true; this.pages = d.payload.pages; this.height = d.payload.height;
         if (this.measurement.committed && validatePaperReport(d.payload.report,this.renderedProject).status === 'ready') this.committedFacts = {...this.measurement,facts:validateTypography(d.payload.typography)};
         frame.style.height = `${this.height}px`;
         this.finish(validatePaperReport(d.payload.report,this.renderedProject), d.payload);
@@ -60,14 +63,14 @@ export class PaperPreview {
       if (d.type === 'error') this.finish({status:'blocked',validation:{errors:[{code:'RENDER_ERROR',message:d.payload.message}],warnings:[]}}, {});
     });
   }
-  cancel() { this.token += 1; clearTimeout(this.timer); this.resolve?.({status:'superseded'}); this.resolve = null; }
+  cancel() { this.token += 1; this.launch.stop(); this.resolve?.({status:'superseded'}); this.resolve = null; }
   finish(report, view) {
-    clearTimeout(this.timer); this.resolve?.(report); this.resolve = null;
+    this.launch.stop(); this.resolve?.(report); this.resolve = null;
     this.onReport(report, view);
   }
   async render(project,{committed=false}={}) {
     this.cancel();
-    const token = this.token; this.renderedProject = project; this.measurement = {committed,documentId:project.manifest.documentId,revision:project.revision,design:JSON.stringify(project.manifest.studioV3)};
+    const token = this.token; this.reported = false; this.renderedProject = project; this.measurement = {committed,documentId:project.manifest.documentId,revision:project.revision,design:JSON.stringify(project.manifest.studioV3)};
     if (committed) this.committedFacts = null;
     const resultPromise = new Promise(resolve => { this.resolve = resolve; });
     try {
@@ -82,11 +85,8 @@ export class PaperPreview {
       const result = await createStandaloneHtml(project, {runtimeSources:await runtimeSources(),requireTrusted:false,networkDisabled:true,scriptNonce:NONCE});
       if (token !== this.token) return {status:'superseded'};
       const at = result.html.lastIndexOf('</body>');
-      this.frame.srcdoc = '';
-      this.frame.srcdoc = result.html.slice(0, at) + bridge(token) + result.html.slice(at);
-      this.timer = setTimeout(() => {
-        if (token === this.token) this.finish({status:'blocked',validation:{errors:[{code:'RENDER_TIMEOUT',message:'Rendering timed out. Check data size and retry.'}],warnings:[]}}, {});
-      }, 25000);
+      const html = result.html.slice(0, at) + bridge(token) + result.html.slice(at);
+      this.launch.start(html, {onFailure: error => { if (token === this.token) this.finish({status:'blocked',validation:{errors:[error],warnings:[]}}, {}); }});
     } catch (e) {
       if (token === this.token) {
         this.frame.srcdoc = '<!doctype html><p style="font:16px Arial;padding:36px">Unable to render this document.</p>';

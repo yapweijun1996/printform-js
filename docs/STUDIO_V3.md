@@ -123,6 +123,14 @@ opaque sandbox origin, and disallows network access. Host messages validate
 the sender window and a monotonic render token. Superseded renders cannot
 replace current reports. A new document invalidates queued edits and file reads.
 
+The document is assigned to the frame once, never through an empty reset. A
+busy browser can drop a `srcdoc` navigation, leaving an empty document that
+never reports, so the bridge sends `hello` on start. Without it within 4 s the
+document is assigned again (twice in total), after which the render is blocked
+as `PREVIEW_NOT_STARTED`. A started preview that still fails to finish within
+25 s is blocked as `RENDER_TIMEOUT`. A repeated `rendered` message for one
+token is ignored. All timings live in `studio-v3/preview-launch.js`.
+
 Amounts, rates, taxes, rounding and totals are supplied by the ERP. `/summary`
 and item `rate`/`amount` bindings intentionally avoid the v2 sample-specific
 financial rules. Studio validates presence/types and formats values; it does
