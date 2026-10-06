@@ -68,7 +68,7 @@ test('explicit Clear removes conversation without changing the template or sendi
 });
 
 test('timeout stops a held request and retry requires another deliberate Send',async({page})=> {
-  await page.addInitScript(()=> {const original=window.setTimeout;window.setTimeout=(callback,ms,...args)=>original(callback,ms===60000?30:ms,...args);});await page.reload();await ready(page);
+  await page.addInitScript(()=> {const original=window.setTimeout;window.setTimeout=(callback,ms,...args)=>original(callback,ms>=60000?30:ms,...args);});await page.reload();await ready(page);
   let release;const held=new Promise(r=>release=r);await page.route('https://gpt.yapweijun1996.com/demo/**',async route=> {
     const path=new URL(route.request().url()).pathname;if(isInference(path))await held;
     await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:{output:[]})}).catch(()=>{});

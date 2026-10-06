@@ -2,6 +2,7 @@ import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
 import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
 import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
+import { withTimeout } from './ai-request-timeout.js';
 import { assertImageParts, buildResponsesBody, responsesResult } from './ai-responses-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
@@ -25,10 +26,19 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     }
     return response;
   }});
-  async function json(path, options) {
+  // One gateway request with its own cap: session acquisition, the single 401 refresh and the body read.
+  // A timeout is a failure, never a retry; a caller's Stop stays a cancellation.
+  async function json(path, options, timeoutMs) {
+    const guard = withTimeout(options.signal,timeoutMs);
+    try { return await read(path,{...options,signal:guard.signal}); }
+    catch (error) { throw guard.timedOut() ? fail('AI_TIMEOUT') : error; }
+    finally { guard.done(); }
+  }
+  async function read(path, options) {
     const response = await session.fetch(`${DEMO_CONFIG.apiBase}/${path}`,options);
     if (!response.ok) throw fail(await classifyFailure(response));
-    const reader = response.body.getReader(), decoder = new TextDecoder();
+    const reader = response.body.getReader(), decoder = new TextDecoder(), stop = () => reader.cancel().catch(()=>{});
+    options.signal.addEventListener('abort',stop,{once:true});
     let source = '';
     try {
       while (true) {
@@ -36,9 +46,10 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
         source += decoder.decode(part.value,{stream:true});
         if (source.length > DEMO_CONFIG.responseLimitChars) throw fail('DEMO_RESPONSE_LIMIT');
       }
+      options.signal.throwIfAborted();
       source += decoder.decode(); return JSON.parse(source);
-    } catch (error) { if (error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
-    finally { await reader.cancel().catch(()=>{}); }
+    } catch (error) { if (options.signal.aborted || error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
+    finally { options.signal.removeEventListener('abort',stop); await reader.cancel().catch(()=>{}); }
   }
   return {
     clear:() => { resetCapabilities(); session.clear(); },
@@ -48,7 +59,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     capabilityDiagnostics:()=>structuredClone(capabilityFacts),
     async discover(signal) {
       const generation=resetCapabilities();
-      const payload = await json('models',{method:'GET',signal});
+      const payload = await json('models',{method:'GET',signal},DEMO_CONFIG.discoverTimeoutMs);
       signal?.throwIfAborted();
       if(generation!==discoveryGeneration)throw fail('DEMO_MODEL_UNAVAILABLE');
       const advertised = Array.isArray(payload?.data) ? payload.data.filter(model=>isDemoAlias(model?.id)) : [];
@@ -69,7 +80,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       }
       // One closed Demo wire contract for text and images; local tools and tokens never enter it.
       const body = buildResponsesBody({alias,system:CHAT_PROMPT,request,media});
-      return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard}));
+      return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs));
     }
   };
 }

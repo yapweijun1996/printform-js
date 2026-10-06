@@ -10,7 +10,7 @@ describe('v3 Demo Gateway configuration',()=> {
     expect(DEMO_CONFIG.sessionTtlSeconds).toBe(900);expect(DEMO_CONFIG.sessionRefreshSkewMs).toBe(30_000);
   });
   it('preserves the limits that used to be literals in the transport and panel',()=> {
-    expect(DEMO_CONFIG.sendTimeoutMs).toBe(60000);expect(DEMO_CONFIG.responseLimitChars).toBe(64000);
+    expect(DEMO_CONFIG.sendTimeoutMs).toBe(225000);expect(DEMO_CONFIG.responseLimitChars).toBe(64000);
     expect(DEMO_CONFIG.image.maxCount).toBe(4);expect(DEMO_CONFIG.image.maxUrlChars).toBe(5592508);
     expect(DEMO_CONFIG.image.maxTotalBytes).toBe(8*1024*1024);expect(DEMO_CONFIG.maxBodyBytes).toBe(12*1024*1024);
     expect(DEMO_CONFIG.image.maxBytes).toBe(4*1024*1024);
@@ -26,5 +26,15 @@ describe('Demo model aliases',()=> {
   it.each(['','demo-','private-model','gpt-5.4-mini','Demo-auto','demo-AUTO','demo auto','demo-auto"}','demo-a/b','demo-\u00e9','demo-'+'a'.repeat(41),null,undefined,42,{},['demo-auto']])('rejects %j',id=> expect(isDemoAlias(id)).toBe(false));
   it('accepts the longest allowed alias',()=> expect(isDemoAlias('demo-'+'a'.repeat(40))).toBe(true));
   it('has a default that is itself a valid alias',()=> expect(isDemoAlias(DEMO_CONFIG.defaultAlias)).toBe(true));
+});
+describe('Demo timeouts',()=> {
+  it('gives each request its own cap and derives the Send total from them',()=> {
+    const c=DEMO_CONFIG;
+    expect(c.discoverTimeoutMs).toBe(15000);expect(c.modelTimeoutMs).toBe(60000);expect(c.maxModelRequests).toBe(3);
+    expect(c.sendTimeoutMs).toBe(c.discoverTimeoutMs+c.maxModelRequests*(c.modelTimeoutMs+c.inspectionAllowanceMs));
+  });
+  it('keeps the model cap above the ~45 s a stalled provider takes, and the total above any single cap',()=> {
+    expect(DEMO_CONFIG.modelTimeoutMs).toBeGreaterThan(45000);expect(DEMO_CONFIG.sendTimeoutMs).toBeGreaterThan(DEMO_CONFIG.modelTimeoutMs*DEMO_CONFIG.maxModelRequests);
+  });
 });
 

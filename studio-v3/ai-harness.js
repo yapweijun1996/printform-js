@@ -1,4 +1,5 @@
 import { AgentHarness, MemorySessionRepo, BACKGROUND_CONTEXT, withAbortSignal } from '@earendil-works/pi-agent-core';
+import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { createModels, createProvider, createAssistantMessageEventStream, Type } from '@earendil-works/pi-ai';
 import { fail } from './ai-edits.js';
 import { parseChatReply } from './ai-chat-protocol.js';
@@ -78,7 +79,7 @@ async function runStepHarness({transport,alias,request,project,signal,chat={},me
 export async function runLayoutHarness(options) {
   const {signal,onPhase=()=>{},inspectCandidate,request,project} = options;
   const totals = {input:0,output:0,total:0}; let previous, diagnostics, unknown = new Set();
-  const limit = inspectCandidate ? 3 : 1;
+  const limit = inspectCandidate ? DEMO_CONFIG.maxModelRequests : 1;
   for (let attempt=1;attempt<=limit;attempt++) {
     signal.throwIfAborted();
     const currentRequest = attempt === 1 ? request : repairRequest(request,{attempt,envelope:previous?.envelope,diagnostics});

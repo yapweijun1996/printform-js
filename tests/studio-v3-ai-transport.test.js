@@ -1,4 +1,4 @@
-import { describe,it,expect,vi } from 'vitest';
+import { describe,it,expect,vi,beforeEach,afterEach } from 'vitest';
 import { createDemoTransport } from '../studio-v3/ai-demo-transport.js';
 import { errorMessage } from '../studio-v3/ai-messages.js';
 const json = (body,status=200) => new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
@@ -303,6 +303,63 @@ describe('v3 dynamic model aliases',()=> {
     const calls=[];const transport=gateway([{id:'demo-groq'}],calls);
     for(const alias of ['private-model','demo-groq"}','Demo-groq','','demo-',undefined])await expect(transport.plan(alias,'x')).rejects.toMatchObject({code:'DEMO_MODEL_UNAVAILABLE'});
     expect(calls).toHaveLength(0);
+  });
+});
+describe('v3 per-request timeouts',()=> {
+  beforeEach(()=> vi.useFakeTimers());
+  afterEach(()=> vi.useRealTimers());
+  const hang=(url,init)=> new Promise((_,reject)=> init.signal.addEventListener('abort',()=>reject(init.signal.reason ?? new DOMException('aborted','AbortError'))));
+  const session=()=>json({token:'dmo_synthetic1234',expires_in:900},201);
+  const gateway=(onApi,calls=[])=>createDemoTransport({fetchImpl:async(url,init)=> { calls.push(url);
+    if(url.endsWith('/session'))return onApi.session ? onApi.session(url,init) : session();
+    return url.endsWith('/models') ? (onApi.models ? onApi.models(url,init) : json(models)) : onApi.api(url,init); }});
+  const settle=async promise=> { let state='pending',value;promise.then(v=> { state='resolved';value=v; },e=> { state='rejected';value=e; });await vi.advanceTimersByTimeAsync(0);return ()=>({state,value}); };
+  it('fails a stalled model request exactly at its cap and does not retry',async()=> {
+    const calls=[];const transport=gateway({api:hang},calls);
+    const outcome=await settle(transport.plan('demo-auto','x'));
+    await vi.advanceTimersByTimeAsync(59_999);expect(outcome().state).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);
+    expect(outcome().state).toBe('rejected');expect(outcome().value.code).toBe('AI_TIMEOUT');
+    await vi.advanceTimersByTimeAsync(300_000);
+    expect(calls.filter(u=>u.endsWith('/responses'))).toHaveLength(1);expect(calls.filter(u=>u.endsWith('/session'))).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('caps model discovery separately and sooner',async()=> {
+    const transport=gateway({models:hang});
+    const outcome=await settle(transport.discover());
+    await vi.advanceTimersByTimeAsync(14_999);expect(outcome().state).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);expect(outcome().value.code).toBe('AI_TIMEOUT');
+  });
+  it('lets a slow answer succeed right up to the cap and leaves no timer behind',async()=> {
+    const transport=gateway({api:()=>new Promise(resolve=>setTimeout(()=>resolve(json(reply)),59_000))});
+    const outcome=await settle(transport.plan('demo-auto','x'));
+    await vi.advanceTimersByTimeAsync(59_000);
+    expect(outcome().state).toBe('resolved');expect(outcome().value.text).toBe('{}');expect(vi.getTimerCount()).toBe(0);
+  });
+  it('counts session acquisition inside the same cap',async()=> {
+    const calls=[];const transport=gateway({session:hang,api:()=>json(reply)},calls);
+    const outcome=await settle(transport.plan('demo-auto','x'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(outcome().value.code).toBe('AI_TIMEOUT');expect(calls.some(u=>u.endsWith('/responses'))).toBe(false);
+  });
+  it('times out a response whose body never finishes',async()=> {
+    const stalled=()=>new Response(new ReadableStream({start(controller) { controller.enqueue(new TextEncoder().encode('{"output":')); }}),{status:200});
+    const transport=gateway({api:stalled});
+    const outcome=await settle(transport.plan('demo-auto','x'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(outcome().state).toBe('rejected');expect(outcome().value.code).toBe('AI_TIMEOUT');
+  });
+  it('keeps the user\'s Stop a cancellation, not a timeout, and frees the timer',async()=> {
+    const calls=[];const transport=gateway({api:hang},calls),stop=new AbortController();
+    const outcome=await settle(transport.plan('demo-auto','x',stop.signal));
+    await vi.advanceTimersByTimeAsync(10_000);stop.abort();await vi.advanceTimersByTimeAsync(0);
+    expect(outcome().state).toBe('rejected');expect(outcome().value.name).toBe('AbortError');expect(outcome().value.code).not.toBe('AI_TIMEOUT');
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(calls.filter(u=>u.endsWith('/responses'))).toHaveLength(1);expect(vi.getTimerCount()).toBe(0);
+  });
+  it('still names a network failure as unreachable, not as a timeout',async()=> {
+    const transport=gateway({api:async()=> { throw new TypeError('Failed to fetch'); }});
+    const outcome=await settle(transport.plan('demo-auto','x'));expect(outcome().value.code).toBe('DEMO_NETWORK_UNREACHABLE');
   });
 });
 

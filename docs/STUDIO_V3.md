@@ -59,7 +59,10 @@ is the default and is listed first), and `/demo/v1/responses` (text and image re
 non-streaming) returns `output_text` carrying a JSON envelope per bounded step. Failures
 are named from the HTTP status and the gateway's own code (network unreachable, origin not
 registered, rate limit, service disabled, no provider available, slow gateway) and each
-has its own message. No native provider tools, arbitrary schema, files, background,
+has its own message. Every gateway request has its own timeout (15 s for model discovery,
+60 s for a model request, including its session and the one 401 refresh); one Send is bounded
+by their sum (225 s). A timeout is a failure, never a retry, so a Send still makes at most
+three model requests. No native provider tools, arbitrary schema, files, background,
 web search, gateway key or private `/v1/*` request is sent. A first 401 refreshes
 once; authoring repair is capped and disclosed. No model fallback occurs: a default the
 user never changed adapts to the aliases the gateway offers, but a model the user chose
