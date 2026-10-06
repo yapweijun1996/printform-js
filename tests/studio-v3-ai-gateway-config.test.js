@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest';
-import { DEMO_CONFIG } from '../studio-v3/ai-gateway-config.js';
+import { DEMO_CONFIG,isDemoAlias } from '../studio-v3/ai-gateway-config.js';
 describe('v3 Demo Gateway configuration',()=> {
   it('keeps the gateway address and project in one place',()=> {
     expect(DEMO_CONFIG.origin).toBe('https://gpt.yapweijun1996.com');
@@ -20,3 +20,11 @@ describe('v3 Demo Gateway configuration',()=> {
     expect(()=> { 'use strict'; DEMO_CONFIG.image.maxCount=99; }).toThrow();
   });
 });
+describe('Demo model aliases',()=> {
+  it('defaults to the gateway routing alias and bounds the list',()=> { expect(DEMO_CONFIG.defaultAlias).toBe('demo-auto');expect(DEMO_CONFIG.maxAliases).toBe(8); });
+  it.each(['demo-auto','demo-openai-mini','demo-groq','demo-gemini','demo-a1','demo-fast'])('accepts %s',id=> expect(isDemoAlias(id)).toBe(true));
+  it.each(['','demo-','private-model','gpt-5.4-mini','Demo-auto','demo-AUTO','demo auto','demo-auto"}','demo-a/b','demo-\u00e9','demo-'+'a'.repeat(41),null,undefined,42,{},['demo-auto']])('rejects %j',id=> expect(isDemoAlias(id)).toBe(false));
+  it('accepts the longest allowed alias',()=> expect(isDemoAlias('demo-'+'a'.repeat(40))).toBe(true));
+  it('has a default that is itself a valid alias',()=> expect(isDemoAlias(DEMO_CONFIG.defaultAlias)).toBe(true));
+});
+

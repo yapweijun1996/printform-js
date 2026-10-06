@@ -1,12 +1,11 @@
 import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
 import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
-import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
 import { assertImageParts, buildResponsesBody, responsesResult } from './ai-responses-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
-export const DEMO_ALIASES = ['demo-fast','demo-auto'];
 const assertDispatch = Symbol('assertDemoDispatch');
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
   let imageModels = new Set(), capabilityFacts=[], discoveryGeneration=0;
@@ -52,15 +51,15 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       const payload = await json('models',{method:'GET',signal});
       signal?.throwIfAborted();
       if(generation!==discoveryGeneration)throw fail('DEMO_MODEL_UNAVAILABLE');
-      const models = Array.isArray(payload?.data) ? payload.data.filter(model=>DEMO_ALIASES.includes(model?.id)) : [];
-      const aliases = [...new Set(models.map(model=>model.id))];
+      const advertised = Array.isArray(payload?.data) ? payload.data.filter(model=>isDemoAlias(model?.id)) : [];
+      const aliases = [...new Set(advertised.map(model=>model.id))].slice(0,DEMO_CONFIG.maxAliases), models = advertised.filter(model=>aliases.includes(model.id));
       if (!aliases.length) throw fail('DEMO_MODEL_UNAVAILABLE');
       imageModels = new Set(aliases.filter(alias=>models.filter(model=>model.id===alias).every(imageCapability)));
       capabilityFacts=models.map(model=>({alias:model.id,facts:modelCapabilityFacts(model)}));
       return aliases;
     },
     async plan(alias, request, signal, media = []) {
-      if (!DEMO_ALIASES.includes(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
+      if (!isDemoAlias(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
       let guard;
       if (media.length) {
         if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');

@@ -54,13 +54,16 @@ This slice does not claim completion of v2's full direct-BYOK migration.
 The owner-selected GPT Server Demo is the only v3 provider. Existing
 `github-pages` registration is reused: browser CORS supplies the exact Origin;
 `POST /demo/session` issues a short-lived memory-only token, `/demo/v1/models`
-checks `demo-fast`/`demo-auto`, and `/demo/v1/responses` (text and image requests alike,
+supplies the model aliases (only `demo-` aliases of a safe shape, at most eight; `demo-auto`
+is the default and is listed first), and `/demo/v1/responses` (text and image requests alike,
 non-streaming) returns `output_text` carrying a JSON envelope per bounded step. Failures
 are named from the HTTP status and the gateway's own code (network unreachable, origin not
 registered, rate limit, service disabled, no provider available, slow gateway) and each
 has its own message. No native provider tools, arbitrary schema, files, background,
 web search, gateway key or private `/v1/*` request is sent. A first 401 refreshes
-once; no model fallback occurs; authoring repair is capped and disclosed.
+once; authoring repair is capped and disclosed. No model fallback occurs: a default the
+user never changed adapts to the aliases the gateway offers, but a model the user chose
+that is no longer offered stops the Send, refreshes the list and waits for a new Send.
 
 The panel displays the selected alias, recipient and exact initial JSON.
 Send deliberately accepts the adjacent notice; there is no consent checkbox.

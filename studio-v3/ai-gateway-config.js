@@ -13,6 +13,11 @@ export const DEMO_CONFIG = Object.freeze({
   sessionRefreshSkewMs: DEMO_SESSION_REFRESH_SKEW_MS,
   // One explicit Send, including model discovery and up to three model requests.
   sendTimeoutMs: 60_000,
+  // The gateway's default routing alias; others are discovered from /models.
+  defaultAlias: 'demo-auto',
+  // Aliases become the request's model field, so only this shape is ever accepted.
+  aliasPattern: /^demo-[a-z0-9][a-z0-9-]{0,39}$/,
+  maxAliases: 8,
   responseLimitChars: 64_000,
   maxBodyBytes: 12 * MIB,
   errorBodyLimitChars: 8_192,
@@ -24,3 +29,4 @@ export const DEMO_CONFIG = Object.freeze({
     maxUrlChars: Math.ceil(4 * MIB / 3) * 4 + 100
   })
 });
+export const isDemoAlias = id => typeof id === 'string' && DEMO_CONFIG.aliasPattern.test(id);

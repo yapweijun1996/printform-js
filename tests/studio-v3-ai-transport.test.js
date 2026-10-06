@@ -270,3 +270,39 @@ describe('v3 text requests use the Responses endpoint',()=> {
     await expect(transport.plan('private-model','x')).rejects.toMatchObject({code:'DEMO_MODEL_UNAVAILABLE'});expect(calls).toHaveLength(0);
   });
 });
+describe('v3 dynamic model aliases',()=> {
+  const gateway=(modelList,calls=[])=>createDemoTransport({fetchImpl:async(url,init)=> { calls.push({url,init});
+    return url.endsWith('/session') ? json({token:'dmo_synthetic1234',expires_in:900},201) : url.endsWith('/models') ? json({data:modelList}) : json(reply); }});
+  it('returns the gateway aliases in order, without relying on demo-fast',async()=> {
+    const transport=gateway(['demo-auto','demo-openai-mini','demo-groq','demo-gemini'].map(id=>({id})));
+    expect(await transport.discover()).toEqual(['demo-auto','demo-openai-mini','demo-groq','demo-gemini']);
+    expect(await gateway([{id:'demo-auto'}]).discover()).toEqual(['demo-auto']);
+  });
+  it('drops ids that are not safe demo aliases and duplicates',async()=> {
+    const bad=['private-model','Demo-auto','demo-auto"}','demo-','gpt-5.4-mini',null,42,{},'demo-'+'a'.repeat(41)].map(id=>({id}));
+    expect(await gateway([...bad,{id:'demo-groq'},{id:'demo-groq'},{id:'demo-auto'}]).discover()).toEqual(['demo-groq','demo-auto']);
+    await expect(gateway(bad).discover()).rejects.toMatchObject({code:'DEMO_MODEL_UNAVAILABLE'});
+  });
+  it('caps the list and only keeps capability facts for kept aliases',async()=> {
+    const many=Array.from({length:12},(_,i)=>({id:`demo-m${i}`,capabilities:{responses:true,multimodal:true}}));
+    const transport=gateway(many);const aliases=await transport.discover();
+    expect(aliases).toHaveLength(8);expect(aliases.at(-1)).toBe('demo-m7');
+    expect(transport.capabilityDiagnostics().map(d=>d.alias)).toEqual(aliases);
+    expect(transport.supportsImages('demo-m7')).toBe(true);expect(transport.supportsImages('demo-m8')).toBe(false);
+  });
+  it('judges image support per alias',async()=> {
+    const transport=gateway([{id:'demo-gemini',capabilities:{responses:true,multimodal:true}},{id:'demo-groq',capabilities:{responses:true,multimodal:false}},{id:'demo-auto'}]);
+    await transport.discover();
+    expect(transport.supportsImages('demo-gemini')).toBe(true);expect(transport.supportsImages('demo-groq')).toBe(false);expect(transport.supportsImages('demo-auto')).toBe(false);
+  });
+  it('plans with any safe alias and puts exactly that alias in the model field',async()=> {
+    const calls=[];const transport=gateway([{id:'demo-groq'}],calls);await transport.discover();await transport.plan('demo-groq','hello');
+    expect(JSON.parse(calls.find(c=>c.url.endsWith('/responses')).init.body).model).toBe('demo-groq');
+  });
+  it('refuses an unsafe alias before any request',async()=> {
+    const calls=[];const transport=gateway([{id:'demo-groq'}],calls);
+    for(const alias of ['private-model','demo-groq"}','Demo-groq','','demo-',undefined])await expect(transport.plan(alias,'x')).rejects.toMatchObject({code:'DEMO_MODEL_UNAVAILABLE'});
+    expect(calls).toHaveLength(0);
+  });
+});
+

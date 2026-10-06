@@ -8,14 +8,15 @@ import { errorMessage } from './ai-messages.js';
 import { inspectProject } from './validation.js';
 import { runLayoutHarness } from './ai-harness.js';
 import { AIElementTags, validateElementReferences } from './ai-element-tags.js';
-import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
+import { fillModels, showAlias } from './ai-model-select.js';
 
 export class AIPanel {
   constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,restore,commit,undo,sync,transport=createDemoTransport()}) {
     Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,restore,commit,undo,sync,transport});
-    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
+    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
-    this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') this.update(); } });
+    this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } } });
     this.root.addEventListener('click',event=> {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
       if (button?.disabled) return;
@@ -106,14 +107,17 @@ export class AIPanel {
     catch (error) { if (id === this.generation) this.error(this.timedOut === id ? fail('AI_TIMEOUT') : error); }
     finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); } }
   }
-  setModels(aliases) { const select = this.node('#ai-model'); for (const option of select.options) option.disabled = !aliases.includes(option.value); if (!aliases.includes(select.value)) select.value = aliases[0]; this.referenceFiles?.capabilityChanged(); }
+  // Returns whether the shown model survived. An untouched default may adapt to what the gateway offers;
+  // a model the user chose never changes silently (see send()).
+  setModels(aliases) { const kept = fillModels(this.node('#ai-model'),aliases); this.referenceFiles?.capabilityChanged(); return kept; }
+  restoreAlias(alias) { const valid = isDemoAlias(alias) ? alias : DEMO_CONFIG.defaultAlias; showAlias(this.node('#ai-model'),valid); this.modelChosen = valid !== DEMO_CONFIG.defaultAlias; }
   finish() { clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.update(); }
   async send() {
     if (this.busy || this.applying || this.restoring) return;
     let payload, request;
     try { this.referenceFiles?.assertReady(); payload = this.payload(); request = this.request(); } catch (error) { this.error(error); this.message(error.message); return; }
     if (!payload.request) { this.message('Write a request or a comment on a referenced element before Send.'); return; }
-    const alias = this.node('#ai-model').value;
+    let alias = this.node('#ai-model').value;
     if (request !== this.node('#ai-share').textContent) { this.share(); this.message('Layout context updated. Review the updated sharing details, then Send again.'); return; }
     if (request.length > 40000) { this.message('The shared context is too large. Clear conversation or shorten the request.'); return; }
     const bus = this.getBus(), revision = bus.revision, project = structuredClone(bus.project), baseDesign = JSON.stringify(project.manifest.studioV3), baseData = JSON.stringify(project.sampleData), epoch = this.epoch, selection = this.getSelection(), scope = JSON.stringify(this.scope()), references = JSON.stringify(payload.references), attachmentVersion = this.referenceFiles?.version, media = this.referenceFiles?.projection().media || [];
@@ -126,7 +130,8 @@ export class AIPanel {
     this.pendingMessage = payload.request; this.conversation.add('user',[payload.request,...payload.references.filter(r=>r.comment).map(r=>`${r.id}: ${r.comment}`)].join('\n'),'answer',{documentKey:this.documentKey()}); this.node('#ai-prompt').value = ''; this.share(); this.update();
     try {
       if (this.viewing) { await this.restore(); this.viewing = false; }
-      const aliases = await this.transport.discover(signal); if (!aliases.includes(alias)) throw fail('DEMO_MODEL_UNAVAILABLE'); this.setModels(aliases);
+      const aliases = await this.transport.discover(signal);
+      if (!this.setModels(aliases)) { if (this.modelChosen) throw fail('DEMO_MODEL_UNAVAILABLE'); alias = this.node('#ai-model').value; }
       if (media.length && !this.transport.supportsImages?.(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
       assertContext();
       const result = await runLayoutHarness({transport:this.transport,alias,request,project,signal,chat:payload,assertContext,media,
@@ -181,7 +186,7 @@ export class AIPanel {
   }
   snapshot() { return {open:Boolean(this.open),prompt:this.node('#ai-prompt').value || this.pendingMessage || '',alias:this.node('#ai-model').value,messages:this.conversation.snapshot(),references:this.elementTags?.snapshot() || []}; }
   restoreSnapshot(saved) {
-    this.conversation.restore(saved.messages || [],this.documentKey()); this.node('#ai-prompt').value = saved.prompt; this.node('#ai-model').value = ['demo-fast','demo-auto'].includes(saved.alias) ? saved.alias : 'demo-fast';
+    this.conversation.restore(saved.messages || [],this.documentKey()); this.node('#ai-prompt').value = saved.prompt; this.restoreAlias(saved.alias);
     this.elementTags?.restoreSnapshot(saved.references || []);
     if (saved.parsed) this.conversation.add('assistant',saved.parsed.summary,'expired',{diff:saved.parsed.diff,documentKey:this.documentKey()});
     if (saved.open) this.show(); else { this.share(); this.update(); }

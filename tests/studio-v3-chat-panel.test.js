@@ -108,6 +108,43 @@ it('keeps Preview manual on narrow screens where it reveals the full-screen pape
     await panel.preview();expect(panel.checked).toBe(true);expect(panel.getBus().revision).toBe(0);
   } finally { window.innerWidth=width; }
 });
+const gatewayWith=(aliases,planned=[])=>({clear:()=>{},clearSession:()=>{},discover:async()=>aliases,plan:async alias=> {planned.push(alias);return {text:JSON.stringify({kind:'answer',message:'ok'})};}});
+const chooseModel=(panel,alias)=> {const select=panel.node('#ai-model');panel.setModels(['demo-auto',alias]);select.value=alias;select.dispatchEvent(new Event('input',{bubbles:true}));};
+const askAgain=panel=> {panel.node('#ai-prompt').value='Use navy accents.';panel.share();};
+it('adapts an untouched default model to what the gateway offers',async()=> {
+  const planned=[];const {panel}=setup({transport:gatewayWith(['demo-openai-mini','demo-groq'],planned)});
+  expect(panel.node('#ai-model').value).toBe('demo-auto');
+  await panel.send();
+  expect(planned).toEqual(['demo-openai-mini']);expect(panel.node('#ai-model').value).toBe('demo-openai-mini');
+  expect([...panel.node('#ai-model').options].map(o=>o.value)).toEqual(['demo-openai-mini','demo-groq']);
+  expect(panel.node('[data-ai-status]').textContent).toContain('demo-openai-mini');
+});
+it('keeps the routing alias and lists it first when the gateway offers it',async()=> {
+  const planned=[];const {panel}=setup({transport:gatewayWith(['demo-groq','demo-auto'],planned)});
+  await panel.send();expect(planned).toEqual(['demo-auto']);expect([...panel.node('#ai-model').options].map(o=>o.value)).toEqual(['demo-auto','demo-groq']);
+});
+it('never replaces a model the user chose: it stops, refreshes the list, and sends only after a new Send',async()=> {
+  const planned=[],offered=['demo-auto'];const {panel}=setup({transport:{...gatewayWith(offered,planned),discover:async()=>offered}});
+  chooseModel(panel,'demo-groq');expect(panel.modelChosen).toBe(true);
+  await panel.send();
+  expect(planned).toEqual([]);
+  expect(panel.conversation.messages.at(-1).text).toContain('no longer available');
+  expect(panel.node('#ai-model').value).toBe('demo-auto');
+  askAgain(panel);await panel.send();
+  expect(planned).toEqual(['demo-auto']);
+});
+it('treats a restored non-default model as a deliberate choice and never trusts an unsafe one',()=> {
+  const {panel}=setup();const select=panel.node('#ai-model');
+  panel.restoreSnapshot({prompt:'',alias:'demo-groq',messages:[],references:[],open:false});
+  expect(select.value).toBe('demo-groq');expect(panel.modelChosen).toBe(true);
+  panel.restoreSnapshot({prompt:'',alias:'demo-auto',messages:[],references:[],open:false});
+  expect(select.value).toBe('demo-auto');expect(panel.modelChosen).toBe(false);
+  for(const alias of ['private-model','<script>','demo-x"}',undefined,42]) {
+    panel.restoreSnapshot({prompt:'',alias,messages:[],references:[],open:false});
+    expect(select.value).toBe('demo-auto');expect(panel.modelChosen).toBe(false);
+    expect([...select.options].every(o=>/^demo-[a-z0-9-]+$/.test(o.value))).toBe(true);
+  }
+});
 it('derives scope from referenced elements instead of a selector',()=>{
  const {panel}=setup();expect(panel.node('#ai-scope')).toBeNull();
  expect(panel.scope()).toEqual({mode:'whole'});expect(panel.scopeHint()).toContain('whole form');
