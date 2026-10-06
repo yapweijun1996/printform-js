@@ -32,10 +32,11 @@ test('explicit sharing -> actual Harness local proposal -> real preview -> apply
   await openAI(page); await expect(page.locator('#ai-share')).not.toContainText('ACME');
   expect(m.calls).toHaveLength(0); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await send(page); await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  await expect(page.locator('[data-ai-status]')).toContainText('demo-fast'); await expect(page.locator('#revision')).toHaveText('r0');
+  // The mock offers both aliases, so the default routing alias demo-auto is used and shown.
+  await expect(page.locator('[data-ai-status]')).toContainText('demo-auto'); await expect(page.locator('#ai-model')).toHaveValue('demo-auto'); await expect(page.locator('#revision')).toHaveText('r0');
   expect(m.plans()).toBe(1); expect(m.calls[0].payload).toEqual({project_id:'github-pages'}); expect(m.calls[0].auth).toBe(false);
   const wire = m.calls.find(c=>isInference(c.path)).payload;
-  expect(Object.keys(wire).sort()).toEqual(['input','model','stream']); expect(JSON.stringify(wire)).not.toContain('ACME');
+  expect(Object.keys(wire).sort()).toEqual(['input','model','stream']); expect(wire.model).toBe('demo-auto'); expect(JSON.stringify(wire)).not.toContain('ACME');
   await expect(page.locator('[data-ai=apply]')).toBeEnabled();
   await expect(page.locator('[data-action=print]')).toBeDisabled(); await expect(page.locator('[data-action=export]')).toBeDisabled();
   expect(await frame(page).locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(22, 58, 101)');
