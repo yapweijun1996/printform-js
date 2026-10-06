@@ -70,7 +70,10 @@ One explicit Send is bounded to three model requests and three real local
 preview inspections, with a code/geometry-only dynamic diagnostic boundary.
 The previous reviewed context and model proposal may be resent for repair.
 Questions remain read-only. Local tools build one unapplied candidate and a
-complete diff; Preview and explicit Apply remain required. CommandBus commits
+complete diff. Above 900 px the unapplied candidate is previewed on paper and
+locally checked automatically once the response arrives; at 900 px and below
+Preview stays a button because it reveals the full-screen paper. Apply is always an
+explicit click and stays disabled until that preview check passes. CommandBus commits
 one revision with scoped Undo after current validation and draft protection.
 ERP data/calculations do not change, and existing financial-bound fields cannot
 be replaced by model-authored literal values. There is no model code, shell,

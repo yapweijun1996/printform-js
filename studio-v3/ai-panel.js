@@ -15,7 +15,6 @@ export class AIPanel {
     this.root = document.querySelector('#ai-panel'); this.viewing = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
     this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') this.update(); } });
-    this.root.addEventListener('change',event=> { if (event.target.id === 'ai-scope') this.contextChanged(true); });
     this.root.addEventListener('click',event=> {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
       if (button?.disabled) return;
@@ -39,7 +38,9 @@ export class AIPanel {
   node(selector) { return this.root.querySelector(selector); }
   message(text) { this.node('[data-ai-status]').textContent = text; }
   error(error) { this.message(errorMessage(error)); }
-  scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return this.node('#ai-scope').value === 'selected' ? {mode:'selected',id:this.getSelection(),...(ids.length ? {ids} : {})} : {mode:'whole'}; }
+  // Scope is derived, never chosen: referenced elements limit the edit, otherwise the whole form is editable.
+  scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return ids.length ? {mode:'selected',id:ids[0],ids} : {mode:'whole'}; }
+  scopeHint() { const n = this.scope().ids?.length || 0; return n ? `Editing ${n} selected element${n > 1 ? 's' : ''}. Remove them to edit the whole form.` : 'Editing the whole form. To limit a change, select an element and press Add to chat.'; }
   documentKey() { return this.getBus()?.project.manifest.documentId; }
   payload() {
     const references = this.elementTags?.payload() || [];
@@ -57,7 +58,7 @@ export class AIPanel {
   contextChanged(force=false) {
     const bus = this.getBus(), selected = this.getSelection();
     this.elementTags?.contextChanged(); this.referenceFiles?.contextChanged();
-    this.node('[data-ai-selection]').textContent = `Selected: ${selected}`;
+    this.node('[data-ai-scope]').textContent = this.scopeHint();
     if (force || bus !== this.contextBus || selected !== this.contextSelection) {
       this.contextBus = bus; this.contextSelection = selected; ++this.epoch;
       const viewing = this.viewing; this.invalidate('Form changed, or selection/scope changed. Send again.');
@@ -139,17 +140,21 @@ export class AIPanel {
       const card = this.conversation.add('assistant',result.kind === 'answer' ? result.message : result.summary,result.kind === 'answer' ? 'answer' : 'ready',{documentKey:this.documentKey(),...(result.diff ? {diff:result.diff} : {})});
       if (result.kind === 'proposal') this.proposal = {...result,bus,revision,baseDesign,epoch,selection,scope,cardId:card.id};
       if (result.kind === 'answer' && this.viewing) { await this.restore(); this.viewing = false; }
-      this.message(`${alias} · ${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `Candidate at r${revision}, ${result.iterations} inspection round(s). ${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} Preview before Apply.`} Tokens: ${result.usage?.total ?? 'unavailable'}.`);
+      // Wide screens preview the unapplied candidate right away; narrow screens keep the Preview button (it hides the full-screen panel).
+      const auto = result.kind === 'proposal' && innerWidth > 900, next = auto && result.inspection?.ready ? 'Review the paper preview, then Apply.' : 'Preview before Apply.';
+      this.message(`${alias} · ${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `Candidate at r${revision}, ${result.iterations} inspection round(s). ${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} Tokens: ${result.usage?.total ?? 'unavailable'}.`);
+      if (auto) await this.preview(true).catch(error=>this.error(error));
     } catch (error) {
       if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail('AI_TIMEOUT') : error); this.conversation.add('assistant',message,error.name === 'AbortError' ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(''); }
     } finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); this.sync(); } }
   }
   present() { this.update(); }
-  async preview() {
+  async preview(quiet = false) {
     const proposal = this.proposal; this.assertCurrent(proposal); this.viewing = true; this.checked = false; this.update(); this.sync();
     const report = await this.renderPreview(proposal.candidate); if (this.proposal !== proposal) return;
     this.assertCurrent(proposal); this.checked = inspectProject(proposal.candidate,report).ready;
-    this.message(this.checked ? 'Unapplied paper preview passed. Review the pages before Apply.' : 'Unapplied preview blocked by layout/data validation. Discard or request another suggestion.'); this.update(); this.sync();
+    if (!quiet) this.message(this.checked ? 'Unapplied paper preview passed. Review the pages before Apply.' : 'Unapplied preview blocked by layout/data validation. Discard or request another suggestion.');
+    this.update(); this.sync();
     if (innerWidth <= 900) { this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
   }
   async apply() {
@@ -186,7 +191,7 @@ export class AIPanel {
     document.querySelector('#ai-preview-banner').hidden = !this.viewing;
     document.querySelector('[data-ai-toggle]').setAttribute('aria-expanded',String(Boolean(this.open)));
     this.elementTags?.setBusy(Boolean(this.busy || this.applying || this.restoring)); this.referenceFiles?.setBusy(Boolean(this.busy || this.applying || this.restoring));
-    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
+    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
     for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=paper],[data-ai=clear]')) node.disabled = Boolean(this.applying);

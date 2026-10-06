@@ -90,7 +90,33 @@ it('reveals the complete input group on prompt or Send focus without sending or 
  for(const selector of ['#ai-prompt','[data-ai-send]'])panel.node(selector).getBoundingClientRect=()=>({top:280,bottom:350});
  panel.node('#ai-prompt').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));
  expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(input.scrollIntoView).toHaveBeenLastCalledWith({block:'nearest',inline:'nearest'});
- panel.node('#ai-scope').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').getBoundingClientRect=()=>({top:200,bottom:240});panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(calls()).toBe(0);
+ panel.node('[data-prompt]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));panel.node('[data-ai-send]').getBoundingClientRect=()=>({top:200,bottom:240});panel.node('[data-ai-send]').dispatchEvent(new FocusEvent('focusin',{bubbles:true}));expect(input.scrollIntoView).toHaveBeenCalledTimes(2);expect(calls()).toBe(0);
+});
+it('previews the unapplied candidate automatically on wide screens, leaving Apply explicit',async()=> {
+  const {panel}=setup();await panel.send();
+  expect(panel.proposal).toBeTruthy();expect(panel.checked).toBe(true);expect(panel.viewing).toBe(true);
+  expect(panel.node('[data-ai=apply]').disabled).toBe(false);
+  expect(panel.node('[data-ai-status]').textContent).toContain('Review the paper preview, then Apply.');
+  expect(panel.getBus().revision).toBe(0);
+});
+it('keeps Preview manual on narrow screens where it reveals the full-screen paper',async()=> {
+  const width=window.innerWidth;
+  try {
+    window.innerWidth=600;const {panel}=setup();await panel.send();
+    expect(panel.checked).toBe(false);expect(panel.node('[data-ai=apply]').disabled).toBe(true);
+    expect(panel.node('[data-ai-status]').textContent).toContain('Preview before Apply.');
+    await panel.preview();expect(panel.checked).toBe(true);expect(panel.getBus().revision).toBe(0);
+  } finally { window.innerWidth=width; }
+});
+it('derives scope from referenced elements instead of a selector',()=>{
+ const {panel}=setup();expect(panel.node('#ai-scope')).toBeNull();
+ expect(panel.scope()).toEqual({mode:'whole'});expect(panel.scopeHint()).toContain('whole form');
+ const original=panel.elementTags;
+ panel.elementTags={snapshot:()=>[{id:'label-customer-bill'}]};
+ expect(panel.scope()).toEqual({mode:'selected',id:'label-customer-bill',ids:['label-customer-bill']});expect(panel.scopeHint()).toContain('1 selected element.');
+ panel.elementTags={snapshot:()=>[{id:'label-customer-bill'},{id:'items-description'}]};
+ expect(panel.scope().ids).toEqual(['label-customer-bill','items-description']);expect(panel.scopeHint()).toContain('2 selected elements.');
+ panel.elementTags=original;
 });
 
 function visualPanel(kind='image') {
