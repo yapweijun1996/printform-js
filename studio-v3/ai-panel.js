@@ -8,6 +8,7 @@ import { errorMessage } from './ai-messages.js';
 import { inspectProject } from './validation.js';
 import { runLayoutHarness } from './ai-harness.js';
 import { AIElementTags, validateElementReferences } from './ai-element-tags.js';
+import { DEMO_CONFIG } from './ai-gateway-config.js';
 
 export class AIPanel {
   constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,restore,commit,undo,sync,transport=createDemoTransport()}) {
@@ -95,7 +96,7 @@ export class AIPanel {
   begin() {
     this.cancel('Connecting to Demo gateway…'); this.busy = true;
     const id = this.generation, controller = new AbortController(); this.controller = controller;
-    this.timer = setTimeout(()=> { this.timedOut = id; controller.abort(); },60000);
+    this.timer = setTimeout(()=> { this.timedOut = id; controller.abort(); },DEMO_CONFIG.sendTimeoutMs);
     this.update(); return {id,signal:controller.signal};
   }
   async discover() {

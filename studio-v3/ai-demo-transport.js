@@ -1,10 +1,12 @@
 import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
-import { createDemoGatewaySession, DEMO_GATEWAY_ENDPOINT } from '../studio-v2/ui/agent-demo-gateway.js';
+import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
+import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { classifyFailure } from './ai-gateway-errors.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
 export const DEMO_ALIASES = ['demo-fast','demo-auto'];
-const assertDispatch = Symbol('assertDemoDispatch');
+const assertDispatch = Symbol('assertDemoDispatch'), IMAGE = DEMO_CONFIG.image;
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
   let imageModels = new Set(), capabilityFacts=[], discoveryGeneration=0;
   const resetCapabilities=()=>{imageModels.clear();capabilityFacts=[];return ++discoveryGeneration;};
@@ -15,19 +17,24 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     let response;
     try { response = await fetchImpl(url,init); }
     catch (error) { throw error?.code || ['AbortError','TimeoutError'].includes(error?.name) ? error : fail('DEMO_NETWORK_UNREACHABLE'); }
-    if (String(url).endsWith('/demo/session') && response.status === 403) throw fail('DEMO_SESSION_FORBIDDEN');
+    // Session failures are named here; unknown ones fall through to the shared session error.
+    // Model requests are classified in json(), after the session's single 401 refresh.
+    if (String(url).endsWith('/demo/session') && !response.ok) {
+      const code = await classifyFailure(response);
+      if (!['DEMO_REQUEST_FAILED','DEMO_SESSION_EXPIRED'].includes(code)) throw fail(code);
+    }
     return response;
   }});
   async function json(path, options) {
-    const response = await session.fetch(`${DEMO_GATEWAY_ENDPOINT}/${path}`,options);
-    if (!response.ok) throw fail(response.status === 401 ? 'DEMO_SESSION_EXPIRED' : response.status === 429 ? 'DEMO_RATE_LIMIT' : 'DEMO_REQUEST_FAILED');
+    const response = await session.fetch(`${DEMO_CONFIG.apiBase}/${path}`,options);
+    if (!response.ok) throw fail(await classifyFailure(response));
     const reader = response.body.getReader(), decoder = new TextDecoder();
     let source = '';
     try {
       while (true) {
         const part = await reader.read(); if (part.done) break;
         source += decoder.decode(part.value,{stream:true});
-        if (source.length > 64000) throw fail('DEMO_RESPONSE_LIMIT');
+        if (source.length > DEMO_CONFIG.responseLimitChars) throw fail('DEMO_RESPONSE_LIMIT');
       }
       source += decoder.decode(); return JSON.parse(source);
     } catch (error) { if (error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
@@ -57,9 +64,9 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
         if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
         const generation=discoveryGeneration;
         const assertImages=()=>{if(generation!==discoveryGeneration || !imageModels.has(alias))throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');};
-        if (media.length > 4 || media.some(part => Object.keys(part).some(key=>!['type','image_url'].includes(key)) || part.type !== 'input_image' || typeof part.image_url !== 'string' || part.image_url.length > 5592508 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(part.image_url)) || JSON.stringify(media).length > 8*1024*1024) throw fail('UNSAFE_PROPOSAL');
+        if (media.length > IMAGE.maxCount || media.some(part => Object.keys(part).some(key=>!['type','image_url'].includes(key)) || part.type !== 'input_image' || typeof part.image_url !== 'string' || part.image_url.length > IMAGE.maxUrlChars || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(part.image_url)) || JSON.stringify(media).length > IMAGE.maxTotalBytes) throw fail('UNSAFE_PROPOSAL');
         const body=JSON.stringify({model:alias,stream:false,input:[{role:'system',content:[{type:'input_text',text:CHAT_PROMPT}]},{role:'user',content:[{type:'input_text',text:request},...media]}]});
-        if(new TextEncoder().encode(body).length>12*1024*1024)throw fail('UNSAFE_PROPOSAL');
+        if(new TextEncoder().encode(body).length>IMAGE.maxBodyBytes)throw fail('UNSAFE_PROPOSAL');
         const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:assertImages});
         if (payload.status !== 'completed' || !Array.isArray(payload.output) || payload.output.some(item=>item.type !== 'message' && item.type !== 'reasoning')) throw fail('MALFORMED_PROPOSAL');
         const content = payload.output.filter(item=>item.type === 'message').flatMap(item=>item.content || []);

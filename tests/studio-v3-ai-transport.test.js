@@ -189,3 +189,48 @@ describe('v3 Demo network failures',()=> {
     expect(errorMessage(error)).toBe('Cancelled. Nothing changed.');
   });
 });
+describe('v3 Demo HTTP failures are named, not generic',()=> {
+  const token = json({token:'dmo_synthetic1234',expires_in:900},201);
+  const api = (status,body,{session}={})=> createDemoTransport({fetchImpl:async url=> url.endsWith('/session') ? (session ? json(session.body,session.status) : token.clone()) : json(body,status)});
+  it.each([
+    [400,{code:'DEMO_MEDIA_DISABLED'},'DEMO_MEDIA_ENDPOINT_BUG'],
+    [403,{error:'demo origin is not registered'},'DEMO_SESSION_FORBIDDEN'],
+    [429,{},'DEMO_RATE_LIMIT'],
+    [503,{code:'DEMO_ROUTER_DISABLED'},'DEMO_SERVICE_DISABLED'],
+    [503,{code:'DEMO_ALL_ROUTES_EXHAUSTED'},'DEMO_ROUTES_EXHAUSTED'],
+    [504,{},'DEMO_GATEWAY_TIMEOUT'],
+    [500,{},'DEMO_REQUEST_FAILED']
+  ])('model request HTTP %i -> %s',async(status,body,code)=> {
+    await expect(api(status,body).discover()).rejects.toMatchObject({code});
+  });
+  it.each([
+    [403,{error:'demo origin is not registered'},'DEMO_SESSION_FORBIDDEN'],
+    [429,{},'DEMO_RATE_LIMIT'],
+    [503,{code:'DEMO_ROUTER_DISABLED'},'DEMO_SERVICE_DISABLED'],
+    [504,{},'DEMO_GATEWAY_TIMEOUT'],
+    [500,{},'DEMO_SESSION_UNAVAILABLE']
+  ])('session request HTTP %i -> %s',async(status,body,code)=> {
+    await expect(api(200,{},{session:{status,body}}).discover()).rejects.toMatchObject({code});
+  });
+  it('refreshes the session once on 401 and recovers when the retry succeeds',async()=> {
+    const urls=[];let modelCalls=0;
+    const transport=createDemoTransport({fetchImpl:async url=> { urls.push(url);
+      if(url.endsWith('/session'))return token.clone();
+      return ++modelCalls===1 ? json({},401) : json(models); }});
+    expect(await transport.discover()).toEqual(['demo-auto','demo-fast']);
+    expect(urls.filter(u=>u.endsWith('/session'))).toHaveLength(2);
+  });
+  it('reports an expired session when the single refresh is rejected too',async()=> {
+    const urls=[];
+    const transport=createDemoTransport({fetchImpl:async url=> { urls.push(url); return url.endsWith('/session') ? token.clone() : json({},401); }});
+    await expect(transport.discover()).rejects.toMatchObject({code:'DEMO_SESSION_EXPIRED'});
+    expect(urls.filter(u=>u.endsWith('/session'))).toHaveLength(2);
+  });
+  it('separates a network failure from every HTTP failure',async()=> {
+    const network=createDemoTransport({fetchImpl:async()=> { throw new TypeError('Failed to fetch'); }});
+    const codes=new Set([(await network.discover().catch(e=>e)).code]);
+    for(const [status,body] of [[403,{}],[429,{}],[503,{code:'DEMO_ROUTER_DISABLED'}],[504,{}],[500,{}]])codes.add((await api(status,body).discover().catch(e=>e)).code);
+    expect(codes.has('DEMO_NETWORK_UNREACHABLE')).toBe(true);expect(codes.size).toBe(6);
+  });
+});
+

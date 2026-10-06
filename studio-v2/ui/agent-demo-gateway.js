@@ -2,8 +2,8 @@ export const DEMO_GATEWAY_ORIGIN = "https://gpt.yapweijun1996.com";
 export const DEMO_GATEWAY_PROJECT_ID = "github-pages";
 export const DEMO_GATEWAY_ENDPOINT = `${DEMO_GATEWAY_ORIGIN}/demo/v1`;
 
-const SESSION_TTL_SECONDS = 15 * 60;
-const REFRESH_SKEW_MS = 30 * 1000;
+export const DEMO_SESSION_TTL_SECONDS = 15 * 60;
+export const DEMO_SESSION_REFRESH_SKEW_MS = 30 * 1000;
 
 function sessionError(code = "DEMO_SESSION_UNAVAILABLE") {
   return Object.assign(new Error("The browser demo session is unavailable."), { code, debug: { code } });
@@ -54,14 +54,14 @@ export function createDemoGatewaySession({
     catch { throw sessionError("DEMO_SESSION_UNAVAILABLE"); }
     if (issuedGeneration !== generation || !validSessionToken(payload?.token)) throw sessionError("DEMO_SESSION_STALE");
     const seconds = Number(payload.expires_in);
-    const ttl = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, SESSION_TTL_SECONDS) : SESSION_TTL_SECONDS;
+    const ttl = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, DEMO_SESSION_TTL_SECONDS) : DEMO_SESSION_TTL_SECONDS;
     token = payload.token;
     expiresAt = now() + Math.max(1, ttl) * 1000;
     return token;
   }
 
   async function getToken(signal) {
-    if (token && expiresAt - now() > REFRESH_SKEW_MS) return token;
+    if (token && expiresAt - now() > DEMO_SESSION_REFRESH_SKEW_MS) return token;
     if (pending) return pending;
     const issuedGeneration = generation;
     const request = issueSession(signal, issuedGeneration);
