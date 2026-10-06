@@ -36,6 +36,9 @@ and Properties open as drawers with Escape/backdrop close and focus return.
 Fit page, Fit width, 100%, incremental zoom and panel/thumbnail toggles affect
 only the editor view; the validated last zoom choice is kept in localStorage,
 defaulting to Fit page, and fit modes recompute when the viewport/panels change; horizontal paper panning never changes print geometry.
+In Design the structure panel starts hidden; the Structure toggle opens it and that
+choice is remembered in localStorage (a `0/1` UI preference, never document data).
+Data and Validate always show their left panel, which holds the sample and dataset lists.
 The current-page indicator follows navigation and scrolling. The UI uses English; user data
 supports bilingual text and the existing five print locales.
 

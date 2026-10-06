@@ -118,7 +118,7 @@ test('data errors recover; malicious text stays inert; data remains isolated bet
   expect(await frame(page).locator('img').count()).toBe(0);
   const isolated = await context.newPage(); await isolated.goto('/studio-v3/'); await ready(isolated);
   await expect(frame(isolated).locator('[data-v3-id=header-company]').first()).toHaveText('ACME Industrial Supply');
-  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('v3')))).toEqual([]);
+  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('v3') && k !== 'printform-studio-v3:structure-open'))).toEqual([]);
   await sample(page,'1');
   await revisionEdit(page,()=>page.locator('[data-sample=erp]').click()); await ready(page);
   await expect(frame(page).locator('[data-v3-id=header-company]').first()).toHaveText(hostile.company.name);
