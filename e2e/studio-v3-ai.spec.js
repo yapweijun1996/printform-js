@@ -49,24 +49,24 @@ test('explicit sharing -> actual Harness local proposal -> real preview -> apply
 for (const [name,reply] of [['malformed','hello'],['unsafe',{summary:'Change money',edits:[{target:'data',property:'total',value:0}]}]]) {
   test(`${name} proposal cannot mutate the form`,async({page})=> {
     await mock(page,{reply}); await openAI(page); await send(page);
-    await expect(page.locator('[data-ai-status]')).toContainText('Nothing changed.'); await expect(page.locator('#revision')).toHaveText('r0'); await expect(page.locator('[data-ai-proposal]')).toBeHidden(); await ready(page);
+    await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Nothing changed.'); await expect(page.locator('#revision')).toHaveText('r0'); await expect(page.locator('[data-ai-proposal]')).toBeHidden(); await ready(page);
   });
 }
 test('session registration blocker and token expiry retry are explicit',async({page})=> {
   await mock(page,{sessionStatus:403}); await openAI(page); await send(page);
-  await expect(page.locator('[data-ai-status]')).toContainText('HTTP 403'); await expect(page.locator('#revision')).toHaveText('r0');
+  await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('HTTP 403'); await expect(page.locator('#revision')).toHaveText('r0');
   await page.unrouteAll(); const m = await mock(page,{unauthorized:true}); await page.locator('[data-ai=retry]').last().click(); await send(page);
   await expect(page.locator('[data-ai-proposal]')).toBeVisible(); expect(m.sessions()).toBe(2); expect(m.plans()).toBe(2);
 });
 test('cancel and a changed revision reject late responses; replaced form gets fresh disclosure',async({page})=> {
   let release; const hold = new Promise(r=>release=r); const m = await mock(page,{hold});
   await openAI(page); await send(page); await expect.poll(()=>m.plans()).toBe(1);
-  await page.locator('[data-ai=cancel]').click(); release(); await expect(page.locator('[data-ai-status]')).toContainText('Cancelled');
+  await page.locator('[data-ai=cancel]').click(); release(); await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Cancelled');
   await page.locator('[data-ai=retry]').last().click(); await page.unrouteAll(); let release2; const hold2 = new Promise(r=>release2=r); const m2 = await mock(page,{hold:hold2});
   await send(page); await expect.poll(()=>m2.plans()).toBe(1);
   await page.locator('#document-name').fill('Fictional renamed form'); await page.locator('#document-name').press('Tab'); release2();
   await expect(page.locator('#revision')).toContainText('r1'); await expect(page.locator('[data-ai-proposal]')).toBeHidden();
-  await expect(page.locator('[data-ai-status]')).toContainText('Form changed'); await expect(page.locator('#ai-consent')).toHaveCount(0);
+  await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Form changed'); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('[data-action=new]').click(); await page.locator('[data-template=delivery]').click(); await ready(page);
   await expect(page.locator('#ai-share')).not.toContainText('items-amount');
 });

@@ -72,8 +72,9 @@ export class AIPanel {
     if (this.applying) return;
     ++this.generation; this.controller?.abort(); this.transport.clear(); this.controller = null;
     clearTimeout(this.timer); this.busy = false;
-    if (this.pendingMessage) { this.conversation.add('assistant',message,'cancelled',{request:this.pendingMessage,documentKey:this.documentKey()}); this.pendingMessage = null; }
-    this.message(message); this.update();
+    const logged = Boolean(this.pendingMessage);
+    if (logged) { this.conversation.add('assistant',message,'cancelled',{request:this.pendingMessage,documentKey:this.documentKey()}); this.pendingMessage = null; }
+    this.message(logged ? '' : message); this.update();
   }
   async stop() {
     const viewing = this.viewing; this.cancel(); if (viewing) await this.restoreUnapplied();
@@ -140,7 +141,7 @@ export class AIPanel {
       if (result.kind === 'answer' && this.viewing) { await this.restore(); this.viewing = false; }
       this.message(`${alias} · ${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `Candidate at r${revision}, ${result.iterations} inspection round(s). ${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} Preview before Apply.`} Tokens: ${result.usage?.total ?? 'unavailable'}.`);
     } catch (error) {
-      if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail('AI_TIMEOUT') : error); this.conversation.add('assistant',message,error.name === 'AbortError' ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(message); }
+      if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail('AI_TIMEOUT') : error); this.conversation.add('assistant',message,error.name === 'AbortError' ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(''); }
     } finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); this.sync(); } }
   }
   present() { this.update(); }

@@ -173,3 +173,19 @@ describe('v3 capability revocation and session lifecycle',()=>{
   expect(errorMessage(error)).toContain('Image analysis is unavailable');expect(errorMessage(error).toLowerCase()).not.toContain('nothing was sent');
  });
 });
+
+describe('v3 Demo network failures',()=> {
+  it('reports a CORS/offline TypeError as an actionable unreachable error, not the generic one',async()=> {
+    const transport = createDemoTransport({fetchImpl:async()=> { throw new TypeError('Failed to fetch'); }});
+    const error = await transport.discover().catch(e=>e);
+    expect(error.code).toBe('DEMO_NETWORK_UNREACHABLE');
+    expect(errorMessage(error)).toContain('Cannot reach the AI service');
+    expect(errorMessage(error)).toContain('Nothing changed');
+  });
+  it('keeps user cancellation as a cancellation rather than a network error',async()=> {
+    const transport = createDemoTransport({fetchImpl:async()=> { throw new DOMException('aborted','AbortError'); }});
+    const error = await transport.discover().catch(e=>e);
+    expect(error.name).toBe('AbortError');
+    expect(errorMessage(error)).toBe('Cancelled. Nothing changed.');
+  });
+});

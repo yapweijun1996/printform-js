@@ -12,7 +12,9 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     // Recheck after session acquisition/refresh; keep the guard off the wire.
     const {[assertDispatch]:assertCurrent,...init}=options;
     assertCurrent?.();
-    const response = await fetchImpl(url,init);
+    let response;
+    try { response = await fetchImpl(url,init); }
+    catch (error) { throw error?.code || ['AbortError','TimeoutError'].includes(error?.name) ? error : fail('DEMO_NETWORK_UNREACHABLE'); }
     if (String(url).endsWith('/demo/session') && response.status === 403) throw fail('DEMO_SESSION_FORBIDDEN');
     return response;
   }});

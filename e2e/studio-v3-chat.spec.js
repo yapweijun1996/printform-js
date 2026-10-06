@@ -34,7 +34,7 @@ test('grounded font Q&A and follow-up proposal form a real conversation with exp
 });
 test('selected scope rejects global styles, exposes live selection and expires an earlier card on selection navigation',async({page})=> {
   await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
-  await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: items');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-status]')).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
+  await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: items');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
   await page.locator('#ai-scope').selectOption('whole');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
   await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: customer');await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
   await page.locator('#left-panel [data-select=items]').click();await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
@@ -70,7 +70,7 @@ test('timeout stops a held request and retry requires another deliberate Send',a
     const path=new URL(route.request().url()).pathname;if(path.endsWith('/chat/completions'))await held;
     await route.fulfill({status:path.endsWith('/session')?201:200,contentType:'application/json',body:JSON.stringify(path.endsWith('/session')?{token:'dmo_synthetic123456',expires_in:900}:path.endsWith('/models')?{data:[{id:'demo-fast'}]}:{choices:[]})}).catch(()=>{});
   });
-  try {await page.locator('[data-ai-toggle]').click();await send(page,'Fictional held request');await expect(page.locator('[data-ai-status]')).toContainText('timed out');await expect(page.locator('#revision')).toHaveText('r0');await page.locator('[data-ai=retry]').last().click();await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('#ai-consent')).toHaveCount(0);}finally{release();}
+  try {await page.locator('[data-ai-toggle]').click();await send(page,'Fictional held request');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('timed out');await expect(page.locator('#revision')).toHaveText('r0');await page.locator('[data-ai=retry]').last().click();await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('#ai-consent')).toHaveCount(0);}finally{release();}
 });
 test.describe('normal browser context',()=> {
   test.use({serviceWorkers:'allow'});

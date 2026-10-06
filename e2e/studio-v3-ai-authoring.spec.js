@@ -53,5 +53,5 @@ test('typed structural proposal adds static text, reorders columns and preserves
 });
 test('read-only questions still cannot produce edits and unsupported model code never gains authority',async({page})=> {
   const wire=await gateway(page,[plan([{type:'replace_template',value:'<script>evil()</script>'}])]);await page.locator('[data-ai-toggle]').click();await send(page,'Make a safe framework change.');
-  await expect(page.locator('[data-ai-status]')).toContainText('unsupported or unsafe');expect(wire).toHaveLength(3);await expect(page.locator('#revision')).toHaveText('r0');await ready(page);
+  await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('unsupported or unsafe');expect(wire).toHaveLength(3);await expect(page.locator('#revision')).toHaveText('r0');await ready(page);
 });

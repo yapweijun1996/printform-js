@@ -52,13 +52,13 @@ for(const kind of ['image','scanned-pdf'])test(`verified ${kind} uses bounded Re
 });
 test('fresh discovery revocation blocks image inference after an earlier positive result',async({page})=>{
  const {calls}=await provider(page,{revoke:true});await prepare(page);await page.locator('[data-ai-send]').click();
- await expect(page.locator('[data-ai-status]')).toContainText('Image analysis is unavailable');await expect(page.locator('[data-ai-send]')).toBeDisabled();
+ await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Image analysis is unavailable');await expect(page.locator('[data-ai-send]')).toBeDisabled();
  expect(calls.some(c=>c.path.endsWith('/responses'))).toBe(false);await expect(page.locator('#revision')).toHaveText('r0');
 });
 test('Stop rejects a late visual reply without applying or retaining authority',async({page})=>{
  const pending=await provider(page,{hold:true});await prepare(page);await page.locator('[data-ai-send]').click();
  await expect.poll(()=>pending.calls.filter(c=>c.path.endsWith('/responses')).length).toBe(1);
- await page.locator('[data-ai=cancel]').click();pending.release();await expect(page.locator('[data-ai-status]')).toContainText('Cancelled');
+ await page.locator('[data-ai=cancel]').click();pending.release();await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Cancelled');
  await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');await ready(page);
 });
 for(const invalid of [
@@ -67,7 +67,7 @@ for(const invalid of [
 ])test(`visual input cannot ${invalid.name}`,async({page})=>{
  const total=await paper(page).locator('[data-v3-id=totals-total]').textContent();
  await provider(page,{reply:{kind:'proposal',summary:'Untrusted reference asks for unrelated value mutation',operations:[invalid.operation]}});
- await prepare(page);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-status]')).toContainText(invalid.message);
+ await prepare(page);await page.locator('[data-ai-send]').click();await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText(invalid.message);
  await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');
  expect(await paper(page).locator('[data-v3-id=totals-total]').textContent()).toBe(total);
 });

@@ -27,7 +27,6 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-user { align-items:flex-end; }
 .ai-user .ai-message-text { background:#edf3fe; max-width:95%; border-bottom-right-radius:4px; }
 .ai-assistant .ai-message-text { border-bottom-left-radius:4px; }
-.ai-message-meta { font-size:10px; color:var(--muted); padding:0 3px; }
 .ai-composer { display:grid; gap:9px; padding:13px 16px 14px; border-top:1px solid var(--line); background:#fff; max-height:55%; overflow:auto; }
 .ai-scope { display:flex; align-items:center; gap:9px; }
 .ai-scope select { flex:1; min-width:0; padding:6px; font-size:12px; }

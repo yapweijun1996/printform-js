@@ -120,7 +120,7 @@ it.each(['image','pdf'])('keeps discovered image permission after token cleanup 
 it('fresh capability revocation blocks attached pixels before any inference request',async()=>{
  const {panel,calls,state}=visualPanel();await panel.discover();state.enabled=false;await panel.send();
  expect(calls.some(c=>c.url.endsWith('/responses') || c.url.endsWith('/chat/completions'))).toBe(false);
- expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(panel.node('[data-ai-status]').textContent).toContain('Image analysis is unavailable');expect(panel.getBus().revision).toBe(0);
+ expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(panel.conversation.messages.at(-1).text).toContain('Image analysis is unavailable');expect(panel.getBus().revision).toBe(0);
 });
 it('failed rediscovery closes image Send until a later successful check',async()=>{
  const {panel,transport,state}=visualPanel();await panel.discover();state.status=500;await panel.discover();
@@ -153,5 +153,5 @@ it('unknown support stays blocked after checking, and a revoked grant exposes th
  button.click();await vi.waitFor(()=>expect(panel.busy).toBe(false));expect(button.hidden).toBe(false);expect(panel.node('[data-ai-send]').disabled).toBe(true);
  state.enabled=true;button.click();await vi.waitFor(()=>expect(button.hidden).toBe(true));state.enabled=false;await panel.send();
  expect(button.hidden).toBe(false);expect(button.disabled).toBe(false);expect(panel.node('[data-ai-send]').disabled).toBe(true);
- expect(panel.node('[data-ai-status]').textContent).toContain('Check image support');expect(calls.every(c=>c.url.endsWith('/session') || c.url.endsWith('/models'))).toBe(true);
+ expect(panel.conversation.messages.at(-1).text).toContain('Check image support');expect(calls.every(c=>c.url.endsWith('/session') || c.url.endsWith('/models'))).toBe(true);
 });
