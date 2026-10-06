@@ -8,7 +8,7 @@ export const AI_MESSAGES = {
   DEMO_GATEWAY_TIMEOUT:'The AI service is slow and did not answer in time. Use Edit & resend to try again. Nothing changed.',
   DEMO_MEDIA_ENDPOINT_BUG:'Internal error: an image request reached the text-only endpoint. Please report this. Nothing changed.',
   DEMO_SESSION_EXPIRED:'Demo session expired after one refresh. Use Edit & resend to try again. Nothing changed.',
-  DEMO_MODEL_UNAVAILABLE:'The model you selected is no longer available. The list was refreshed; check the selected model and send again. Nothing changed.',
+  DEMO_MODEL_UNAVAILABLE:'The selected model is no longer available. Choose a model from the list and send again. Nothing changed.',
   DEMO_RATE_LIMIT:'Demo request limit reached. Try again later. Nothing changed.',
   DEMO_REQUEST_FAILED:'Demo request failed. Check gateway availability. Nothing changed.',
   LOGO_ASSET_UNAVAILABLE:'The suggestion references an unavailable logo asset. Nothing changed.',

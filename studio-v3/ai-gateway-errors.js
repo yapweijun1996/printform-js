@@ -17,6 +17,7 @@ export async function readFailureBody(response) {
 // HTTP status plus the gateway's own code (or its published wording) decide the failure.
 export function failureCode(status, {code = '', message = ''} = {}) {
   if (status === 400 && (code === 'DEMO_MEDIA_DISABLED' || message.includes('text messages only'))) return 'DEMO_MEDIA_ENDPOINT_BUG';
+  if (code === 'DEMO_MODEL_NOT_ALLOWED') return 'DEMO_MODEL_UNAVAILABLE';
   if (status === 401) return 'DEMO_SESSION_EXPIRED';
   if (status === 403) return 'DEMO_SESSION_FORBIDDEN';
   if (status === 429) return 'DEMO_RATE_LIMIT';
