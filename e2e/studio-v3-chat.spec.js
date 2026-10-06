@@ -1,4 +1,5 @@
 import {syntheticDemoTransport} from './synthetic-demo-transport.js';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import {test,expect} from '@playwright/test';
 test.use({serviceWorkers:'block'});
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -16,7 +17,7 @@ async function mock(page,replies=[answer]) {
   });return requests;
 }
 async function send(page,text) {await page.locator('#ai-prompt').fill(text);await page.locator('[data-ai-send]').click();}
-test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await page.goto('/studio-v3/');await ready(page);});
+test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
 test('grounded font Q&A and follow-up proposal form a real conversation with explicit Send payload and one-step Undo',async({page},info)=> {
   const requests=await mock(page,[answer,proposal]);
   const original=await page.frameLocator('#preview-frame').locator('[data-v3-id=totals-total]').textContent();

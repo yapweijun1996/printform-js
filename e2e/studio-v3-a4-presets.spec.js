@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {A4_PRESETS} from '../studio-v3/a4-presets.js';
@@ -43,7 +44,7 @@ async function facts(root) {
  })));
 }
 test.beforeEach(async({page})=>{
- page.on('dialog',dialog=>dialog.accept());await page.goto('/studio-v3/');await ready(page);
+ page.on('dialog',dialog=>dialog.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);
 });
 
 for(const preset of A4_PRESETS)test(`${preset.documentKind}: real data → edit → reopen → A4 print`,async({page,context,browserName},info)=>{

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -23,6 +24,7 @@ async function newForm(page,type) {
 async function openJSON(page) { await page.locator('[data-mode=data]').click(); await page.locator('#database-workbench [data-db-group=json]').click(); }
 test.beforeEach(async ({page}) => {
   page.on('dialog', dialog => dialog.accept());
+  await keepStructureOpen(page);
   await page.goto('/studio-v3/');
   await ready(page);
 });

@@ -1,4 +1,5 @@
 import { test,expect } from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 // These deterministic transport tests need interception before a worker claims
 // the client; real worker+AI recovery is covered in the upgrade tests.
 test.use({serviceWorkers:'block'});
@@ -23,7 +24,7 @@ async function mock(page,{reply = proposal,status = 200,sessionStatus = 201,hold
   });
   return {calls,sessions:()=>sessions,plans:()=>plans};
 }
-test.beforeEach(async({page})=> { page.on('dialog',d=>d.accept()); await page.goto('/studio-v3/'); await ready(page); });
+test.beforeEach(async({page})=> { page.on('dialog',d=>d.accept()); await keepStructureOpen(page);await page.goto('/studio-v3/'); await ready(page); });
 test('explicit sharing -> actual Harness local proposal -> real preview -> apply -> undo; ERP and print dimensions survive',async({page},info)=> {
   const m = await mock(page); const before = await frame(page).locator('.printform_page').first().evaluate(n=>({width:n.offsetWidth,height:n.offsetHeight}));
   const total = await frame(page).locator('[data-v3-id=totals-total]').textContent();

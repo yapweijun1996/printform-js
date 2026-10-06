@@ -1,9 +1,10 @@
 import {test,expect} from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import {upgradeServer,NEXT} from './studio-v3-upgrade-server.js';
 import {newProject} from '../studio-v3/model.js';
 import {saveProject} from '../studio-v3/file-io.js';
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
-async function start(page,server) {page.on('dialog',d=>d.accept());await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
+async function start(page,server) {page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
 async function update(page,server) {
   server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`,{timeout:30000});
   await page.locator('#update-button').click();await page.locator('[data-update-choice=keep]').click();

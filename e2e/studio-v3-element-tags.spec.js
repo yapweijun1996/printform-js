@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 test.use({serviceWorkers:'block'});
 const frame = page=>page.frameLocator('#preview-frame');
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -17,7 +18,7 @@ async function add(page,id) {
   await page.locator('#left-panel [data-ai-add]').click();
   await expect(page.locator(`[data-ai-tag-id="${id}"]`)).toBeVisible();
 }
-test.beforeEach(async({page})=> { page.on('dialog',dialog=>dialog.accept()); await page.goto('/studio-v3/'); await ready(page); });
+test.beforeEach(async({page})=> { page.on('dialog',dialog=>dialog.accept()); await keepStructureOpen(page);await page.goto('/studio-v3/'); await ready(page); });
 
 test('canvas label and structure value become removable composer references; only explicit Send transmits comments',async({page},info)=> {
   const calls = await mock(page), errors = []; page.on('pageerror',error=>errors.push(error.message));

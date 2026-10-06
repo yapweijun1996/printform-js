@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import { keepStructureOpen } from './studio-v3-structure.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 test.use({serviceWorkers:'block'});
@@ -29,7 +30,7 @@ async function expectYellow(locator){
   await expect(locator.first()).toHaveCSS('background-color','rgb(255, 255, 0)');
   expect(await locator.evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).backgroundColor==='rgb(255, 255, 0)'))).toBe(true);
 }
-test.beforeEach(async({page})=>{page.on('dialog',dialog=>dialog.accept());await page.goto('/studio-v3/');await ready(page);});
+test.beforeEach(async({page})=>{page.on('dialog',dialog=>dialog.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
 test('yellow rows are rendered across pages; Preview Apply Undo and save/reopen retain data and template identity',async({page,context,browserName},info)=>{
   const calls=await mock(page,[wrong,fill]);const before=await save(page,info,'before-row-fill.printform.json');
   const totals=await paper(page).locator('[data-v3-id=totals-total]').allTextContents();
