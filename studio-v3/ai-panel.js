@@ -39,7 +39,7 @@ export class AIPanel {
   }
   node(selector) { return this.root.querySelector(selector); }
   // Progress ticks twice a second; they stay silent for screen readers, phase changes are announced.
-  message(text,{progress = false} = {}) { const status = this.node('[data-ai-status]'); status.setAttribute('aria-live',progress ? 'off' : 'polite'); status.textContent = text; }
+  message(text,{progress = false} = {}) { const status = this.node('[data-ai-status]'); status.setAttribute('aria-live',progress ? 'off' : 'polite'); status.textContent = text; const wait = this.root.querySelector('.ai-pending-text'); if (wait) wait.textContent = text; }
   error(error) { this.message(errorMessage(error)); }
   // Scope is derived, never chosen: referenced elements limit the edit, otherwise the whole form is editable.
   scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return ids.length ? {mode:'selected',id:ids[0],ids} : {mode:'whole'}; }
@@ -149,7 +149,8 @@ export class AIPanel {
       if (result.kind === 'answer' && this.viewing) { await this.restore(); this.viewing = false; }
       // Wide screens preview the unapplied candidate right away; narrow screens keep the Preview button (it hides the full-screen panel).
       const auto = result.kind === 'proposal' && innerWidth > 900, next = auto && result.inspection?.ready ? 'Review the paper preview, then Apply.' : 'Preview before Apply.';
-      this.message(`${alias} · ${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `Candidate at r${revision}, ${result.iterations} inspection round(s). ${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} Tokens: ${result.usage?.total ?? 'unavailable'}.`);
+      const details = `${alias} · ${result.kind === 'answer' ? '' : `r${revision} · ${result.iterations} inspection round(s) · `}Tokens: ${result.usage?.total ?? 'unavailable'}`;
+      this.message(`${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} (${details})`);
       if (auto) await this.preview(true).catch(error=>this.error(error));
     } catch (error) {
       if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail('AI_TIMEOUT') : error); this.conversation.add('assistant',message,error.name === 'AbortError' ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(''); }
