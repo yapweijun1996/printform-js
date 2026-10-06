@@ -1,6 +1,6 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import fs from 'node:fs/promises';
-test.use({serviceWorkers:'block'});
+
 test('currency vertical clipping is rejected at the value and its wrappers; normal A4 and multiline labels remain readable',async({page},info)=> {
   await page.goto('/studio-v3/');
   await page.setContent('<html lang="en"><head><title>Financial clip fixture</title></head><body><div class="printform_page" style="width:794px;height:1123px"><div class="field" style="height:120px;width:400px;display:flex;justify-content:space-between;align-items:flex-start"><span data-v3-role="label">Legitimate<br>multiline label</span><div id="wrapper"><span data-pf-format="currency" style="display:block">RM 12,150.00</span></div></div></div></body></html>');

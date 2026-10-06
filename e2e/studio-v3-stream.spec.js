@@ -1,7 +1,7 @@
-import { test,expect } from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 // The gateway is replaced inside the page by a fetch that streams server-sent events with real
 // delays, so the browser's own stream, decoder and timers are exercised. Nothing leaves the machine.
-test.use({serviceWorkers:'block'});
+
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const proposal = {summary:'Use navy and compact spacing',edits:[{target:'style',property:'color',value:'#163a65'},{target:'style',property:'padding',value:5}]};
 async function streamingGateway(page) {

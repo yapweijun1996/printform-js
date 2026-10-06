@@ -1,5 +1,5 @@
-import {test,expect} from '@playwright/test';
-test.use({serviceWorkers:'block'});test.setTimeout(90000);
+import { test, expect } from './studio-v3-test.js';
+test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 test('remembered quotation data never silently becomes an invoice on reload or New',async({page})=>{
  await page.goto('/studio-v3/');await ready(page);await page.locator('[data-action=new]').click();

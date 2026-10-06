@@ -1,9 +1,9 @@
 import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {syntheticPdf,syntheticPng} from './fixtures/reference-documents.js';
-test.use({serviceWorkers:'block'});test.setTimeout(90000);
+test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
 const proposal={summary:'Use the fictional reference navy',edits:[{target:'style',property:'color',value:'#163a65'}]};

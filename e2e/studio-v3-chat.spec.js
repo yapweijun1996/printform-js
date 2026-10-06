@@ -2,8 +2,8 @@ import { isInference, responsesReply, userText } from './demo-gateway-fixture.js
 import {syntheticDemoTransport} from './synthetic-demo-transport.js';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
-import {test,expect} from '@playwright/test';
-test.use({serviceWorkers:'block'});
+import { test, expect } from './studio-v3-test.js';
+
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const answer={kind:'answer',message:'The supplied facts show the current font sizes.'};
 const proposal={kind:'proposal',summary:'Use navy accents',edits:[{target:'style',property:'color',value:'#163a65'}]};
@@ -76,7 +76,7 @@ test('timeout stops a held request and retry requires another deliberate Send',a
   try {await page.locator('[data-ai-toggle]').click();await send(page,'Fictional held request');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('timed out');await expect(page.locator('#revision')).toHaveText('r0');await page.locator('[data-ai=retry]').last().click();await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('#ai-consent')).toHaveCount(0);}finally{release();}
 });
 test.describe('normal browser context',()=> {
-  test.use({serviceWorkers:'allow'});
+  test.use({blockServiceWorkers:false});
   test('read-only chat and print renders have no page errors with normal service-worker permissions',async({page,context})=> {
     const errors=[];page.on('pageerror',e=>errors.push(e.message));const transport=await syntheticDemoTransport(context,[answer,proposal]);await page.reload();await ready(page);await page.locator('[data-ai-toggle]').click();await send(page,'What are the current font sizes?');await expect(page.locator('[data-ai-status]')).toContainText('Read-only answer');
     await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await ready(page);await page.locator('[data-ai=undo]').click();await ready(page);expect(errors).toEqual([]);expect(transport.requests).toHaveLength(2);expect(transport.unexpected).toEqual([]);

@@ -1,8 +1,8 @@
 import { responsesReply, userText } from './demo-gateway-fixture.js';
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import { limitToSelection, reviewCandidate } from './studio-v3-scope.js';
 import { clickPaper } from './studio-v3-paper-click.js';
-test.use({serviceWorkers:'block'});
+
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const frame=page=>page.frameLocator('#preview-frame');
 const plan=operations=>({kind:'proposal',summary:'Edit the referenced template elements',operations});

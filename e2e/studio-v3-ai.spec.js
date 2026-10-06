@@ -1,10 +1,10 @@
 import { reviewCandidate } from './studio-v3-scope.js';
 import { isInference, responsesReply } from './demo-gateway-fixture.js';
-import { test,expect } from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 // These deterministic transport tests need interception before a worker claims
 // the client; real worker+AI recovery is covered in the upgrade tests.
-test.use({serviceWorkers:'block'});
+
 const proposal = {summary:'Use navy and compact spacing',edits:[{target:'style',property:'color',value:'#163a65'},{target:'style',property:'padding',value:5}]};
 const frame = page=>page.frameLocator('#preview-frame');
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});

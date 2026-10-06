@@ -1,5 +1,5 @@
-import {test,expect} from '@playwright/test';
-test.use({serviceWorkers:'block'});
+import { test, expect } from './studio-v3-test.js';
+
 test('quiet composer retains accessible exact-request inspection and the complete footer',async({page})=>{
  const requests=[];await page.route('https://gpt.yapweijun1996.com/demo/**',route=>{requests.push(route.request().url());return route.abort();});
  await page.goto('/studio-v3/');await expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});

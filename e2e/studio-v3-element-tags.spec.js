@@ -1,8 +1,8 @@
 import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import { clickPaper } from './studio-v3-paper-click.js';
-test.use({serviceWorkers:'block'});
+
 const frame = page=>page.frameLocator('#preview-frame');
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 async function mock(page) {

@@ -1,9 +1,9 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { clickPaper } from './studio-v3-paper-click.js';
 import {syntheticPng} from './fixtures/reference-documents.js';
 import {rasterPdf} from './fixtures/raster-reference-documents.js';
-test.use({serviceWorkers:'block'});test.setTimeout(90000);
+test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
 const label={kind:'proposal',summary:'Style only the selected label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};

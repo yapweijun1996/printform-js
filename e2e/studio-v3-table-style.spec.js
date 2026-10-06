@@ -1,10 +1,10 @@
 import { responsesReply } from './demo-gateway-fixture.js';
-import {test,expect} from '@playwright/test';
+import { test, expect } from './studio-v3-test.js';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
-test.use({serviceWorkers:'block'});
+
 test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
