@@ -1,4 +1,5 @@
 import {syntheticDemoTransport} from './synthetic-demo-transport.js';
+import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import {test,expect} from '@playwright/test';
 test.use({serviceWorkers:'block'});
@@ -33,15 +34,15 @@ test('grounded font Q&A and follow-up proposal form a real conversation with exp
   await page.locator('[data-ai=undo]').click();await ready(page);expect(await page.frameLocator('#preview-frame').locator('[data-v3-id=totals-total]').textContent()).toBe(original);
   expect(await page.frameLocator('#preview-frame').locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(23, 99, 220)');
 });
-test('selected scope rejects global styles, exposes live selection and expires an earlier card on selection navigation',async({page})=> {
-  await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
-  await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: items');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
-  await page.locator('#ai-scope').selectOption('whole');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-selection]')).toHaveText('Selected: customer');await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
+test('a referenced scope rejects global styles, the hint tracks scope and an earlier card expires on selection navigation',async({page})=> {
+  await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
+  await expect(page.locator('[data-ai-scope]')).toContainText('Editing 1 selected element');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
+  await limitToWholeForm(page);await expect(page.locator('[data-ai-scope]')).toContainText('whole form');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
   await page.locator('#left-panel [data-select=items]').click();await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
 });
 test('font answers use selected field facts, remain plain text and do not treat Shift+Enter or IME Enter as Send',async({page})=> {
-  const requests=await mock(page,[{kind:'answer',message:'<img src=x onerror=alert(1)>'}]);await page.locator('#left-panel [data-select=header-company]').click();await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
+  const requests=await mock(page,[{kind:'answer',message:'<img src=x onerror=alert(1)>'}]);await page.locator('#left-panel [data-select=header-company]').click();await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await page.locator('#ai-prompt').fill('What is the current font size?');await page.locator('#ai-prompt').press('Shift+Enter');expect(requests).toHaveLength(0);
   await page.locator('#ai-prompt').evaluate(n=>n.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true})));expect(requests).toHaveLength(0);
   await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-log]')).toContainText('header-company · value: 12 pt');await expect(page.locator('[data-ai-log] img')).toHaveCount(0);await expect(page.locator('#revision')).toHaveText('r0');

@@ -35,8 +35,7 @@ test('explicit sharing -> actual Harness local proposal -> real preview -> apply
   expect(m.plans()).toBe(1); expect(m.calls[0].payload).toEqual({project_id:'github-pages'}); expect(m.calls[0].auth).toBe(false);
   const wire = m.calls.find(c=>c.path.endsWith('/chat/completions')).payload;
   expect(Object.keys(wire).sort()).toEqual(['messages','model','stream']); expect(JSON.stringify(wire)).not.toContain('ACME');
-  await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-  await page.locator('[data-ai=preview]').click(); await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
   await expect(page.locator('[data-action=print]')).toBeDisabled(); await expect(page.locator('[data-action=export]')).toBeDisabled();
   expect(await frame(page).locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(22, 58, 101)');
   await page.screenshot({path:info.outputPath('ai-unapplied-preview.png')});
@@ -53,6 +52,17 @@ for (const [name,reply] of [['malformed','hello'],['unsafe',{summary:'Change mon
     await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Nothing changed.'); await expect(page.locator('#revision')).toHaveText('r0'); await expect(page.locator('[data-ai-proposal]')).toBeHidden(); await ready(page);
   });
 }
+test('narrow screens keep Preview manual: Apply waits for the Preview button, which reveals the paper',async({page})=> {
+  await page.setViewportSize({width:390,height:844});
+  await mock(page); await openAI(page); await send(page);
+  await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  await expect(page.locator('[data-ai=apply]')).toBeDisabled();
+  await page.locator('[data-ai=preview]').click();
+  await expect(page.locator('#ai-preview-banner')).toBeVisible();
+  await page.locator('[data-ai-return]').click();
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  await expect(page.locator('#revision')).toHaveText('r0');
+});
 test('session registration blocker and token expiry retry are explicit',async({page})=> {
   await mock(page,{sessionStatus:403}); await openAI(page); await send(page);
   await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('HTTP 403'); await expect(page.locator('#revision')).toHaveText('r0');

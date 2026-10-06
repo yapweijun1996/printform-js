@@ -106,7 +106,7 @@ test('plain-language selected label request supplies its exact target and stays 
  });
  const valueBefore=await frame(page).locator('[data-v3-id=customer-ship]').first().textContent();
  await frame(page).locator('[data-v3-id=label-customer-ship]').first().click();await page.locator('.paper-toolbar [data-ai-add]').click();
- await page.locator('#ai-scope').selectOption('selected');await page.locator('#ai-prompt').fill(wording);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+ await page.locator('#ai-prompt').fill(wording);await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();
  await expect(frame(page).locator('[data-v3-id=label-customer-ship]').first()).toHaveCSS('font-size','16px');await expect(frame(page).locator('[data-v3-id=label-customer-ship]').first()).toHaveCSS('font-weight','700');
  expect(await frame(page).locator('[data-v3-id=customer-ship]').first().textContent()).toBe(valueBefore);await page.locator('[data-ai=undo]').click();await ready(page);await expect(page.locator('#revision')).toContainText('r2');

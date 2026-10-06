@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import { limitToSelection } from './studio-v3-scope.js';
 test.use({serviceWorkers:'block'});
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const frame=page=>page.frameLocator('#preview-frame');
@@ -22,7 +23,7 @@ test('screenshot request changes selected label to 12pt bold without changing it
   const beforeValue=await value.evaluate(n=>({text:n.textContent,font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}));
   const beforeLabel=await node.evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}));
   const total=await frame(page).locator('[data-v3-id=totals-total]').textContent();
-  await node.click();await page.locator('[data-ai-toggle]').click();await page.locator('#ai-scope').selectOption('selected');
+  await node.click();await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await expect(page.locator('#ai-consent')).toHaveCount(0);await send(page,'Change this label to 12pt bold.');
   await expect(page.locator('[data-ai-proposal]')).toBeVisible();await expect(page.locator('[data-ai=apply]')).toBeDisabled();
   await expect(page.locator('#revision')).toHaveText('r0');await expect(page.locator('#ai-preview-banner')).toBeVisible();
