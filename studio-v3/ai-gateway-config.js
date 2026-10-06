@@ -14,12 +14,12 @@ export const DEMO_CONFIG = Object.freeze({
   // One explicit Send, including model discovery and up to three model requests.
   sendTimeoutMs: 60_000,
   responseLimitChars: 64_000,
+  maxBodyBytes: 12 * MIB,
   errorBodyLimitChars: 8_192,
   image: Object.freeze({
     maxCount: 4,
     maxBytes: 4 * MIB,
     maxTotalBytes: 8 * MIB,
-    maxBodyBytes: 12 * MIB,
     // Base64 of one maximum image plus the data-URL header allowance.
     maxUrlChars: Math.ceil(4 * MIB / 3) * 4 + 100
   })

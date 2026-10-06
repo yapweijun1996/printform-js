@@ -1,3 +1,4 @@
+import { isInference, responsesReply } from './demo-gateway-fixture.js';
 import { test,expect } from '@playwright/test';
 import { keepStructureOpen } from './studio-v3-structure.js';
 // These deterministic transport tests need interception before a worker claims
@@ -19,7 +20,7 @@ async function mock(page,{reply = proposal,status = 200,sessionStatus = 201,hold
     else if (path.endsWith('/models')) await fulfill({data:[{id:'demo-fast'},{id:'demo-auto'}]});
     else {
       plans++; if (hold) await hold;
-      await fulfill(unauthorized && plans===1 ? {} : {choices:[{finish_reason:'stop',message:{content:typeof reply === 'string' ? reply : JSON.stringify(reply)}}],usage:{total_tokens:25}},unauthorized && plans===1 ? 401 : status);
+      await fulfill(unauthorized && plans===1 ? {} : responsesReply(reply,{total_tokens:25}),unauthorized && plans===1 ? 401 : status);
     }
   });
   return {calls,sessions:()=>sessions,plans:()=>plans};
@@ -33,8 +34,8 @@ test('explicit sharing -> actual Harness local proposal -> real preview -> apply
   await send(page); await expect(page.locator('[data-ai-proposal]')).toBeVisible();
   await expect(page.locator('[data-ai-status]')).toContainText('demo-fast'); await expect(page.locator('#revision')).toHaveText('r0');
   expect(m.plans()).toBe(1); expect(m.calls[0].payload).toEqual({project_id:'github-pages'}); expect(m.calls[0].auth).toBe(false);
-  const wire = m.calls.find(c=>c.path.endsWith('/chat/completions')).payload;
-  expect(Object.keys(wire).sort()).toEqual(['messages','model','stream']); expect(JSON.stringify(wire)).not.toContain('ACME');
+  const wire = m.calls.find(c=>isInference(c.path)).payload;
+  expect(Object.keys(wire).sort()).toEqual(['input','model','stream']); expect(JSON.stringify(wire)).not.toContain('ACME');
   await expect(page.locator('[data-ai=apply]')).toBeEnabled();
   await expect(page.locator('[data-action=print]')).toBeDisabled(); await expect(page.locator('[data-action=export]')).toBeDisabled();
   expect(await frame(page).locator('.brand-mark').first().evaluate(n=>getComputedStyle(n).color)).toBe('rgb(22, 58, 101)');

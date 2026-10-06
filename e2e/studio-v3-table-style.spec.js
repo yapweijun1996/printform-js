@@ -1,3 +1,4 @@
+import { responsesReply } from './demo-gateway-fixture.js';
 import {test,expect} from '@playwright/test';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
@@ -16,7 +17,7 @@ async function mock(page,replies){
     const path=new URL(route.request().url()).pathname;
     let body;if(path.endsWith('/session'))body={token:'dmo_synthetic123456',expires_in:900};
     else if(path.endsWith('/models'))body={data:[{id:'demo-fast'}]};
-    else{calls.push(route.request().postDataJSON());body={choices:[{finish_reason:'stop',message:{content:JSON.stringify(replies[Math.min(calls.length-1,replies.length-1)])}}]};}
+    else{calls.push(route.request().postDataJSON());body=responsesReply(replies[Math.min(calls.length-1,replies.length-1)]);}
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   });return calls;
 }

@@ -3,7 +3,8 @@ import { createDemoTransport } from '../studio-v3/ai-demo-transport.js';
 import { errorMessage } from '../studio-v3/ai-messages.js';
 const json = (body,status=200) => new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
 const models = {data:[{id:'demo-auto'},{id:'demo-fast'},{id:'private-model'}]};
-const reply = {choices:[{finish_reason:'stop',message:{content:'{}'}}]};
+const textReply = text => ({status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}],usage:{input_tokens:3,output_tokens:4,total_tokens:7}});
+const reply = textReply('{}');
 describe('v3 Demo wire contract',()=> {
   it('uses existing registration, discovers aliases and sends no native tools/private credentials',async()=> {
     const calls = []; const transport = createDemoTransport({fetchImpl:async(url,init)=> {
@@ -11,8 +12,8 @@ describe('v3 Demo wire contract',()=> {
     }});
     expect(await transport.discover()).toEqual(['demo-auto','demo-fast']); await transport.plan('demo-fast','fictional layout');
     expect(JSON.parse(calls[0].init.body)).toEqual({project_id:'github-pages'}); expect(calls[0].init.headers.authorization).toBeUndefined();
-    expect(calls[2].url).toBe('https://gpt.yapweijun1996.com/demo/v1/chat/completions');
-    const payload = JSON.parse(calls[2].init.body); expect(Object.keys(payload).sort()).toEqual(['messages','model','stream']);
+    expect(calls[2].url).toBe('https://gpt.yapweijun1996.com/demo/v1/responses'); expect(calls.some(c=>c.url.includes('chat/completions'))).toBe(false);
+    const payload = JSON.parse(calls[2].init.body); expect(Object.keys(payload).sort()).toEqual(['input','model','stream']); expect(payload.stream).toBe(false);
     expect(payload.model).toBe('demo-fast'); expect(JSON.stringify(payload)).not.toContain('dmo_');
     expect(new Headers(calls[2].init.headers).get('authorization')).toBe('Bearer dmo_synthetic1234');
     expect(new Headers(calls[0].init.headers).has('origin')).toBe(false);
@@ -48,9 +49,15 @@ describe('v3 Demo wire contract',()=> {
     await expect(transport.discover()).rejects.toThrow(status===429?'DEMO_RATE_LIMIT':'DEMO_REQUEST_FAILED');
   });
   it('rejects absent aliases, native tool responses, truncation and oversized responses',async()=> {
-    for (const bad of [{choices:[{finish_reason:'length',message:{content:'{}'}}]},{choices:[{finish_reason:'stop',message:{content:'{}',tool_calls:[]}}]},{padding:'x'.repeat(65000)}]) {
+    const message = {type:'message',content:[{type:'output_text',text:'{}'}]};
+    for (const [bad,code] of [
+      [{status:'incomplete',output:[message]},'MALFORMED_PROPOSAL'],
+      [{status:'completed',output:[{type:'function_call',name:'run'},message]},'MALFORMED_PROPOSAL'],
+      [{choices:[{finish_reason:'stop',message:{content:'{}'}}]},'MALFORMED_PROPOSAL'],
+      [{padding:'x'.repeat(65000)},'DEMO_RESPONSE_LIMIT']
+    ]) {
       const transport = createDemoTransport({fetchImpl:async url=>url.endsWith('/session') ? json({token:'dmo_synthetic123'}) : json(bad)});
-      await expect(transport.plan('demo-fast','fake')).rejects.toThrow();
+      await expect(transport.plan('demo-fast','fake')).rejects.toMatchObject({code});
     }
     const missing = createDemoTransport({fetchImpl:async url=>url.endsWith('/session') ? json({token:'dmo_synthetic123'}) : json({data:[{id:'private'}]})});
     await expect(missing.discover()).rejects.toThrow('DEMO_MODEL_UNAVAILABLE');
@@ -233,4 +240,33 @@ describe('v3 Demo HTTP failures are named, not generic',()=> {
     expect(codes.has('DEMO_NETWORK_UNREACHABLE')).toBe(true);expect(codes.size).toBe(6);
   });
 });
-
+describe('v3 text requests use the Responses endpoint',()=> {
+  const recorder=(payload=reply)=> { const calls=[];
+    const transport=createDemoTransport({fetchImpl:async(url,init)=> { calls.push({url,init}); return url.endsWith('/session') ? json({token:'dmo_synthetic1234',expires_in:900},201) : json(payload); }});
+    return {transport,calls}; };
+  it('sends the closed text body to /responses and returns text plus mapped usage',async()=> {
+    const {transport,calls}=recorder(textReply('{"kind":"answer","message":"hi"}'));
+    const result=await transport.plan('demo-auto','current layout');
+    const call=calls.find(c=>c.url.endsWith('/responses')),body=JSON.parse(call.init.body);
+    expect(call.url).toBe('https://gpt.yapweijun1996.com/demo/v1/responses');
+    expect(body.model).toBe('demo-auto');expect(body.stream).toBe(false);
+    expect(body.input.map(item=>item.role)).toEqual(['system','user']);
+    expect(body.input[1].content).toEqual([{type:'input_text',text:'current layout'}]);
+    expect(JSON.stringify(body)).not.toMatch(/tools|tool_choice|messages|dmo_/);
+    expect(calls.some(c=>c.url.includes('chat/completions'))).toBe(false);
+    expect(result).toEqual({text:'{"kind":"answer","message":"hi"}',usage:{prompt_tokens:3,completion_tokens:4,total_tokens:7}});
+  });
+  it('keeps the gateway JSON size limit for text-only requests',async()=> {
+    const {transport,calls}=recorder();
+    await expect(transport.plan('demo-fast','界'.repeat(4*1024*1024))).rejects.toMatchObject({code:'UNSAFE_PROPOSAL'});
+    expect(calls.some(c=>c.url.endsWith('/responses'))).toBe(false);
+  });
+  it('tolerates a response without status and with benign extra items',async()=> {
+    const {transport}=recorder({output:[{type:'reasoning',summary:[]},{type:'future_item'},{type:'message',content:[{type:'output_text',text:'{}'}]}]});
+    expect((await transport.plan('demo-fast','x')).text).toBe('{}');
+  });
+  it('still rejects an alias outside the allowed list before any request',async()=> {
+    const {transport,calls}=recorder();
+    await expect(transport.plan('private-model','x')).rejects.toMatchObject({code:'DEMO_MODEL_UNAVAILABLE'});expect(calls).toHaveLength(0);
+  });
+});

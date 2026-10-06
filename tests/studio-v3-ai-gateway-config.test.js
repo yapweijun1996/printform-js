@@ -12,7 +12,7 @@ describe('v3 Demo Gateway configuration',()=> {
   it('preserves the limits that used to be literals in the transport and panel',()=> {
     expect(DEMO_CONFIG.sendTimeoutMs).toBe(60000);expect(DEMO_CONFIG.responseLimitChars).toBe(64000);
     expect(DEMO_CONFIG.image.maxCount).toBe(4);expect(DEMO_CONFIG.image.maxUrlChars).toBe(5592508);
-    expect(DEMO_CONFIG.image.maxTotalBytes).toBe(8*1024*1024);expect(DEMO_CONFIG.image.maxBodyBytes).toBe(12*1024*1024);
+    expect(DEMO_CONFIG.image.maxTotalBytes).toBe(8*1024*1024);expect(DEMO_CONFIG.maxBodyBytes).toBe(12*1024*1024);
     expect(DEMO_CONFIG.image.maxBytes).toBe(4*1024*1024);
   });
   it('is immutable',()=> {

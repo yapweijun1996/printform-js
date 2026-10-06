@@ -8,13 +8,13 @@ export async function publicDemoPlanner(context) {
     globalThis.printformRegressionSession = gateway.createDemoGatewaySession();
     globalThis.printformRegressionEndpoint = gateway.DEMO_GATEWAY_ENDPOINT;
   });
-  return async wire => page.evaluate(async ({model,messages})=> {
+  return async wire => page.evaluate(async ({model,input})=> {
     const response = await globalThis.printformRegressionSession.fetch(
-      `${globalThis.printformRegressionEndpoint}/chat/completions`, {
+      `${globalThis.printformRegressionEndpoint}/responses`, {
         method:'POST',headers:{'content-type':'application/json'},
-        signal:AbortSignal.timeout(45000),body:JSON.stringify({model,stream:false,messages})
+        signal:AbortSignal.timeout(45000),body:JSON.stringify({model,stream:false,input})
       });
     if (!response.ok) throw new Error(`Public demo HTTP ${response.status}`);
     return response.json();
-  },{model:wire.model,messages:wire.messages});
+  },{model:wire.model,input:wire.input});
 }

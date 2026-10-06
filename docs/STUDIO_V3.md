@@ -54,8 +54,11 @@ This slice does not claim completion of v2's full direct-BYOK migration.
 The owner-selected GPT Server Demo is the only v3 provider. Existing
 `github-pages` registration is reused: browser CORS supplies the exact Origin;
 `POST /demo/session` issues a short-lived memory-only token, `/demo/v1/models`
-checks `demo-fast`/`demo-auto`, and `/demo/v1/chat/completions` returns a text
-JSON envelope per bounded step. No native provider tools, arbitrary schema, files, background,
+checks `demo-fast`/`demo-auto`, and `/demo/v1/responses` (text and image requests alike,
+non-streaming) returns `output_text` carrying a JSON envelope per bounded step. Failures
+are named from the HTTP status and the gateway's own code (network unreachable, origin not
+registered, rate limit, service disabled, no provider available, slow gateway) and each
+has its own message. No native provider tools, arbitrary schema, files, background,
 web search, gateway key or private `/v1/*` request is sent. A first 401 refreshes
 once; no model fallback occurs; authoring repair is capped and disclosed.
 

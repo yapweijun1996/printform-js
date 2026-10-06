@@ -2,11 +2,12 @@ import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
 import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
+import { assertImageParts, buildResponsesBody, responsesResult } from './ai-responses-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
 export const DEMO_ALIASES = ['demo-fast','demo-auto'];
-const assertDispatch = Symbol('assertDemoDispatch'), IMAGE = DEMO_CONFIG.image;
+const assertDispatch = Symbol('assertDemoDispatch');
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
   let imageModels = new Set(), capabilityFacts=[], discoveryGeneration=0;
   const resetCapabilities=()=>{imageModels.clear();capabilityFacts=[];return ++discoveryGeneration;};
@@ -60,27 +61,16 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     },
     async plan(alias, request, signal, media = []) {
       if (!DEMO_ALIASES.includes(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
+      let guard;
       if (media.length) {
         if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
         const generation=discoveryGeneration;
-        const assertImages=()=>{if(generation!==discoveryGeneration || !imageModels.has(alias))throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');};
-        if (media.length > IMAGE.maxCount || media.some(part => Object.keys(part).some(key=>!['type','image_url'].includes(key)) || part.type !== 'input_image' || typeof part.image_url !== 'string' || part.image_url.length > IMAGE.maxUrlChars || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(part.image_url)) || JSON.stringify(media).length > IMAGE.maxTotalBytes) throw fail('UNSAFE_PROPOSAL');
-        const body=JSON.stringify({model:alias,stream:false,input:[{role:'system',content:[{type:'input_text',text:CHAT_PROMPT}]},{role:'user',content:[{type:'input_text',text:request},...media]}]});
-        if(new TextEncoder().encode(body).length>IMAGE.maxBodyBytes)throw fail('UNSAFE_PROPOSAL');
-        const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:assertImages});
-        if (payload.status !== 'completed' || !Array.isArray(payload.output) || payload.output.some(item=>item.type !== 'message' && item.type !== 'reasoning')) throw fail('MALFORMED_PROPOSAL');
-        const content = payload.output.filter(item=>item.type === 'message').flatMap(item=>item.content || []);
-        if (!content.length || content.some(part=>part.type !== 'output_text' || typeof part.text !== 'string')) throw fail('MALFORMED_PROPOSAL');
-        return {text:content.map(part=>part.text).join(''),usage:{prompt_tokens:payload.usage?.input_tokens,completion_tokens:payload.usage?.output_tokens,total_tokens:payload.usage?.total_tokens}};
+        guard=()=>{if(generation!==discoveryGeneration || !imageModels.has(alias))throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');};
+        assertImageParts(media);
       }
-      // Closed Demo wire contract; local tools and tokens never enter messages.
-      const payload = await json('chat/completions',{
-        method:'POST',signal,headers:{'content-type':'application/json'},
-        body:JSON.stringify({model:alias,stream:false,messages:[{role:'system',content:CHAT_PROMPT},{role:'user',content:request}]})
-      });
-      const choice = payload.choices?.[0], message = choice?.message;
-      if (choice?.finish_reason !== 'stop' || message?.tool_calls || typeof message?.content !== 'string') throw fail('MALFORMED_PROPOSAL');
-      return {text:message.content,usage:payload.usage};
+      // One closed Demo wire contract for text and images; local tools and tokens never enter it.
+      const body = buildResponsesBody({alias,system:CHAT_PROMPT,request,media});
+      return responsesResult(await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard}));
     }
   };
 }

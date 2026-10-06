@@ -1,3 +1,4 @@
+import { isInference, responsesReply } from './demo-gateway-fixture.js';
 // Explicit browser fetch fixture survives service-worker control in all engines.
 // No fixture request is forwarded to the public demo or another external origin.
 export async function syntheticDemoTransport(context,replies) {
@@ -6,9 +7,9 @@ export async function syntheticDemoTransport(context,replies) {
     const path=new URL(url).pathname;
     if(path.endsWith('/session'))return {status:201,body:{token:'dmo_synthetic123456',expires_in:900}};
     if(path.endsWith('/models'))return {status:200,body:{data:[{id:'demo-fast'},{id:'demo-auto'}]}};
-    if(!path.endsWith('/chat/completions')) {unexpected.push(url);throw new Error('Unexpected fixture endpoint');}
-    requests.push(JSON.parse(body).messages);
-    return {status:200,body:{choices:[{finish_reason:'stop',message:{content:JSON.stringify(replies[Math.min(index++,replies.length-1)])}}]}};
+    if(!isInference(path)) {unexpected.push(url);throw new Error('Unexpected fixture endpoint');}
+    requests.push(JSON.parse(body));
+    return {status:200,body:responsesReply(replies[Math.min(index++,replies.length-1)])};
   });
   await context.addInitScript(()=> {
     const fetchOriginal=window.fetch.bind(window);

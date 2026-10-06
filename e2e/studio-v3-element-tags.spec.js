@@ -1,3 +1,4 @@
+import { isInference, responsesReply, userText } from './demo-gateway-fixture.js';
 import { test, expect } from '@playwright/test';
 import { keepStructureOpen } from './studio-v3-structure.js';
 test.use({serviceWorkers:'block'});
@@ -8,7 +9,7 @@ async function mock(page) {
   await page.route('https://gpt.yapweijun1996.com/demo/**',async route=> {
     const path = new URL(route.request().url()).pathname;
     calls.push({path,body:route.request().postDataJSON()});
-    const body = path.endsWith('/session') ? {token:'dmo_synthetic123456',expires_in:900} : path.endsWith('/models') ? {data:[{id:'demo-fast'},{id:'demo-auto'}]} : {choices:[{finish_reason:'stop',message:{content:JSON.stringify({kind:'answer',message:'Referenced elements received. The form is unchanged.'})}}]};
+    const body = path.endsWith('/session') ? {token:'dmo_synthetic123456',expires_in:900} : path.endsWith('/models') ? {data:[{id:'demo-fast'},{id:'demo-auto'}]} : responsesReply({kind:'answer',message:'Referenced elements received. The form is unchanged.'});
     await route.fulfill({status:path.endsWith('/session') ? 201 : 200,contentType:'application/json',body:JSON.stringify(body)});
   });
   return calls;
@@ -40,14 +41,14 @@ test('canvas label and structure value become removable composer references; onl
   await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('[data-ai-send]').click();
   await expect(page.locator('[data-ai-status]')).toContainText('Read-only answer');
-  expect(calls.filter(call=>call.path.endsWith('/chat/completions'))).toHaveLength(1);
-  const wire = calls.find(call=>call.path.endsWith('/chat/completions')).body;
+  expect(calls.filter(call=>isInference(call.path))).toHaveLength(1);
+  const wire = calls.find(call=>isInference(call.path)).body;
   expect(JSON.stringify(wire)).not.toContain('ACME'); expect(JSON.stringify(wire)).not.toContain('Sterling');
   expect(JSON.stringify(wire)).toContain('label-customer-bill'); expect(JSON.stringify(wire)).toContain('Make this label 12pt');
   await expect(page.locator('#revision')).toHaveText('r0');
   await page.screenshot({path:info.outputPath('element-reference-composer.png')});
   await page.getByRole('button',{name:'Remove reference header-company',exact:true}).click();
-  await expect(page.locator('[data-ai-tag-id]')).toHaveCount(1); expect(calls.filter(call=>call.path.endsWith('/chat/completions'))).toHaveLength(1);
+  await expect(page.locator('[data-ai-tag-id]')).toHaveCount(1); expect(calls.filter(call=>isInference(call.path))).toHaveLength(1);
   expect(errors).toEqual([]);
 });
 test('revision changes visibly block stale tags until the user removes and adds them again',async({page})=> {
@@ -97,10 +98,10 @@ test('plain-language selected label request supplies its exact target and stays 
   if(path.endsWith('/session'))body={token:'dmo_synthetic123456',expires_in:900};
   else if(path.endsWith('/models'))body={data:[{id:'demo-fast'}]};
   else {
-   captured=JSON.parse(route.request().postDataJSON().messages[1].content);
+   captured=JSON.parse(userText(route.request().postDataJSON()));
    expect(captured.request).toBe(wording);expect(captured.request).not.toContain('label-customer-ship');
    const selected=captured.scopeAuthoringTargets.find(target=>target.target==='label-customer-ship');expect(selected?.typographyPatchKey).toBe('labelStyle');
-   body={choices:[{finish_reason:'stop',message:{content:JSON.stringify({kind:'proposal',summary:'Only the selected label becomes 12pt bold',operations:[{type:'set_field',target:selected.target,patch:{labelStyle:{fontSize:12,bold:true}}}]})}}]};
+   body=responsesReply({kind:'proposal',summary:'Only the selected label becomes 12pt bold',operations:[{type:'set_field',target:selected.target,patch:{labelStyle:{fontSize:12,bold:true}}}]});
   }
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
  });
