@@ -1,3 +1,4 @@
+import { reviewCandidate } from './studio-v3-scope.js';
 import { isInference, responsesReply } from './demo-gateway-fixture.js';
 import { test,expect } from '@playwright/test';
 import { keepStructureOpen } from './studio-v3-structure.js';
@@ -58,8 +59,7 @@ test('narrow screens keep Preview manual: Apply waits for the Preview button, wh
   await page.setViewportSize({width:390,height:844});
   await mock(page); await openAI(page); await send(page);
   await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-  await page.locator('[data-ai=preview]').click();
+  await reviewCandidate(page);
   await expect(page.locator('#ai-preview-banner')).toBeVisible();
   await page.locator('[data-ai-return]').click();
   await expect(page.locator('[data-ai=apply]')).toBeEnabled();

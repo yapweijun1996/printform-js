@@ -11,3 +11,9 @@ export async function limitToWholeForm(page) {
   while (await remove.count()) await remove.first().click();
   await expect(page.locator('[data-ai-element-tags]')).toBeHidden();
 }
+// A candidate must be previewed on paper before Apply. Wide screens do it automatically after Send;
+// narrow screens (<= 900px) need the Preview button, which reveals the full-screen paper.
+export async function reviewCandidate(page) {
+  if (page.viewportSize().width <= 900) await page.locator('[data-ai=preview]').click();
+  await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+}

@@ -1,5 +1,6 @@
 import { replyText, responsesReply, userText } from './demo-gateway-fixture.js';
 import { expect } from '@playwright/test';
+import { reviewCandidate } from './studio-v3-scope.js';
 import fs from 'node:fs/promises';
 import { publicDemoPlanner } from './studio-v3-live-redesign.js';
 import { readFileSync } from 'node:fs';
@@ -101,8 +102,7 @@ export async function runRedesignLifecycle({page,context},info,fixtures) {
       expect(operations.some(o=>['reorder_fields','reorder_sections'].includes(o.type))).toBe(true);
       expect(operations.some(o=>o.type==='set_element_style' || (o.type==='set_style' && o.patch?.font!==undefined))).toBe(true);
     }
-    await expect(page.locator('[data-ai=apply]')).toBeDisabled();
-    await page.locator('[data-ai=preview]').click(); await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+    await reviewCandidate(page);
     const preview = await inspect(page);
     await page.locator('[data-ai=apply]').click(); await ready(page);
     const applied = await inspect(page); expect(applied).toEqual(preview);

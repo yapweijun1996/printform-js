@@ -1,6 +1,6 @@
 import { responsesReply, userText } from './demo-gateway-fixture.js';
 import {test,expect} from '@playwright/test';
-import { limitToSelection } from './studio-v3-scope.js';
+import { limitToSelection, reviewCandidate } from './studio-v3-scope.js';
 import { clickPaper } from './studio-v3-paper-click.js';
 test.use({serviceWorkers:'block'});
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -27,10 +27,10 @@ test('screenshot request changes selected label to 12pt bold without changing it
   const total=await frame(page).locator('[data-v3-id=totals-total]').textContent();
   await clickPaper(page,node);await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await expect(page.locator('#ai-consent')).toHaveCount(0);await send(page,'Change this label to 12pt bold.');
-  await expect(page.locator('[data-ai-proposal]')).toBeVisible();await expect(page.locator('[data-ai=apply]')).toBeDisabled();
+  await expect(page.locator('[data-ai-proposal]')).toBeVisible();
   await expect(page.locator('#revision')).toHaveText('r0');await expect(page.locator('#ai-preview-banner')).toBeVisible();
   expect(wire).toHaveLength(1);const payload=JSON.parse(userText(wire[0]));expect(payload.scope.id).toBe('label-customer-ship');expect(JSON.stringify(payload)).not.toMatch(/Sterling Manufacturing|ACME Industrial|RM 125|sampleData/);
-  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();
+  await reviewCandidate(page);
   expect(await node.evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}))).toEqual({font:'16px',weight:'700'});
   expect(await value.evaluate(n=>({text:n.textContent,font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}))).toEqual(beforeValue);
   await page.screenshot({path:info.outputPath('selected-label-12pt-bold-preview.png')});
