@@ -227,3 +227,30 @@ it('unknown support stays blocked after checking, and a revoked grant exposes th
  expect(button.hidden).toBe(false);expect(button.disabled).toBe(false);expect(panel.node('[data-ai-send]').disabled).toBe(true);
  expect(panel.conversation.messages.at(-1).text).toContain('Check image support');expect(calls.every(c=>c.url.endsWith('/session') || c.url.endsWith('/models'))).toBe(true);
 });
+it('shows the wait inside the conversation, mirrors progress there, and removes it when done',async()=> {
+  const pending=()=>document.querySelector('[data-ai-log] .ai-pending-text');let during;
+  const {panel}=setup({transport:{clear:()=>{},clearSession:()=>{},discover:async()=>['demo-auto'],plan:async(alias,request,signal,media,{onProgress})=> {
+    onProgress({chars:0,elapsedMs:0});const first=pending()?.textContent;
+    onProgress({chars:1204,elapsedMs:6900});during={first,later:pending()?.textContent,hidden:pending()?.closest('article').getAttribute('aria-hidden')};
+    return {text:JSON.stringify({kind:'answer',message:'ok'})}; }}});
+  await panel.send();
+  expect(during.first).toContain('Waiting for the AI service');expect(during.later).toContain('Receiving response · 1,204 characters');
+  expect(during.hidden).toBe('true');expect(pending()).toBeNull();
+});
+it('words the card by what was done: previewed on paper once the preview passed',async()=> {
+  const {panel}=setup();await panel.send();
+  expect(panel.checked).toBe(true);
+  expect(panel.node('.ai-card-state').textContent).toContain('Previewed on paper');expect(panel.node('.ai-card-state').textContent).not.toContain('preview first');
+  expect(panel.node('[data-ai=preview]').textContent).toBe('Preview again');
+  const width=window.innerWidth;
+  try {
+    window.innerWidth=600;const narrow=setup();await narrow.panel.send();
+    expect(narrow.panel.node('.ai-card-state').textContent).toContain('preview first');expect(narrow.panel.node('[data-ai=preview]').textContent).toBe('Preview');
+  } finally { window.innerWidth=width; }
+});
+it('leads the status with the next step and keeps technical details in parentheses',async()=> {
+  const {panel}=setup();await panel.send();
+  const text=panel.node('[data-ai-status]').textContent;
+  expect(text.startsWith('Local checks passed. Review the paper preview, then Apply.')).toBe(true);
+  expect(text).toMatch(/\(demo-fast · r0 · 1 inspection round\(s\) · Tokens: [^)]+\)$/);
+});

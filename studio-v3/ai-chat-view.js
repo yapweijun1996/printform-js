@@ -17,10 +17,11 @@ export function renderConversation(panel) {
       const body = document.createElement('tbody');
       for (const diff of message.diff) { const r = document.createElement('tr'); for (const value of [`${diff.target} · ${diff.property}`,diff.before,diff.after]) r.append(node('td','',String(value))); body.append(r); }
       table.append(head,body); card.append(table);
-      const state = node('p','ai-card-state',message.status === 'ready' ? 'Not applied · preview first' : message.status === 'applied' ? (message.appliedBus !== panel.getBus() ? 'Applied to a previous form · history only' : panel.canUndo(message) ? 'Applied to the form' : 'Applied earlier · history only') : 'Expired · send a new request'); card.append(state);
+      const previewed = active && panel.viewing && panel.checked;
+      const state = node('p','ai-card-state',message.status === 'ready' ? (previewed ? 'Previewed on paper · review it, then Apply' : 'Not applied · preview first') : message.status === 'applied' ? (message.appliedBus !== panel.getBus() ? 'Applied to a previous form · history only' : panel.canUndo(message) ? 'Applied to the form' : 'Applied earlier · history only') : 'Expired · send a new request'); card.append(state);
       if (active) {
         const actions = node('div','ai-actions');
-        for (const [action,label,disabled] of [['preview','Preview',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
+        for (const [action,label,disabled] of [['preview',previewed ? 'Preview again' : 'Preview',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
           const button = node('button',action === 'apply' ? 'primary' : '',label); button.type = 'button'; button.dataset.ai = action; button.disabled = Boolean(disabled || panel.applying); actions.append(button);
         }
         card.append(actions);
@@ -33,6 +34,11 @@ export function renderConversation(panel) {
       const button = node('button','ai-retry','Edit & resend'); button.type = 'button'; button.dataset.ai = 'retry'; button.dataset.cardId = message.id; article.append(button);
     }
     article.setAttribute('aria-label',message.role === 'user' ? 'You' : 'AI assistant'); log.append(article);
+  }
+  // The wait is shown where the answer will appear. The status line stays the announced source, so this copy is hidden from readers.
+  if (panel.pendingMessage) {
+    const wait = node('article','ai-message ai-assistant ai-pending'); wait.setAttribute('aria-hidden','true');
+    wait.append(node('div','ai-message-text ai-pending-text',panel.node('[data-ai-status]').textContent || 'Working…')); log.append(wait);
   }
   if (atEnd) log.scrollTop = log.scrollHeight;
 }
