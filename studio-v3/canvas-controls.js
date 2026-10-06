@@ -1,8 +1,9 @@
 import { persistZoom } from './zoom-preference.js';
 import { labelSelection } from './design-authoring.js';
+import { restoreStructureOpen, persistStructureOpen } from './structure-preference.js';
 export class CanvasControls {
-  constructor({resize,guard,upload=()=>{},report=()=>{},context=()=>null}) {
-    this.resize = resize; this.guard = guard; this.drawer = null; this.returnFocus = null;
+  constructor({resize,guard,upload=()=>{},report=()=>{},context=()=>null,mode=()=> 'design'}) {
+    this.resize = resize; this.guard = guard; this.drawer = null; this.returnFocus = null; this.mode = mode; this.lastMode = null; this.structureOpen = restoreStructureOpen();
     this.backdrop = document.querySelector('#drawer-backdrop');
     document.addEventListener('click',event=> {
       const button = event.target.closest('[data-layout]'); if (!button) return;
@@ -30,7 +31,7 @@ export class CanvasControls {
     });
     this.observer = new ResizeObserver(()=>this.resize()); this.observer.observe(document.querySelector('#paper-scroll'));
     window.addEventListener('resize',()=> { if (innerWidth > 900 && this.drawer) this.close(false); this.update(); });
-    this.update();
+    this.syncStructure(); this.update();
   }
   focusable(name) {
     return [...document.querySelector(name === 'structure' ? '#left-panel' : '#right-panel').querySelectorAll('button,input,select,textarea,[tabindex]')].filter(n=>!n.disabled && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden');
@@ -40,7 +41,16 @@ export class CanvasControls {
     if (innerWidth <= 900) {
       if (this.drawer === name) { this.close(); return; }
       this.open(name,button);
-    } else { document.body.classList.toggle(`hide-${name}`); this.update(); this.resize(); }
+    } else { document.body.classList.toggle(`hide-${name}`); this.remember(name); this.update(); this.resize(); }
+  }
+  // Design starts without the structure tree; Data and Validate always need their sample lists.
+  syncStructure() {
+    const mode = this.mode(); if (mode === this.lastMode) return; this.lastMode = mode;
+    document.body.classList.toggle('hide-structure',mode === 'design' && !this.structureOpen); this.update(); this.resize();
+  }
+  remember(name) {
+    if (name !== 'structure' || this.mode() !== 'design') return;
+    this.structureOpen = !document.body.classList.contains('hide-structure'); persistStructureOpen(this.structureOpen);
   }
   open(name,button = null) {
     this.drawer = name; this.returnFocus = button || document.querySelector(`[data-layout=${name}]`);
@@ -73,7 +83,7 @@ export class CanvasControls {
   focusDraft(node) {
     const panel = node?.closest('.side-panel'); if (!panel) { node?.focus(); return; }
     const name = panel.id === 'left-panel' ? 'structure' : 'properties';
-    if (innerWidth <= 900) this.open(name); else { document.body.classList.remove(`hide-${name}`); this.update(); this.resize(); }
+    if (innerWidth <= 900) this.open(name); else { document.body.classList.remove(`hide-${name}`); this.remember(name); this.update(); this.resize(); }
     node.focus();
   }
   update() {
