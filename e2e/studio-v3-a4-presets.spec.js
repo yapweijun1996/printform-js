@@ -81,7 +81,8 @@ for(const preset of A4_PRESETS)test(`${preset.documentKind}: real data → edit 
  const longPath=info.outputPath(`${preset.id}-long-names.printform.json`);await fs.writeFile(longPath,JSON.stringify(long));
  // Opening another form first proves the imported layout identity survives a real reopen.
  await page.locator('[data-action=new]').click();await page.locator('[data-template=blank]').click();await ready(page);
- await page.locator('#open-file').setInputFiles(longPath);
+ // Upload from memory: the output path carries the test title (non-ASCII arrows), which some environments cannot hand to the file chooser.
+ await page.locator('#open-file').setInputFiles({name:`${preset.id}-long-names.printform.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(long))});
  await expect(page.locator('#document-name')).toHaveValue(long.project.manifest.title);await ready(page);
  await expect(preview(page).locator('[data-v3-id=header-company]').first()).toHaveText(long.project.sampleData.company.name);
  await expect(preview(page).locator('[data-v3-id=customer-bill]').first()).toHaveText(long.project.sampleData.customer.name);
