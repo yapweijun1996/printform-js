@@ -149,12 +149,12 @@ it('keeps progress ticks silent for screen readers but announces phase changes',
 });
 it('derives scope from referenced elements instead of a selector',()=>{
  const {panel}=setup();expect(panel.node('#ai-scope')).toBeNull();
- expect(panel.scope()).toEqual({mode:'whole'});expect(panel.scopeHint()).toContain('whole form');
+ expect(panel.scope()).toEqual({mode:'whole'});panel.showScopeHint();expect(panel.node('[data-ai-scope]').textContent).toContain('Whole form');
  const original=panel.elementTags;
  panel.elementTags={snapshot:()=>[{id:'label-customer-bill'}]};
- expect(panel.scope()).toEqual({mode:'selected',id:'label-customer-bill',ids:['label-customer-bill']});expect(panel.scopeHint()).toContain('1 selected element.');
+ expect(panel.scope()).toEqual({mode:'selected',id:'label-customer-bill',ids:['label-customer-bill']});panel.showScopeHint();expect(panel.node('[data-ai-scope]').textContent).toContain('Scope: 1 selected element');
  panel.elementTags={snapshot:()=>[{id:'label-customer-bill'},{id:'items-description'}]};
- expect(panel.scope().ids).toEqual(['label-customer-bill','items-description']);expect(panel.scopeHint()).toContain('2 selected elements.');
+ expect(panel.scope().ids).toEqual(['label-customer-bill','items-description']);panel.showScopeHint();expect(panel.node('[data-ai-scope]').textContent).toContain('Scope: 2 selected elements');
  panel.elementTags=original;
 });
 it('shows the wait inside the conversation, mirrors progress there, and removes it when done',async()=> {
@@ -175,7 +175,7 @@ it('words the card by what was done: previewed on paper once the preview passed'
   const width=window.innerWidth;
   try {
     window.innerWidth=600;const narrow=setup();await narrow.panel.send();
-    expect(narrow.panel.node('.ai-card-state').textContent).toContain('preview first');expect(narrow.panel.node('[data-ai=preview]').textContent).toBe('Preview');
+    expect(narrow.panel.node('.ai-card-state').textContent).toContain('preview first');expect(narrow.panel.node('[data-ai=preview]').textContent).toBe('Preview on page');
   } finally { window.innerWidth=width; }
 });
 it('leads the status with the next step and keeps technical details in parentheses',async()=> {
@@ -193,7 +193,7 @@ it('clears element references once their own Apply succeeds, so the next Send is
   await panel.send();expect(panel.checked).toBe(true);
   await panel.apply();
   expect(panel.elementTags.snapshot()).toEqual([]);expect(panel.scope()).toEqual({mode:'whole'});
-  expect(panel.node('[data-ai-scope]').textContent).toMatch(/^Editing the whole form/);
+  expect(panel.node('[data-ai-scope]').textContent).toMatch(/^Scope: Whole form/);
 });
 it('keeps element references when the Apply fails',async()=> {
   const label={kind:'proposal',summary:'Label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};

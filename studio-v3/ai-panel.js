@@ -21,7 +21,7 @@ export class AIPanel {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
       if (button?.disabled) return;
       if (action === 'close') this.close();
-      if (action === 'paper') { if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
+      if (action === 'attach') this.referenceFiles?.pick();
       if (action === 'cancel') void this.stop();
       if (action === 'discard') void this.discard();
       if (action === 'preview') void this.guard(()=>this.preview()).catch(error=>this.error(error));
@@ -44,7 +44,14 @@ export class AIPanel {
   error(error) { this.message(errorMessage(error)); }
   // Scope is derived, never chosen: referenced elements limit the edit, otherwise the whole form is editable.
   scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return ids.length ? {mode:'selected',id:ids[0],ids} : {mode:'whole'}; }
-  scopeHint() { const n = this.scope().ids?.length || 0; return n ? `Editing ${n} selected element${n > 1 ? 's' : ''}. Remove them to edit the whole form.` : 'Editing the whole form. To limit a change, select an element and press Add to chat.'; }
+  // The scope bar says plainly what AI may change; a narrow screen needs the extra step of closing the panel to select.
+  showScopeHint() {
+    const bar = this.node('[data-ai-scope]'), count = this.scope().ids?.length || 0, title = document.createElement('strong'), help = document.createElement('span');
+    bar.dataset.scope = count ? 'selected' : 'whole';
+    title.textContent = count ? `Scope: ${count} selected element${count > 1 ? 's' : ''}` : 'Scope: Whole form';
+    help.textContent = count ? 'Remove the references to edit the whole form.' : innerWidth <= 900 ? 'Close this panel, tap an element on the paper, then press Add to chat to limit a change.' : 'AI may change any part. To limit a change, select an element and press Add to chat.';
+    bar.replaceChildren(title,' ',help);
+  }
   documentKey() { return this.getBus()?.project.manifest.documentId; }
   payload() {
     const references = this.elementTags?.payload() || [];
@@ -59,7 +66,6 @@ export class AIPanel {
   show() { this.open = true; this.root.hidden = false; document.body.classList.add('ai-open'); this.contextChanged(); this.share(); this.update(); this.node('#ai-prompt').focus(); this.sync(); }
   suspend() { this.node('.ai-settings').open = false; this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
   close() { if (this.applying) return; if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
-  showScopeHint() { this.node('[data-ai-scope]').textContent = this.scopeHint(); }
   contextChanged(force=false) {
     const bus = this.getBus(), selected = this.getSelection();
     this.elementTags?.contextChanged(); this.referenceFiles?.contextChanged();
@@ -207,7 +213,7 @@ export class AIPanel {
     for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
-    for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=paper],[data-ai=clear]')) node.disabled = Boolean(this.applying);
+    for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);
     renderConversation(this);
   }
 }

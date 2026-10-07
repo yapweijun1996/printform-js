@@ -33,6 +33,7 @@ export class AIReferenceFiles {
     } catch(error){if(this.controller===controller && !controller.signal.aborted)this.notice.textContent=error.message;}
     finally {if(this.controller===controller){this.reading=false;this.cancel.hidden=true;this.controller=null;this.panel.update();}}
   }
+  pick() { this.root.open=true; this.input.click(); }
   changed() { ++this.version;this.panel.contextChanged(true);this.render(); }
   projection() { return referenceProjection(this.files); }
   hasImages(){return this.files.some(file=>file.kind==='image' || file.processing==='visual');}

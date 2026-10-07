@@ -4,12 +4,23 @@ const readable = value => {
   if (!text.startsWith('{')) return text;
   try { return Object.entries(JSON.parse(text)).map(([key,item]) => item === true ? key : `${key} ${item}`).join(' · ') || text; } catch { return text; }
 };
+// Starting actions shown in the empty conversation: each fills the message box, nothing is sent.
+const STARTERS = [
+  ['Improve typography','Improve the typography of this form: font sizes, hierarchy and readability.'],
+  ['Make spacing tighter','Reduce cell padding to 5 px.'],
+  ['Use red accents','Use red accents #a82938.'],
+  ['Check font sizes','What are the current font sizes?']
+];
 const node = (tag,className,text) => { const n = document.createElement(tag); n.className = className; if (text !== undefined) n.textContent = text; return n; };
 export function renderConversation(panel) {
   const log = panel.node('[data-ai-log]'), atEnd = log.scrollHeight-log.scrollTop-log.clientHeight < 60;
   log.replaceChildren();
   if (!panel.conversation.messages.length) {
-    const intro = node('section','ai-welcome'); intro.append(node('h3','','Let’s shape your print form'),node('p','','Ask about the current layout, or propose colors and spacing. Review every edit on paper before applying it.')); log.append(intro);
+    const intro = node('section','ai-welcome'), chips = node('div','ai-chips'), attach = node('button','ai-attach','＋ Attach reference'), flow = node('ol','ai-flow');
+    for (const [label,prompt] of STARTERS) { const chip = node('button','',label); chip.type = 'button'; chip.dataset.ai = 'prompt'; chip.dataset.prompt = prompt; chips.append(chip); }
+    attach.type = 'button'; attach.dataset.ai = 'attach'; attach.append(node('small','',' PDF, PNG or JPEG'));
+    for (const step of ['Ask','Preview on page','Apply (Undo anytime)']) flow.append(node('li','',step));
+    intro.append(node('h3','','What would you like to change?'),node('p','','Describe a change or attach a reference. AI previews it on the page before anything is applied.'),chips,attach,flow); log.append(intro);
   }
   for (const message of panel.conversation.messages) {
     const article = node('article',`ai-message ai-${message.role}`); article.dataset.messageId = message.id;
@@ -27,7 +38,7 @@ export function renderConversation(panel) {
       const state = node('p','ai-card-state',message.status === 'ready' ? (previewed ? 'Previewed on paper · review it, then Apply' : 'Not applied · preview first') : message.status === 'applied' ? (message.appliedBus !== panel.getBus() ? 'Applied to a previous form · history only' : panel.canUndo(message) ? 'Applied to the form' : 'Applied earlier · history only') : 'Expired · send a new request'); card.append(state);
       if (active) {
         const actions = node('div','ai-actions');
-        for (const [action,label,disabled] of [['preview',previewed ? 'Preview again' : 'Preview',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
+        for (const [action,label,disabled] of [['preview',previewed ? 'Preview again' : 'Preview on page',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
           const button = node('button',action === 'apply' ? 'primary' : '',label); button.type = 'button'; button.dataset.ai = action; button.disabled = Boolean(disabled || panel.applying); actions.append(button);
         }
         card.append(actions);
