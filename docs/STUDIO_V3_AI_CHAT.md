@@ -181,3 +181,12 @@ and send again; each Send starts a fresh session, so that works. A 429 whose wor
 the daily quota says the allowance is used up until tomorrow. Any other 429 keeps the
 generic "limit reached, try later". A Cloudflare 524 (origin silent for about 100 s) reaches
 the browser as a network failure, so that message also says the service may be too slow.
+
+## Gateway probe
+
+`studio-v3/gateway-probe.html` is a diagnostic page for checking what the real Demo gateway does with the tool loop's
+wire format. It runs the same transport as the panel and sends three tiny requests with fictional text: the model list,
+one function call (`read_skill`, a stand-in for a skill reader), and one replay of that call with its result and encrypted
+reasoning. It shows PASS or FAIL per check with codes and counts only, never request or response bodies, and offers the
+result as text to copy. It must be opened from the published site, because the gateway allows that origin; the origin is
+never set by hand. It is a separate bundle (`scripts/build-studio-v3.mjs`), not part of the app shell.

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Demo gateway probe</title>
+<style>
+ body{font:15px/1.5 system-ui,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1f2933}
+ button{font:inherit;padding:8px 14px;border:1px solid #1d4ed8;background:#1d4ed8;color:#fff;border-radius:6px;cursor:pointer}
+ button:disabled{opacity:.5;cursor:default}
+ ol{padding-left:0;list-style:none} li{padding:8px 10px;margin:6px 0;border:1px solid #d5dbe1;border-radius:6px}
+ li.ok{border-color:#2f855a;background:#f0fff4} li.bad{border-color:#c53030;background:#fff5f5}
+ textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,monospace}
+ small{color:#52606d}
+</style>
+</head>
+<body>
+<h1>Demo gateway probe</h1>
+<p><small>Sends three tiny requests with fictional text to the Demo gateway: model list, one tool call, one replay of that call. It shows codes and counts only. Open it from the published site, not from a file.</small></p>
+<p><button id="run" type="button">Run probe</button></p>
+<ol id="checks" aria-live="polite"></ol>
+<p><textarea id="result" readonly aria-label="Result to copy"></textarea></p>
+<script type="module" src="./gateway-probe-page.js"></script>
+</body>
+</html>
