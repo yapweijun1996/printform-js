@@ -7,8 +7,9 @@ import {saveProject} from '../studio-v3/file-io.js';
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 async function start(page,server) {page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
 async function update(page,server) {
-  server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`,{timeout:30000});
-  await page.locator('#update-button').click();await page.locator('[data-update-choice=keep]').click();
+  // The check finds the build and, because work is unsaved, the approval dialog opens by itself.
+  server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-dialog')).toBeVisible({timeout:30000});
+  await page.locator('[data-update-choice=keep]').click();
 }
 async function demoMock(page,reply) {
   // Keep real Service Workers enabled. Browser fetch interception cannot route
@@ -96,8 +97,8 @@ test('pending AI request is cancelled only on confirmed update and never resumes
     });
     await start(page,server);
     await page.locator('[data-ai-toggle]').click();await page.locator('#ai-prompt').fill('Fictional held request');await page.locator('[data-ai-send]').click();
-    await expect.poll(()=>requests).toBe(1);server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-button')).toContainText('Update to');
-    await page.locator('#update-button').click();await page.locator('[data-update-choice=stay]').click();await expect(page.locator('[data-ai=cancel]')).toBeVisible();
+    await expect.poll(()=>requests).toBe(1);server.publish();await page.locator('#update-button').click();await expect(page.locator('#update-dialog')).toBeVisible({timeout:30000});
+    await page.locator('[data-update-choice=stay]').click();await expect(page.locator('[data-ai=cancel]')).toBeVisible();
     await page.locator('#update-button').click();await page.locator('[data-update-choice=keep]').click();await expect(page.locator('#app-version')).toContainText(NEXT.slice(0,12));await ready(page);release();
     await expect(page.locator('#ai-prompt')).toHaveValue('Fictional held request');await expect(page.locator('[data-ai=cancel]')).toBeHidden();await expect(page.locator('[data-ai-proposal]')).toBeHidden();
     expect(requests).toBe(1);await expect(page.locator('#revision')).toHaveText('r0');

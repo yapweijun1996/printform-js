@@ -6,15 +6,18 @@ const version = (page,value)=>expect(page.locator('#app-version')).toHaveText(`v
 async function controlled(page) { await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller)); }
 async function open(page,url) { await keepStructureOpen(page); await page.goto(url); await ready(page); await controlled(page); }
 async function offer(page) {
-  if(!(await page.locator('#update-button').textContent()).startsWith('Update to')) await page.locator('#update-button').click();
-  await expect(page.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`,{timeout:30000});
-  if(await page.locator('#update-dialog').isVisible())await page.locator('[data-update-choice=stay]').click();
-  await expect(page.locator('#update-button')).toBeEnabled();
+  const button = page.locator('#update-button'), dialog = page.locator('#update-dialog');
+  // The browser may already have noticed the build (the approval dialog then opens by itself and the button is
+  // disabled); otherwise a check asks it to look. These tests hold unsaved work, so the dialog always appears.
+  if (!await dialog.isVisible() && await button.isEnabled() && !(await button.textContent()).startsWith('Update to')) await button.click();
+  await expect(dialog).toBeVisible({timeout:30000}); await page.locator('[data-update-choice=stay]').click();
+  await expect(button).toHaveText(`Update to ${NEXT.slice(0,12)}`,{timeout:30000});
+  await expect(button).toBeEnabled();
 }
 async function choose(page,value) { await page.locator('#update-button').click(); await expect(page.locator('#update-dialog')).toBeVisible(); await page.locator(`[data-update-choice=${value}]`).click(); }
 
 for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mobile',390,844]]) {
-  test(`two real builds: ${name} protects work offline, keeps drafts/history/data/zoom on update and leaves another tab open`,async({page,context},info)=> {
+  test(`two real builds: ${name} protects work offline, keeps drafts/history/data/zoom on update and updates a tab without unsaved work by itself`,async({page,context},info)=> {
     const server = await upgradeServer(); const other = await context.newPage();
     try {
       await page.setViewportSize({width,height}); page.on('dialog',dialog=>dialog.accept());
@@ -47,13 +50,10 @@ for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mo
       await page.screenshot({path:info.outputPath(`upgrade-${name}.png`)});
       await page.locator('[data-action=undo]').click(); await page.locator('[data-draft-choice=discard]').click(); await ready(page);
       await expect(page.frameLocator('#preview-frame').locator('.prowheader_processed').first().locator('th').nth(1)).toHaveText('Item code');
-      await version(other,OLD); await expect(other.locator('#revision')).toHaveText('r0');
-      expect(await other.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(OLD);
-      await context.setOffline(true);
-      if (!await other.locator('[data-action=rerender]').isVisible()) await other.locator('details.quality-panel summary').click();
-      await other.locator('[data-action=rerender]').click(); await ready(other);
-      await expect(other.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`);
-      await context.setOffline(false);
+      // The other tab holds no unsaved work, so it updates by itself once the new build is active.
+      await version(other,NEXT); await expect(other.locator('#revision')).toHaveText('r0');
+      expect(await other.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(NEXT);
+      await expect(other.locator('#update-dialog')).toBeHidden();
       const after = await page.evaluate(async()=> {
         const db=await new Promise(resolve=> { const r=indexedDB.open('printform-studio-v3-demo-db');r.onsuccess=()=>resolve(r.result); });
         return new Promise(resolve=> { const r=db.transaction('datasets').objectStore('datasets').getAll();r.onsuccess=()=> { db.close();resolve(r.result); }; });
@@ -67,7 +67,8 @@ for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mo
 test('failed integrity download and offline check retain old build; explicit discard never deletes saved datasets',async({page,context})=> {
   const server=await upgradeServer();
   try {
-    await open(page,server.url); server.publish({broken:true}); await page.locator('#update-button').click();
+    await open(page,server.url); await page.locator('[data-ai-toggle]').click(); await page.locator('#ai-prompt').fill('Fictional draft only');
+    server.publish({broken:true}); await page.locator('#update-button').click();
     await version(page,OLD); await expect(page.locator('#update-button')).toHaveText('Check for updates');
     await context.setOffline(true); await page.locator('#update-button').click(); await version(page,OLD); await ready(page);
     await context.setOffline(false); server.publish(); await offer(page);
@@ -90,5 +91,35 @@ test('mobile viewport stays accessible: scale one, 16px inputs, keyboard update 
     await page.locator('#update-button').focus(); await page.keyboard.press('Enter'); await expect(page.locator('[data-update-choice=stay]')).toBeFocused();
     await page.keyboard.press('Escape'); await expect(page.locator('#update-button')).toBeFocused();
     await page.screenshot({path:info.outputPath('mobile-accessible-update.png')});
+  } finally { await server.close(); }
+});
+
+test('without unsaved work a verified new build updates by itself: no click, no dialog',async({page})=> {
+  const server=await upgradeServer();
+  try {
+    await open(page,server.url); await version(page,OLD);
+    const shown=[]; await page.exposeFunction('seen',()=>shown.push(1));
+    await page.evaluate(()=>new MutationObserver(()=>{ if(document.querySelector('#update-dialog').open)globalThis.seen(); }).observe(document.querySelector('#update-dialog'),{attributes:true}));
+    server.publish(); await page.locator('#update-button').click();   // only asks the browser to look; it never chooses Update
+    await version(page,NEXT); await ready(page);
+    expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(NEXT);
+    expect(shown).toHaveLength(0);
+    expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
+  } finally { await server.close(); }
+});
+
+test('with unsaved work the approval dialog opens by itself; Stay keeps the tab and work, Keep updates and restores them',async({page})=> {
+  const server=await upgradeServer();
+  try {
+    await open(page,server.url); await page.locator('[data-ai-toggle]').click(); await page.locator('#ai-prompt').fill('Fictional draft only');
+    server.publish(); await page.locator('#update-button').click();
+    await expect(page.locator('#update-dialog')).toBeVisible({timeout:30000});
+    await expect(page.locator('[data-update-summary]')).toContainText('unsaved work');
+    await page.locator('[data-update-choice=stay]').click();
+    await version(page,OLD); await expect(page.locator('#ai-prompt')).toHaveValue('Fictional draft only');
+    await expect(page.locator('#update-button')).toHaveText(`Update to ${NEXT.slice(0,12)}`);
+    await page.locator('#update-button').click(); await page.locator('[data-update-choice=keep]').click();
+    await version(page,NEXT); await ready(page);
+    await expect(page.locator('#ai-prompt')).toHaveValue('Fictional draft only');
   } finally { await server.close(); }
 });
