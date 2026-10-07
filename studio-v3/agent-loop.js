@@ -29,7 +29,7 @@ export async function runAgentLoop({models,model,project,request,scope = {mode:'
     signal.throwIfAborted();
     if (deadline.aborted) throw fail('AGENT_TIMEOUT');
     if (failure()) throw failure();
-    if (outcome.proposal) return {...outcome.proposal,turns:outcome.turns,steps:draft.count};
+    if (outcome.proposal) return {...outcome.proposal,turns:outcome.turns,iterations:outcome.turns,steps:draft.count};
     if (outcome.blocked) throw Object.assign(fail(outcome.blocked.code),outcome.blocked.reason ? {reason:outcome.blocked.reason} : {});
     throw fail('AI_RUN_FAILED');
   } finally { await harness.close(BACKGROUND_CONTEXT); }

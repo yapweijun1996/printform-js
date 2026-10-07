@@ -13,14 +13,14 @@ const msg = text => ({id:'msg_1',type:'message',status:'completed',content:[{typ
 const turn = (output,tokens) => stream([{type:'response.created',response:{status:'in_progress',output:[]}},{type:'response.completed',response:{status:'completed',output,usage:{input_tokens:tokens,output_tokens:2,total_tokens:tokens + 2}}}]);
 const note = {type:'add_field',section:'footer',field:{id:'note-two',label:'Extra note',kind:'static',text:'Authored note'}};
 
-function setup(answers,{signal = new AbortController().signal} = {}) {
+function setup(answers,{signal = new AbortController().signal,assertContext} = {}) {
   const bodies = [], transport = createDemoTransport({fetchImpl:async(url,init)=> {
     if (url.endsWith('/session')) return json({token:'dmo_synthetic1',expires_in:900},201);
     bodies.push(JSON.parse(init.body)); const answer = answers.shift();
     if (init.signal?.aborted) throw Object.assign(new Error('aborted'),{name:'AbortError'});
     return typeof answer === 'function' ? answer(init) : answer;
   }});
-  const provider = createGatewayModel({transport,alias:'demo-fast',signal}), project = newProject();
+  const provider = createGatewayModel({transport,alias:'demo-fast',signal,assertContext}), project = newProject();
   const promise = runAgentLoop({...provider,failure:provider.failure,project,request:'Add an extra note to the footer.',scope:{mode:'whole'},context:()=>'CONTEXT-TEXT',inspect:async()=>({report:{status:'ready'}}),signal});
   return {promise,bodies,provider,project};
 }
@@ -58,6 +58,12 @@ describe('a tool run over the Demo gateway',()=> {
     const {promise} = setup([init=>new Promise((_resolve,reject)=>{ sent = init.signal; init.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'}))); setTimeout(()=>controller.abort(),20); })],{signal:controller.signal});
     expect((await failure(promise)).name).toBe('AbortError');
     expect(sent.aborted).toBe(true); // the request in flight is cancelled, not left running behind the run
+  });
+
+  it('stops before the next request when the live form changed under the run',async()=> {
+    let turns = 0;
+    const {promise,bodies} = setup([turn([reasoning(1),fn(1,'get_context',{})],10),turn([reasoning(2),fn(2,'finish',{summary:'x'})],10)],{assertContext:()=> { if (++turns === 2) throw Object.assign(new Error('STALE_PROPOSAL'),{code:'STALE_PROPOSAL'}); }});
+    expect((await failure(promise)).code).toBe('STALE_PROPOSAL'); expect(bodies).toHaveLength(1);
   });
 
   it('fails clearly when the model answers in words and calls no tool',async()=> {

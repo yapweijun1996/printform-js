@@ -1,7 +1,10 @@
 import { AIReferenceFiles } from './ai-reference-files.js';
+import { runPanelAgent } from './ai-agent-run.js';
+import { agentEnabled,setAgentEnabled } from './agent-preference.js';
+import { stepLabel } from './agent-step-labels.js';
 import { createDemoTransport } from './ai-demo-transport.js';
 import { assertProposalCurrent, fail } from './ai-edits.js';
-import { chatRequest } from './ai-chat-protocol.js';
+import { chatRequest,readOnlyRequest } from './ai-chat-protocol.js';
 import { Conversation, cleanMessages } from './ai-conversation.js';
 import { renderConversation, setupPanelLayout } from './ai-chat-view.js';
 import { errorMessage } from './ai-messages.js';
@@ -16,9 +19,11 @@ const RECIPIENT_NOTICE = 'Sent to the Demo gateway · use fictional data only';
 export class AIPanel {
   constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,restore,commit,undo,sync,transport=createDemoTransport()}) {
     Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,restore,commit,undo,sync,transport});
-    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
+    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.agentSteps = []; this.agentUnavailable = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
-    this.root.addEventListener('change',event=> { if (event.target.id === 'ai-scope' && event.target.value === 'whole') { this.elementTags?.clear(); this.showScopeHint(); } });
+    this.node('#ai-agent').checked = agentEnabled();
+    this.root.addEventListener('change',event=> { if (event.target.id === 'ai-agent') { setAgentEnabled(event.target.checked); this.agentUnavailable = false; }
+      if (event.target.id === 'ai-scope' && event.target.value === 'whole') { this.elementTags?.clear(); this.showScopeHint(); } });
     this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } } });
     this.root.addEventListener('click',event=> {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
@@ -128,7 +133,10 @@ export class AIPanel {
   // a model the user chose never changes silently (see send()).
   setModels(aliases) { const kept = fillModels(this.node('#ai-model'),aliases); this.referenceFiles?.capabilityChanged(); return kept; }
   restoreAlias(alias) { const valid = isDemoAlias(alias) ? alias : DEMO_CONFIG.defaultAlias; showAlias(this.node('#ai-model'),valid); this.modelChosen = valid !== DEMO_CONFIG.defaultAlias; }
-  finish() { clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.update(); }
+  finish() { clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.agentSteps = []; this.update(); }
+  // Work in steps unless it is off, known to be unavailable, or the request is a question or carries images.
+  useSteps(payload,media) { return agentEnabled() && !this.agentUnavailable && !media.length && typeof this.transport.agentTurn === 'function' && !readOnlyRequest(payload.request,payload.conversation); }
+  stepDone(step,id) { if (id === this.generation) { this.agentSteps.push({text:stepLabel(step),ok:step.ok,code:step.code}); this.update(); } }
   async send() {
     if (this.busy || this.applying || this.restoring) return;
     let payload, request;
@@ -151,12 +159,26 @@ export class AIPanel {
       if (!this.setModels(aliases)) { if (this.modelChosen) throw fail('DEMO_MODEL_UNAVAILABLE'); alias = this.node('#ai-model').value; }
       if (media.length && !this.transport.supportsImages?.(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
       assertContext();
-      const result = await runLayoutHarness({transport:this.transport,alias,request,project,signal,chat:payload,assertContext,media,
-        inspectCandidate:async proposal=> {
-          assertContext(); this.viewing = true; this.update(); this.sync();
-          const report = await this.renderPreview(proposal.candidate); assertContext(); signal.throwIfAborted();
-          return {report,quality:inspectProject(proposal.candidate,report)};
-        },onPhase:(text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); }});
+      const inspectCandidate = async proposal=> {
+        assertContext(); this.viewing = true; this.update(); this.sync();
+        const report = await this.renderPreview(proposal.candidate); assertContext(); signal.throwIfAborted();
+        return {report,quality:inspectProject(proposal.candidate,report)};
+      };
+      const onPhase = (text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); };
+      let result;
+      if (this.useSteps(payload,media)) {
+        this.agentSteps = [];
+        try { result = await runPanelAgent({transport:this.transport,alias,payload,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id)}); }
+        catch (error) {
+          // The gateway refusing tools is remembered. A model that ignored the tools on its first turn is only skipped
+          // this once. A run that already took steps and then ended without a result is reported, not restarted.
+          const refused = error.code === 'DEMO_TOOLS_UNAVAILABLE', ignored = error.code === 'AI_RUN_FAILED' && !this.agentSteps.length;
+          if (!refused && !ignored) throw error;
+          if (refused) this.agentUnavailable = true;
+          this.agentSteps = []; onPhase(refused ? 'Step-by-step runs are not available here; using the single-step flow' : 'The model did not use the step tools; using the single-step flow');
+        }
+      }
+      result ||= await runLayoutHarness({transport:this.transport,alias,request,project,signal,chat:payload,assertContext,media,inspectCandidate,onPhase});
       if (id !== this.generation) return;
       assertProposalCurrent(this.getBus(),{bus,revision,baseDesign});
       if (epoch !== this.epoch || selection !== this.getSelection() || scope !== JSON.stringify(this.scope())) throw fail('STALE_PROPOSAL');
@@ -165,7 +187,7 @@ export class AIPanel {
       if (result.kind === 'answer' && this.viewing) { await this.restore(); this.viewing = false; }
       // Wide screens preview the unapplied candidate right away; narrow screens keep the Preview button (it hides the full-screen panel).
       const auto = result.kind === 'proposal' && innerWidth > 900, next = auto && result.inspection?.ready ? 'Review the paper preview, then Apply.' : 'Preview before Apply.';
-      const details = `${alias} · ${result.kind === 'answer' ? '' : `r${revision} · ${result.iterations} inspection round(s) · `}Tokens: ${result.usage?.total ?? 'unavailable'}`;
+      const details = `${alias} · ${result.kind === 'answer' ? '' : `r${revision} · ${result.mode === 'steps' ? `${result.turns} steps` : `${result.iterations} inspection round(s)`} · `}Tokens: ${result.usage?.total ?? 'unavailable'}`;
       this.message(`${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} (${details})`);
       if (auto) await this.preview(true).catch(error=>this.error(error));
     } catch (error) {
@@ -217,7 +239,7 @@ export class AIPanel {
     document.querySelector('#ai-preview-banner').hidden = !this.viewing;
     document.querySelector('[data-ai-toggle]').setAttribute('aria-expanded',String(Boolean(this.open)));
     this.elementTags?.setBusy(Boolean(this.busy || this.applying || this.restoring)); this.referenceFiles?.setBusy(Boolean(this.busy || this.applying || this.restoring));
-    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
+    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,#ai-agent,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
     for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);

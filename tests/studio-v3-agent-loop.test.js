@@ -78,6 +78,23 @@ describe('the agent loop',()=> {
   });
 });
 
+describe('what a finished run reports',()=> {
+  it('carries the inspection only when the final draft is the one that was inspected',async()=> {
+    const inspected = await run([call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})]).promise;
+    expect(inspected.inspection).toMatchObject({ready:true}); expect(inspected.iterations).toBe(3);
+    const stale = await run([call('inspect_draft',{}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('finish',{summary:'Added a note'})]).promise;
+    expect(stale.inspection).toBeUndefined();
+    const undone = await run([call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('undo_step',{}),call('apply_operations',{summary:'Add it again',operations:[note]}),call('finish',{summary:'Added a note'})]).promise;
+    expect(undone.inspection).toBeUndefined();
+  });
+
+  it('tells each step what it did, so a timeline can show it',async()=> {
+    const {promise,steps} = run([call('get_context',{}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})]);
+    await promise;
+    expect(steps.map(step=>step.detail)).toEqual([undefined,expect.stringMatching(/^\d+ changes?$/),'ready',undefined]);
+  });
+});
+
 describe('the agent prompt',()=> {
   it('keeps the printform.js authoring rules, and no longer asks for a JSON envelope',()=> {
     for (const needle of ['set_field','set_table_style','rowBackground','stable field ID','at most 24']) expect(AGENT_PROMPT).toContain(needle);

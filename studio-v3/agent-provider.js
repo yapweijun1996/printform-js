@@ -6,7 +6,7 @@ const ZERO = {input:0,output:0,cacheRead:0,cacheWrite:0};
 // A Pi provider that sends each model turn through the Demo transport. The model, its tools and its history are Pi's;
 // this only turns a turn into a request and the answer back into an assistant message. Keys never enter: the transport
 // holds the short-lived session. `failure()` is the error of a failed turn, so the loop can report its real code.
-export function createGatewayModel({transport,alias,signal,onPhase = () => {}}) {
+export function createGatewayModel({transport,alias,signal,assertContext = () => {},onPhase = () => {}}) {
   const model = {id:alias,name:alias,provider:'printform-demo',api:'printform-demo-agent',baseUrl:'https://gpt.yapweijun1996.com/demo/v1',reasoning:true,input:['text'],contextWindow:128000,maxTokens:16384,cost:{...ZERO}};
   const totals = {input:0,output:0,total:0};
   let failed = null;
@@ -15,7 +15,7 @@ export function createGatewayModel({transport,alias,signal,onPhase = () => {}}) 
     const output = {role:'assistant',content:[],api:model.api,provider:model.provider,model:alias,stopReason:'stop',timestamp:Date.now(),usage:{...ZERO,totalTokens:0,cost:{...ZERO,total:0}}};
     void (async () => {
       try {
-        onPhase('Waiting for the AI service');
+        assertContext(); onPhase('Waiting for the AI service');
         const turn = await transport.agentTurn(alias,context,options.signal || signal,{onProgress:progress=>onPhase(progressText(progress),{progress:true})});
         output.content = assistantContent(turn.output);
         output.stopReason = output.content.some(block=>block.type === 'toolCall') ? 'toolUse' : 'stop';

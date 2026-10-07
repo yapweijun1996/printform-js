@@ -46,7 +46,14 @@ export function renderConversation(panel) {
   // The wait is shown where the answer will appear. The status line stays the announced source, so this copy is hidden from readers.
   if (panel.pendingMessage) {
     const wait = node('article','ai-message ai-assistant ai-pending'); wait.setAttribute('aria-hidden','true');
-    wait.append(node('div','ai-message-text ai-pending-text',panel.node('[data-ai-status]').textContent || 'Working…')); log.append(wait);
+    wait.append(node('div','ai-message-text ai-pending-text',panel.node('[data-ai-status]').textContent || 'Working…'));
+    // A run in steps shows its latest steps; a rejected one carries its code in the tooltip only.
+    if (panel.agentSteps?.length) {
+      const steps = node('ol','ai-steps');
+      for (const step of panel.agentSteps.slice(-6)) { const item = node('li',step.ok ? '' : 'ai-step-failed',`${step.ok ? '✓' : '✗'} ${step.text}`); if (step.code) item.title = step.code; steps.append(item); }
+      wait.append(steps);
+    }
+    log.append(wait);
   }
   // The empty state reads from its top; a running conversation follows its newest message.
   if (!panel.conversation.messages.length) log.scrollTop = 0;

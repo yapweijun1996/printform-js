@@ -1,6 +1,9 @@
 import {test,expect} from '@playwright/test';
+import {AGENT_KEY} from '../studio-v3/agent-preference.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import {upgradeServer,OLD,NEXT} from './studio-v3-upgrade-server.js';
+// These specs run a fake gateway that only knows single-step replies, so working in steps starts switched off.
+test.beforeEach(async({page})=> { await page.addInitScript(key=> { try { localStorage.setItem(key,'off'); } catch { /* storage may be blocked */ } },AGENT_KEY); });
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const version = (page,value)=>expect(page.locator('#app-version')).toHaveText(`v3 · ${value.slice(0,12)}`);
 async function controlled(page) { await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller)); }
