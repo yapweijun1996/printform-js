@@ -30,6 +30,11 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
   anywhere in the conversation. The composer is a column in which only the References area
   and the element tags shrink and scroll inside themselves; the message box, Send, its reason
   and the status line keep their size, so they stay on screen on a phone or a short window.
+- **Image support.** Attaching an image (or a visual PDF) checks the model's image support at once;
+  it sends no reference file, only the model list request. The result and its "Check image support"
+  retry button sit in a row pinned to the bottom of the scrolling References area, so the button is
+  never hidden when the references are tall. Changing the references clears the result, and the next
+  image attached is checked again.
 - **The line under the message box.** One element, two contents. Normally it shows the
   recipient notice. When Send is disabled for image support that is not confirmed, or while
   references are still being read, the reason replaces it (amber) and goes back to the

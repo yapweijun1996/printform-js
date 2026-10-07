@@ -14,7 +14,10 @@ export class AIReferenceFiles {
     this.capability=node('p');this.capability.className='hint';this.capability.setAttribute('role','status');
     this.checkSupport=node('button','Check image support');this.checkSupport.type='button';this.checkSupport.addEventListener('click',()=>void this.checkImageSupport());
     this.diagnostics=node('details');this.diagnostics.append(node('summary','Observed model capabilities'));this.diagnosticText=node('pre');this.diagnostics.append(this.diagnosticText);
-    this.root.append(modeLabel,label,this.cancel,this.list,this.capability,this.checkSupport,this.diagnostics,this.notice); panel.node('.ai-input')?.before(this.root);
+    // The status and its button sit in one row that stays at the bottom of the (scrolling) block, so the action the
+    // Send reason points to is never out of sight.
+    this.statusRow=node('div');this.statusRow.className='ai-capability-row';this.statusRow.append(this.capability,this.checkSupport);
+    this.root.append(modeLabel,label,this.cancel,this.list,this.statusRow,this.diagnostics,this.notice); panel.node('.ai-input')?.before(this.root);
     this.input.addEventListener('change',()=>{const files=[...this.input.files];this.input.value='';void this.add(files);});
     // Files may be dropped on the composer or anywhere in the conversation, including the Attach card.
     for (const zone of [panel.node('.ai-composer') || this.root,panel.node('[data-ai-log]')].filter(Boolean)) {
@@ -25,15 +28,18 @@ export class AIReferenceFiles {
   }
   async add(files) {
     if(this.locked || !files.length)return; this.root.open=true;
-    this.controller?.abort(); const controller=new AbortController();this.controller=controller; const key=this.panel.documentKey();this.reading=true;this.cancel.hidden=false;this.panel.update();
+    let added=false; this.controller?.abort(); const controller=new AbortController();this.controller=controller; const key=this.panel.documentKey();this.reading=true;this.cancel.hidden=false;this.panel.update();
     this.notice.textContent='Reading references locally…';
     try {
       const parsed=await parseReferenceFiles(files,{signal:controller.signal,existing:this.files,pdfMode:this.pdfMode.value});
       if(controller.signal.aborted || key!==this.panel.documentKey())return;
-      this.files=[...this.files,...parsed];this.changed();
+      this.files=[...this.files,...parsed];this.changed();added=true;
       this.notice.textContent='Ready locally. Send shares the listed PDF text/positions and attached images with the Demo gateway and its provider. Use fictional demo files only.';
     } catch(error){if(this.controller===controller && !controller.signal.aborted)this.notice.textContent=error.message;}
     finally {if(this.controller===controller){this.reading=false;this.cancel.hidden=true;this.controller=null;this.panel.update();}}
+    // An image needs confirmed support before Send. The check shares no reference file, so it runs as soon as one is
+    // attached; the button stays for a retry.
+    if(added && this.hasImages() && !this.locked && !this.capabilityChanged())await this.checkImageSupport();
   }
   pick() { if(this.locked)return; this.root.open=true; this.input.click(); }
   changed() { ++this.version;this.panel.contextChanged(true);this.render(); }

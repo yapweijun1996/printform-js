@@ -26,8 +26,6 @@ async function prepare(page,fixture=syntheticPng()) {
  await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(fixture);
  await expect(page.locator('.ai-reference-card')).toHaveCount(1,{timeout:30000});await expect(page.locator('.ai-reference-files')).toContainText('Ready locally');
  await page.locator('#ai-prompt').fill('Only make the selected Ship to label 12pt bold, using this fictional visual reference.');
- await expect(page.locator('[data-ai-send]')).toBeDisabled();
- await page.getByRole('button',{name:'Check image support',exact:true}).click();
  await expect(page.locator('[data-ai-status]')).toContainText('Available: demo-fast');
  await expect(page.locator('.ai-reference-files')).toContainText('Images available');await expect(page.locator('[data-ai-send]')).toBeEnabled();
 }
