@@ -57,7 +57,19 @@ requests. This needs the gateway to allow client-executed function tools for the
 native OpenAI route. If the gateway refuses tools, the panel says so once, uses the single-step flow, and does not ask
 again until the page is reloaded or the setting is switched. Questions, requests with images and the setting
 "Work in steps (beta)" in the settings menu (on by default, remembered in the browser) use the single-step flow.
-Not yet in steps: reading reference files and images (the single-step flow still does), and context compaction.
+
+Long runs and cost. A run has a token budget (2,000,000 in all; a turn that would start past it does not start) and the
+status line shows the tokens so far. The model can keep notes with `take_notes`: they replace its earlier notes, are
+capped at 2,000 characters, and are shown to it on every turn together with the steps still in the draft, so they
+survive folded results and dropped turns. When the request grows past 400,000 characters the oldest turns are replaced
+by one message carrying the notes and the step list, and only the newest four turns stay; a call is never left without
+its result.
+
+Reference images (and the pages of a visual PDF) go with the request on the first four turns only, because the gateway
+keeps no state and every turn would resend them; after that a line says they are gone and the model works from its
+notes. They need the same confirmed image support as the single-step flow. A PDF's extracted text and positions reach
+the agent through `get_context`. Designing a new form from an image or PDF is not done here: the agent amends the
+current form.
 
 ## Authoring and questions
 

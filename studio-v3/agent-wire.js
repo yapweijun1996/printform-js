@@ -1,5 +1,6 @@
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { fail } from './ai-edits.js';
+import { createAgentMemory } from './agent-memory.js';
 
 // Pi messages <-> Responses items for a tool-using run. The gateway is stateless (no stored responses), so every
 // turn resends the conversation; encrypted reasoning travels inside Pi's thinking block and comes back from there.
@@ -16,13 +17,54 @@ function replayReasoning(signature) {
 }
 export const toolSpecs = tools => tools.map(({name,description,parameters}) => ({type:'function',name,description,parameters}));
 
+// Reference images travel with the request on the first turns only: the gateway keeps no state, so every turn would
+// otherwise resend them. After that a line says they are gone, and the model works from its own notes.
+const showImages = (messages,limits) => messages.filter(message=>message.role === 'assistant').length < limits.imageTurns;
+function userParts(content,visible) {
+  if (typeof content === 'string') return input(content);
+  const parts = [];
+  let hidden = 0;
+  for (const block of content) {
+    if (block.type === 'text') parts.push({type:'input_text',text:block.text});
+    else if (block.type === 'image') { if (visible) parts.push({type:'input_image',image_url:`data:${block.mimeType};base64,${block.data}`}); else hidden += 1; }
+  }
+  if (hidden) parts.push({type:'input_text',text:`[${hidden} reference image${hidden === 1 ? '' : 's'} no longer attached; rely on your notes]`});
+  return parts;
+}
+// Whether the next request would carry images, so the caller can require confirmed image support first.
+export function usesImages({messages},limits = DEMO_CONFIG.agent) {
+  return showImages(messages,limits) && messages.some(message=>message.role === 'user' && Array.isArray(message.content) && message.content.some(block=>block.type === 'image'));
+}
+
+// Messages grouped as: the request, then turns of one assistant message and the tool results that answer it.
+function turnsOf(messages) {
+  const turns = [];
+  for (const message of messages.slice(1)) {
+    if (message.role === 'toolResult' && turns.length) turns.at(-1).push(message); else turns.push([message]);
+  }
+  return turns;
+}
+const sizeOf = messages => JSON.stringify(messages).length;
+// Past its budget, the request keeps the original ask and the newest turns, and says in one message what was dropped.
+// Whole turns go, so a function call is never left without its result.
+function compact(messages,memory,limits) {
+  if (sizeOf(messages) <= limits.maxContextChars) return messages;
+  const turns = turnsOf(messages), kept = turns.slice(-limits.keepTurns);
+  if (kept.length === turns.length) return messages;
+  const earlier = {role:'user',content:`Earlier work (older steps were dropped to keep the request small):\n${memory.describe() || 'Nothing was noted.'}`,timestamp:0};
+  return [messages[0],earlier,...kept.flat()];
+}
+
 // Older tool results are folded (the call stays, so the pairing is intact); only the newest few are sent in full.
-export function inputItems({systemPrompt,messages}) {
-  const total = messages.filter(message=>message.role === 'toolResult').length, fullFrom = total - DEMO_CONFIG.agent.keepToolResults;
+export function inputItems({systemPrompt,messages:all},memory = createAgentMemory(),limits = DEMO_CONFIG.agent) {
+  const compacted = compact(all,memory,limits), summarised = compacted !== all;
+  // The notes are shown every turn; a summary already carries them.
+  const messages = !summarised && memory.notes ? [compacted[0],{role:'user',content:memory.describe(),timestamp:0},...compacted.slice(1)] : compacted;
+  const visible = showImages(all,limits), total = messages.filter(message=>message.role === 'toolResult').length, fullFrom = total - limits.keepToolResults;
   const items = systemPrompt ? [{role:'system',content:input(systemPrompt)}] : [];
   let seen = 0;
   for (const message of messages) {
-    if (message.role === 'user') items.push({role:'user',content:input(typeof message.content === 'string' ? message.content : joined(message.content))});
+    if (message.role === 'user') items.push({role:'user',content:userParts(message.content,visible)});
     else if (message.role === 'toolResult') items.push({type:'function_call_output',call_id:message.toolCallId,output:seen++ < fullFrom ? FOLDED : joined(message.content)});
     else if (message.role === 'assistant') {
       for (const block of message.content) {
@@ -36,8 +78,8 @@ export function inputItems({systemPrompt,messages}) {
 }
 
 // A closed body: function tools and encrypted reasoning, and none of the fields the Demo gateway refuses.
-export function agentBody({alias,context,stream}) {
-  const body = JSON.stringify({model:alias,stream,input:inputItems(context),tools:toolSpecs(context.tools || []),tool_choice:'auto',include:['reasoning.encrypted_content']});
+export function agentBody({alias,context,memory,stream}) {
+  const body = JSON.stringify({model:alias,stream,input:inputItems(context,memory),tools:toolSpecs(context.tools || []),tool_choice:'auto',include:['reasoning.encrypted_content']});
   if (new TextEncoder().encode(body).length > DEMO_CONFIG.maxBodyBytes) throw fail('AGENT_CONTEXT_LIMIT');
   return body;
 }

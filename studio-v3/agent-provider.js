@@ -1,27 +1,32 @@
 import { createModels, createProvider, createAssistantMessageEventStream } from '@earendil-works/pi-ai';
 import { progressText } from './ai-response-reader.js';
 import { assistantContent } from './agent-wire.js';
+import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { fail } from './ai-edits.js';
 
 const ZERO = {input:0,output:0,cacheRead:0,cacheWrite:0};
 // A Pi provider that sends each model turn through the Demo transport. The model, its tools and its history are Pi's;
 // this only turns a turn into a request and the answer back into an assistant message. Keys never enter: the transport
 // holds the short-lived session. `failure()` is the error of a failed turn, so the loop can report its real code.
-export function createGatewayModel({transport,alias,signal,assertContext = () => {},onPhase = () => {}}) {
+export function createGatewayModel({transport,alias,signal,assertContext = () => {},maxTokens = DEMO_CONFIG.agent.maxRunTokens,memory,onTurn = () => {},onPhase = () => {}}) {
   const model = {id:alias,name:alias,provider:'printform-demo',api:'printform-demo-agent',baseUrl:'https://gpt.yapweijun1996.com/demo/v1',reasoning:true,input:['text'],contextWindow:128000,maxTokens:16384,cost:{...ZERO}};
   const totals = {input:0,output:0,total:0};
-  let failed = null;
+  let failed = null, turns = 0;
   const stream = (_model,context,options = {}) => {
     const events = createAssistantMessageEventStream();
     const output = {role:'assistant',content:[],api:model.api,provider:model.provider,model:alias,stopReason:'stop',timestamp:Date.now(),usage:{...ZERO,totalTokens:0,cost:{...ZERO,total:0}}};
     void (async () => {
       try {
-        assertContext(); onPhase('Waiting for the AI service');
-        const turn = await transport.agentTurn(alias,context,options.signal || signal,{onProgress:progress=>onPhase(progressText(progress),{progress:true})});
+        assertContext();
+        if (totals.total >= maxTokens) throw fail('AGENT_TOKEN_BUDGET');
+        onPhase('Waiting for the AI service');
+        const turn = await transport.agentTurn(alias,context,options.signal || signal,{memory,onProgress:progress=>onPhase(progressText(progress),{progress:true})});
         output.content = assistantContent(turn.output);
         output.stopReason = output.content.some(block=>block.type === 'toolCall') ? 'toolUse' : 'stop';
         for (const [key,wire,total] of [['input','prompt_tokens','input'],['output','completion_tokens','output'],['totalTokens','total_tokens','total']]) {
           const value = turn.usage?.[wire]; if (Number.isFinite(value) && value >= 0) { output.usage[key] = value; totals[total] += value; }
         }
+        onTurn({turn:++turns,totals:{...totals}});
         events.push({type:'start',partial:output}); events.push({type:'done',reason:output.stopReason,message:output}); events.end();
       } catch (error) {
         failed = error;

@@ -2,6 +2,7 @@ import {describe,it,expect} from 'vitest';
 import {createModels,fauxProvider,fauxAssistantMessage,fauxToolCall} from '@earendil-works/pi-ai';
 import {newProject,designOf} from '../studio-v3/model.js';
 import {runAgentLoop,AGENT_PROMPT} from '../studio-v3/agent-loop.js';
+import {createAgentMemory} from '../studio-v3/agent-memory.js';
 
 const note = {type:'add_field',section:'footer',field:{id:'note-two',label:'Extra note',kind:'static',text:'Authored note'}};
 const badStep = {type:'set_field',target:'nowhere',patch:{width:10}};
@@ -95,10 +96,32 @@ describe('what a finished run reports',()=> {
   });
 });
 
+describe('a run with reference images',()=> {
+  const media = [{type:'input_image',image_url:'data:image/png;base64,AAAA'}];
+  it('gives the images to the model with the request',async()=> {
+    let first;
+    const {promise} = run([context=> { first = context.messages[0]; return call('report_blocked',{reason:'seen'}); }],{options:{media}});
+    await reason(promise);
+    expect(first.content).toEqual([{type:'text',text:'Tidy the footer of this form.'},{type:'image',data:'AAAA',mimeType:'image/png'}]);
+  });
+  it('refuses images that break the sharing rules, before anything is sent',async()=> {
+    const {promise,faux} = run([call('get_context',{})],{options:{media:[{type:'input_image',image_url:'https://example.com/a.png'}]}});
+    expect((await reason(promise)).code).toBe('UNSAFE_PROPOSAL'); expect(faux.state.callCount).toBe(0);
+  });
+});
+
+describe('what the run remembers',()=> {
+  it('keeps the latest notes and the steps still in the draft',async()=> {
+    const memory = createAgentMemory();
+    await run([call('take_notes',{notes:'Footer needs a note.'}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('apply_operations',{summary:'Recolour',operations:[{type:'set_style',patch:{color:'#163a65'}}]}),call('undo_step',{}),call('finish',{summary:'Added a note'})],{options:{memory}}).promise;
+    expect(memory.notes).toBe('Footer needs a note.'); expect(memory.steps).toEqual([{summary:'Add a note',changes:expect.any(Number)}]);
+  });
+});
+
 describe('the agent prompt',()=> {
   it('keeps the printform.js authoring rules, and no longer asks for a JSON envelope',()=> {
     for (const needle of ['set_field','set_table_style','rowBackground','stable field ID','at most 24']) expect(AGENT_PROMPT).toContain(needle);
     expect(AGENT_PROMPT).not.toContain('Return ONE JSON object');
-    for (const tool of ['get_context','apply_operations','inspect_draft','undo_step','finish','report_blocked']) expect(AGENT_PROMPT).toContain(tool);
+    for (const tool of ['get_context','apply_operations','inspect_draft','undo_step','take_notes','finish','report_blocked']) expect(AGENT_PROMPT).toContain(tool);
   });
 });

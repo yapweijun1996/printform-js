@@ -2,28 +2,32 @@ import { AgentHarness, MemorySessionRepo, BACKGROUND_CONTEXT, withAbortSignal } 
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { createDraft } from './agent-draft.js';
+import { createAgentMemory } from './agent-memory.js';
 import { createAgentTools, AGENT_TOOL_NAMES } from './agent-tools.js';
 import { fail } from './ai-edits.js';
+import { assertImageParts } from './ai-responses-wire.js';
 
 // The printform.js authoring rules are the ones the single-step flow already sends; only the output format differs.
 const RULES = CHAT_PROMPT.slice(CHAT_PROMPT.indexOf('The global color is the brand accent'));
 export const AGENT_PROMPT = `You are a Printform framework-native authoring agent working on a private DRAFT copy of the form, using tools instead of a JSON reply. Nothing you do reaches the live form: a person previews and applies what you finish.
-Start with get_context. Change the draft with apply_operations (at most 24 typed operations per call; it takes the operations described below, not an envelope). After structural changes call inspect_draft and fix what it reports. Retract a step with undo_step. When the request is met and the inspection is ready, call finish with a short summary. If the request cannot be met with the supported operations, call report_blocked and say why. Follow the printform.js standard below exactly; never emit HTML, CSS or script. Tools: ${AGENT_TOOL_NAMES.join(', ')}.
+Start with get_context. Reference images, if there are any, come with the request on your first few turns only: before they go, record what you need from them with take_notes. Change the draft with apply_operations (at most 24 typed operations per call; it takes the operations described below, not an envelope). After structural changes call inspect_draft and fix what it reports. Retract a step with undo_step. On a long job keep short notes with take_notes (what you have seen, what is decided, what is left): they replace your earlier notes and are shown to you on every turn, even after older steps are dropped to keep the request small. When the request is met and the inspection is ready, call finish with a short summary. If the request cannot be met with the supported operations, call report_blocked and say why. Follow the printform.js standard below exactly; never emit HTML, CSS or script. Tools: ${AGENT_TOOL_NAMES.join(', ')}.
 ${RULES}`;
 
 // Runs one authoring task as a tool loop on a draft. Resolves to a proposal shaped like the single-step flow's, so
 // the existing Preview / Apply / Undo takes it unchanged; rejects with a coded error otherwise.
-export async function runAgentLoop({models,model,project,request,scope = {mode:'whole'},references = [],context,inspect,signal,failure = () => null,onStep = () => {},limits = DEMO_CONFIG.agent,systemPrompt = AGENT_PROMPT}) {
+export async function runAgentLoop({models,model,project,request,scope = {mode:'whole'},references = [],context,inspect,signal,media = [],memory = createAgentMemory(),failure = () => null,onStep = () => {},limits = DEMO_CONFIG.agent,systemPrompt = AGENT_PROMPT}) {
   signal.throwIfAborted();
+  assertImageParts(media);
+  const images = media.map(part=> { const [,mimeType,data] = /^data:(image\/[a-z]+);base64,(.+)$/.exec(part.image_url); return {type:'image',data,mimeType}; });
   const draft = createDraft(project,{scope,request,references}), outcome = {}, deadline = AbortSignal.timeout(limits.maxRunMs), stop = AbortSignal.any([signal,deadline]);
-  const tools = createAgentTools({draft,context:current=>context(current),inspect,signal:stop,outcome,limits,onStep});
+  const tools = createAgentTools({draft,context:current=>context(current),inspect,signal:stop,outcome,limits,memory,onStep});
   const ctx = withAbortSignal(stop,BACKGROUND_CONTEXT);
   const session = await new MemorySessionRepo().create({},ctx);
   const {harness} = await AgentHarness.create({session,models,model,tools,activeToolNames:tools.map(item=>item.name),systemPrompt,toolExecution:'sequential',retry:{enabled:false,maxRetries:0,baseDelayMs:0}},ctx);
   try {
     const lane = await harness.lane('agent',ctx), onAbort = () => { void lane.abort(BACKGROUND_CONTEXT); };
     stop.addEventListener('abort',onAbort,{once:true});
-    try { await lane.prompt(request,ctx); }
+    try { await (images.length ? lane.prompt(request,images,ctx) : lane.prompt(request,ctx)); }
     catch (error) { if (deadline.aborted && !signal.aborted) throw fail('AGENT_TIMEOUT'); throw error; }
     finally { stop.removeEventListener('abort',onAbort); }
     signal.throwIfAborted();

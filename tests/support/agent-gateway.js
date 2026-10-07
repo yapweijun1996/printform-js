@@ -8,10 +8,10 @@ export const turn = (output,tokens = 10) => stream([{type:'response.created',res
 export const plain = text => json({status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}],usage:{input_tokens:3,output_tokens:4,total_tokens:7}});
 export const message = text => ({id:'msg_1',type:'message',status:'completed',content:[{type:'output_text',text}],phase:'final_answer',role:'assistant'});
 export const colour = value => ({type:'set_style',patch:{color:value}});
-export function scriptedGateway({agent = [],single = []} = {}) {
+export function scriptedGateway({agent = [],single = [],multimodal = false} = {}) {
   const bodies = [], transport = createDemoTransport({fetchImpl:async(url,init)=> {
     if (url.endsWith('/session')) return json({token:'dmo_synthetic1',expires_in:900},201);
-    if (url.endsWith('/models')) return json({data:[{id:'demo-fast'}]});
+    if (url.endsWith('/models')) return json({data:[{id:'demo-fast',capabilities:{responses:true,multimodal}}]});
     const body = JSON.parse(init.body); bodies.push(body);
     const answer = (body.tools ? agent : single).shift();
     return typeof answer === 'function' ? answer(init,body) : answer;

@@ -134,8 +134,8 @@ export class AIPanel {
   setModels(aliases) { const kept = fillModels(this.node('#ai-model'),aliases); this.referenceFiles?.capabilityChanged(); return kept; }
   restoreAlias(alias) { const valid = isDemoAlias(alias) ? alias : DEMO_CONFIG.defaultAlias; showAlias(this.node('#ai-model'),valid); this.modelChosen = valid !== DEMO_CONFIG.defaultAlias; }
   finish() { clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.agentSteps = []; this.update(); }
-  // Work in steps unless it is off, known to be unavailable, or the request is a question or carries images.
-  useSteps(payload,media) { return agentEnabled() && !this.agentUnavailable && !media.length && typeof this.transport.agentTurn === 'function' && !readOnlyRequest(payload.request,payload.conversation); }
+  // Work in steps unless it is off, known to be unavailable, or the request is a question. Images need confirmed support.
+  useSteps(payload,media,alias) { return agentEnabled() && !this.agentUnavailable && (!media.length || this.transport.supportsImages?.(alias) === true) && typeof this.transport.agentTurn === 'function' && !readOnlyRequest(payload.request,payload.conversation); }
   stepDone(step,id) { if (id === this.generation) { this.agentSteps.push({text:stepLabel(step),ok:step.ok,code:step.code}); this.update(); } }
   async send() {
     if (this.busy || this.applying || this.restoring) return;
@@ -166,9 +166,9 @@ export class AIPanel {
       };
       const onPhase = (text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); };
       let result;
-      if (this.useSteps(payload,media)) {
+      if (this.useSteps(payload,media,alias)) {
         this.agentSteps = [];
-        try { result = await runPanelAgent({transport:this.transport,alias,payload,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id)}); }
+        try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id)}); }
         catch (error) {
           // The gateway refusing tools is remembered. A model that ignored the tools on its first turn is only skipped
           // this once. A run that already took steps and then ended without a result is reported, not restarted.

@@ -1,6 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {Type} from '@earendil-works/pi-ai';
-import {toolSpecs,inputItems,agentBody,agentOutput,assistantContent} from '../studio-v3/agent-wire.js';
+import {toolSpecs,inputItems,agentBody,agentOutput,assistantContent,usesImages} from '../studio-v3/agent-wire.js';
+import {createAgentMemory} from '../studio-v3/agent-memory.js';
 import {DEMO_CONFIG} from '../studio-v3/ai-gateway-config.js';
 
 const tools = [{name:'get_context',description:'Read it.',parameters:Type.Object({}),execute:()=>{}},{name:'finish',description:'Done.',parameters:Type.Object({summary:Type.String()}),execute:()=>{}}];
@@ -91,5 +92,59 @@ describe('agent wire: answers',()=> {
 
   it('ignores benign unknown items',()=> {
     expect(assistantContent(agentOutput({status:'completed',output:[{type:'something_new',id:'z'},message('Hi')]}))).toEqual([{type:'text',text:'Hi'}]);
+  });
+});
+
+describe('agent wire: long runs',()=> {
+  const small = {keepToolResults:2,maxContextChars:3000,keepTurns:2};
+  const turns = count => { const messages = [user('go')]; for (let i = 0; i < count; i++) messages.push(assistant([call(`c${i}`,'get_context')],`r${i}`),result(`c${i}`,'get_context','x'.repeat(900))); return messages; };
+
+  it('shows the notes on every turn, right after the request',()=> {
+    const memory = createAgentMemory(); memory.note('Header is a two-column grid.');
+    const items = inputItems({systemPrompt:'S',messages:turns(1)},memory);
+    expect(items[2]).toEqual({role:'user',content:[{type:'input_text',text:expect.stringContaining('Header is a two-column grid.')}]});
+    expect(items.map(item=>item.type || item.role).slice(0,3)).toEqual(['system','user','user']);
+  });
+
+  it('adds nothing while there is nothing to remember and the request is small',()=> {
+    expect(inputItems({systemPrompt:'S',messages:turns(1)},createAgentMemory())).toEqual(inputItems({systemPrompt:'S',messages:turns(1)}));
+  });
+
+  it('replaces the oldest turns with a summary when the request grows past its budget, keeping calls and results paired',()=> {
+    const memory = createAgentMemory(); memory.addStep('Add a footer note',2); memory.note('Footer still needs a signature line.');
+    const items = inputItems({systemPrompt:'S',messages:turns(8)},memory,small);
+    const summary = items.find(item=>item.role === 'user' && JSON.stringify(item).includes('Earlier work'));
+    expect(summary).toBeDefined(); expect(JSON.stringify(summary)).toContain('1. Add a footer note (2 changes)'); expect(JSON.stringify(summary)).toContain('Footer still needs a signature line.');
+    const calls = items.filter(item=>item.type === 'function_call').map(item=>item.call_id), outputs = items.filter(item=>item.type === 'function_call_output').map(item=>item.call_id);
+    expect(calls).toEqual(['c6','c7']); expect(outputs).toEqual(calls);
+    expect(JSON.stringify(items).length).toBeLessThan(JSON.stringify(inputItems({systemPrompt:'S',messages:turns(8)},memory,{...small,maxContextChars:Infinity})).length);
+  });
+
+  it('does not summarise a request that is still within its budget',()=> {
+    const items = inputItems({systemPrompt:'S',messages:turns(2)},createAgentMemory(),{...small,maxContextChars:100000});
+    expect(JSON.stringify(items)).not.toContain('Earlier work'); expect(items.filter(item=>item.type === 'function_call')).toHaveLength(2);
+  });
+});
+
+describe('agent wire: reference images',()=> {
+  const image = {type:'image',data:'AAAA',mimeType:'image/png'};
+  const limits = {...DEMO_CONFIG.agent,imageTurns:2};
+  const asked = turnsTaken => { const messages = [{role:'user',content:[{type:'text',text:'Copy this layout'},image],timestamp:1}]; for (let i = 0; i < turnsTaken; i++) messages.push(assistant([call(`c${i}`,'get_context')],`r${i}`),result(`c${i}`,'get_context','ok')); return messages; };
+
+  it('sends the images with the request on the first turns',()=> {
+    const items = inputItems({messages:asked(1)},undefined,limits);
+    expect(items[0]).toEqual({role:'user',content:[{type:'input_text',text:'Copy this layout'},{type:'input_image',image_url:'data:image/png;base64,AAAA'}]});
+    expect(usesImages({messages:asked(1)},limits)).toBe(true);
+  });
+
+  it('stops resending them once the model has had its turns with them, and says so',()=> {
+    const items = inputItems({messages:asked(2)},undefined,limits);
+    expect(items[0].content.map(part=>part.type)).toEqual(['input_text','input_text']);
+    expect(items[0].content[1].text).toContain('no longer attached');
+    expect(JSON.stringify(items)).not.toContain('AAAA'); expect(usesImages({messages:asked(2)},limits)).toBe(false);
+  });
+
+  it('has no images to send when the request had none',()=> {
+    expect(usesImages({messages:[user('go')]},limits)).toBe(false);
   });
 });

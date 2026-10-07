@@ -1,5 +1,7 @@
 import { Type } from '@earendil-works/pi-ai';
 import { safeRunDiagnostics } from './ai-inspection.js';
+import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { createAgentMemory } from './agent-memory.js';
 
 const reply = (value,extra = {}) => ({content:[{type:'text',text:typeof value === 'string' ? value : JSON.stringify(value)}],details:{},...extra});
 const tool = (name,description,parameters,execute) => ({name,label:name,description,replay:'never',parameters,execute});
@@ -7,7 +9,7 @@ const SUMMARY = Type.String({minLength:1,maxLength:500});
 
 // The tools of an authoring run. They work on the draft only. A tool that fails throws: the model then sees the error
 // code and can repair the step. The run budget and the repeated-failure guard live here so no tool can bypass them.
-export function createAgentTools({draft,context,inspect,signal,outcome,limits,onStep = () => {}}) {
+export function createAgentTools({draft,context,inspect,signal,outcome,limits,memory = createAgentMemory(),onStep = () => {}}) {
   const run = {calls:0,failure:'',repeats:0,inspected:null};
   const guarded = (name,work) => async (_id,args) => {
     signal.throwIfAborted();
@@ -33,6 +35,7 @@ export function createAgentTools({draft,context,inspect,signal,outcome,limits,on
       Type.Object({summary:SUMMARY,operations:Type.Array(Type.Record(Type.String(),Type.Any()),{minItems:1,maxItems:24})}),
       guarded('apply_operations',async ({summary,operations}) => {
         const step = draft.apply(summary,operations), n = step.diff.length;
+        memory.addStep(summary,n);
         return reply(`Applied. ${n} changes in this step, ${draft.count} steps in the draft.`,{details:{detail:`${n} change${n === 1 ? '' : 's'}`}});
       })),
     tool('inspect_draft','Render the draft in a real print preview and report pagination, overflow and quality issues.',Type.Object({}),
@@ -44,7 +47,13 @@ export function createAgentTools({draft,context,inspect,signal,outcome,limits,on
         return reply(result,{details:{detail:result.ready ? 'ready' : `${result.errors.length + result.issues.length} issues`}});
       })),
     tool('undo_step','Remove the last applied step from the draft.',Type.Object({}),
-      guarded('undo_step',async () => reply(draft.undo() ? `Removed. ${draft.count} steps remain.` : 'There is nothing to undo.'))),
+      guarded('undo_step',async () => {
+        if (!draft.undo()) return reply('There is nothing to undo.');
+        memory.dropStep(); return reply(`Removed. ${draft.count} steps remain.`);
+      })),
+    tool('take_notes','Keep notes for yourself (what you have seen, decisions, what is left). They replace your earlier notes and are shown to you on every turn, even after older steps are dropped.',
+      Type.Object({notes:Type.String({minLength:1,maxLength:DEMO_CONFIG.agent.maxNoteChars})}),
+      guarded('take_notes',async ({notes}) => { memory.note(notes); return reply('Noted.',{details:{detail:'saved'}}); })),
     tool('finish','Hand the draft to the person for preview. Only when the request is met and the inspection is ready.',Type.Object({summary:SUMMARY}),
       guarded('finish',async ({summary}) => {
         // The inspection counts only if it was of the draft being handed over; any later step makes it stale.
@@ -56,4 +65,4 @@ export function createAgentTools({draft,context,inspect,signal,outcome,limits,on
       guarded('report_blocked',async ({reason}) => { outcome.blocked = {code:'AGENT_BLOCKED',reason}; return reply('Reported.',{terminate:true}); }))
   ];
 }
-export const AGENT_TOOL_NAMES = Object.freeze(['get_context','apply_operations','inspect_draft','undo_step','finish','report_blocked']);
+export const AGENT_TOOL_NAMES = Object.freeze(['get_context','apply_operations','inspect_draft','undo_step','take_notes','finish','report_blocked']);
