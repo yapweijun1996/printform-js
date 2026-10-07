@@ -21,8 +21,9 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 [data-ai-resize] { position:absolute; z-index:2; left:-4px; top:0; bottom:0; width:8px; cursor:col-resize; touch-action:none; }
 [data-ai-resize]:focus-visible { background:#1763dc44; outline:2px solid var(--blue); }
 [data-ai-log] { overflow:auto; padding:22px 16px; display:flex; flex-direction:column; gap:20px; overscroll-behavior:contain; }
-.ai-welcome { margin:auto 0; padding:12px 3px; display:grid; gap:12px; justify-items:center; text-align:center; }
+.ai-welcome { margin:auto 0; padding:8px 3px; display:grid; gap:10px; justify-items:center; text-align:center; }
 .ai-welcome h3 { font-size:19px; margin:0; }
+.ai-welcome .ai-privacy { max-width:none; margin:0; }
 .ai-welcome p { color:var(--muted); font-size:13px !important; max-width:40ch; }
 .ai-message { display:flex; flex-direction:column; gap:8px; max-width:100%; }
 .ai-message-text { padding:13px 14px; border-radius:12px; background:#f4f6f8; font-size:13px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
@@ -43,9 +44,9 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-hero svg { width:34px; height:34px; stroke-width:1.4; }
 .ai-hero svg + svg { position:absolute; top:4px; right:2px; width:24px; height:24px; color:#1763dc; fill:#1763dc22; }
 .ai-chips { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
-.ai-chips button { display:flex; align-items:center; justify-content:flex-start; gap:9px; border-radius:14px; font-size:13px; padding:9px 12px; min-height:44px; text-align:left; color:#1c2b44; background:#f7f8fa; }
+.ai-chips button { display:flex; align-items:center; justify-content:flex-start; gap:9px; border-radius:14px; font-size:13px; padding:8px 12px; min-height:40px; text-align:left; color:#1c2b44; background:#f7f8fa; }
 .ai-chips svg { flex:none; color:#1763dc; }
-.ai-attach { display:grid; justify-items:center; gap:3px; width:100%; min-height:88px; padding:12px; font-size:14px; border:1px dashed #9fb0c8; border-radius:12px; background:#fbfcfe; color:#1f3a63; cursor:pointer; }
+.ai-attach { display:grid; justify-items:center; gap:3px; width:100%; min-height:76px; padding:10px; font-size:14px; border:1px dashed #9fb0c8; border-radius:12px; background:#fbfcfe; color:#1f3a63; cursor:pointer; }
 .ai-attach svg { width:24px; height:24px; color:#1763dc; }
 .ai-attach small { color:var(--muted); font-size:13px; }
 .ai-flow { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px 10px; margin:0; padding:0; list-style:none; font-size:13px; color:var(--muted); counter-reset:step; }
@@ -72,6 +73,7 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-tag-error { color:#a42333; font-size:10px !important; }
 .ai-target-highlight { outline:2px solid var(--blue); outline-offset:-2px; background:#edf3fe; }
 .paper-toolbar [data-ai-add] { width:auto; font-size:11px; }
+[data-ai-send-reason] { margin:0; color:#8a4b00; font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
 [data-ai-status] { color:#536278; overflow-wrap:anywhere; font-size:11px !important; }
 .ai-change-card { border:1px solid var(--line); border-radius:10px; padding:10px; background:white; }
 .ai-diff { width:100%; border-collapse:collapse; font-size:11px; }
@@ -113,6 +115,12 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 @keyframes ai-wait { 50% { opacity:.55; } }
 @media (prefers-reduced-motion:reduce) { .ai-pending .ai-message-text { animation:none; } }
 .ai-diff th { white-space:nowrap; }
+/* Open references scroll inside their own area, so the message box, Send and its reason never leave the screen. */
+.ai-reference-files[open] { max-height:34dvh; }
+/* The composer is a column in which only the references and element tags give way (and scroll inside themselves); the message box, Send, its reason and the status always keep their size. */
+.ai-composer { display:flex; flex-direction:column; overflow:hidden; }
+.ai-composer > * { flex:none; }
+.ai-composer > .ai-reference-files, .ai-composer > [data-ai-element-tags] { flex:0 1 auto; min-height:0; overflow:auto; }
 /* Kept last: these hide parts of the panel on short screens and must win over the rules above. */
 /* Short screens keep the one-line scope and drop its explanation, so the conversation and composer stay usable. */
 /* On the wide layout the panel sits under the header, so the illustration is the first thing to give way. */

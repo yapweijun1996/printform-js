@@ -5,10 +5,10 @@ async function open(page, size) {
   await page.setViewportSize(size); await page.goto('/studio-v3/'); await ready(page);
   await page.locator('[data-ai-toggle]').click(); await expect(page.locator('.ai-welcome')).toBeVisible();
 }
-// The empty state is only useful if its last row (the flow) can be seen without scrolling.
+// The empty state is only useful if its last line (the privacy note after the flow) can be seen without scrolling.
 const fits = page => page.evaluate(() => {
-  const log = document.querySelector('[data-ai-log]').getBoundingClientRect(), flow = document.querySelector('.ai-flow').getBoundingClientRect();
-  return flow.top >= log.top && flow.bottom <= log.bottom + 1;
+  const log = document.querySelector('[data-ai-log]').getBoundingClientRect(), last = document.querySelector('.ai-welcome').lastElementChild.getBoundingClientRect();
+  return last.top >= log.top && last.bottom <= log.bottom + 1;
 });
 
 test('phone: illustration, scope explanation and every starting row are visible at once',async({page})=> {

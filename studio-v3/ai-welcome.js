@@ -17,6 +17,6 @@ export function renderWelcome() {
   }
   attach.type = 'button'; attach.dataset.ai = 'attach'; attach.insertAdjacentHTML('beforeend',icon('clip')); attach.append(node('strong','','Attach reference'),node('small','','PDF, PNG or JPG'));
   for (const step of ['Ask AI','Preview','Apply']) flow.append(node('li','',step));
-  intro.append(hero,node('h3','','What would you like to improve?'),node('p','','Describe a change or attach a reference. AI will preview changes before you apply them.'),chips,attach,flow);
+  intro.append(hero,node('h3','','What would you like to improve?'),node('p','','Describe a change or attach a reference. AI will preview changes before you apply them.'),chips,attach,flow,node('p','ai-privacy','Sent to the Demo gateway · use fictional data only'));
   return intro;
 }

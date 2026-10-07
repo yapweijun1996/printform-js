@@ -4,12 +4,37 @@ The sidepanel keeps a bounded conversation and composer. Send is the deliberate
 action accepting the adjacent recipient/context notice. No consent checkbox
 or background send is used. Enter sends; Shift+Enter and IME Enter do not.
 There is no request preview control; what is sent is the bounded context described in
-the studio v3 doc. If the current context differs from the one prepared when the user
+the studio v3 doc. The recipient notice is the empty-state line "Sent to the Demo gateway ·
+use fictional data only" and the text in the Settings menu; it is not repeated once a
+conversation exists (a known gap). If the current context differs from the one prepared when the user
 started typing, Send refreshes it and stops before inference.
 
 Edit scope is derived, not chosen: elements added with Add to chat limit the edit to
 those references; with none, the whole form is editable. A proposal that touches
 anything outside the references is rejected (`UNSAFE_SCOPE`).
+
+## Panel layout
+
+- **Empty conversation.** An illustration, "What would you like to improve?", four starter
+  chips (they fill the message box and send nothing), an Attach reference card, the numbered
+  Ask AI, Preview, Apply flow and the recipient line. The illustration gives way on wide
+  windows up to 940px high and on any window up to 760px high; the view starts at its top.
+- **Scope card**, above the conversation: "Scope: Whole form" (amber) or "n selected
+  element(s)" (blue), with "Changes will be previewed before applying." and how to limit a
+  change. The control mirrors the derived scope; it does not set it. Choosing Whole form
+  removes every reference. "Selected elements" is disabled when there are none, and the
+  control is locked while a request or Apply runs. On windows up to 760px high only the first
+  line is kept.
+- **Composer.** A plus button (attach a reference), a one-line message box that grows with
+  its text (capped by CSS) and a paper-plane Send. Files can be dropped on the composer or
+  anywhere in the conversation. The composer is a column in which only the References area
+  and the element tags shrink and scroll inside themselves; the message box, Send, its reason
+  and the status line keep their size, so they stay on screen on a phone or a short window.
+- **Why Send is off.** When Send is disabled for image support that is not confirmed, or
+  while references are still being read, the reason shows under the message box and is tied
+  to Send with `aria-describedby`. Other disabled states (a running request, Apply, restore)
+  are visible elsewhere and show no extra line.
+- **Header.** Settings (the "…" menu) and Close. There is no Back button.
 
 ## Authoring and questions
 

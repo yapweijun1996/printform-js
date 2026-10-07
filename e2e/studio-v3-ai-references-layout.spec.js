@@ -32,3 +32,19 @@ test('an image card keeps its thumbnail column, a readable name and a small Remo
   const {card,name,remove} = await widths(page);
   expect(thumb).toBeLessThan(card * .2); expect(name).toBeGreaterThan(card * .4); expect(remove).toBeLessThan(card * .3);
 });
+
+test('on a phone, open references scroll inside their own area and leave the conversation room',async({page})=> {
+  await page.setViewportSize({width:390,height:844});
+  await attach(page,syntheticPdf());
+  const log = await page.locator('[data-ai-log]').evaluate(n=>n.getBoundingClientRect().height);
+  expect(log).toBeGreaterThanOrEqual(200);
+  await expect(page.locator('#ai-prompt')).toBeInViewport({ratio:1}); await expect(page.locator('[data-ai-send]')).toBeInViewport({ratio:1});
+});
+
+test('Send greyed out for missing image support says so, right under the message box',async({page})=> {
+  await page.setViewportSize({width:390,height:844});
+  await attach(page,syntheticPng()); await page.locator('#ai-prompt').fill('Use navy accents.');
+  await expect(page.locator('[data-ai-send]')).toBeDisabled();
+  const reason = page.locator('[data-ai-send-reason]');
+  await expect(reason).toBeVisible(); await expect(reason).toContainText('Check image support'); await expect(reason).toBeInViewport({ratio:1});
+});

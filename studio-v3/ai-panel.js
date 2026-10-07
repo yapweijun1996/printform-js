@@ -219,6 +219,12 @@ export class AIPanel {
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
     for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);
-    renderConversation(this);
+    this.showSendReason(); renderConversation(this);
+  }
+  // Says why Send is off when nothing else on screen does: files still being read, or image support not yet confirmed.
+  showSendReason() {
+    const files = this.referenceFiles, node = this.node('[data-ai-send-reason]');
+    node.textContent = files?.reading ? 'Reading references… Send unlocks when they are ready.' : files?.imageBlocked() ? 'Send is off: image support is not confirmed for this model. Use Check image support, or remove the image.' : '';
+    node.hidden = !node.textContent;
   }
 }
