@@ -1,3 +1,4 @@
+import { renderWelcome } from './ai-welcome.js';
 // Style patches arrive as JSON text; show "fontSize 12 · bold" instead.
 const readable = value => {
   const text = String(value);
@@ -9,7 +10,7 @@ export function renderConversation(panel) {
   const log = panel.node('[data-ai-log]'), atEnd = log.scrollHeight-log.scrollTop-log.clientHeight < 60;
   log.replaceChildren();
   if (!panel.conversation.messages.length) {
-    const intro = node('section','ai-welcome'); intro.append(node('h3','','Let’s shape your print form'),node('p','','Ask about the current layout, or propose colors and spacing. Review every edit on paper before applying it.')); log.append(intro);
+    log.append(renderWelcome());
   }
   for (const message of panel.conversation.messages) {
     const article = node('article',`ai-message ai-${message.role}`); article.dataset.messageId = message.id;
@@ -27,7 +28,7 @@ export function renderConversation(panel) {
       const state = node('p','ai-card-state',message.status === 'ready' ? (previewed ? 'Previewed on paper · review it, then Apply' : 'Not applied · preview first') : message.status === 'applied' ? (message.appliedBus !== panel.getBus() ? 'Applied to a previous form · history only' : panel.canUndo(message) ? 'Applied to the form' : 'Applied earlier · history only') : 'Expired · send a new request'); card.append(state);
       if (active) {
         const actions = node('div','ai-actions');
-        for (const [action,label,disabled] of [['preview',previewed ? 'Preview again' : 'Preview',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
+        for (const [action,label,disabled] of [['preview',previewed ? 'Preview again' : 'Preview on page',panel.busy],['apply','Apply',!panel.checked || panel.busy],['discard','Discard',panel.applying]]) {
           const button = node('button',action === 'apply' ? 'primary' : '',label); button.type = 'button'; button.dataset.ai = action; button.disabled = Boolean(disabled || panel.applying); actions.append(button);
         }
         card.append(actions);
@@ -47,7 +48,9 @@ export function renderConversation(panel) {
     const wait = node('article','ai-message ai-assistant ai-pending'); wait.setAttribute('aria-hidden','true');
     wait.append(node('div','ai-message-text ai-pending-text',panel.node('[data-ai-status]').textContent || 'Working…')); log.append(wait);
   }
-  if (atEnd) log.scrollTop = log.scrollHeight;
+  // The empty state reads from its top; a running conversation follows its newest message.
+  if (!panel.conversation.messages.length) log.scrollTop = 0;
+  else if (atEnd) log.scrollTop = log.scrollHeight;
 }
 export function setupPanelLayout(panel) {
   const key = 'printform-studio-v3:ai-width', separator = panel.node('[data-ai-resize]');

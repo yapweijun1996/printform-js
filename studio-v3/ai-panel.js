@@ -16,12 +16,13 @@ export class AIPanel {
     Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,restore,commit,undo,sync,transport});
     this.root = document.querySelector('#ai-panel'); this.viewing = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
+    this.root.addEventListener('change',event=> { if (event.target.id === 'ai-scope' && event.target.value === 'whole') { this.elementTags?.clear(); this.showScopeHint(); } });
     this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } } });
     this.root.addEventListener('click',event=> {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
       if (button?.disabled) return;
       if (action === 'close') this.close();
-      if (action === 'paper') { if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
+      if (action === 'attach') this.referenceFiles?.pick();
       if (action === 'cancel') void this.stop();
       if (action === 'discard') void this.discard();
       if (action === 'preview') void this.guard(()=>this.preview()).catch(error=>this.error(error));
@@ -44,7 +45,15 @@ export class AIPanel {
   error(error) { this.message(errorMessage(error)); }
   // Scope is derived, never chosen: referenced elements limit the edit, otherwise the whole form is editable.
   scope() { const ids = this.elementTags?.snapshot().map(r=>r.id) || []; return ids.length ? {mode:'selected',id:ids[0],ids} : {mode:'whole'}; }
-  scopeHint() { const n = this.scope().ids?.length || 0; return n ? `Editing ${n} selected element${n > 1 ? 's' : ''}. Remove them to edit the whole form.` : 'Editing the whole form. To limit a change, select an element and press Add to chat.'; }
+  // The scope bar says plainly what AI may change; a narrow screen needs the extra step of closing the panel to select.
+  // The scope is always derived from the referenced elements; this bar shows it and offers the way back to the whole form.
+  showScopeHint() {
+    const bar = this.node('[data-ai-scope]'), count = this.scope().ids?.length || 0, choice = this.node('#ai-scope'), selected = choice.querySelector('[value=selected]');
+    bar.dataset.scope = count ? 'selected' : 'whole';
+    selected.disabled = !count; selected.textContent = count ? `${count} selected element${count > 1 ? 's' : ''}` : 'Selected elements'; choice.value = count ? 'selected' : 'whole';
+    const how = count ? 'Choose Whole form to edit any part.' : innerWidth <= 900 ? 'To limit them, close this panel, tap an element, then press Add to chat.' : 'To limit them, select an element and press Add to chat.';
+    this.node('.ai-scope-help').textContent = `Changes will be previewed before applying. ${how}`;
+  }
   documentKey() { return this.getBus()?.project.manifest.documentId; }
   payload() {
     const references = this.elementTags?.payload() || [];
@@ -52,14 +61,16 @@ export class AIPanel {
     return {request,scope:this.scope(),typography:this.getFacts(),conversation:this.conversation.context(this.documentKey()),references,...(this.referenceFiles?.files.length ? {attachments:this.referenceFiles.projection().references} : {})};
   }
   request() { return this.getBus() ? chatRequest(this.getBus().project,this.payload()) : '{}'; }
+  // One line at rest; grows with the text (the CSS caps it). Hidden panels measure 0, so they keep the natural height.
+  fitPrompt() { const box = this.node('#ai-prompt'); box.style.height = 'auto'; if (box.scrollHeight) box.style.height = `${box.scrollHeight}px`; }
   share() {
+    this.fitPrompt();
     try { this.sharedRequest = this.request(); this.shareBlocked = false; }
     catch (error) { this.shareBlocked = true; this.sharedRequest = null; this.message(error.message); }
   }
   show() { this.open = true; this.root.hidden = false; document.body.classList.add('ai-open'); this.contextChanged(); this.share(); this.update(); this.node('#ai-prompt').focus(); this.sync(); }
   suspend() { this.node('.ai-settings').open = false; this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
   close() { if (this.applying) return; if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
-  showScopeHint() { this.node('[data-ai-scope]').textContent = this.scopeHint(); }
   contextChanged(force=false) {
     const bus = this.getBus(), selected = this.getSelection();
     this.elementTags?.contextChanged(); this.referenceFiles?.contextChanged();
@@ -204,10 +215,10 @@ export class AIPanel {
     document.querySelector('#ai-preview-banner').hidden = !this.viewing;
     document.querySelector('[data-ai-toggle]').setAttribute('aria-expanded',String(Boolean(this.open)));
     this.elementTags?.setBusy(Boolean(this.busy || this.applying || this.restoring)); this.referenceFiles?.setBusy(Boolean(this.busy || this.applying || this.restoring));
-    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
+    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
-    for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=paper],[data-ai=clear]')) node.disabled = Boolean(this.applying);
+    for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);
     renderConversation(this);
   }
 }

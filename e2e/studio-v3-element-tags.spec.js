@@ -67,7 +67,7 @@ test('revision changes visibly block stale tags until the user removes and adds 
   await expect(page.locator('[data-ai-tag-id="items-description"]')).toContainText('r1');
 });
 test('deleted and cross-document references never target a neighboring field with the same position or ID',async({page})=> {
-  const calls = await mock(page); await add(page,'items-sku'); await page.locator('[data-ai=paper]').click();
+  const calls = await mock(page); await add(page,'items-sku'); await page.locator('[data-ai=close]').click();
   await page.locator('#right-panel [data-action=remove-field]').click(); await expect(page.locator('#revision')).toContainText('r1'); await ready(page);
   await page.locator('[data-ai-toggle]').click(); await expect(page.locator('[data-ai-element-tags]')).toContainText('Deleted element');
   await page.locator('#ai-prompt').fill('Amend this referenced field.'); await page.locator('[data-ai-send]').click(); expect(calls).toHaveLength(0);
