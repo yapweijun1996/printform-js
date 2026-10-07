@@ -10,6 +10,8 @@ import { runLayoutHarness } from './ai-harness.js';
 import { AIElementTags, validateElementReferences } from './ai-element-tags.js';
 import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { fillModels, showAlias } from './ai-model-select.js';
+// Shown under the message box whenever Send works; it is the recipient notice Send accepts.
+const RECIPIENT_NOTICE = 'Sent to the Demo gateway · use fictional data only';
 
 export class AIPanel {
   constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,restore,commit,undo,sync,transport=createDemoTransport()}) {
@@ -221,10 +223,11 @@ export class AIPanel {
     for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);
     this.showSendReason(); renderConversation(this);
   }
-  // Says why Send is off when nothing else on screen does: files still being read, or image support not yet confirmed.
+  // The line under the message box: who receives the request, or why Send is off when nothing else on screen says so
+  // (files still being read, image support not confirmed). The reason replaces the notice while it applies.
   showSendReason() {
     const files = this.referenceFiles, node = this.node('[data-ai-send-reason]');
-    node.textContent = files?.reading ? 'Reading references… Send unlocks when they are ready.' : files?.imageBlocked() ? 'Send is off: image support is not confirmed for this model. Use Check image support, or remove the image.' : '';
-    node.hidden = !node.textContent;
+    const reason = files?.reading ? 'Reading references… Send unlocks when they are ready.' : files?.imageBlocked() ? 'Send is off: image support is not confirmed for this model. Use Check image support, or remove the image.' : '';
+    node.textContent = reason || RECIPIENT_NOTICE; node.dataset.kind = reason ? 'reason' : 'notice';
   }
 }
