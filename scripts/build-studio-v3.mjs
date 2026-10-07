@@ -7,6 +7,8 @@ import { serializeStandalone } from '../studio-v2/core/project-model.js';
 
 export async function buildStudioV3({root,output}) {
   await build({root,base:'./',configFile:false,logLevel:'warn',worker:{rollupOptions:{output:{entryFileNames:'chunks/[name]-[hash].js'}}},build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/app.js'),formats:['es'],fileName:()=> 'app.js'},rollupOptions:{output:{chunkFileNames:'chunks/[name]-[hash].js'}},minify:true,sourcemap:false}});
+  // The diagnostic page is a separate, self-contained bundle: its imports reach files outside studio-v3.
+  await build({root,base:'./',configFile:false,logLevel:'warn',build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/gateway-probe-page.js'),formats:['es'],fileName:()=> 'gateway-probe-page.js'},minify:true,sourcemap:false}});
   const directory = path.resolve(output,'studio-v3/samples');
   fs.mkdirSync(directory,{recursive:true});
   const sources = {
