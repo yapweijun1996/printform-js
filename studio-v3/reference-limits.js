@@ -29,6 +29,7 @@ const MESSAGES = {
   PDF_TOO_LARGE:'PDF references must be 5 MiB or smaller.',
   PDF_IMAGE_LIMIT:'An embedded PDF image exceeds the 12-million-pixel limit. Use Text & positions mode or a lower-resolution PDF.',
   PDF_WORKER:'The local PDF worker could not start. Reload the page and retry.',
+  PDF_ENGINE:'This browser cannot run the PDF reader. Update the browser or try another one. PNG/JPEG/WebP references still work.',
   REFERENCE_BUDGET:'The references exceed the combined page, text, image or output budget.',
   PREVIEW_TOO_LARGE:'The decoded preview exceeds the safe image limit.',
   REFERENCE_TIMEOUT:'Reference processing exceeded 20 seconds. Use a smaller or simpler file.',

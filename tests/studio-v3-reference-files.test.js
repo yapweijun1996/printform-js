@@ -118,9 +118,16 @@ describe('isolated PDF parsing contract',()=> {
     const {runtime}=pdfRuntime(options); await expect(parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'))).rejects.toMatchObject({code}); expect(runtime.destroy).toHaveBeenCalled();
   });
   it('maps protected and corrupt PDFs to explicit rejection',async()=> {
-    for (const [options,code] of [[{loadingError:Object.assign(new Error('password'),{name:'PasswordException'})},'PDF_ENCRYPTED'],[{loadingError:new Error('invalid xref')},'FILE_CORRUPT']]) {
+    for (const [options,code] of [[{loadingError:Object.assign(new Error('password'),{name:'PasswordException'})},'PDF_ENCRYPTED'],[{loadingError:new Error('invalid xref')},'FILE_CORRUPT'],
+      // A missing browser built-in is the browser's problem; corrupt data that trips PDF.js is the file's.
+      [{loadingError:new TypeError('e.getOrInsertComputed is not a function')},'PDF_ENGINE'],[{loadingError:new TypeError("Cannot read properties of undefined (reading 'x')")},'FILE_CORRUPT']]) {
       pdfRuntime(options); await expect(parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'))).rejects.toMatchObject({code});
     }
+  });
+  it('reports a missing browser feature during visual rendering as the browser, not a damaged file',async()=> {
+    pdfRuntime({renderError:new TypeError('this[#t].getOrInsertComputed is not a function')});
+    const failure=await parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'),{pdfMode:'visual'}).catch(error=>error);
+    expect(failure.code).toBe('PDF_ENGINE');expect(failure.message).toContain('browser');expect(failure.message).not.toContain('damaged');expect(failure.message).not.toContain('getOrInsertComputed');
   });
   it('rejects password requests instead of asking for or retaining credentials',async()=> {
     const {loading}=pdfRuntime(); loading.promise=new Promise(()=>{});
@@ -159,7 +166,7 @@ it.each(['text','visual'])('rejects swallowed external-resource fallback before 
 });
 
 
-it.each([['Image exceeded maximum allowed size and was removed.','PDF_IMAGE_LIMIT'],['Malformed image data','FILE_CORRUPT']])('rejects worker stream failure even if PDF.js resolves render: %s',async(message,code)=>{
+it.each([['Image exceeded maximum allowed size and was removed.','PDF_IMAGE_LIMIT'],['Malformed image data','FILE_CORRUPT'],['e.getOrInsertComputed is not a function','PDF_ENGINE']])('rejects worker stream failure even if PDF.js resolves render: %s',async(message,code)=>{
  const {runtime,page}=pdfRuntime();const removed=vi.spyOn(runtime.port,'removeEventListener');
  page.render.mockImplementation(()=>{runtime.port.dispatchEvent(new MessageEvent('message',{data:{stream:5,reason:{name:'UnknownErrorException',message}}}));return {promise:Promise.resolve(),cancel:vi.fn()};});
  await expect(parseReferenceFile(file(pdfBytes(),'broken-image.pdf','application/pdf'),{pdfMode:'visual'})).rejects.toMatchObject({code});expect(runtime.destroy).toHaveBeenCalled();expect(removed).toHaveBeenCalledWith('message',expect.any(Function));

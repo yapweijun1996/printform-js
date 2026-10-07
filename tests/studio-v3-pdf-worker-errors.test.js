@@ -1,5 +1,5 @@
 import {it,expect,vi} from 'vitest';
-import {observePdfWorkerErrors} from '../studio-v3/reference-pdf-errors.js';
+import {observePdfWorkerErrors,isEngineFailure} from '../studio-v3/reference-pdf-errors.js';
 const send=(port,data)=>port.dispatchEvent(new MessageEvent('message',{data}));
 it('ignores normal completion/cancellation and malformed envelopes',()=>{
  const port=new EventTarget(),guard=observePdfWorkerErrors(port);
@@ -16,3 +16,14 @@ it('catches native worker failures and removes both listeners on disposal',async
 it('does not accept late error events after successful disposal',()=>{
  const port=new EventTarget(),guard=observePdfWorkerErrors(port);guard.dispose();send(port,{stream:5,reason:{message:'failure'}});expect(()=>guard.check()).not.toThrow();
 });
+it.each([
+ [{name:'TypeError',message:'e.getOrInsertComputed is not a function'},true],
+ [{name:'TypeError',message:'Promise.withResolvers is not a function'},true],
+ [{name:'ReferenceError',message:'ImageDecoder is not defined'},true],
+ [{name:'UnknownErrorException',message:'x.at is not a function'},true],
+ [{name:'TypeError',message:"Cannot read properties of undefined (reading 'length')"},false],
+ [{name:'FormatError',message:'Bad value is not a function'},false],
+ [{name:'InvalidPDFException',message:'Invalid PDF structure.'},false],
+ [{name:'Error',message:'invalid xref'},false],
+ [null,false],['text',false],[{},false]
+])('tells a missing browser feature from a damaged file: %j',(reason,expected)=>{expect(isEngineFailure(reason)).toBe(expected);});
