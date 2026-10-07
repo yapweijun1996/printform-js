@@ -39,6 +39,12 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
 
 ## Authoring and questions
 
+A request that reads like a question is read-only: any proposal returned for it is rejected
+(`UNSAFE_PROPOSAL`). Wording that names fonts and sizes counts as a question unless it also
+contains a change verb (change, set, make, increase, reduce, adjust, improve, enhance, tighten,
+enlarge, shrink). The starting actions in the empty state must stay edit requests, and a test
+checks each of them against this rule.
+
 Ordinary questions use a closed answer envelope and remain read-only. Font
 questions use measured computed typography in the committed sandbox preview,
 with stable label/value/title/page-number IDs. Zoom is separate from print size.

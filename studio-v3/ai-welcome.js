@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
 // Starting actions shown in the empty conversation: each fills the message box, nothing is sent.
-const STARTERS = [
+export const STARTERS = [
   ['type','Improve typography','Improve the typography of this form: font sizes, hierarchy and readability.'],
   ['spacing','Tighten spacing','Reduce cell padding to 5 px.'],
   ['align','Improve alignment','Improve alignment: left-align text and right-align numbers.'],
