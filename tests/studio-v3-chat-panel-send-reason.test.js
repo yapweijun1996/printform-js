@@ -2,26 +2,32 @@ import {beforeEach,describe,it,expect} from 'vitest';
 import {html,setup,visualPanel} from './support/chat-panel.js';
 beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html>/i,'');document.body.inert=false;});
 
-// When Send is off for a reason the user cannot see in the conversation, the reason sits right under the message box.
-const reason=panel=>panel.node('[data-ai-send-reason]');
-describe('why Send is off',()=> {
-  it('is silent while Send works',()=> {
+// One line under the message box is always on screen: who receives the request, or why Send is off.
+const line=panel=>panel.node('[data-ai-send-reason]');
+const NOTICE='Sent to the Demo gateway · use fictional data only';
+describe('the line under the message box',()=> {
+  it('tells who receives the request while Send works',()=> {
     const {panel}=setup();panel.update();
-    expect(panel.node('[data-ai-send]').disabled).toBe(false);expect(reason(panel).textContent).toBe('');expect(reason(panel).hidden).toBe(true);
+    expect(panel.node('[data-ai-send]').disabled).toBe(false);
+    expect(line(panel).hidden).toBe(false);expect(line(panel).textContent).toBe(NOTICE);expect(line(panel).dataset.kind).toBe('notice');
+  });
+  it('is still there once the conversation has started',async()=> {
+    const {panel}=setup();await panel.send();
+    expect(panel.node('[data-ai-log] .ai-welcome')).toBeNull();expect(line(panel).hidden).toBe(false);expect(line(panel).textContent).toBe(NOTICE);
   });
   it('names the missing image support and what to do about it, tied to the Send button',()=> {
     const {panel}=visualPanel('image');panel.update();
     expect(panel.node('[data-ai-send]').disabled).toBe(true);
-    expect(reason(panel).hidden).toBe(false);expect(reason(panel).textContent).toContain('image support is not confirmed');expect(reason(panel).textContent).toContain('Check image support');
-    expect(panel.node('[data-ai-send]').getAttribute('aria-describedby')).toBe(reason(panel).id);
+    expect(line(panel).dataset.kind).toBe('reason');expect(line(panel).textContent).toContain('image support is not confirmed');expect(line(panel).textContent).toContain('Check image support');
+    expect(panel.node('[data-ai-send]').getAttribute('aria-describedby')).toBe(line(panel).id);
   });
-  it('goes away once image support is confirmed',async()=> {
+  it('goes back to the notice once image support is confirmed',async()=> {
     const {panel}=visualPanel('image');panel.update();
     await panel.referenceFiles.checkImageSupport();panel.update();
-    expect(panel.node('[data-ai-send]').disabled).toBe(false);expect(reason(panel).hidden).toBe(true);
+    expect(panel.node('[data-ai-send]').disabled).toBe(false);expect(line(panel).dataset.kind).toBe('notice');expect(line(panel).textContent).toBe(NOTICE);
   });
   it('says references are still being read',()=> {
     const {panel}=setup();panel.referenceFiles.reading=true;panel.update();
-    expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(reason(panel).textContent).toContain('Reading references');
+    expect(panel.node('[data-ai-send]').disabled).toBe(true);expect(line(panel).dataset.kind).toBe('reason');expect(line(panel).textContent).toContain('Reading references');
   });
 });

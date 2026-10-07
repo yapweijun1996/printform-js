@@ -5,7 +5,7 @@ async function open(page, size) {
   await page.setViewportSize(size); await page.goto('/studio-v3/'); await ready(page);
   await page.locator('[data-ai-toggle]').click(); await expect(page.locator('.ai-welcome')).toBeVisible();
 }
-// The empty state is only useful if its last line (the privacy note after the flow) can be seen without scrolling.
+// The empty state is only useful if its last line (the flow) can be seen without scrolling.
 const fits = page => page.evaluate(() => {
   const log = document.querySelector('[data-ai-log]').getBoundingClientRect(), last = document.querySelector('.ai-welcome').lastElementChild.getBoundingClientRect();
   return last.top >= log.top && last.bottom <= log.bottom + 1;
@@ -34,4 +34,12 @@ test('the plus button is a real icon button that opens the file picker',async({p
   const plus = page.locator('.ai-input > .ai-plus');
   await expect(plus.locator('svg')).toBeVisible();
   const chooser = page.waitForEvent('filechooser'); await plus.click(); expect((await chooser).isMultiple()).toBe(true);
+});
+
+test('the recipient notice sits under the message box on a phone and on desktop',async({page})=> {
+  for (const size of [{width:390,height:844},{width:1440,height:900}]) {
+    await open(page,size);
+    const notice = page.locator('[data-ai-send-reason]');
+    await expect(notice).toContainText('Sent to the Demo gateway'); await expect(notice).toHaveAttribute('data-kind','notice'); await expect(notice).toBeInViewport({ratio:1});
+  }
 });

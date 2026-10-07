@@ -4,9 +4,9 @@ The sidepanel keeps a bounded conversation and composer. Send is the deliberate
 action accepting the adjacent recipient/context notice. No consent checkbox
 or background send is used. Enter sends; Shift+Enter and IME Enter do not.
 There is no request preview control; what is sent is the bounded context described in
-the studio v3 doc. The recipient notice is the empty-state line "Sent to the Demo gateway ·
-use fictional data only" and the text in the Settings menu; it is not repeated once a
-conversation exists (a known gap). If the current context differs from the one prepared when the user
+the studio v3 doc. The recipient notice is the line "Sent to the Demo gateway · use fictional data only"
+under the message box, which stays on screen for the whole conversation, plus the text in
+the Settings menu. If the current context differs from the one prepared when the user
 started typing, Send refreshes it and stops before inference.
 
 Edit scope is derived, not chosen: elements added with Add to chat limit the edit to
@@ -17,7 +17,7 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
 
 - **Empty conversation.** An illustration, "What would you like to improve?", four starter
   chips (they fill the message box and send nothing), an Attach reference card, the numbered
-  Ask AI, Preview, Apply flow and the recipient line. The illustration gives way on wide
+  Ask AI, Preview, Apply flow. The illustration gives way on wide
   windows up to 940px high and on any window up to 760px high; the view starts at its top.
 - **Scope card**, above the conversation: "Scope: Whole form" (amber) or "n selected
   element(s)" (blue), with "Changes will be previewed before applying." and how to limit a
@@ -30,10 +30,11 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
   anywhere in the conversation. The composer is a column in which only the References area
   and the element tags shrink and scroll inside themselves; the message box, Send, its reason
   and the status line keep their size, so they stay on screen on a phone or a short window.
-- **Why Send is off.** When Send is disabled for image support that is not confirmed, or
-  while references are still being read, the reason shows under the message box and is tied
-  to Send with `aria-describedby`. Other disabled states (a running request, Apply, restore)
-  are visible elsewhere and show no extra line.
+- **The line under the message box.** One element, two contents. Normally it shows the
+  recipient notice. When Send is disabled for image support that is not confirmed, or while
+  references are still being read, the reason replaces it (amber) and goes back to the
+  notice when the cause is gone. It is tied to Send with `aria-describedby`. Other disabled
+  states (a running request, Apply, restore) are visible elsewhere and keep the notice.
 - **Header.** Settings (the "…" menu) and Close. There is no Back button.
 
 ## Authoring and questions

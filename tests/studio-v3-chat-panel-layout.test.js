@@ -21,9 +21,9 @@ describe('empty state',()=> {
     expect([...flow.querySelectorAll('li')].map(item=>item.textContent)).toEqual(['Ask AI','Preview','Apply']);
   });
 
-  it('says where the form goes before anything is sent, as the last line of the empty state',()=> {
-    const {panel}=setup(),welcome=panel.node('[data-ai-log] .ai-welcome'),note=welcome.lastElementChild;
-    expect(note.className).toBe('ai-privacy');expect(note.textContent).toBe('Sent to the Demo gateway · use fictional data only');
+  it('ends with the flow; the recipient notice lives under the message box instead',()=> {
+    const {panel}=setup(),welcome=panel.node('[data-ai-log] .ai-welcome');
+    expect(welcome.querySelector('.ai-privacy')).toBeNull();expect(welcome.lastElementChild.className).toBe('ai-flow');
   });
 
   it('a starting action fills the message box and the Attach card opens the file picker',()=> {
