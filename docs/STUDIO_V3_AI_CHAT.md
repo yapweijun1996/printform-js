@@ -190,3 +190,21 @@ one function call (`read_skill`, a stand-in for a skill reader), and one replay 
 reasoning. It shows PASS or FAIL per check with codes and counts only, never request or response bodies, and offers the
 result as text to copy. It must be opened from the published site, because the gateway allows that origin; the origin is
 never set by hand. It is a separate bundle (`scripts/build-studio-v3.mjs`), not part of the app shell.
+
+Real run, 2026-10-07, from the published site: the model list returned 6 aliases (`demo-auto` used); the model called
+`read_skill` with the right argument and an encrypted reasoning item; the replay of the call, its result and the reasoning
+was accepted and the model answered. So function tools are enabled for the project and the replay format works.
+
+## Status of the tool loop
+
+Verified against the real gateway: function tools, one call with its argument, and the replay with encrypted reasoning
+(the probe above). Verified only against a scripted gateway: everything else, namely long runs (request size, session
+rotation every 15 requests, token expiry), the full `apply_operations` flow, reference images with tools, streamed progress
+and the session request and concurrency caps.
+
+Not built yet: agent skills and a registry for tools. The tool set and the system prompt are fixed. Pi has a skills API
+(`Skill`, `resources.skills`, `formatSkillsForSystemPrompt`, `harness.skill`); its `loadSkills` needs a file system and shell
+environment, so in the browser the plan is to build `Skill` objects from bundled text, list them in the system prompt, and
+add a `read_skill` tool. An in-memory check with Pi's test provider showed that the listing reaches the first request and a
+tool result reaches the next; whether the model reads a skill on its own is not yet observed. Designing a new form from an
+image or PDF is not supported: the agent amends the current form.
