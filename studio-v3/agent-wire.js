@@ -1,5 +1,6 @@
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { fail } from './ai-edits.js';
+import { createAgentMemory } from './agent-memory.js';
 
 // Pi messages <-> Responses items for a tool-using run. The gateway is stateless (no stored responses), so every
 // turn resends the conversation; encrypted reasoning travels inside Pi's thinking block and comes back from there.
@@ -16,9 +17,31 @@ function replayReasoning(signature) {
 }
 export const toolSpecs = tools => tools.map(({name,description,parameters}) => ({type:'function',name,description,parameters}));
 
+// Messages grouped as: the request, then turns of one assistant message and the tool results that answer it.
+function turnsOf(messages) {
+  const turns = [];
+  for (const message of messages.slice(1)) {
+    if (message.role === 'toolResult' && turns.length) turns.at(-1).push(message); else turns.push([message]);
+  }
+  return turns;
+}
+const sizeOf = messages => JSON.stringify(messages).length;
+// Past its budget, the request keeps the original ask and the newest turns, and says in one message what was dropped.
+// Whole turns go, so a function call is never left without its result.
+function compact(messages,memory,limits) {
+  if (sizeOf(messages) <= limits.maxContextChars) return messages;
+  const turns = turnsOf(messages), kept = turns.slice(-limits.keepTurns);
+  if (kept.length === turns.length) return messages;
+  const earlier = {role:'user',content:`Earlier work (older steps were dropped to keep the request small):\n${memory.describe() || 'Nothing was noted.'}`,timestamp:0};
+  return [messages[0],earlier,...kept.flat()];
+}
+
 // Older tool results are folded (the call stays, so the pairing is intact); only the newest few are sent in full.
-export function inputItems({systemPrompt,messages}) {
-  const total = messages.filter(message=>message.role === 'toolResult').length, fullFrom = total - DEMO_CONFIG.agent.keepToolResults;
+export function inputItems({systemPrompt,messages:all},memory = createAgentMemory(),limits = DEMO_CONFIG.agent) {
+  const compacted = compact(all,memory,limits), summarised = compacted !== all;
+  // The notes are shown every turn; a summary already carries them.
+  const messages = !summarised && memory.notes ? [compacted[0],{role:'user',content:memory.describe(),timestamp:0},...compacted.slice(1)] : compacted;
+  const total = messages.filter(message=>message.role === 'toolResult').length, fullFrom = total - limits.keepToolResults;
   const items = systemPrompt ? [{role:'system',content:input(systemPrompt)}] : [];
   let seen = 0;
   for (const message of messages) {
@@ -36,8 +59,8 @@ export function inputItems({systemPrompt,messages}) {
 }
 
 // A closed body: function tools and encrypted reasoning, and none of the fields the Demo gateway refuses.
-export function agentBody({alias,context,stream}) {
-  const body = JSON.stringify({model:alias,stream,input:inputItems(context),tools:toolSpecs(context.tools || []),tool_choice:'auto',include:['reasoning.encrypted_content']});
+export function agentBody({alias,context,memory,stream}) {
+  const body = JSON.stringify({model:alias,stream,input:inputItems(context,memory),tools:toolSpecs(context.tools || []),tool_choice:'auto',include:['reasoning.encrypted_content']});
   if (new TextEncoder().encode(body).length > DEMO_CONFIG.maxBodyBytes) throw fail('AGENT_CONTEXT_LIMIT');
   return body;
 }

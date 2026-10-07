@@ -5,7 +5,7 @@ import {agentEnabled,setAgentEnabled,AGENT_KEY} from '../studio-v3/agent-prefere
 afterEach(()=> localStorage.clear());
 describe('step labels',()=> {
   it('say what a step did, with its detail',()=> {
-    expect(stepLabel({name:'get_context',ok:true})).toBe('Read the form');
+    expect(stepLabel({name:'get_context',ok:true})).toBe('Read the form'); expect(stepLabel({name:'take_notes',ok:true})).toBe('Made a note');
     expect(stepLabel({name:'apply_operations',ok:true,detail:'4 changes'})).toBe('Changed the draft · 4 changes');
     expect(stepLabel({name:'inspect_draft',ok:true,detail:'ready'})).toBe('Checked the print preview · ready');
   });

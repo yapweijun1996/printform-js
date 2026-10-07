@@ -59,6 +59,7 @@ describe('the panel working in steps',()=> {
     const sending = panel.send();
     await vi.waitFor(()=>expect(panel.node('[data-ai-log] .ai-steps li')).not.toBeNull());
     expect(panel.node('[data-ai-log] .ai-steps li').textContent).toContain('Read the form');
+    expect(panel.node('[data-ai-status]').textContent).toMatch(/12 tokens/); // 10 in + 2 out of the finished turn
     panel.node('[data-ai=cancel]').click(); await sending;
     expect(panel.node('[data-ai-log] .ai-steps')).toBeNull();
   });

@@ -67,11 +67,11 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     },
     // One turn of a tool-using run: the whole conversation goes out, the model's output items come back. The gateway
     // allows a limited number of requests per session, so a long run moves to a fresh session before that limit.
-    async agentTurn(alias, context, signal, {onProgress} = {}) {
+    async agentTurn(alias, context, signal, {onProgress,memory} = {}) {
       if (!isDemoAlias(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
       if (sessionTurns >= DEMO_CONFIG.agent.sessionRequests) { session.clear(); sessionTurns = 0; }
       sessionTurns += 1;
-      const body = agentBody({alias,context,stream:DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
+      const body = agentBody({alias,context,memory,stream:DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
       try {
         const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body},DEMO_CONFIG.modelTimeoutMs,progress);
         return {output:agentOutput(payload),usage:responsesUsage(payload)};

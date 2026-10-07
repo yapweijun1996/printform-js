@@ -63,7 +63,7 @@ describe('progress while the model writes a tool call',()=> {
 });
 
 describe('run failures are named for the person',()=> {
-  it.each(['DEMO_TOOLS_UNAVAILABLE','AGENT_BUDGET','AGENT_STALLED','AGENT_BLOCKED','AGENT_TIMEOUT','AGENT_CONTEXT_LIMIT'])('%s has a message that says nothing changed',failure=> {
+  it.each(['DEMO_TOOLS_UNAVAILABLE','AGENT_BUDGET','AGENT_TOKEN_BUDGET','AGENT_STALLED','AGENT_BLOCKED','AGENT_TIMEOUT','AGENT_CONTEXT_LIMIT'])('%s has a message that says nothing changed',failure=> {
     expect(AI_MESSAGES[failure]).toContain('Nothing changed');
   });
 });

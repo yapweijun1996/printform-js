@@ -11,6 +11,7 @@ export const AI_MESSAGES = {
   DEMO_MODEL_UNAVAILABLE:'The selected model is no longer available. Choose a model from the list and send again. Nothing changed.',
   DEMO_TOOLS_UNAVAILABLE:'The AI service does not allow step-by-step runs for this app yet. Nothing changed.',
   AGENT_BUDGET:'The run used up its step budget before it finished. Nothing changed.',
+  AGENT_TOKEN_BUDGET:'The run used up its token budget before it finished. Nothing changed.',
   AGENT_STALLED:'The run kept repeating the same failing step and was stopped. Nothing changed.',
   AGENT_BLOCKED:'The assistant could not meet this request with the supported operations. Nothing changed.',
   AGENT_TIMEOUT:'The run took too long and was stopped. Nothing changed.',

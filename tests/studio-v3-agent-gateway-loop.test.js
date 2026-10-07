@@ -3,6 +3,7 @@ import {newProject,designOf} from '../studio-v3/model.js';
 import {createDemoTransport} from '../studio-v3/ai-demo-transport.js';
 import {createGatewayModel} from '../studio-v3/agent-provider.js';
 import {runAgentLoop} from '../studio-v3/agent-loop.js';
+import {createAgentMemory} from '../studio-v3/agent-memory.js';
 
 // The whole run goes through the real tool loop, wire format and transport; only the gateway is faked.
 const json = (body,status = 200) => new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
@@ -13,15 +14,16 @@ const msg = text => ({id:'msg_1',type:'message',status:'completed',content:[{typ
 const turn = (output,tokens) => stream([{type:'response.created',response:{status:'in_progress',output:[]}},{type:'response.completed',response:{status:'completed',output,usage:{input_tokens:tokens,output_tokens:2,total_tokens:tokens + 2}}}]);
 const note = {type:'add_field',section:'footer',field:{id:'note-two',label:'Extra note',kind:'static',text:'Authored note'}};
 
-function setup(answers,{signal = new AbortController().signal,assertContext} = {}) {
+function setup(answers,{signal = new AbortController().signal,assertContext,maxTokens,onTurn} = {}) {
+  const memory = createAgentMemory();
   const bodies = [], transport = createDemoTransport({fetchImpl:async(url,init)=> {
     if (url.endsWith('/session')) return json({token:'dmo_synthetic1',expires_in:900},201);
     bodies.push(JSON.parse(init.body)); const answer = answers.shift();
     if (init.signal?.aborted) throw Object.assign(new Error('aborted'),{name:'AbortError'});
     return typeof answer === 'function' ? answer(init) : answer;
   }});
-  const provider = createGatewayModel({transport,alias:'demo-fast',signal,assertContext}), project = newProject();
-  const promise = runAgentLoop({...provider,failure:provider.failure,project,request:'Add an extra note to the footer.',scope:{mode:'whole'},context:()=>'CONTEXT-TEXT',inspect:async()=>({report:{status:'ready'}}),signal});
+  const provider = createGatewayModel({transport,alias:'demo-fast',signal,assertContext,maxTokens,onTurn,memory}), project = newProject();
+  const promise = runAgentLoop({...provider,memory,failure:provider.failure,project,request:'Add an extra note to the footer.',scope:{mode:'whole'},context:()=>'CONTEXT-TEXT',inspect:async()=>({report:{status:'ready'}}),signal});
   return {promise,bodies,provider,project};
 }
 const failure = async promise => { try { await promise; } catch (error) { return error; } return null; };
@@ -58,6 +60,22 @@ describe('a tool run over the Demo gateway',()=> {
     const {promise} = setup([init=>new Promise((_resolve,reject)=>{ sent = init.signal; init.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'}))); setTimeout(()=>controller.abort(),20); })],{signal:controller.signal});
     expect((await failure(promise)).name).toBe('AbortError');
     expect(sent.aborted).toBe(true); // the request in flight is cancelled, not left running behind the run
+  });
+
+  it('shows the model its own notes on the following turns, even once older results are folded',async()=> {
+    const {promise,bodies} = setup([turn([reasoning(1),fn(1,'take_notes',{notes:'Totals sit bottom right.'})],10),turn([reasoning(2),fn(2,'get_context',{})],10),turn([reasoning(3),fn(3,'report_blocked',{reason:'stop'})],10)]);
+    await failure(promise);
+    expect(JSON.stringify(bodies[0].input)).not.toContain('Your notes');
+    for (const body of bodies.slice(1)) expect(JSON.stringify(body.input)).toContain('Your notes:\\nTotals sit bottom right.');
+  });
+
+  it('stops before a request that would start past the token budget, and reports each turn as it ends',async()=> {
+    const seen = [];
+    const {promise,bodies} = setup([
+      turn([reasoning(1),fn(1,'get_context',{})],10),turn([reasoning(2),fn(2,'get_context',{})],10),turn([reasoning(3),fn(3,'get_context',{})],10),turn([reasoning(4),fn(4,'finish',{summary:'x'})],10)
+    ],{maxTokens:30,onTurn:info=>seen.push(info)});
+    expect((await failure(promise)).code).toBe('AGENT_TOKEN_BUDGET');
+    expect(bodies).toHaveLength(3); expect(seen.map(info=>info.totals.total)).toEqual([12,24,36]); expect(seen.map(info=>info.turn)).toEqual([1,2,3]);
   });
 
   it('stops before the next request when the live form changed under the run',async()=> {
