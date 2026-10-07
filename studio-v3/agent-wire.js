@@ -1,0 +1,69 @@
+import { DEMO_CONFIG } from './ai-gateway-config.js';
+import { fail } from './ai-edits.js';
+
+// Pi messages <-> Responses items for a tool-using run. The gateway is stateless (no stored responses), so every
+// turn resends the conversation; encrypted reasoning travels inside Pi's thinking block and comes back from there.
+const input = text => [{type:'input_text',text}];
+const joined = parts => (Array.isArray(parts) ? parts : []).filter(part=>part?.type === 'text').map(part=>part.text).join('');
+const FOLDED = '[older result omitted to keep the request small]';
+
+// Only the fields the gateway documents for a replayed reasoning item; anything else that was stored stays home.
+function replayReasoning(signature) {
+  const stored = JSON.parse(signature);
+  if (typeof stored?.encrypted_content !== 'string') throw fail('MALFORMED_PROPOSAL');
+
+  return {type:'reasoning',id:stored.id,summary:[],encrypted_content:stored.encrypted_content};
+}
+export const toolSpecs = tools => tools.map(({name,description,parameters}) => ({type:'function',name,description,parameters}));
+
+// Older tool results are folded (the call stays, so the pairing is intact); only the newest few are sent in full.
+export function inputItems({systemPrompt,messages}) {
+  const total = messages.filter(message=>message.role === 'toolResult').length, fullFrom = total - DEMO_CONFIG.agent.keepToolResults;
+  const items = systemPrompt ? [{role:'system',content:input(systemPrompt)}] : [];
+  let seen = 0;
+  for (const message of messages) {
+    if (message.role === 'user') items.push({role:'user',content:input(typeof message.content === 'string' ? message.content : joined(message.content))});
+    else if (message.role === 'toolResult') items.push({type:'function_call_output',call_id:message.toolCallId,output:seen++ < fullFrom ? FOLDED : joined(message.content)});
+    else if (message.role === 'assistant') {
+      for (const block of message.content) {
+        if (block.type === 'thinking' && block.thinkingSignature) items.push(replayReasoning(block.thinkingSignature));
+        else if (block.type === 'text' && block.text) items.push({type:'message',role:'assistant',content:[{type:'output_text',text:block.text}]});
+        else if (block.type === 'toolCall') items.push({type:'function_call',call_id:block.id,name:block.name,arguments:JSON.stringify(block.arguments ?? {})});
+      }
+    }
+  }
+  return items;
+}
+
+// A closed body: function tools and encrypted reasoning, and none of the fields the Demo gateway refuses.
+export function agentBody({alias,context,stream}) {
+  const body = JSON.stringify({model:alias,stream,input:inputItems(context),tools:toolSpecs(context.tools || []),tool_choice:'auto',include:['reasoning.encrypted_content']});
+  if (new TextEncoder().encode(body).length > DEMO_CONFIG.maxBodyBytes) throw fail('AGENT_CONTEXT_LIMIT');
+  return body;
+}
+
+// Keeps what a tool run may contain. Server-side tools, refusals and unfinished answers are unexpected authority.
+export function agentOutput(payload) {
+  const output = payload?.output;
+  if (!Array.isArray(output) || payload.status !== 'completed') throw fail('MALFORMED_PROPOSAL');
+  if (output.some(item=>/(^|_)call$/.test(String(item?.type)) && item.type !== 'function_call')) throw fail('MALFORMED_PROPOSAL');
+  if (output.some(item=>item?.type === 'message' && Array.isArray(item.content) && item.content.some(part=>part?.type === 'refusal'))) throw fail('MALFORMED_PROPOSAL');
+  return output;
+}
+
+export function assistantContent(output) {
+  const content = [];
+  for (const item of output) {
+    if (item.type === 'reasoning' && item.encrypted_content) {
+      content.push({type:'thinking',thinking:'',thinkingSignature:JSON.stringify({type:'reasoning',id:item.id,summary:[],encrypted_content:item.encrypted_content}),redacted:true});
+    } else if (item.type === 'message') {
+      const text = (item.content || []).filter(part=>part?.type === 'output_text' && typeof part.text === 'string').map(part=>part.text).join('');
+      if (text) content.push({type:'text',text});
+    } else if (item.type === 'function_call') {
+      let args; try { args = JSON.parse(item.arguments || '{}'); } catch { throw fail('MALFORMED_PROPOSAL'); }
+      if (!args || typeof args !== 'object' || Array.isArray(args) || typeof item.call_id !== 'string' || typeof item.name !== 'string') throw fail('MALFORMED_PROPOSAL');
+      content.push({type:'toolCall',id:item.call_id,name:item.name,arguments:args});
+    }
+  }
+  return content;
+}
