@@ -125,3 +125,14 @@ gap, so it reports "This browser cannot run the PDF reader" and says PNG/JPEG/We
 references still work. Errors about the file itself (PDF.js format errors, invalid
 structure, bad data reads) never produce the browser message. The reader uses the
 pdf.js legacy build so that older browsers run it at all.
+
+## Gateway failures
+
+A failed Demo request is named by HTTP status plus the gateway's own code (or its published
+wording), and the message says what to do next. No route left (`DEMO_ALL_ROUTES_EXHAUSTED`)
+is recognised on both 429 and 503. A 429 for the session request or concurrency cap
+(`DEMO_SESSION_REQUEST_LIMIT`, `DEMO_SESSION_CONCURRENCY_LIMIT`) says to wait a few seconds
+and send again; each Send starts a fresh session, so that works. A 429 whose wording names
+the daily quota says the allowance is used up until tomorrow. Any other 429 keeps the
+generic "limit reached, try later". A Cloudflare 524 (origin silent for about 100 s) reaches
+the browser as a network failure, so that message also says the service may be too slow.
