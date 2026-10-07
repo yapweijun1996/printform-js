@@ -88,6 +88,13 @@ locally checked automatically once the response arrives; at 900 px and below
 Preview stays a button because it reveals the full-screen paper. Apply is always an
 explicit click and stays disabled until that preview check passes. CommandBus commits
 one revision with scoped Undo after current validation and draft protection.
+While a request runs the wait is shown inside the conversation (a hidden-from-readers
+copy of the status line). The card says "Previewed on paper" once the preview passed. A
+successful Apply clears the element references, which pointed at the replaced revision;
+a failed Apply keeps them, and a hand edit still marks them outdated. Only the newest
+failed request offers Edit & resend. For image references, Check image support asks the
+gateway for model metadata only; afterwards the panel says whether the gateway reported
+image support for the chosen model instead of repeating the prompt to check.
 ERP data/calculations do not change, and existing financial-bound fields cannot
 be replaced by model-authored literal values. There is no model code, shell,
 filesystem, arbitrary HTML/CSS/JavaScript or automatic commit capability.

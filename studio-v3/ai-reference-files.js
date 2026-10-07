@@ -39,7 +39,7 @@ export class AIReferenceFiles {
   async checkImageSupport(){
     if(this.locked || this.reading || this.checking)return;
     this.checking=true;this.capabilityChanged();
-    try {await this.panel.discover();}
+    try {if(await this.panel.discover()===true)this.checkedAlias=this.panel.node('#ai-model').value;}
     finally {this.checking=false;this.capabilityChanged();}
   }
   capabilityChanged(){
@@ -47,7 +47,7 @@ export class AIReferenceFiles {
     this.diagnosticText.textContent=facts.length?JSON.stringify(facts,null,2):'Use Check image support or Discover available models to inspect bounded public capability facts.';
     const allowed=this.panel.transport.supportsImages?.(this.panel.node('#ai-model').value)===true;
     this.checkSupport.hidden=!hasImages || allowed;this.checkSupport.disabled=Boolean(this.locked || this.reading || this.checking);
-    this.capability.textContent=this.checking?'Checking image support. No reference files are shared by this check.':allowed?'Images available for this model. Review every AI result.':hasImages?'Image support is not confirmed for this model. Use Check image support to check or retry. The check shares no reference files.':'Image and visual-PDF references need confirmed image support.';
+    this.capability.textContent=this.checking?'Checking image support. No reference files are shared by this check.':allowed?'Images available for this model. Review every AI result.':hasImages?(this.checkedAlias===this.panel.node('#ai-model').value?'The gateway did not report image support for this model. Choose another model, or remove the image reference. Check image support runs the check again and shares no reference files.':'Image support is not confirmed for this model. Use Check image support to check or retry. The check shares no reference files.'):'Image and visual-PDF references need confirmed image support.';
     return allowed;
   }
   imageBlocked(){return this.hasImages() && !this.capabilityChanged();}
