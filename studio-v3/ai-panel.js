@@ -28,10 +28,11 @@ export class AIPanel {
       if (action === 'apply') void this.guard(()=>this.apply()).catch(error=>this.error(error));
       if (action === 'undo') void this.guard(()=>this.undoCard(button.dataset.cardId)).catch(error=>this.error(error));
       if (action === 'models') void this.discover();
-      if (action === 'clear') void this.clear();
+      if (action === 'clear') { this.node('.ai-settings').open = false; void this.clear(); }
       if (action === 'retry') this.retry(button.dataset.cardId);
       if (button?.dataset.prompt) { this.node('#ai-prompt').value = button.dataset.prompt; this.share(); this.node('#ai-prompt').focus(); }
     });
+    document.addEventListener('click',event=> { const menu = this.node('.ai-settings'); if (menu.open && !menu.contains(event.target)) menu.open = false; });
     document.querySelector('#ai-preview-banner').addEventListener('click',event=> { if (this.applying) return; if (event.target.closest('[data-ai-return]')) this.show(); if (event.target.closest('[data-ai-discard]')) void this.discard(); });
     document.querySelector('[data-ai-toggle]').addEventListener('click',()=>this.open ? this.close() : this.show());
     this.node('[data-ai-origin]').textContent = `${location.origin} · project github-pages`;
@@ -56,7 +57,7 @@ export class AIPanel {
     catch (error) { this.shareBlocked = true; this.sharedRequest = null; this.message(error.message); }
   }
   show() { this.open = true; this.root.hidden = false; document.body.classList.add('ai-open'); this.contextChanged(); this.share(); this.update(); this.node('#ai-prompt').focus(); this.sync(); }
-  suspend() { this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
+  suspend() { this.node('.ai-settings').open = false; this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
   close() { if (this.applying) return; if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
   showScopeHint() { this.node('[data-ai-scope]').textContent = this.scopeHint(); }
   contextChanged(force=false) {
