@@ -1,4 +1,4 @@
-import {beforeEach,it,expect,vi} from 'vitest';
+import {beforeEach,describe,it,expect,vi} from 'vitest';
 import {AIPanel} from '../studio-v3/ai-panel.js';
 import {PaperPreview} from '../studio-v3/preview.js';
 import {AIElementTags} from '../studio-v3/ai-element-tags.js';
@@ -218,4 +218,28 @@ it('offers Edit & resend only on the newest failed request, not on history',asyn
   await panel.send();expect(retries()).toBe(1);
   fail=false;panel.node('#ai-prompt').value='Try again.';panel.share();await panel.send();
   expect(retries()).toBe(0);
+});
+describe('AI settings menu',()=> {
+  const press=key=>document.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
+  const opened=()=> {const result=setup();result.panel.show();const menu=result.panel.node('.ai-settings');menu.open=true;return {...result,menu};};
+  it('Escape closes the menu first and the panel only on the next press',()=> {
+    const {panel,menu}=opened();
+    press('Escape');expect(menu.open).toBe(false);expect(panel.open).toBe(true);
+    press('Escape');expect(panel.open).toBe(false);
+  });
+  it('a click outside the menu closes it, a click inside does not',()=> {
+    const {menu}=opened();
+    menu.querySelector('select').dispatchEvent(new MouseEvent('click',{bubbles:true}));expect(menu.open).toBe(true);
+    document.querySelector('#ai-prompt').dispatchEvent(new MouseEvent('click',{bubbles:true}));expect(menu.open).toBe(false);
+  });
+  it('Clear conversation closes the menu, Discover available models keeps it open',async()=> {
+    const {panel,menu}=opened();
+    panel.node('[data-ai=models]').click();expect(menu.open).toBe(true);
+    await vi.waitFor(()=>expect(panel.busy).toBe(false));
+    panel.node('[data-ai=clear]').click();expect(menu.open).toBe(false);
+  });
+  it('closing the panel does not leave the menu open for the next time',()=> {
+    const {panel,menu}=opened();
+    panel.close();expect(menu.open).toBe(false);
+  });
 });

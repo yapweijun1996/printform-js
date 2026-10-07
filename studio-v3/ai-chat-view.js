@@ -77,7 +77,10 @@ export function setupPanelLayout(panel) {
   });
   document.addEventListener('keydown',event=> {
     if (!panel.open || document.querySelector('dialog[open]')) return;
-    if (event.key === 'Escape') { event.preventDefault(); panel.close(); }
+    if (event.key === 'Escape') {
+      event.preventDefault(); const menu = panel.node('.ai-settings');
+      if (menu.open) { menu.open = false; menu.querySelector('summary').focus(); } else panel.close(); // the open menu takes the first Escape
+    }
     if (event.key !== 'Tab' || innerWidth > 900) return;
     const nodes = [...panel.root.querySelectorAll('button,textarea,select,input,summary,[tabindex="0"]')].filter(n=>!n.disabled && n.getClientRects().length);
     if (event.shiftKey && document.activeElement === nodes[0]) { event.preventDefault(); nodes.at(-1)?.focus(); }
