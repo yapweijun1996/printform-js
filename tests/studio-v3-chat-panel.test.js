@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {AIPanel} from '../studio-v3/ai-panel.js';
 import {createDemoTransport} from '../studio-v3/ai-demo-transport.js';
 import {PaperPreview} from '../studio-v3/preview.js';
+import {AIElementTags} from '../studio-v3/ai-element-tags.js';
 import {newProject} from '../studio-v3/model.js';
 import {createBus,editProject,designOperations} from '../studio-v3/controller.js';
 const html=fs.readFileSync('studio-v3/index.html','utf8');
@@ -253,4 +254,39 @@ it('leads the status with the next step and keeps technical details in parenthes
   const text=panel.node('[data-ai-status]').textContent;
   expect(text.startsWith('Local checks passed. Review the paper preview, then Apply.')).toBe(true);
   expect(text).toMatch(/\(demo-fast · r0 · 1 inspection round\(s\) · Tokens: [^)]+\)$/);
+});
+it('clears element references once their own Apply succeeds, so the next Send is not blocked as outdated',async()=> {
+  const label={kind:'proposal',summary:'Label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};
+  // Like the app, the commit announces the changed document (refreshing the hint) while the references still exist.
+  let holder;const {panel}=setup({reply:label,commit:async()=> {holder.contextChanged();return {bus:holder.getBus(),revision:1};}});holder=panel;
+  panel.elementTags=new AIElementTags({bus:()=>panel.getBus(),selection:()=>'label-customer-ship',onChange:()=>panel.share()});
+  panel.elementTags.add('label-customer-ship');expect(panel.scope().mode).toBe('selected');
+  await panel.send();expect(panel.checked).toBe(true);
+  await panel.apply();
+  expect(panel.elementTags.snapshot()).toEqual([]);expect(panel.scope()).toEqual({mode:'whole'});
+  expect(panel.node('[data-ai-scope]').textContent).toMatch(/^Editing the whole form/);
+});
+it('keeps element references when the Apply fails',async()=> {
+  const label={kind:'proposal',summary:'Label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};
+  const {panel}=setup({reply:label,commit:async()=> {throw new Error('commit failed');}});
+  panel.elementTags=new AIElementTags({bus:()=>panel.getBus(),selection:()=>'label-customer-ship',onChange:()=>panel.share()});
+  panel.elementTags.add('label-customer-ship');
+  await panel.send();await panel.apply();
+  expect(panel.elementTags.snapshot().map(r=>r.id)).toEqual(['label-customer-ship']);
+});
+it('shows object values in the change table as readable text instead of raw JSON',async()=> {
+  const label={kind:'proposal',summary:'Label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};
+  const {panel}=setup({reply:label});
+  panel.elementTags=new AIElementTags({bus:()=>panel.getBus(),selection:()=>'label-customer-ship',onChange:()=>panel.share()});
+  panel.elementTags.add('label-customer-ship');
+  await panel.send();
+  const cells=[...document.querySelectorAll('.ai-diff tbody td')].map(td=>td.textContent);
+  expect(cells).toContain('fontSize 12 · bold');expect(cells.some(text=>text.includes('{')||text.includes('"'))).toBe(false);
+});
+it('offers Edit & resend only on the newest failed request, not on history',async()=> {
+  let fail=true;const retries=()=>document.querySelectorAll('[data-ai=retry]').length;
+  const {panel}=setup({plan:async()=> { if(fail)throw new Error('boom');return {text:JSON.stringify({kind:'answer',message:'ok'})}; }});
+  await panel.send();expect(retries()).toBe(1);
+  fail=false;panel.node('#ai-prompt').value='Try again.';panel.share();await panel.send();
+  expect(retries()).toBe(0);
 });
