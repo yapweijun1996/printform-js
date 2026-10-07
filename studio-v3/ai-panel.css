@@ -93,3 +93,4 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-pending .ai-message-text { color:#536278; animation:ai-wait 1.6s ease-in-out infinite; }
 @keyframes ai-wait { 50% { opacity:.55; } }
 @media (prefers-reduced-motion:reduce) { .ai-pending .ai-message-text { animation:none; } }
+.ai-diff th { white-space:nowrap; }

@@ -1,3 +1,9 @@
+// Style patches arrive as JSON text; show "fontSize 12 · bold" instead.
+const readable = value => {
+  const text = String(value);
+  if (!text.startsWith('{')) return text;
+  try { return Object.entries(JSON.parse(text)).map(([key,item]) => item === true ? key : `${key} ${item}`).join(' · ') || text; } catch { return text; }
+};
 const node = (tag,className,text) => { const n = document.createElement(tag); n.className = className; if (text !== undefined) n.textContent = text; return n; };
 export function renderConversation(panel) {
   const log = panel.node('[data-ai-log]'), atEnd = log.scrollHeight-log.scrollTop-log.clientHeight < 60;
@@ -15,7 +21,7 @@ export function renderConversation(panel) {
       const table = node('table','ai-diff'), head = document.createElement('thead'), row = document.createElement('tr');
       for (const label of ['Setting','Before','After']) row.append(node('th','',label)); head.append(row);
       const body = document.createElement('tbody');
-      for (const diff of message.diff) { const r = document.createElement('tr'); for (const value of [`${diff.target} · ${diff.property}`,diff.before,diff.after]) r.append(node('td','',String(value))); body.append(r); }
+      for (const diff of message.diff) { const r = document.createElement('tr'); for (const value of [`${diff.target} · ${diff.property}`,diff.before,diff.after]) r.append(node('td','',readable(value))); body.append(r); }
       table.append(head,body); card.append(table);
       const previewed = active && panel.viewing && panel.checked;
       const state = node('p','ai-card-state',message.status === 'ready' ? (previewed ? 'Previewed on paper · review it, then Apply' : 'Not applied · preview first') : message.status === 'applied' ? (message.appliedBus !== panel.getBus() ? 'Applied to a previous form · history only' : panel.canUndo(message) ? 'Applied to the form' : 'Applied earlier · history only') : 'Expired · send a new request'); card.append(state);
@@ -30,7 +36,8 @@ export function renderConversation(panel) {
       }
       article.append(card);
     }
-    if (message.status === 'error' || message.status === 'cancelled') {
+    // Only the newest failure can be resent; after a later request an old Edit & resend would be stale history.
+    if ((message.status === 'error' || message.status === 'cancelled') && panel.conversation.messages.at(-1) === message) {
       const button = node('button','ai-retry','Edit & resend'); button.type = 'button'; button.dataset.ai = 'retry'; button.dataset.cardId = message.id; article.append(button);
     }
     article.setAttribute('aria-label',message.role === 'user' ? 'You' : 'AI assistant'); log.append(article);

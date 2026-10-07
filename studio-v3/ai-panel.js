@@ -58,10 +58,11 @@ export class AIPanel {
   show() { this.open = true; this.root.hidden = false; document.body.classList.add('ai-open'); this.contextChanged(); this.share(); this.update(); this.node('#ai-prompt').focus(); this.sync(); }
   suspend() { this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
   close() { if (this.applying) return; if (this.busy) void this.stop(); this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
+  showScopeHint() { this.node('[data-ai-scope]').textContent = this.scopeHint(); }
   contextChanged(force=false) {
     const bus = this.getBus(), selected = this.getSelection();
     this.elementTags?.contextChanged(); this.referenceFiles?.contextChanged();
-    this.node('[data-ai-scope]').textContent = this.scopeHint();
+    this.showScopeHint();
     if (force || bus !== this.contextBus || selected !== this.contextSelection) {
       this.contextBus = bus; this.contextSelection = selected; ++this.epoch;
       const viewing = this.viewing; this.invalidate('Form changed, or selection/scope changed. Send again.');
@@ -172,6 +173,8 @@ export class AIPanel {
     try {
       const applied = await this.commit(proposal,generation); canonical = true;
       if (card) Object.assign(card,{status:'applied',appliedBus:applied.bus,appliedRevision:applied.revision,appliedEpoch:proposal.epoch});
+      // The references pointed at the revision just replaced; keeping them would block the next Send as outdated.
+      if (applied.bus === this.getBus()) { this.elementTags?.consume(); this.showScopeHint(); }
       this.message(applied.bus === this.getBus() ? `Applied ${proposal.alias} suggestion. Undo restores the previous layout.` : 'Applied to the previous form. Current form unchanged.');
     } catch (error) {
       try { await this.restore(); canonical = true; this.error(error); }
