@@ -81,7 +81,7 @@ test('works in steps on a reference image: it is sent on the first turns only, a
   await page.getByText('References · PDF / image',{exact:true}).click();
   await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(syntheticPng());
   await expect(page.locator('.ai-reference-card')).toHaveCount(1,{timeout:30000});
-  await page.getByRole('button',{name:'Check image support'}).click(); await expect(page.locator('.ai-reference-files')).toContainText('Images available');
+  await expect(page.locator('.ai-reference-files')).toContainText('Images available');
   await send(page,'Use navy accents #163a65, following the reference.');
   await expect(page.locator('[data-ai-proposal]')).toBeVisible({timeout:30000});
   const sent = (await wire(page)).filter(body=>body.tools);

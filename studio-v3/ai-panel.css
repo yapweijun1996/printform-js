@@ -119,6 +119,7 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-steps { margin:6px 0 0; padding:0 14px; list-style:none; display:grid; gap:2px; font-size:13px; color:var(--muted); }
 .ai-step-failed { color:#8a4b00; }
 .ai-settings-body .ai-agent-toggle { display:flex; align-items:center; gap:8px; font-size:13px; }
+.ai-capability-row { position:sticky; bottom:0; display:grid; gap:6px; padding-top:6px; background:#fff; border-top:1px solid var(--line); }
 /* Open references scroll inside their own area, so the message box, Send and its reason never leave the screen. */
 .ai-reference-files[open] { max-height:34dvh; }
 /* The composer is a column in which only the references and element tags give way (and scroll inside themselves); the message box, Send, its reason and the status always keep their size. */

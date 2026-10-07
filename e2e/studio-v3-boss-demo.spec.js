@@ -15,6 +15,8 @@ async function mockProvider(page,{images=false}={}) {
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(value)});
  });return calls;
 }
+// Attaching an image checks image support itself, so /session and /models may be called; no model request may be.
+const inference=calls=>calls.filter(call=>/\/(responses|chat\/completions)$/.test(call.path));
 async function openReferences(page){await page.locator('[data-ai-toggle]').click();await page.getByText('References · PDF / image',{exact:true}).click();}
 async function attach(page,fixture){await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(fixture);await expect(page.locator('.ai-reference-card')).toHaveCount(1,{timeout:30000});await expect(page.locator('.ai-reference-files')).toContainText('Ready locally');}
 test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await page.goto('/studio-v3/');await ready(page);});
@@ -56,9 +58,9 @@ test('real PDF parsing -> explicit text-only sharing -> mocked AI Preview Apply 
  await page.reload();await ready(page);await openReferences(page);await expect(page.locator('.ai-reference-card')).toHaveCount(0);
 });
 test('unknown capability schema keeps images blocked while normal model diagnostics expose safe facts',async({page})=>{
- const calls=await mockProvider(page,{images:true});await openReferences(page);await attach(page,syntheticPng());await page.locator('#ai-prompt').fill('Use navy #163a65.');await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(calls).toHaveLength(0);
+ const calls=await mockProvider(page,{images:true});await openReferences(page);await attach(page,syntheticPng());await page.locator('#ai-prompt').fill('Use navy #163a65.');await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(inference(calls)).toHaveLength(0);
  await page.locator('.ai-settings>summary').click();await page.locator('[data-ai=models]').click();await expect(page.locator('[data-ai-status]')).toContainText('Available: demo-fast');await page.locator('.ai-settings>summary').click();
- await page.getByText('Observed model capabilities',{exact:true}).click();await expect(page.locator('.ai-reference-files')).toContainText('input_modalities');await expect(page.locator('.ai-reference-files')).toContainText('Image support is not confirmed');await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(calls.some(call=>call.path.endsWith('/responses') || call.path.endsWith('/chat/completions'))).toBe(false);
+ await page.getByText('Observed model capabilities',{exact:true}).click();await expect(page.locator('.ai-reference-files')).toContainText('input_modalities');await expect(page.locator('.ai-reference-files')).toContainText('The gateway did not report image support');await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(calls.some(call=>call.path.endsWith('/responses') || call.path.endsWith('/chat/completions'))).toBe(false);
 });
 test('oversized page count and corrupt references fail locally; changing forms drops attachments',async({page})=>{
  const calls=await mockProvider(page);await openReferences(page);await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('not a raster')});await expect(page.locator('.ai-reference-files')).toContainText('Only PDF, PNG, JPEG and WebP');await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(syntheticPdf({pages:7}));await expect(page.locator('.ai-reference-files')).toContainText('no more than 4 pages');await expect(page.locator('.ai-reference-card')).toHaveCount(0);
@@ -70,7 +72,7 @@ test('oversized page count and corrupt references fail locally; changing forms d
 test('drop an image into the conversation composer, then remove it without sending',async({page})=>{
  const calls=await mockProvider(page);await page.locator('[data-ai-toggle]').click();const fixture=syntheticPng();
  const transfer=await page.evaluateHandle(({bytes,name,mime})=>{const dt=new DataTransfer();dt.items.add(new File([Uint8Array.from(bytes)],name,{type:mime}));return dt;},{bytes:[...fixture.buffer],name:fixture.name,mime:fixture.mimeType});
- await page.locator('.ai-composer').dispatchEvent('drop',{dataTransfer:transfer});await expect(page.locator('.ai-reference-card')).toHaveCount(1);await page.locator('.ai-reference-card button').click();await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(calls).toHaveLength(0);await transfer.dispose();
+ await page.locator('.ai-composer').dispatchEvent('drop',{dataTransfer:transfer});await expect(page.locator('.ai-reference-card')).toHaveCount(1);await page.locator('.ai-reference-card button').click();await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(inference(calls)).toHaveLength(0);await transfer.dispose();
 });
 
 test('catalogue seed migration adds missing fixtures without overwriting a retained edited record',async({page})=>{
@@ -103,7 +105,7 @@ test('PDF text extraction ignores raster content without decoding or advertising
  for(const raster of ['xobject','inline','negative']) {
   await attach(page,syntheticPdf({pages:1,raster}));await expect(page.locator('.ai-reference-card')).toContainText('PDF appearance, embedded images and annotations are not rendered');await expect(page.locator('.ai-reference-excerpt')).toContainText('FICTIONAL REFERENCE');await expect(page.locator('.ai-reference-card img')).toHaveCount(0);await page.locator('.ai-reference-card button').click();
  }
- expect(calls).toHaveLength(0);
+ expect(inference(calls)).toHaveLength(0);
 });
 
 test('visual PDF mode renders fictional JPEG, PNG-style Flate, masks and multiple images locally',async({page},info)=>{
@@ -112,14 +114,14 @@ test('visual PDF mode renders fictional JPEG, PNG-style Flate, masks and multipl
   await attach(page,rasterPdf(kind,{text:kind!=='jpeg'}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('.ai-reference-card img')).toHaveJSProperty('complete',true);expect(await page.locator('.ai-reference-card img').evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
   await expect(page.locator('.ai-reference-card')).toContainText('best-effort controls');await expect(page.locator('[data-ai-send]')).toBeDisabled();await page.screenshot({path:info.outputPath(`local-${kind}-pdf-reference.png`)});await page.locator('.ai-reference-card button').click();
  }
- await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('oversized'));await expect(page.locator('.ai-reference-files')).toContainText('12-million-pixel limit');await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(calls).toHaveLength(0);
- await attach(page,syntheticPdf({pages:1,text:false,blank:true}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(calls).toHaveLength(0);
+ await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('oversized'));await expect(page.locator('.ai-reference-files')).toContainText('12-million-pixel limit');await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(inference(calls)).toHaveLength(0);
+ await attach(page,syntheticPdf({pages:1,text:false,blank:true}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(inference(calls)).toHaveLength(0);
 });
 test('cancelled visual PDF worker can be replaced by a successful fresh read',async({page})=>{
  const {rasterPdf}=await import('./fixtures/raster-reference-documents.js');const calls=await mockProvider(page);await openReferences(page);await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');let release;const held=new Promise(resolve=>release=resolve);
  await page.route('**/pdf.worker*.js',async route=>{await held;await route.continue().catch(()=>{});});
  await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('jpeg'));await page.getByRole('button',{name:'Cancel reading',exact:true}).click();await expect(page.locator('.ai-reference-files')).toContainText('reading cancelled');release();await page.unroute('**/pdf.worker*.js');await expect(page.getByRole('button',{name:'Cancel reading',exact:true})).toBeHidden();
- await attach(page,rasterPdf('png'));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);expect(calls).toHaveLength(0);
+ await attach(page,rasterPdf('png'));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);expect(inference(calls)).toHaveLength(0);
 });
 
 
