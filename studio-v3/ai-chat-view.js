@@ -1,26 +1,16 @@
+import { renderWelcome } from './ai-welcome.js';
 // Style patches arrive as JSON text; show "fontSize 12 · bold" instead.
 const readable = value => {
   const text = String(value);
   if (!text.startsWith('{')) return text;
   try { return Object.entries(JSON.parse(text)).map(([key,item]) => item === true ? key : `${key} ${item}`).join(' · ') || text; } catch { return text; }
 };
-// Starting actions shown in the empty conversation: each fills the message box, nothing is sent.
-const STARTERS = [
-  ['Improve typography','Improve the typography of this form: font sizes, hierarchy and readability.'],
-  ['Make spacing tighter','Reduce cell padding to 5 px.'],
-  ['Use red accents','Use red accents #a82938.'],
-  ['Check font sizes','What are the current font sizes?']
-];
 const node = (tag,className,text) => { const n = document.createElement(tag); n.className = className; if (text !== undefined) n.textContent = text; return n; };
 export function renderConversation(panel) {
   const log = panel.node('[data-ai-log]'), atEnd = log.scrollHeight-log.scrollTop-log.clientHeight < 60;
   log.replaceChildren();
   if (!panel.conversation.messages.length) {
-    const intro = node('section','ai-welcome'), chips = node('div','ai-chips'), attach = node('button','ai-attach','＋ Attach reference'), flow = node('ol','ai-flow');
-    for (const [label,prompt] of STARTERS) { const chip = node('button','',label); chip.type = 'button'; chip.dataset.ai = 'prompt'; chip.dataset.prompt = prompt; chips.append(chip); }
-    attach.type = 'button'; attach.dataset.ai = 'attach'; attach.append(node('small','',' PDF, PNG or JPEG'));
-    for (const step of ['Ask','Preview on page','Apply (Undo anytime)']) flow.append(node('li','',step));
-    intro.append(node('h3','','What would you like to change?'),node('p','','Describe a change or attach a reference. AI previews it on the page before anything is applied.'),chips,attach,flow); log.append(intro);
+    log.append(renderWelcome());
   }
   for (const message of panel.conversation.messages) {
     const article = node('article',`ai-message ai-${message.role}`); article.dataset.messageId = message.id;
@@ -58,7 +48,9 @@ export function renderConversation(panel) {
     const wait = node('article','ai-message ai-assistant ai-pending'); wait.setAttribute('aria-hidden','true');
     wait.append(node('div','ai-message-text ai-pending-text',panel.node('[data-ai-status]').textContent || 'Working…')); log.append(wait);
   }
-  if (atEnd) log.scrollTop = log.scrollHeight;
+  // The empty state reads from its top; a running conversation follows its newest message.
+  if (!panel.conversation.messages.length) log.scrollTop = 0;
+  else if (atEnd) log.scrollTop = log.scrollHeight;
 }
 export function setupPanelLayout(panel) {
   const key = 'printform-studio-v3:ai-width', separator = panel.node('[data-ai-resize]');

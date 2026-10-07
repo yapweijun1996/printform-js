@@ -37,8 +37,8 @@ test('grounded font Q&A and follow-up proposal form a real conversation with exp
 });
 test('a referenced scope rejects global styles, the hint tracks scope and an earlier card expires on selection navigation',async({page})=> {
   await mock(page,[proposal,proposal]);await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
-  await expect(page.locator('[data-ai-scope]')).toContainText('Scope: 1 selected element');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
-  await limitToWholeForm(page);await expect(page.locator('[data-ai-scope]')).toContainText('Scope: Whole form');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  await expect(page.locator('#ai-scope')).toHaveValue('selected');await send(page,'Use navy accents.');await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('exceeds the selected scope');await expect(page.locator('#revision')).toHaveText('r0');
+  await limitToWholeForm(page);await expect(page.locator('#ai-scope')).toHaveValue('whole');await send(page,'Use navy accents.');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
   await page.locator('#left-panel [data-select=customer]').click();await expect(page.locator('[data-ai-proposal]')).toHaveCount(0);await expect(page.locator('[data-ai-log]')).toContainText('Expired');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
   await page.locator('#left-panel [data-select=items]').click();await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
 });

@@ -16,9 +16,11 @@ export class AIReferenceFiles {
     this.diagnostics=node('details');this.diagnostics.append(node('summary','Observed model capabilities'));this.diagnosticText=node('pre');this.diagnostics.append(this.diagnosticText);
     this.root.append(modeLabel,label,this.cancel,this.list,this.capability,this.checkSupport,this.diagnostics,this.notice); panel.node('.ai-input')?.before(this.root);
     this.input.addEventListener('change',()=>{const files=[...this.input.files];this.input.value='';void this.add(files);});
-    const dropTarget=panel.node('.ai-composer') || this.root;
-    dropTarget.addEventListener('dragover',e=>{e.preventDefault();if(!this.locked)e.dataTransfer.dropEffect='copy';});
-    dropTarget.addEventListener('drop',e=>{e.preventDefault();if(!this.locked)void this.add([...e.dataTransfer.files]);});
+    // Files may be dropped on the composer or anywhere in the conversation, including the Attach card.
+    for (const zone of [panel.node('.ai-composer') || this.root,panel.node('[data-ai-log]')].filter(Boolean)) {
+      zone.addEventListener('dragover',e=>{e.preventDefault();if(!this.locked)e.dataTransfer.dropEffect='copy';});
+      zone.addEventListener('drop',e=>{e.preventDefault();if(!this.locked)void this.add([...e.dataTransfer.files]);});
+    }
     this.render();
   }
   async add(files) {
@@ -33,7 +35,7 @@ export class AIReferenceFiles {
     } catch(error){if(this.controller===controller && !controller.signal.aborted)this.notice.textContent=error.message;}
     finally {if(this.controller===controller){this.reading=false;this.cancel.hidden=true;this.controller=null;this.panel.update();}}
   }
-  pick() { this.root.open=true; this.input.click(); }
+  pick() { if(this.locked)return; this.root.open=true; this.input.click(); }
   changed() { ++this.version;this.panel.contextChanged(true);this.render(); }
   projection() { return referenceProjection(this.files); }
   hasImages(){return this.files.some(file=>file.kind==='image' || file.processing==='visual');}
