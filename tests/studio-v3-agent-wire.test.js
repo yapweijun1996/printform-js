@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {Type} from '@earendil-works/pi-ai';
-import {toolSpecs,inputItems,agentBody,agentOutput,assistantContent} from '../studio-v3/agent-wire.js';
+import {toolSpecs,inputItems,agentBody,agentOutput,assistantContent,usesImages} from '../studio-v3/agent-wire.js';
 import {createAgentMemory} from '../studio-v3/agent-memory.js';
 import {DEMO_CONFIG} from '../studio-v3/ai-gateway-config.js';
 
@@ -123,5 +123,28 @@ describe('agent wire: long runs',()=> {
   it('does not summarise a request that is still within its budget',()=> {
     const items = inputItems({systemPrompt:'S',messages:turns(2)},createAgentMemory(),{...small,maxContextChars:100000});
     expect(JSON.stringify(items)).not.toContain('Earlier work'); expect(items.filter(item=>item.type === 'function_call')).toHaveLength(2);
+  });
+});
+
+describe('agent wire: reference images',()=> {
+  const image = {type:'image',data:'AAAA',mimeType:'image/png'};
+  const limits = {...DEMO_CONFIG.agent,imageTurns:2};
+  const asked = turnsTaken => { const messages = [{role:'user',content:[{type:'text',text:'Copy this layout'},image],timestamp:1}]; for (let i = 0; i < turnsTaken; i++) messages.push(assistant([call(`c${i}`,'get_context')],`r${i}`),result(`c${i}`,'get_context','ok')); return messages; };
+
+  it('sends the images with the request on the first turns',()=> {
+    const items = inputItems({messages:asked(1)},undefined,limits);
+    expect(items[0]).toEqual({role:'user',content:[{type:'input_text',text:'Copy this layout'},{type:'input_image',image_url:'data:image/png;base64,AAAA'}]});
+    expect(usesImages({messages:asked(1)},limits)).toBe(true);
+  });
+
+  it('stops resending them once the model has had its turns with them, and says so',()=> {
+    const items = inputItems({messages:asked(2)},undefined,limits);
+    expect(items[0].content.map(part=>part.type)).toEqual(['input_text','input_text']);
+    expect(items[0].content[1].text).toContain('no longer attached');
+    expect(JSON.stringify(items)).not.toContain('AAAA'); expect(usesImages({messages:asked(2)},limits)).toBe(false);
+  });
+
+  it('has no images to send when the request had none',()=> {
+    expect(usesImages({messages:[user('go')]},limits)).toBe(false);
   });
 });

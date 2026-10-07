@@ -54,6 +54,28 @@ describe('agent turns over the Demo gateway',()=> {
   });
 });
 
+describe('agent turns that carry reference images',()=> {
+  const imageContext = () => ({systemPrompt:'S',messages:[{role:'user',content:[{type:'text',text:'Copy this'},{type:'image',data:'AAAA',mimeType:'image/png'}],timestamp:1}],tools});
+  function imageGateway(multimodal) {
+    const calls = [], transport = createDemoTransport({fetchImpl:async(url,init)=> {
+      calls.push({url,init});
+      if (url.endsWith('/session')) return json({token:'dmo_synthetic1',expires_in:900},201);
+      if (url.endsWith('/models')) return json({data:[{id:'demo-fast',capabilities:{responses:true,multimodal}}]});
+      return completed();
+    }});
+    return {transport,calls,sent:()=>calls.filter(item=>item.url.endsWith('/demo/v1/responses'))};
+  }
+  it('does not send images before the gateway has confirmed image support',async()=> {
+    const {transport,sent} = imageGateway(false); await transport.discover();
+    expect(await code(()=>transport.agentTurn('demo-fast',imageContext(),new AbortController().signal))).toBe('DEMO_IMAGE_CAPABILITY_UNVERIFIED'); expect(sent()).toHaveLength(0);
+  });
+  it('sends them once support is confirmed',async()=> {
+    const {transport,sent} = imageGateway(true); await transport.discover();
+    await transport.agentTurn('demo-fast',imageContext(),new AbortController().signal);
+    expect(JSON.parse(sent()[0].init.body).input[1].content[1]).toEqual({type:'input_image',image_url:'data:image/png;base64,AAAA'});
+  });
+});
+
 describe('progress while the model writes a tool call',()=> {
   it('counts the characters of the call arguments as they stream in',async()=> {
     const seen = [], progress = {addChars:count=>seen.push(count)};

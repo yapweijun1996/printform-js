@@ -96,6 +96,20 @@ describe('what a finished run reports',()=> {
   });
 });
 
+describe('a run with reference images',()=> {
+  const media = [{type:'input_image',image_url:'data:image/png;base64,AAAA'}];
+  it('gives the images to the model with the request',async()=> {
+    let first;
+    const {promise} = run([context=> { first = context.messages[0]; return call('report_blocked',{reason:'seen'}); }],{options:{media}});
+    await reason(promise);
+    expect(first.content).toEqual([{type:'text',text:'Tidy the footer of this form.'},{type:'image',data:'AAAA',mimeType:'image/png'}]);
+  });
+  it('refuses images that break the sharing rules, before anything is sent',async()=> {
+    const {promise,faux} = run([call('get_context',{})],{options:{media:[{type:'input_image',image_url:'https://example.com/a.png'}]}});
+    expect((await reason(promise)).code).toBe('UNSAFE_PROPOSAL'); expect(faux.state.callCount).toBe(0);
+  });
+});
+
 describe('what the run remembers',()=> {
   it('keeps the latest notes and the steps still in the draft',async()=> {
     const memory = createAgentMemory();

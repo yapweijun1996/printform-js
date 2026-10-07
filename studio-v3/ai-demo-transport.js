@@ -5,7 +5,7 @@ import { classifyFailure } from './ai-gateway-errors.js';
 import { withTimeout } from './ai-request-timeout.js';
 import { createProgress, readEventStream, readJsonBody } from './ai-response-reader.js';
 import { assertImageParts, buildResponsesBody, responsesResult, responsesUsage } from './ai-responses-wire.js';
-import { agentBody, agentOutput } from './agent-wire.js';
+import { agentBody, agentOutput, usesImages } from './agent-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
@@ -71,9 +71,15 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       if (!isDemoAlias(alias)) throw fail('DEMO_MODEL_UNAVAILABLE');
       if (sessionTurns >= DEMO_CONFIG.agent.sessionRequests) { session.clear(); sessionTurns = 0; }
       sessionTurns += 1;
+      let guard;
+      if (usesImages(context)) {
+        if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
+        const generation = discoveryGeneration;
+        guard = () => { if (generation !== discoveryGeneration || !imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED'); };
+      }
       const body = agentBody({alias,context,memory,stream:DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
       try {
-        const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body},DEMO_CONFIG.modelTimeoutMs,progress);
+        const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs,progress);
         return {output:agentOutput(payload),usage:responsesUsage(payload)};
       } finally { progress.stop(); }
     },

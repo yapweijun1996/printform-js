@@ -24,7 +24,7 @@ export const DEMO_CONFIG = Object.freeze({
   // A tool-using authoring run. maxRunTokens stops a run before it spends more than that in all (a turn that would
   // start past it does not start). maxTurns counts tool calls (each continuing model turn makes at least one); the
   // other two stop a run that is going nowhere or has gone on too long. Stop by the person always works.
-  agent: Object.freeze({maxTurns:1000,maxRepeatedFailures:5,maxRunMs:60 * 60 * 1000,sessionRequests:15,keepToolResults:6,maxRunTokens:2_000_000,maxContextChars:400_000,keepTurns:4,maxNoteChars:2000}),
+  agent: Object.freeze({maxTurns:1000,maxRepeatedFailures:5,maxRunMs:60 * 60 * 1000,sessionRequests:15,keepToolResults:6,maxRunTokens:2_000_000,maxContextChars:400_000,keepTurns:4,maxNoteChars:2000,imageTurns:4}),
   // The gateway's default routing alias; others are discovered from /models.
   defaultAlias: 'demo-auto',
   // Aliases become the request's model field, so only this shape is ever accepted.

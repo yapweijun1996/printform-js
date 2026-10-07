@@ -1,6 +1,9 @@
-import {beforeEach,it,expect,vi} from 'vitest';
+import {afterEach,beforeEach,it,expect,vi} from 'vitest';
 import {html,setup,visualPanel} from './support/chat-panel.js';
-beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html>/i,'');document.body.inert=false;});
+import {setAgentEnabled} from '../studio-v3/agent-preference.js';
+// These tests are about the single-step image flow and a gateway that only answers in one step.
+beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html>/i,'');document.body.inert=false;setAgentEnabled(false);});
+afterEach(()=> localStorage.clear());
 it.each(['image','pdf'])('keeps discovered image permission after token cleanup and sends a %s reference only after fresh discovery',async kind=>{
  const {panel,transport,calls}=visualPanel(kind);
  expect(panel.node('[data-ai-send]').disabled).toBe(true);await panel.discover();
