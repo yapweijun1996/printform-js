@@ -97,3 +97,17 @@ gates still run with browser workers=1 and `PLAYWRIGHT_SKIP_BROWSER_GC=1`.
 An existing pre-PWA v3 tab has no updater and needs one ordinary user reload
 to receive this first release. Subsequent releases support the Update button.
 Native printer output remains an owner review boundary; this is a Pilot.
+
+## Publishing
+
+`.github/workflows/pages.yml` publishes to GitHub Pages on every push to `main` (or by hand from
+the Actions tab). It runs `npm ci` and `npm run build:site`, then deploys `site-dist/`. It runs no
+tests: verification stays local (`npm run verify` / `verify:quick`). The build stamps the commit
+SHA from `GITHUB_SHA` as the page's version (a local build shows `local`), which is what the update
+check compares.
+
+- One-time setting: Settings > Pages > Build and deployment > Source must be "GitHub Actions".
+- Nothing is published without this workflow; before it existed, merging to `main` left the site on
+  the last build that CI had published.
+- A tab opened before the first publish of the automatic-update code runs the old code, so it needs
+  one manual update (Check for updates, then Update). Later builds update by themselves.
