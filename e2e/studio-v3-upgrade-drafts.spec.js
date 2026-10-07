@@ -1,9 +1,12 @@
 import { isInference, responsesReply } from './demo-gateway-fixture.js';
 import {test,expect} from '@playwright/test';
+import {AGENT_KEY} from '../studio-v3/agent-preference.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import {upgradeServer,NEXT} from './studio-v3-upgrade-server.js';
 import {newProject} from '../studio-v3/model.js';
 import {saveProject} from '../studio-v3/file-io.js';
+// These specs run a fake gateway that only knows single-step replies, so working in steps starts switched off.
+test.beforeEach(async({page})=> { await page.addInitScript(key=> { try { localStorage.setItem(key,'off'); } catch { /* storage may be blocked */ } },AGENT_KEY); });
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 async function start(page,server) {page.on('dialog',d=>d.accept());await keepStructureOpen(page);await page.goto(server.url);await ready(page);await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller));}
 async function update(page,server) {

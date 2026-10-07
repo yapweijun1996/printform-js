@@ -42,7 +42,7 @@ export async function readEventStream(reader, signal, progress) {
     for (const frame of parser.push(text)) {
       let event; try { event = JSON.parse(frame.data); } catch { continue; }
       const type = event?.type || frame.event;
-      if (type === 'response.output_text.delta') progress.addChars(String(event.delta ?? '').length);
+      if (type === 'response.output_text.delta' || type === 'response.function_call_arguments.delta') progress.addChars(String(event.delta ?? '').length);
       else if (type === 'response.completed') completed = event.response;
       else if (type === 'response.failed') throw streamError(event.response?.error);
       else if (type === 'error') throw streamError(event.error ?? event);

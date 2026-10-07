@@ -37,6 +37,28 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
   states (a running request, Apply, restore) are visible elsewhere and keep the notice.
 - **Header.** Settings (the "…" menu) and Close. There is no Back button.
 
+## Working in steps
+
+An edit request can run as a tool loop instead of one reply. The model works on a private draft copy of the
+form and calls local tools: `get_context` (structure, bindings, authoring targets), `apply_operations` (the same
+typed operations and checks as a single proposal, at most 24 per call), `inspect_draft` (a real print preview of the
+draft), `undo_step`, `finish` (hands the result over) and `report_blocked`. Each step is checked against the previous
+one by the same parser and the same scope rules; the live form is never touched. `finish` turns the draft into one
+proposal with the net change, and the usual Preview, Apply and Undo take it. Its inspection counts as passed only if
+the final draft is the one that was inspected.
+
+Limits, all in the gateway config: 1000 tool calls per run, a stop after the same failing step repeats 5 times, and 60
+minutes. Stop works at any time and cancels the request in flight. A run also stops if the live form changes. The panel
+shows the latest steps while it works; a rejected step is shown as such and the model sees its error code and repairs it.
+
+Each turn resends the conversation (the gateway keeps no state), with encrypted reasoning replayed from the previous
+turn; older tool results are folded and the request has a size limit. A fresh gateway session starts every 15
+requests. This needs the gateway to allow client-executed function tools for the project (`agent_tools_enabled`) and a
+native OpenAI route. If the gateway refuses tools, the panel says so once, uses the single-step flow, and does not ask
+again until the page is reloaded or the setting is switched. Questions, requests with images and the setting
+"Work in steps (beta)" in the settings menu (on by default, remembered in the browser) use the single-step flow.
+Not yet in steps: reading reference files and images (the single-step flow still does), and context compaction.
+
 ## Authoring and questions
 
 A request that reads like a question is read-only: any proposal returned for it is rejected

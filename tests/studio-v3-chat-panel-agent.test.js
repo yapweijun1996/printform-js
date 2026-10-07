@@ -1,0 +1,82 @@
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+import {html,setup} from './support/chat-panel.js';
+import {scriptedGateway,successfulRun,json,plain,turn,reasoning,fn,message} from './support/agent-gateway.js';
+import {setAgentEnabled} from '../studio-v3/agent-preference.js';
+
+beforeEach(()=> {document.documentElement.innerHTML = html.replace(/<!doctype html>/i,'');document.body.inert = false;localStorage.clear();});
+afterEach(()=> localStorage.clear());
+const NAVY = '{"kind":"proposal","summary":"Navy","edits":[{"target":"style","property":"color","value":"#163a65"}]}';
+const lastCard = panel => panel.conversation.messages.at(-1);
+const ask = (panel,text) => { panel.node('#ai-prompt').value = text; panel.share(); };
+
+describe('the panel working in steps',()=> {
+  it('hands over one proposal from several steps, and leaves the live form alone',async()=> {
+    const gateway = scriptedGateway({agent:successfulRun()}), {panel} = setup({transport:gateway.transport}), stepped = vi.spyOn(panel,'stepDone');
+    await panel.send();
+    expect(gateway.agentCalls()).toBe(4); expect(gateway.singleCalls()).toBe(0); expect(stepped).toHaveBeenCalledTimes(4);
+    expect(panel.proposal).not.toBeNull(); expect(lastCard(panel).status).toBe('ready'); expect(lastCard(panel).diff.length).toBeGreaterThan(0);
+    expect(panel.getBus().revision).toBe(0);
+    expect(panel.node('[data-ai-status]').textContent).toContain('4 steps'); expect(panel.node('[data-ai-status]').textContent).toContain('Local checks passed');
+  });
+
+  it('falls back to the single-step flow when the gateway has no tools, and remembers it',async()=> {
+    const gateway = scriptedGateway({agent:[json({error:{code:'DEMO_AGENT_TOOLS_DISABLED',message:'agent tools are disabled'}},400)],single:[plain(NAVY),plain(NAVY)]}), {panel} = setup({transport:gateway.transport});
+    await panel.send();
+    expect(panel.proposal).not.toBeNull(); expect(panel.agentUnavailable).toBe(true); expect(gateway.agentCalls()).toBe(1); expect(gateway.singleCalls()).toBe(1);
+    ask(panel,'Use navy accents.'); await panel.send();
+    expect(gateway.agentCalls()).toBe(1); expect(gateway.singleCalls()).toBe(2);
+  });
+
+  it('uses the single-step flow, this once, when the model answers in words and calls no tool',async()=> {
+    const gateway = scriptedGateway({agent:[turn([message('All done.')])],single:[plain(NAVY)]}), {panel} = setup({transport:gateway.transport});
+    await panel.send();
+    expect(panel.proposal).not.toBeNull(); expect(panel.agentUnavailable).toBe(false); expect(gateway.agentCalls()).toBe(1); expect(gateway.singleCalls()).toBe(1);
+  });
+
+  it('reports a run that took steps and then ended without a result, instead of starting over silently',async()=> {
+    const gateway = scriptedGateway({agent:[turn([reasoning(1),fn(1,'get_context',{})]),turn([message('All done.')])],single:[plain(NAVY)]}), {panel} = setup({transport:gateway.transport});
+    await panel.send();
+    expect(panel.proposal).toBeNull(); expect(lastCard(panel).status).toBe('error'); expect(gateway.singleCalls()).toBe(0);
+  });
+
+  it('keeps questions and the "work in steps" setting on the single-step flow',async()=> {
+    const question = scriptedGateway({single:[plain('{"kind":"answer","message":"Sizes below."}')]}), asked = setup({transport:question.transport});
+    ask(asked.panel,'What are the current font sizes?'); await asked.panel.send();
+    expect(question.agentCalls()).toBe(0); expect(question.singleCalls()).toBe(1);
+    document.documentElement.innerHTML = html.replace(/<!doctype html>/i,'');
+    setAgentEnabled(false);
+    const off = scriptedGateway({single:[plain(NAVY)]}), {panel} = setup({transport:off.transport});
+    await panel.send(); expect(off.agentCalls()).toBe(0); expect(off.singleCalls()).toBe(1); expect(panel.proposal).not.toBeNull();
+  });
+
+  it('does not work in steps for a request that carries images, which the step tools cannot see',()=> {
+    const {panel} = setup({transport:scriptedGateway().transport}), payload = {request:'Use navy accents.',conversation:[]};
+    expect(panel.useSteps(payload,[])).toBe(true); expect(panel.useSteps(payload,[{type:'input_image'}])).toBe(false);
+  });
+
+  it('shows the steps taken so far while it works',async()=> {
+    const gateway = scriptedGateway({agent:[turn([reasoning(1),fn(1,'get_context',{})]),init=>new Promise((_resolve,reject)=>init.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'}))))]}), {panel} = setup({transport:gateway.transport});
+    const sending = panel.send();
+    await vi.waitFor(()=>expect(panel.node('[data-ai-log] .ai-steps li')).not.toBeNull());
+    expect(panel.node('[data-ai-log] .ai-steps li').textContent).toContain('Read the form');
+    panel.node('[data-ai=cancel]').click(); await sending;
+    expect(panel.node('[data-ai-log] .ai-steps')).toBeNull();
+  });
+
+  it('can be stopped, and then has no proposal',async()=> {
+    const gateway = scriptedGateway({agent:[turn([reasoning(1),fn(1,'get_context',{})]),init=>new Promise((_resolve,reject)=>init.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'}))))]}), {panel} = setup({transport:gateway.transport});
+    const sending = panel.send();
+    await vi.waitFor(()=>expect(gateway.agentCalls()).toBe(2));
+    panel.node('[data-ai=cancel]').click(); await sending;
+    expect(panel.proposal).toBeNull(); expect(lastCard(panel).status).toBe('cancelled');
+  });
+
+  it('drops the run, with no proposal and no further request, when the live form changes meanwhile',async()=> {
+    let ctl;
+    const gateway = scriptedGateway({agent:[turn([reasoning(1),fn(1,'get_context',{})]),()=> { ctl.changeBus(); return turn([reasoning(2),fn(2,'get_context',{})]); },turn([reasoning(3),fn(3,'finish',{summary:'x'})])]});
+    ctl = setup({transport:gateway.transport});
+    await ctl.panel.send();
+    expect(ctl.panel.proposal).toBeNull(); expect(lastCard(ctl.panel).status).toBe('cancelled');
+    expect(gateway.agentCalls()).toBe(2);
+  });
+});
