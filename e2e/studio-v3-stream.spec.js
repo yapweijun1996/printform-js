@@ -10,6 +10,8 @@ async function streamingGateway(page) {
     const frame=(name,data)=>`event: ${name}\ndata: ${JSON.stringify({type:name,...data})}\n\n`;
     const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
     window.__wire=[];
+    // A test may hold each phase until it releases it (window.__hold); otherwise phases last 1.5 s.
+    const gate=name=>window.__hold ? new Promise(resolve=>{(window.__gates??={})[name]=resolve;}) : sleep(1500);
     window.fetch=async(input,init)=> {
       const url=new URL(typeof input==='string' ? input : input.url,location.href);
       if(url.origin!=='https://gpt.yapweijun1996.com')return original(input,init);
@@ -20,8 +22,8 @@ async function streamingGateway(page) {
       return new Response(new ReadableStream({async start(controller) {
         const send=value=>controller.enqueue(encoder.encode(value));
         send(frame('response.created',{response:{status:'in_progress',output:[]}}));
-        await sleep(1500);send(frame('response.output_text.delta',{delta:text.slice(0,half)}));
-        await sleep(1500);send(frame('response.output_text.delta',{delta:text.slice(half)})+frame('response.completed',{response:{status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}],usage:{input_tokens:3,output_tokens:4,total_tokens:7}}}));
+        await gate('first');send(frame('response.output_text.delta',{delta:text.slice(0,half)}));
+        await gate('second');send(frame('response.output_text.delta',{delta:text.slice(half)})+frame('response.completed',{response:{status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}],usage:{input_tokens:3,output_tokens:4,total_tokens:7}}}));
         controller.close();
       }}),{status:200,headers:{'content-type':'text/event-stream'}});
     };
@@ -32,10 +34,13 @@ async function ask(page) {
   await page.locator('[data-ai-toggle]').click();await page.locator('#ai-prompt').fill('Use navy #163a65 and padding 5 px.');await page.locator('[data-ai-send]').click();
 }
 test('a streamed answer shows silent progress, then the usual reviewable proposal',async({page})=> {
+  await page.addInitScript(()=>{window.__hold=true;});   // each phase lasts until released, however slow the machine is
   await streamingGateway(page);await ask(page);
   const status=page.locator('[data-ai-status]');
   await expect(status).toContainText('Waiting for the AI service');await expect(status).toHaveAttribute('aria-live','off');
+  await page.waitForFunction(()=>window.__gates?.first);await page.evaluate(()=>window.__gates.first());
   await expect(status).toContainText('Receiving response');await expect(status).toContainText('characters');await expect(status).toHaveAttribute('aria-live','off');
+  await page.waitForFunction(()=>window.__gates?.second);await page.evaluate(()=>window.__gates.second());
   await expect(page.locator('[data-ai-proposal]')).toBeVisible();await expect(status).toHaveAttribute('aria-live','polite');
   await expect(status).toContainText('Tokens: 7');await expect(page.locator('#revision')).toHaveText('r0');
   const wire=await page.evaluate(()=>window.__wire);

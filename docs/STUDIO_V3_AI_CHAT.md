@@ -89,3 +89,13 @@ verified local backup guard. Recovered proposals never regain Preview/Apply;
 references require fresh re-addition. Failed recovery keeps the protected backup.
 Desktop resizing, mobile paper-return and normal draft/database protections
 remain available. Native printer output and visual design still need owner review.
+
+## Reference PDF failures
+
+The local PDF reader names why a file failed. A damaged or undecodable file reports
+"damaged or could not be decoded". A failure that names a missing function or global
+(for example `Map.prototype.getOrInsertComputed` on an older browser) is the browser's
+gap, so it reports "This browser cannot run the PDF reader" and says PNG/JPEG/WebP
+references still work. Errors about the file itself (PDF.js format errors, invalid
+structure, bad data reads) never produce the browser message. The reader uses the
+pdf.js legacy build so that older browsers run it at all.

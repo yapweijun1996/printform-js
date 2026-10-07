@@ -1,4 +1,5 @@
 import { REFERENCE_LIMITS as L,referenceError,previewSize,encodePreview } from './reference-limits.js';
+import { isEngineFailure } from './reference-pdf-errors.js';
 
 function geometry(item,viewport,util) {
   if (!Array.isArray(item.transform)||item.transform.length!==6||!item.transform.every(Number.isFinite)) return null;
@@ -89,6 +90,6 @@ export async function parseReferencePdf(bytes,scope,{mode='text'}={}) {
     if (/Image exceeded maximum allowed size/i.test(error.message || ''))throw referenceError('PDF_IMAGE_LIMIT');
     if (error.name==='PasswordException') throw referenceError('PDF_ENCRYPTED');
     if (blockedResource) throw referenceError('PDF_UNSUPPORTED');
-    throw referenceError('FILE_CORRUPT');
+    throw referenceError(isEngineFailure(error) ? 'PDF_ENGINE' : 'FILE_CORRUPT');
   } finally { remove(); stop(); if (canvas) canvas.width=canvas.height=0; }
 }
