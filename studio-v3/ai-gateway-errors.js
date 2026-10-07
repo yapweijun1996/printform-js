@@ -1,6 +1,6 @@
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 const text = value => typeof value === 'string' ? value : '';
-// The gateway's error body shape is not documented; accept the common ones.
+// The gateway guide publishes its error codes but not the JSON shape that carries them; accept the common shapes.
 export function failureDetail(body) {
   const error = body?.error, plain = text(error);
   const code = [body?.code, error?.code, plain].map(text).find(Boolean) || '';
@@ -20,9 +20,12 @@ export function failureCode(status, {code = '', message = ''} = {}) {
   if (code === 'DEMO_MODEL_NOT_ALLOWED') return 'DEMO_MODEL_UNAVAILABLE';
   if (status === 401) return 'DEMO_SESSION_EXPIRED';
   if (status === 403) return 'DEMO_SESSION_FORBIDDEN';
+  // The guide says no-route-left arrives as 429 or 503, and 429 has meanings that call for different next steps.
+  if ([429,503].includes(status) && code === 'DEMO_ALL_ROUTES_EXHAUSTED') return 'DEMO_ROUTES_EXHAUSTED';
+  if (status === 429 && ['DEMO_SESSION_REQUEST_LIMIT','DEMO_SESSION_CONCURRENCY_LIMIT'].includes(code)) return 'DEMO_SESSION_BUSY';
+  if (status === 429 && message.includes('daily')) return 'DEMO_DAILY_LIMIT';
   if (status === 429) return 'DEMO_RATE_LIMIT';
   if (status === 503 && (code === 'DEMO_ROUTER_DISABLED' || message.includes('public demo is disabled'))) return 'DEMO_SERVICE_DISABLED';
-  if (status === 503 && code === 'DEMO_ALL_ROUTES_EXHAUSTED') return 'DEMO_ROUTES_EXHAUSTED';
   if (status === 504) return 'DEMO_GATEWAY_TIMEOUT';
   return 'DEMO_REQUEST_FAILED';
 }
