@@ -7,11 +7,9 @@ test('quiet composer retains accessible exact-request inspection and the complet
  await expect(page.getByText('Send shares your message, comments and reviewed context with gpt.yapweijun1996.com and its model provider.',{exact:false})).toHaveCount(0);
  await expect(page.getByText('Sharing details · review exact request',{exact:true})).toHaveCount(0);
  await expect(page.getByText('Ask about this layout, or review an edit proposal.',{exact:true})).toHaveCount(0);
- const details=page.locator('.ai-sharing'),control=details.locator('summary');
- await expect(control).toHaveAttribute('aria-label','Inspect outgoing request');await expect(control.locator('svg')).toBeVisible();
- await control.focus();await page.keyboard.press('Enter');await expect(details).toHaveAttribute('open','');await expect(page.locator('#ai-share')).toBeVisible();
- await page.locator('#ai-prompt').fill('Use navy accents.');await expect(page.locator('#ai-share')).toContainText('Use navy accents.');
- expect(await page.locator('#ai-share').textContent()).not.toMatch(/ACME Industrial|Sterling Manufacturing|12,150/);
+ // The request preview control is gone: no eye button, no sharing panel, no echoed request.
+ await expect(page.locator('.ai-sharing')).toHaveCount(0);await expect(page.locator('#ai-share')).toHaveCount(0);
+ await expect(page.getByLabel('Inspect outgoing request')).toHaveCount(0);
  const footer=page.locator('body > footer.status-bar');await expect(footer).toHaveCount(1);
  await expect(footer.locator('#status')).toContainText('45 rows');await expect(footer).toContainText('current layout passed');
  await expect(footer).toContainText('Built-in demo');await expect(page.locator('#app-version')).toBeVisible();

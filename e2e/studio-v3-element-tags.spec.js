@@ -34,10 +34,6 @@ test('canvas label and structure value become removable composer references; onl
   await page.getByRole('button',{name:'Locate Bill to · label (label-customer-bill)',exact:true}).hover();
   await expect(frame(page).locator('[data-v3-selection]')).toHaveCount(1);
   await expect(page.locator('#ai-prompt')).toHaveValue('');
-  const reviewed = JSON.parse(await page.locator('#ai-share').textContent());
-  expect(reviewed.references).toHaveLength(2);
-  expect(reviewed.references[0]).toMatchObject({id:'label-customer-bill',kind:'label',role:'label',revision:0,comment:'Make this label 12pt, bold and navy.'});
-  expect(reviewed.references[1]).toMatchObject({id:'header-company',role:'value',revision:0});
   expect(calls).toHaveLength(0);
   await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('[data-ai-send]').click();
@@ -46,6 +42,10 @@ test('canvas label and structure value become removable composer references; onl
   const wire = calls.find(call=>isInference(call.path)).body;
   expect(JSON.stringify(wire)).not.toContain('ACME'); expect(JSON.stringify(wire)).not.toContain('Sterling');
   expect(JSON.stringify(wire)).toContain('label-customer-bill'); expect(JSON.stringify(wire)).toContain('Make this label 12pt');
+  const sent = JSON.parse(userText(wire));
+  expect(sent.references).toHaveLength(2);
+  expect(sent.references[0]).toMatchObject({id:'label-customer-bill',kind:'label',role:'label',revision:0,comment:'Make this label 12pt, bold and navy.'});
+  expect(sent.references[1]).toMatchObject({id:'header-company',role:'value',revision:0});
   await expect(page.locator('#revision')).toHaveText('r0');
   await page.screenshot({path:info.outputPath('element-reference-composer.png')});
   await page.getByRole('button',{name:'Remove reference header-company',exact:true}).click();
@@ -64,7 +64,7 @@ test('revision changes visibly block stale tags until the user removes and adds 
   await page.locator('#left-panel [data-ai-add]').click();
   await expect(page.locator('[data-ai-tag-id="items-description"]')).not.toHaveAttribute('data-invalid','');
   await page.getByLabel('Comment for items-description',{exact:true}).fill('Make this text larger.');
-  expect(JSON.parse(await page.locator('#ai-share').textContent()).references[0]).toMatchObject({id:'items-description',revision:1});
+  await expect(page.locator('[data-ai-tag-id="items-description"]')).toContainText('r1');
 });
 test('deleted and cross-document references never target a neighboring field with the same position or ID',async({page})=> {
   const calls = await mock(page); await add(page,'items-sku'); await page.locator('[data-ai=paper]').click();

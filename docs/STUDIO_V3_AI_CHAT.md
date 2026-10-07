@@ -3,8 +3,9 @@
 The sidepanel keeps a bounded conversation and composer. Send is the deliberate
 action accepting the adjacent recipient/context notice. No consent checkbox
 or background send is used. Enter sends; Shift+Enter and IME Enter do not.
-Exact initial JSON remains inspectable in Sharing details. If current context
-differs from the displayed request, Send refreshes it and stops before inference.
+There is no request preview control; what is sent is the bounded context described in
+the studio v3 doc. If the current context differs from the one prepared when the user
+started typing, Send refreshes it and stops before inference.
 
 Edit scope is derived, not chosen: elements added with Add to chat limit the edit to
 those references; with none, the whole form is editable. A proposal that touches

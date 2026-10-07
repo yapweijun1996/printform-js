@@ -42,9 +42,9 @@ test('all business templates render and long scenario paginates without missing 
 });
 test('real PDF parsing -> explicit text-only sharing -> mocked AI Preview Apply Undo -> export',async({page},info)=>{
  const calls=await mockProvider(page);await openReferences(page);await attach(page,syntheticPdf());
- await expect(page.locator('.ai-reference-card')).toContainText('2 page(s)');await expect(page.locator('#ai-share')).toContainText('FICTIONAL REFERENCE');await expect(page.locator('#ai-share')).toContainText('extracted-text-and-positions');expect(calls).toHaveLength(0);
+ await expect(page.locator('.ai-reference-card')).toContainText('2 page(s)');expect(calls).toHaveLength(0);
  await page.locator('#ai-prompt').fill('Use navy #163a65 based on the reference structure.');await page.locator('[data-ai-send]').click();await expect(page.locator('[data-ai-proposal]')).toBeVisible();
- const wire=calls.find(c=>isInference(c.path)).payload;expect(userText(wire)).toContain('DEMO-REF-001');expect(JSON.stringify(wire)).not.toContain('base64');expect(JSON.stringify(wire)).not.toContain('ACME Industrial');
+ const wire=calls.find(c=>isInference(c.path)).payload;expect(userText(wire)).toContain('DEMO-REF-001');expect(JSON.stringify(wire)).toContain('FICTIONAL REFERENCE');expect(JSON.stringify(wire)).toContain('extracted-text-and-positions');expect(JSON.stringify(wire)).not.toContain('base64');expect(JSON.stringify(wire)).not.toContain('ACME Industrial');
  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.locator('[data-ai=apply]').click();await expect(page.locator('#revision')).toContainText('r1');
  const savePromise=page.waitForEvent('download');await page.locator('[data-action=save]').click();const saved=await savePromise,savedPath=info.outputPath('pdf-authored.printform.json');await saved.saveAs(savedPath);
  const authored=JSON.parse(await fs.readFile(savedPath,'utf8')).project;expect(authored.manifest.studioV3.color).toBe('#163a65');expect(authored.manifest.currency).toBe('MYR');expect(authored.sampleData.summary.total).toBe(12150);expect(authored.manifest.studioV3.columns.find(f=>f.id==='amount').pointer).toBe('./amount');
@@ -101,7 +101,7 @@ test('explicit compact A5 preset retains all 45 rows, fields and totals in at mo
 test('PDF text extraction ignores raster content without decoding or advertising a visual preview',async({page})=>{
  const calls=await mockProvider(page);await openReferences(page);
  for(const raster of ['xobject','inline','negative']) {
-  await attach(page,syntheticPdf({pages:1,raster}));await expect(page.locator('.ai-reference-card')).toContainText('PDF appearance, embedded images and annotations are not rendered');await expect(page.locator('.ai-reference-excerpt')).toContainText('FICTIONAL REFERENCE');await expect(page.locator('.ai-reference-card img')).toHaveCount(0);await expect(page.locator('#ai-share')).not.toContainText('base64');await page.locator('.ai-reference-card button').click();
+  await attach(page,syntheticPdf({pages:1,raster}));await expect(page.locator('.ai-reference-card')).toContainText('PDF appearance, embedded images and annotations are not rendered');await expect(page.locator('.ai-reference-excerpt')).toContainText('FICTIONAL REFERENCE');await expect(page.locator('.ai-reference-card img')).toHaveCount(0);await page.locator('.ai-reference-card button').click();
  }
  expect(calls).toHaveLength(0);
 });
@@ -110,7 +110,7 @@ test('visual PDF mode renders fictional JPEG, PNG-style Flate, masks and multipl
  const {rasterPdf}=await import('./fixtures/raster-reference-documents.js');const calls=await mockProvider(page);await openReferences(page);await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');
  for(const kind of ['jpeg','png','mask','multiple']) {
   await attach(page,rasterPdf(kind,{text:kind!=='jpeg'}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('.ai-reference-card img')).toHaveJSProperty('complete',true);expect(await page.locator('.ai-reference-card img').evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
-  await expect(page.locator('.ai-reference-card')).toContainText('best-effort controls');await expect(page.locator('#ai-share')).toContainText('visual-pages');await expect(page.locator('[data-ai-send]')).toBeDisabled();await page.screenshot({path:info.outputPath(`local-${kind}-pdf-reference.png`)});await page.locator('.ai-reference-card button').click();
+  await expect(page.locator('.ai-reference-card')).toContainText('best-effort controls');await expect(page.locator('[data-ai-send]')).toBeDisabled();await page.screenshot({path:info.outputPath(`local-${kind}-pdf-reference.png`)});await page.locator('.ai-reference-card button').click();
  }
  await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('oversized'));await expect(page.locator('.ai-reference-files')).toContainText('12-million-pixel limit');await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(calls).toHaveLength(0);
  await attach(page,syntheticPdf({pages:1,text:false,blank:true}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(calls).toHaveLength(0);
