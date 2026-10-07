@@ -21,6 +21,11 @@ describe('empty state',()=> {
     expect([...flow.querySelectorAll('li')].map(item=>item.textContent)).toEqual(['Ask AI','Preview','Apply']);
   });
 
+  it('says where the form goes before anything is sent, as the last line of the empty state',()=> {
+    const {panel}=setup(),welcome=panel.node('[data-ai-log] .ai-welcome'),note=welcome.lastElementChild;
+    expect(note.className).toBe('ai-privacy');expect(note.textContent).toBe('Sent to the Demo gateway · use fictional data only');
+  });
+
   it('a starting action fills the message box and the Attach card opens the file picker',()=> {
     const {panel}=setup(),log=panel.node('[data-ai-log]'),pick=vi.spyOn(panel.referenceFiles.input,'click').mockImplementation(()=>{}),attach=log.querySelector('[data-ai=attach]');
     log.querySelector('[data-ai=prompt]').click();
