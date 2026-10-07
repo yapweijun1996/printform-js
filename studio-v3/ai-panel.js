@@ -52,8 +52,8 @@ export class AIPanel {
   }
   request() { return this.getBus() ? chatRequest(this.getBus().project,this.payload()) : '{}'; }
   share() {
-    try { this.node('#ai-share').textContent = this.request(); this.shareBlocked = false; }
-    catch (error) { this.shareBlocked = true; this.node('#ai-share').textContent = 'Remove outdated element references before Send.'; this.message(error.message); }
+    try { this.sharedRequest = this.request(); this.shareBlocked = false; }
+    catch (error) { this.shareBlocked = true; this.sharedRequest = null; this.message(error.message); }
   }
   show() { this.open = true; this.root.hidden = false; document.body.classList.add('ai-open'); this.contextChanged(); this.share(); this.update(); this.node('#ai-prompt').focus(); this.sync(); }
   suspend() { this.open = false; this.root.hidden = true; document.body.classList.remove('ai-open'); this.update(); this.sync(); }
@@ -121,7 +121,7 @@ export class AIPanel {
     try { this.referenceFiles?.assertReady(); payload = this.payload(); request = this.request(); } catch (error) { this.error(error); this.message(error.message); return; }
     if (!payload.request) { this.message('Write a request or a comment on a referenced element before Send.'); return; }
     let alias = this.node('#ai-model').value;
-    if (request !== this.node('#ai-share').textContent) { this.share(); this.message('Layout context updated. Review the updated sharing details, then Send again.'); return; }
+    if (request !== this.sharedRequest) { this.share(); this.message('Layout context updated. Send again to use the current layout.'); return; }
     if (request.length > 40000) { this.message('The shared context is too large. Clear conversation or shorten the request.'); return; }
     const bus = this.getBus(), revision = bus.revision, project = structuredClone(bus.project), baseDesign = JSON.stringify(project.manifest.studioV3), baseData = JSON.stringify(project.sampleData), epoch = this.epoch, selection = this.getSelection(), scope = JSON.stringify(this.scope()), references = JSON.stringify(payload.references), attachmentVersion = this.referenceFiles?.version, media = this.referenceFiles?.projection().media || [];
     const assertContext = ()=> {

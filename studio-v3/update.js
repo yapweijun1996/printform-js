@@ -1,3 +1,5 @@
+// A tab that stays open still notices new builds: when it becomes visible again it asks the browser to look, at most this often.
+export const BACKGROUND_CHECK_MS = 10 * 60 * 1000;
 export function workerVersion(worker,timeout = 3000) {
   if (!worker) return Promise.resolve(null);
   return new Promise((resolve,reject)=> {
@@ -47,6 +49,7 @@ export function setupUpdates(work,{sw = navigator.serviceWorker,reload = ()=>loc
   const version = document.querySelector('#app-version'), button = document.querySelector('#update-button'), status = document.querySelector('#update-status');
   version.textContent = `v3 · ${/^[a-f0-9]{40}$/.test(current) ? current.slice(0,12) : 'local'}`; version.title = current;
   let registration, candidate, busy = false;
+  const offered = new Set(); // builds already offered automatically in this page load: ask once, never loop
   const message = text=> { status.textContent = text; };
   async function refresh() {
     if (!registration) return;
@@ -55,7 +58,7 @@ export function setupUpdates(work,{sw = navigator.serviceWorker,reload = ()=>loc
     candidate = value && value.build !== current ? {worker,...value} : null;
     button.textContent = candidate ? `Update to ${candidate.build.slice(0,12)}` : 'Check for updates';
     button.dataset.target = candidate?.build || '';
-    if (candidate) message('New build ready. This tab stays on its current version until you choose Update.');
+    if (candidate) { message('New build ready. Updating automatically unless there is unsaved work to approve first.'); void auto(); }
   }
   function watch() {
     const worker = registration.installing; if (!worker) return;
@@ -80,6 +83,22 @@ export function setupUpdates(work,{sw = navigator.serviceWorker,reload = ()=>loc
       changed();
     });
   }
+  // Shared by the button and the automatic update. work.prepare() asks for approval only when work is unsaved.
+  async function install(target) {
+    if (!navigator.onLine) throw new Error('Update is ready. Reconnect, then choose Update again. Current work is unchanged.');
+    if (!await work.prepare()) return;
+    if (!navigator.onLine) throw new Error('Reconnect, then choose Update again. Work and its recovery backup are retained.');
+    await activate(target);
+    message(`Updating to ${target.build.slice(0,12)}…`);
+    navigateUpdate(work,target.build,reload,message);
+  }
+  async function auto() {
+    if (busy || !candidate || offered.has(candidate.build)) return;
+    const target = candidate; offered.add(target.build); busy = true; button.disabled = true;
+    try { await install(target); }
+    catch (error) { offered.delete(target.build); work.failed(); message(`A new build is ready but could not update automatically. ${error.message || ''} Choose Update to retry.`.replace(/\s+/g,' ')); }
+    finally { busy = false; button.disabled = !registration; if (!work.leaving()) button.focus(); }
+  }
   button.onclick = async()=> {
     if (busy) return; busy = true; button.disabled = true;
     try {
@@ -88,18 +107,19 @@ export function setupUpdates(work,{sw = navigator.serviceWorker,reload = ()=>loc
         await checkRegistration(registration);
         await refresh();
         if (!candidate && !registration?.installing) message('Current version is ready. No verified newer build is available.');
+        // An explicit check that finds a build proceeds like any other detection (ask only for unsaved work).
+        else if (candidate) { busy = false; await auto(); }
         return;
       }
-      const target = candidate;
-      if (!navigator.onLine) throw new Error('Update is ready. Reconnect, then choose Update again. Current work is unchanged.');
-      if (!await work.prepare()) return;
-      if (!navigator.onLine) throw new Error('Reconnect, then choose Update again. Work and its recovery backup are retained.');
-      await activate(target);
-      message(`Updating to ${target.build.slice(0,12)}…`);
-      navigateUpdate(work,target.build,reload,message);
+      await install(candidate);
     } catch (error) { work.failed(); message(error.message || 'Update failed. Current work is retained.'); }
     finally { busy = false; button.disabled = !registration; if (!work.leaving()) button.focus(); }
   };
+  let lastCheck = Date.now();
+  document.addEventListener('visibilitychange',()=> {
+    if (document.visibilityState !== 'visible' || busy || !registration || Date.now() - lastCheck < BACKGROUND_CHECK_MS) return;
+    lastCheck = Date.now(); void Promise.resolve(registration.update()).catch(()=> {}); // quiet: a failed or offline check changes nothing
+  });
   if (!sw?.register) { button.disabled = true; message('Offline updates are unavailable in this browser; current build is shown above.'); return; }
   sw.addEventListener('controllerchange',()=> { if (!work.leaving()) void refresh().catch(error=>message(error.message)); });
   void sw.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(async reg=> {

@@ -15,11 +15,19 @@ the service worker that may have been activated by another tab.
 - Installation fetches the complete generated shell and verifies every
   file's SHA-256 before completing. Download/integrity failure removes only
   that incomplete new cache. The previous worker and work remain available.
-- A waiting build displays **Update to `<SHA>`**. **Check for updates** retries
-  discovery/download. Checking and installing never reload a page.
-- Only confirmed Update sends the exact-build activation message and reloads
-  this tab. Other tabs continue editing on their immutable old resources;
-  they offer the new build, without changing their loaded version label.
+- A verified waiting build updates **automatically**, without asking, when the tab
+  holds no unsaved work. The tab notices builds when it loads, when the browser
+  finishes installing one, when **Check for updates** is chosen and when the tab
+  becomes visible again (at most every ten minutes, silently; a failed or offline
+  check changes nothing). Each build is offered automatically once per page load;
+  after **Stay** or a failure the button keeps showing **Update to `<SHA>`**.
+- When work is unsaved, the update dialog below opens instead and asks. The single
+  source of truth for "unsaved work" is `createUpdateWork().pending()` (dirty template,
+  field/data/table drafts, an AI request, proposal or prompt, or an edited title);
+  the dialog is shown only when it is true. The exact-build activation message and the
+  reload happen only after that (or immediately when there is nothing to protect).
+- Other tabs continue on their immutable old resources until they notice the build;
+  a tab with no unsaved work then updates by itself and one with unsaved work asks.
 - Update requires an online browser navigation. Offline checks/confirmation
   retain the old page and work and ask for a manual retry after reconnecting;
   going online never triggers a reload. This also avoids WebKit's observed
@@ -34,7 +42,7 @@ the service worker that may have been activated by another tab.
 
 ## Protecting work
 
-The dialog always offers **Keep work & update**, **Discard work & update** and
+The dialog, shown only when work is unsaved, offers **Keep work & update**, **Discard work & update** and
 **Stay** (also Escape). Keep requires an explicit user choice to temporarily
 persist document data locally in this tab's sessionStorage. It stores the
 controlled template, active and baseline data/source, history, field/binding/

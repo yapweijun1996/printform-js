@@ -8,7 +8,7 @@ import {html,setup} from './support/chat-panel.js';
 beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html>/i,'');document.body.inert=false;});
 it('requires renewed review if measured facts change after consent, before any gateway call',async()=> {
   let facts=[];const {panel,calls}=setup({facts:()=>facts});
-  facts=[{id:'header',role:'title',pt:18}];await panel.send();expect(calls()).toBe(0);expect(panel.node('#ai-consent')).toBeNull();expect(panel.node('#ai-share').textContent).toContain('18');expect(panel.node('[data-ai-status]').textContent).toContain('updated');
+  facts=[{id:'header',role:'title',pt:18}];await panel.send();expect(calls()).toBe(0);expect(panel.node('#ai-consent')).toBeNull();expect(panel.request()).toContain('18');expect(panel.node('[data-ai-status]').textContent).toContain('updated');
 });
 it('expires a response/card after selection moves away and back, preserving canonical revision',async()=> {
   const {panel,select}=setup();await panel.send();const bus=panel.getBus();expect(panel.proposal).toBeTruthy();select('customer');select('items');expect(panel.proposal).toBeNull();expect(bus.revision).toBe(0);expect(panel.conversation.messages.at(-1).status).toBe('expired');

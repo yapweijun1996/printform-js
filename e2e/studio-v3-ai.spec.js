@@ -30,9 +30,10 @@ test.beforeEach(async({page})=> { page.on('dialog',d=>d.accept()); await keepStr
 test('explicit sharing -> actual Harness local proposal -> real preview -> apply -> undo; ERP and print dimensions survive',async({page},info)=> {
   const m = await mock(page); const before = await frame(page).locator('.printform_page').first().evaluate(n=>({width:n.offsetWidth,height:n.offsetHeight}));
   const total = await frame(page).locator('[data-v3-id=totals-total]').textContent();
-  await openAI(page); await expect(page.locator('#ai-share')).not.toContainText('ACME');
+  await openAI(page);
   expect(m.calls).toHaveLength(0); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await send(page); await expect(page.locator('[data-ai-proposal]')).toBeVisible();
+  expect(JSON.stringify(m.calls.map(c=>c.payload))).not.toContain('ACME');
   // The mock offers both aliases, so the default routing alias demo-auto is used and shown.
   await expect(page.locator('[data-ai-status]')).toContainText('demo-auto'); await expect(page.locator('#ai-model')).toHaveValue('demo-auto'); await expect(page.locator('#revision')).toHaveText('r0');
   expect(m.plans()).toBe(1); expect(m.calls[0].payload).toEqual({project_id:'github-pages'}); expect(m.calls[0].auth).toBe(false);
@@ -81,7 +82,8 @@ test('cancel and a changed revision reject late responses; replaced form gets fr
   await expect(page.locator('#revision')).toContainText('r1'); await expect(page.locator('[data-ai-proposal]')).toBeHidden();
   await expect(page.locator('.ai-assistant .ai-message-text').last()).toContainText('Form changed'); await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('[data-action=new]').click(); await page.locator('[data-template=delivery]').click(); await ready(page);
-  await expect(page.locator('#ai-share')).not.toContainText('items-amount');
+  await page.locator('#ai-prompt').fill('Use navy.'); await send(page); await expect.poll(()=>m2.plans()).toBe(2);
+  expect(JSON.stringify(m2.calls.at(-1).payload)).not.toContain('items-amount');
 });
 test('unapplied drafts stay protected across AI preview and cannot be silently overwritten by Apply',async({page})=> {
   await mock(page); await page.locator('#left-panel [data-select=items-description]').click();
@@ -113,7 +115,7 @@ test('coherent accessible SVG controls and keyboard/mobile AI sidepanel',async({
   await page.keyboard.press('Escape'); await expect(page.locator('[data-ai-toggle]')).toBeFocused();
   await page.setViewportSize({width:390,height:844}); await page.locator('[data-ai-toggle]').click();
   const box = await page.locator('#ai-panel').boundingBox(); expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x+box.width).toBeLessThanOrEqual(390);
-  await page.locator('[data-ai=paper]').focus(); await page.keyboard.press('Shift+Tab'); await expect(page.locator('.ai-sharing > summary')).toBeFocused();
+  await page.locator('[data-ai=paper]').focus(); await page.keyboard.press('Shift+Tab'); await expect(page.locator('[data-ai-send]')).toBeFocused();
   await page.screenshot({path:info.outputPath('ai-mobile.png')});
   await page.keyboard.press('Escape'); await expect(page.locator('[data-ai-toggle]')).toBeFocused();
 });

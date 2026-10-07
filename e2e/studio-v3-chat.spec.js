@@ -27,9 +27,9 @@ test('grounded font Q&A and follow-up proposal form a real conversation with exp
   const log=page.locator('[data-ai-log]');await expect(log).toContainText('header-title · title: 18 pt');await expect(log).toContainText('header-company · value: 12 pt');await expect(log).toContainText('items · column heading: 8 pt');await expect(log).toContainText('computed styles');
   await expect(page.locator('#revision')).toHaveText('r0');await expect(page.locator('[data-ai=apply]')).toHaveCount(0);
   const context=JSON.parse(userText(requests[0]));expect(context.typography.length).toBeGreaterThan(5);expect(context.typography.every(f=>Object.keys(f).sort().join(',')==='id,pt,role')).toBe(true);expect(JSON.stringify(context)).not.toMatch(/ACME|125|sampleData/);
-  await page.locator('#ai-prompt').fill('Use navy accents #163a65 instead.');await expect(page.locator('#ai-share')).toContainText('What are the current font sizes?');await expect(page.locator('#ai-consent')).toHaveCount(0);
+  await page.locator('#ai-prompt').fill('Use navy accents #163a65 instead.');await expect(page.locator('#ai-consent')).toHaveCount(0);
   await page.locator('#ai-prompt').press('Enter');await expect(page.locator('[data-ai-proposal]')).toBeVisible();
-  expect(JSON.parse(userText(requests[1])).conversation).toHaveLength(2);await expect(page.locator('.ai-diff')).toContainText('#1763dc');await expect(page.locator('.ai-diff')).toContainText('#163a65');
+  expect(JSON.parse(userText(requests[1])).conversation).toHaveLength(2);expect(userText(requests[1])).toContain('What are the current font sizes?');await expect(page.locator('.ai-diff')).toContainText('#1763dc');await expect(page.locator('.ai-diff')).toContainText('#163a65');
   await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await page.screenshot({path:info.outputPath('chat-desktop-preview.png')});
   await page.locator('[data-ai=apply]').click();await ready(page);await expect(log).toContainText('Applied to the form');await expect(page.locator('[data-ai=undo]')).toBeVisible();
   await page.locator('[data-ai=undo]').click();await ready(page);expect(await page.frameLocator('#preview-frame').locator('[data-v3-id=totals-total]').textContent()).toBe(original);

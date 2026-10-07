@@ -92,10 +92,15 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     const checkBusy = ()=> { if (state.fileReads || database.busy || database.pending || drafts.applying.size || ai.applying) throw new Error('A file read, edit or database save is active. Wait, then retry.'); };
     checkBusy();
     if (!database.store.persistent) throw new Error('Database storage is tab-only. Export your datasets before leaving; update is blocked to protect them.');
-    const dialog = document.querySelector('#update-dialog');
-    dialog.querySelector('[data-update-summary]').textContent = pending() ? 'This tab has unsaved work. Keep preserves the template, history, field/data drafts and AI input/conversation locally (old proposals expire) for this tab’s reload.' : 'Keep preserves this tab’s current template and active data for the reload.';
-    dialog.returnValue = 'stay';
-    const choice = await new Promise(resolve=> { dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true}); dialog.showModal(); });
+    // pending() is the single source of truth for unsaved work. Without any, there is nothing to keep or lose,
+    // so no approval is asked; with some, the one update dialog asks.
+    let choice = 'discard';
+    if (pending()) {
+      const dialog = document.querySelector('#update-dialog');
+      dialog.querySelector('[data-update-summary]').textContent = 'This tab has unsaved work. Keep preserves the template, history, field/data drafts and AI input/conversation locally (old proposals expire) for this tab’s reload.';
+      dialog.returnValue = 'stay';
+      choice = await new Promise(resolve=> { dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true}); dialog.showModal(); });
+    }
     if (choice === 'stay') return false;
     document.body.inert = true;
     try {
