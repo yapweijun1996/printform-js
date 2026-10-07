@@ -102,10 +102,11 @@ export class AIPanel {
     this.timer = setTimeout(()=> { this.timedOut = id; controller.abort(); },DEMO_CONFIG.sendTimeoutMs);
     this.update(); return {id,signal:controller.signal};
   }
+  // Resolves true only when the gateway answered; failures are reported in the conversation instead.
   async discover() {
     if (this.busy || this.applying || this.restoring) return;
     const {id,signal} = this.begin();
-    try { const aliases = await this.transport.discover(signal); if (id !== this.generation) return; this.setModels(aliases); this.message(`Available: ${aliases.join(', ')}. No document sent.`); }
+    try { const aliases = await this.transport.discover(signal); if (id !== this.generation) return; this.setModels(aliases); this.message(`Available: ${aliases.join(', ')}. No document sent.`); return true; }
     catch (error) { if (id === this.generation) this.error(this.timedOut === id ? fail('AI_TIMEOUT') : error); }
     finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); } }
   }
