@@ -19,7 +19,7 @@ Priority: **P1** the user cannot tell what is happening; **P2** layout and scrol
 | UX-01 | P1 | Step lines use internal terms: "Changed the draft", "Made a note", "Handed over the result" **[code]** | `agent-step-labels.js` | No visible step line contains "draft", "note" or "operations"; each line says in plain words what changed and its outcome; the technical code stays in the tooltip. |
 | UX-02 | P1 | "rejected, trying again" gives no reason and no hint whether to act **[code]** | `agent-step-labels.js` | A rejected step shows a short plain reason class (for example outside the selected elements, invalid value) and says whether the AI continues on its own. |
 | UX-03 | P1 | Status line mixes per-request seconds, a phase and a raw token count, so "Waiting … 0 s" appears during a working run **[code]** | `ai-response-reader.js`, `agent-provider.js:22`, `ai-panel.js:190` | During a step run the line shows the run's total elapsed time and the current phase; it never shows a reset "0 s" while steps are completing; the token figure is secondary or tied to a stated budget. |
-| UX-04 | P4 | Stop is an icon with no visible text **[code]** | `index.html` | Sighted users can identify Stop without a tooltip (visible text or an established icon plus label); the accessible name stays "Stop request". |
+| UX-04 | closed | Stop is an icon with no visible text **[code]**. Owner decision: keep as is. | `index.html` | None; closed by owner decision. |
 | UX-05 | P2 | Three nested scroll regions (log, references area, panel) **[shot]** | `ai-panel.css:23,32` | At 400 x 800 at most one region scrolls at a time during a run; verified with a browser run. |
 | UX-06 | P2 | Top of the conversation clipped; the request text is out of view **[shot]** | `ai-panel.css` | After sending, the user's own message stays reachable without manual scrolling; no bubble is cut off at the top edge. |
 | UX-07 | P2 | One attached image fills most of the panel **[shot]** | `ai-reference-files.js` | With one attachment the references area is collapsed or height-capped and the conversation keeps at least half the panel height at 400 x 800. |
@@ -49,9 +49,9 @@ Priority: **P1** the user cannot tell what is happening; **P2** layout and scrol
 3. **S3, layout:** UX-05 to UX-07 (needs browser evidence in three engines).
 4. **S4, audit:** UX-17, 18.
 
-## Decisions needed
+## Decisions (owner, 2026-10-08)
 
-- Is a visible text label on Stop wanted, or is the tooltip enough? (UX-04)
-- Glossary for "Demo gateway", "provider" and "draft": what should a business user read instead? (UX-15, UX-01)
-- Should the capability diagnostic move to Settings or be removed from normal use? (UX-11)
-- Which slice first? The suggested order is S1, then S2.
+- **Stop (UX-04): keep as is.** Icon plus the "Stop request" tooltip and accessible name stay. Item closed, no change.
+- **Terminology (UX-15, UX-01): move all technical words to business language.** The exact replacement for each word ("Demo gateway", "provider", "draft", "OCR", "note") is still to be confirmed by the owner before S2; S1 does not touch the run-progress wording.
+- **Capability diagnostic (UX-11): move it to the Settings menu**, out of the references area.
+- **Order: S1 first** (references area), then S2.
