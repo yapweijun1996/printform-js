@@ -6,8 +6,8 @@ export class AIReferenceFiles {
     this.panel=panel; this.files=[]; this.version=0; this.documentKey=panel.documentKey();
     this.root=node('details'); this.root.className='ai-reference-files'; this.root.setAttribute('aria-label','Design references');
     const summary=node('summary','References · PDF / image');this.root.append(summary);
-    const label=node('label','Add reference PDF or image'); this.input=node('input'); this.input.type='file'; this.input.multiple=true; this.input.accept='application/pdf,image/png,image/jpeg,image/webp'; label.append(this.input);
-    const modeLabel=node('label','PDF reading for new attachments');this.pdfMode=node('select');this.pdfMode.setAttribute('aria-label','PDF reading for new attachments');for(const [value,text] of [['text','Text & positions (lightweight)'],['visual','Visual pages (best-effort local preview)']]){const option=node('option',text);option.value=value;this.pdfMode.append(option);}modeLabel.append(this.pdfMode);
+    const label=node('label','Add reference PDF or image'); label.className='sr-only'; this.input=node('input'); this.input.type='file'; this.input.tabIndex=-1; this.input.multiple=true; this.input.accept='application/pdf,image/png,image/jpeg,image/webp'; label.append(this.input);
+    const modeLabel=this.modeLabel=node('label','PDF reading for new attachments');this.pdfMode=node('select');this.pdfMode.setAttribute('aria-label','PDF reading for new attachments');for(const [value,text] of [['text','Text & positions (lightweight)'],['visual','Visual pages (best-effort local preview)']]){const option=node('option',text);option.value=value;this.pdfMode.append(option);}modeLabel.append(this.pdfMode);
     this.list=node('div'); this.list.className='ai-reference-list';
     this.notice=node('p','Files stay in memory. Text mode skips PDF appearance/images. Visual pages uses best-effort local limits. Use Check image support before sending pixels. If visual reading fails, choose Text & positions and attach again.');this.notice.className='hint';
     this.cancel=node('button','Cancel reading');this.cancel.type='button';this.cancel.hidden=true;this.cancel.addEventListener('click',()=>{this.controller?.abort();this.notice.textContent='Reference reading cancelled. Nothing was sent.';});
@@ -17,7 +17,7 @@ export class AIReferenceFiles {
     // The status and its button sit in one row that stays at the bottom of the (scrolling) block, so the action the
     // Send reason points to is never out of sight.
     this.statusRow=node('div');this.statusRow.className='ai-capability-row';this.statusRow.append(this.capability,this.checkSupport);
-    this.root.append(modeLabel,label,this.cancel,this.list,this.statusRow,this.diagnostics,this.notice); panel.node('.ai-input')?.before(this.root);
+    this.root.append(modeLabel,label,this.cancel,this.list,this.statusRow,this.notice); (panel.node('.ai-settings-body') || this.root).append(this.diagnostics); panel.node('.ai-input')?.before(this.root);
     this.input.addEventListener('change',()=>{const files=[...this.input.files];this.input.value='';void this.add(files);});
     // Files may be dropped on the composer or anywhere in the conversation, including the Attach card.
     for (const zone of [panel.node('.ai-composer') || this.root,panel.node('[data-ai-log]')].filter(Boolean)) {
@@ -63,10 +63,11 @@ export class AIReferenceFiles {
   assertReady() {if(this.reading)throw new Error('Wait for reference processing to finish.');if(this.imageBlocked())throw new Error('Image support is not confirmed. Use Check image support, or remove image and visual-PDF references. Choose Text & positions and reattach the PDF to send without images.');}
   render() {
     this.list.replaceChildren();
+    this.modeLabel.hidden=this.files.length>0 && this.files.every(file=>file.kind==='image');
     for(const file of this.files){
       const card=node('div');card.className='ai-reference-card';
       const textOnly=file.kind==='pdf' && file.processing!=='visual',preview=node(textOnly?'pre':'div');preview.className=textOnly?'ai-reference-excerpt':'ai-reference-thumbnails';if(textOnly)preview.textContent=`Text excerpt (not a visual preview):\n${file.text.slice(0,320)}`;else for(const page of file.pages){const image=node('img');image.src=page.preview.dataUrl;image.alt=`${file.name} · reference page ${page.number}`;preview.append(image);}
-      const info=node('span',`${file.name} · ${file.pageCount} page(s)${!file.text?.trim()?' · image-only, no extracted text':''}`);
+      const info=node('span',file.kind==='image'?file.name:`${file.name} · ${file.pageCount} page(s)${!file.text?.trim()?' · image-only, no extracted text':''}`);
       const remove=node('button','Remove');remove.type='button';remove.disabled=this.locked;remove.addEventListener('click',()=>{this.files=this.files.filter(f=>f.id!==file.id);this.changed();});
       card.append(preview,info,remove);for(const warning of file.warnings || [])card.append(node('small',warning));this.list.append(card);
     }
