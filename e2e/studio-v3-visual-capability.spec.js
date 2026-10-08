@@ -6,6 +6,11 @@ import {rasterPdf} from './fixtures/raster-reference-documents.js';
 test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
+// After Apply/Undo the preview frame is re-navigated and Firefox intermittently cannot reach it, even though
+// the paper renders correctly. Reads after that point use the page thumbnails, which are cloned from the
+// rendered pages into the main document (open shadow DOM). Clicks and the initial reads still use the frame.
+const rendered=page=>page.locator('.thumbnail-scene');
+const renderedStyle=page=>rendered(page).locator('[data-v3-id=label-customer-ship]').first().evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}));
 const label={kind:'proposal',summary:'Style only the selected label',operations:[{type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}}]};
 async function provider(page,{reply=label,hold=false,revoke=false}={}) {
  const calls=[];let discoveries=0,release;
@@ -44,11 +49,11 @@ for(const kind of ['image','scanned-pdf'])test(`verified ${kind} uses bounded Re
  expect(user[0].text).toContain('label-customer-ship');expect(user[0].text).toContain('visual-pages');
  await page.locator('[data-ai=preview]').click();await expect(page.locator('[data-ai=apply]')).toBeEnabled();await expect(page.locator('#revision')).toHaveText('r0');
  await page.locator('[data-ai=apply]').click();await ready(page);await expect(page.locator('#revision')).toHaveText('r1 · unsaved template');
- expect(await paper(page).locator('[data-v3-id=totals-total]').textContent()).toBe(total);
- expect(await node().evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}))).toEqual({font:'16px',weight:'700'});
+ expect(await rendered(page).locator('[data-v3-id=totals-total]').first().textContent()).toBe(total);
+ await expect.poll(()=>renderedStyle(page)).toEqual({font:'16px',weight:'700'});
  await page.screenshot({path:info.outputPath(`${kind}-selected-label-applied.png`)});
  await page.locator('[data-ai=undo]').click();await ready(page);await expect(page.locator('#revision')).toHaveText('r2 · unsaved template');
- expect(await node().evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}))).toEqual(before);
+ await expect.poll(()=>renderedStyle(page)).toEqual(before);
 });
 test('fresh discovery revocation blocks image inference after an earlier positive result',async({page})=>{
  const {calls}=await provider(page,{revoke:true});await prepare(page);await page.locator('[data-ai-send]').click();
