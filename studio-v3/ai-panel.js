@@ -118,15 +118,21 @@ export class AIPanel {
   begin() {
     this.cancel('Connecting to Demo gateway…'); this.busy = true;
     const id = this.generation, controller = new AbortController(); this.controller = controller;
-    this.timer = setTimeout(()=> { this.timedOut = id; controller.abort(); },DEMO_CONFIG.sendTimeoutMs);
+    this.setRunTimeout(id,DEMO_CONFIG.sendTimeoutMs);
     this.update(); return {id,signal:controller.signal};
+  }
+  setRunTimeout(id,ms,code='AI_TIMEOUT') {
+    if (id !== this.generation || !this.controller) return;
+    clearTimeout(this.timer);
+    const controller = this.controller;
+    this.timer = setTimeout(()=> { if (id !== this.generation) return; this.timedOut = id; this.timeoutCode = code; controller.abort(); },ms);
   }
   // Resolves true only when the gateway answered; failures are reported in the conversation instead.
   async discover() {
     if (this.busy || this.applying || this.restoring) return;
     const {id,signal} = this.begin();
     try { const aliases = await this.transport.discover(signal); if (id !== this.generation) return; this.setModels(aliases); this.message(`Available: ${aliases.join(', ')}. No document sent.`); return true; }
-    catch (error) { if (id === this.generation) this.error(this.timedOut === id ? fail('AI_TIMEOUT') : error); }
+    catch (error) { if (id === this.generation) this.error(this.timedOut === id ? fail(this.timeoutCode) : error); }
     finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); } }
   }
   // Returns whether the shown model survived. An untouched default may adapt to what the gateway offers;
@@ -167,6 +173,7 @@ export class AIPanel {
       const onPhase = (text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); };
       let result;
       if (this.useSteps(payload,media,alias)) {
+        this.setRunTimeout(id,DEMO_CONFIG.agent.maxRunMs,'AGENT_TIMEOUT');
         this.agentSteps = [];
         try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id)}); }
         catch (error) {
@@ -175,6 +182,7 @@ export class AIPanel {
           const refused = error.code === 'DEMO_TOOLS_UNAVAILABLE', ignored = error.code === 'AI_RUN_FAILED' && !this.agentSteps.length;
           if (!refused && !ignored) throw error;
           if (refused) this.agentUnavailable = true;
+          this.setRunTimeout(id,DEMO_CONFIG.sendTimeoutMs);
           this.agentSteps = []; onPhase(refused ? 'Step-by-step runs are not available here; using the single-step flow' : 'The model did not use the step tools; using the single-step flow');
         }
       }
@@ -191,7 +199,7 @@ export class AIPanel {
       this.message(`${result.kind === 'answer' ? 'Read-only answer; form unchanged.' : `${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} (${details})`);
       if (auto) await this.preview(true).catch(error=>this.error(error));
     } catch (error) {
-      if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail('AI_TIMEOUT') : error); this.conversation.add('assistant',message,error.name === 'AbortError' ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(''); }
+      if (id === this.generation) { const message = errorMessage(this.timedOut === id ? fail(this.timeoutCode) : error); this.conversation.add('assistant',message,error.name === 'AbortError' && this.timedOut !== id ? 'cancelled' : 'error',{request:payload.request,documentKey:this.documentKey()}); this.message(''); }
     } finally { if (id === this.generation) { this.transport.clearSession(); this.finish(); this.share(); this.sync(); } }
   }
   present() { this.update(); }

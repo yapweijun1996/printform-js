@@ -57,15 +57,16 @@ describe('the panel working in steps',()=> {
   it('works in steps on reference images once the gateway has confirmed image support, and stops resending them after a few turns',async()=> {
     const gateway = scriptedGateway({multimodal:true,agent:[
       turn([reasoning(1),fn(1,'get_context',{})]),turn([reasoning(2),fn(2,'take_notes',{notes:'Two columns; total bottom right.'})]),turn([reasoning(3),fn(3,'get_context',{})]),
-      turn([reasoning(4),fn(4,'get_context',{})]),turn([reasoning(5),fn(5,'apply_operations',{summary:'Navy accents',operations:[colour('#163a65')]})]),turn([reasoning(6),fn(6,'finish',{summary:'Navy accents'})])
+      turn([reasoning(4),fn(4,'get_context',{})]),turn([reasoning(5),fn(5,'apply_operations',{summary:'Navy accents',operations:[colour('#163a65')]})]),turn([reasoning(6),fn(6,'inspect_draft',{})]),turn([reasoning(7),fn(7,'finish',{summary:'Navy accents'})])
     ]}), {panel} = setup({transport:gateway.transport});
     panel.referenceFiles.files = [{id:'ref-1',name:'fictional.png',kind:'image',mime:'image/png',processing:'visual',pageCount:1,text:'',pages:[{number:1,width:10,height:10,text:'',textItems:[],preview:{dataUrl:'data:image/png;base64,AAAA'}}],warnings:[]}];
     panel.referenceFiles.root.open = true; panel.referenceFiles.changed();
     await panel.referenceFiles.checkImageSupport(); // the product asks for this before images are sent
     await panel.send();
-    expect(panel.proposal).not.toBeNull(); expect(gateway.agentCalls()).toBe(6);
+    expect(panel.proposal).not.toBeNull(); expect(gateway.agentCalls()).toBe(7);
     const carries = body => JSON.stringify(body.input).includes('data:image/png;base64,AAAA');
-    expect(gateway.bodies.filter(body=>body.tools).map(carries)).toEqual([true,true,true,true,false,false]);
+    expect(gateway.bodies.filter(body=>body.tools).map(carries)).toEqual([true,true,true,true,false,false,false]);
+    expect(gateway.bodies.filter(body=>body.tools).map(body=>body.stream)).toEqual([false,false,false,false,true,true,true]);
     expect(JSON.stringify(gateway.bodies.at(-1).input)).toContain('Two columns; total bottom right.');
   });
 

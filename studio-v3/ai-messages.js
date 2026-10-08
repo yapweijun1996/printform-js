@@ -12,6 +12,7 @@ export const AI_MESSAGES = {
   DEMO_TOOLS_UNAVAILABLE:'The AI service does not allow step-by-step runs for this app yet. Nothing changed.',
   AGENT_BUDGET:'The run used up its step budget before it finished. Nothing changed.',
   AGENT_TOKEN_BUDGET:'The run used up its token budget before it finished. Nothing changed.',
+  AGENT_USAGE_UNAVAILABLE:'The AI service did not report reliable token usage. The run stopped to protect its budget. Nothing changed.',
   AGENT_STALLED:'The run kept repeating the same failing step and was stopped. Nothing changed.',
   AGENT_BLOCKED:'The assistant could not meet this request with the supported operations. Nothing changed.',
   AGENT_TIMEOUT:'The run took too long and was stopped. Nothing changed.',

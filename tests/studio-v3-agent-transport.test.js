@@ -73,6 +73,9 @@ describe('agent turns that carry reference images',()=> {
     const {transport,sent} = imageGateway(true); await transport.discover();
     await transport.agentTurn('demo-fast',imageContext(),new AbortController().signal);
     expect(JSON.parse(sent()[0].init.body).input[1].content[1]).toEqual({type:'input_image',image_url:'data:image/png;base64,AAAA'});
+    expect(JSON.parse(sent()[0].init.body).stream).toBe(false);
+    await transport.agentTurn('demo-fast',context(),new AbortController().signal);
+    expect(JSON.parse(sent()[1].init.body).stream).toBe(true);
   });
 });
 
@@ -85,7 +88,7 @@ describe('progress while the model writes a tool call',()=> {
 });
 
 describe('run failures are named for the person',()=> {
-  it.each(['DEMO_TOOLS_UNAVAILABLE','AGENT_BUDGET','AGENT_TOKEN_BUDGET','AGENT_STALLED','AGENT_BLOCKED','AGENT_TIMEOUT','AGENT_CONTEXT_LIMIT'])('%s has a message that says nothing changed',failure=> {
+  it.each(['DEMO_TOOLS_UNAVAILABLE','AGENT_BUDGET','AGENT_TOKEN_BUDGET','AGENT_USAGE_UNAVAILABLE','AGENT_STALLED','AGENT_BLOCKED','AGENT_TIMEOUT','AGENT_CONTEXT_LIMIT'])('%s has a message that says nothing changed',failure=> {
     expect(AI_MESSAGES[failure]).toContain('Nothing changed');
   });
 });

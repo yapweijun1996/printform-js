@@ -80,13 +80,15 @@ describe('the agent loop',()=> {
 });
 
 describe('what a finished run reports',()=> {
-  it('carries the inspection only when the final draft is the one that was inspected',async()=> {
+  it('requires another inspection when an edit or undo makes the last one stale',async()=> {
     const inspected = await run([call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})]).promise;
     expect(inspected.inspection).toMatchObject({ready:true}); expect(inspected.iterations).toBe(3);
-    const stale = await run([call('inspect_draft',{}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('finish',{summary:'Added a note'})]).promise;
-    expect(stale.inspection).toBeUndefined();
-    const undone = await run([call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('undo_step',{}),call('apply_operations',{summary:'Add it again',operations:[note]}),call('finish',{summary:'Added a note'})]).promise;
-    expect(undone.inspection).toBeUndefined();
+    const stale = run([call('inspect_draft',{}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('finish',{summary:'Added a note'}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})]);
+    expect((await stale.promise).inspection.ready).toBe(true);
+    expect(stale.steps[2]).toMatchObject({name:'finish',ok:false,code:'AGENT_INSPECTION_REQUIRED'});
+    const undone = run([call('apply_operations',{summary:'Add a note',operations:[note]}),call('inspect_draft',{}),call('undo_step',{}),call('apply_operations',{summary:'Add it again',operations:[note]}),call('finish',{summary:'Added a note'}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})]);
+    expect((await undone.promise).inspection.ready).toBe(true);
+    expect(undone.steps[4]).toMatchObject({name:'finish',ok:false,code:'AGENT_INSPECTION_REQUIRED'});
   });
 
   it('tells each step what it did, so a timeline can show it',async()=> {
@@ -113,7 +115,7 @@ describe('a run with reference images',()=> {
 describe('what the run remembers',()=> {
   it('keeps the latest notes and the steps still in the draft',async()=> {
     const memory = createAgentMemory();
-    await run([call('take_notes',{notes:'Footer needs a note.'}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('apply_operations',{summary:'Recolour',operations:[{type:'set_style',patch:{color:'#163a65'}}]}),call('undo_step',{}),call('finish',{summary:'Added a note'})],{options:{memory}}).promise;
+    await run([call('take_notes',{notes:'Footer needs a note.'}),call('apply_operations',{summary:'Add a note',operations:[note]}),call('apply_operations',{summary:'Recolour',operations:[{type:'set_style',patch:{color:'#163a65'}}]}),call('undo_step',{}),call('inspect_draft',{}),call('finish',{summary:'Added a note'})],{options:{memory}}).promise;
     expect(memory.notes).toBe('Footer needs a note.'); expect(memory.steps).toEqual([{summary:'Add a note',changes:expect.any(Number)}]);
   });
 });

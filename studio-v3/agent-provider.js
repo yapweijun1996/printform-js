@@ -3,6 +3,7 @@ import { progressText } from './ai-response-reader.js';
 import { assistantContent } from './agent-wire.js';
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { fail } from './ai-edits.js';
+import { agentUsage, addAgentUsage } from './agent-usage.js';
 
 const ZERO = {input:0,output:0,cacheRead:0,cacheWrite:0};
 // A Pi provider that sends each model turn through the Demo transport. The model, its tools and its history are Pi's;
@@ -18,15 +19,18 @@ export function createGatewayModel({transport,alias,signal,assertContext = () =>
     void (async () => {
       try {
         assertContext();
+        if (totals.total === null) throw fail('AGENT_USAGE_UNAVAILABLE');
         if (totals.total >= maxTokens) throw fail('AGENT_TOKEN_BUDGET');
         onPhase('Waiting for the AI service');
         const turn = await transport.agentTurn(alias,context,options.signal || signal,{memory,onProgress:progress=>onPhase(progressText(progress),{progress:true})});
+        const usage = agentUsage(turn.usage);
+        addAgentUsage(totals,usage);
+        onTurn({turn:++turns,totals:{...totals}});
+        if (totals.total === null) throw fail('AGENT_USAGE_UNAVAILABLE');
         output.content = assistantContent(turn.output);
         output.stopReason = output.content.some(block=>block.type === 'toolCall') ? 'toolUse' : 'stop';
-        for (const [key,wire,total] of [['input','prompt_tokens','input'],['output','completion_tokens','output'],['totalTokens','total_tokens','total']]) {
-          const value = turn.usage?.[wire]; if (Number.isFinite(value) && value >= 0) { output.usage[key] = value; totals[total] += value; }
-        }
-        onTurn({turn:++turns,totals:{...totals}});
+        // Pi requires numeric message fields; the host usage projection preserves unavailable components as null.
+        Object.assign(output.usage,{input:usage.input ?? 0,output:usage.output ?? 0,totalTokens:usage.total});
         events.push({type:'start',partial:output}); events.push({type:'done',reason:output.stopReason,message:output}); events.end();
       } catch (error) {
         failed = error;

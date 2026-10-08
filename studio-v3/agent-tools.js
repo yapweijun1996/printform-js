@@ -2,6 +2,7 @@ import { Type } from '@earendil-works/pi-ai';
 import { safeRunDiagnostics } from './ai-inspection.js';
 import { DEMO_CONFIG } from './ai-gateway-config.js';
 import { createAgentMemory } from './agent-memory.js';
+import { fail } from './ai-edits.js';
 
 const reply = (value,extra = {}) => ({content:[{type:'text',text:typeof value === 'string' ? value : JSON.stringify(value)}],details:{},...extra});
 const tool = (name,description,parameters,execute) => ({name,label:name,description,replay:'never',parameters,execute});
@@ -56,9 +57,12 @@ export function createAgentTools({draft,context,inspect,signal,outcome,limits,me
       guarded('take_notes',async ({notes}) => { memory.note(notes); return reply('Noted.',{details:{detail:'saved'}}); })),
     tool('finish','Hand the draft to the person for preview. Only when the request is met and the inspection is ready.',Type.Object({summary:SUMMARY}),
       guarded('finish',async ({summary}) => {
+        const proposal = draft.proposal(summary);
         // The inspection counts only if it was of the draft being handed over; any later step makes it stale.
         const inspection = run.inspected?.candidate === draft.project ? run.inspected.diagnostics : undefined;
-        outcome.proposal = {...draft.proposal(summary),...(inspection ? {inspection} : {})};
+        if (!inspection) throw fail('AGENT_INSPECTION_REQUIRED');
+        if (!inspection.ready) throw fail('AGENT_INSPECTION_BLOCKED');
+        outcome.proposal = {...proposal,inspection};
         return reply('Done. The person reviews and applies it.',{terminate:true});
       })),
     tool('report_blocked','Stop because the request cannot be met with the supported operations. Say why.',Type.Object({reason:SUMMARY}),
