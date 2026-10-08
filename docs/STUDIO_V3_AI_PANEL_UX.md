@@ -8,6 +8,7 @@ Evidence tags: **[code]** the string or behavior was found in the source; **[sho
 
 - The Stop button is **not** unnamed: it has `aria-label="Stop request"` and a tooltip (`index.html`). It is icon-only to sighted users (UX-04, low).
 - "Observed model capabilities" is a **collapsed** `<details>` developer diagnostic (`ai-reference-files.js:16`), not an empty heading. The problem is that it is shown to every user (UX-11).
+- Remove (UX-13) looked faint only because the screenshot was taken **while a request ran**: the references area is disabled then (`setBusy()`), and `tokens.css:8` gives every disabled button `opacity:.48`. Its default state was not shown to be low contrast, so UX-13 is withdrawn.
 - "Waiting for the AI service · 0 s" is the elapsed time of **one request** (`ai-response-reader.js:17-18`); it restarts every turn of a step run, so a healthy run keeps showing "0 s" (UX-03).
 
 ## Backlog
@@ -28,7 +29,7 @@ Priority: **P1** the user cannot tell what is happening; **P2** layout and scrol
 | UX-10 | P3 | The same privacy and image message appears three times **[code]** | `reference-images.js`, `ai-reference-files.js`, `ai-panel.js` | One notice states what is sent and to whom; the others are removed or only appear when they add new information. |
 | UX-11 | P3 | Developer diagnostic shown to all users **[code]** | `ai-reference-files.js:16` | Hidden by default for normal users (settings or an explicit action); the existing `studio-v3-boss-demo.spec.js` check is updated, not deleted. |
 | UX-12 | P3 | PDF-reading mode selector is visible when only an image is attached **[shot]** | `ai-reference-files.js:10` | The selector appears only when a PDF is attached or about to be. |
-| UX-13 | P3 | Remove is low-contrast, yet it discards the attachment **[shot]** | `ai-panel.css` | Remove meets WCAG AA contrast and has a visible keyboard focus state. |
+| UX-13 | withdrawn | Remove looked low-contrast **[shot]**, but that is the disabled style used while a request runs (`opacity:.48`), not its default look. | `tokens.css:8`, `ai-reference-files.js` | None unless a contrast measurement of the default state fails (then reopen). |
 | UX-14 | P4 | The default "Whole form" scope uses a warning colour and long copy **[shot]** | `ai-panel.js`, `ai-panel.css:34` | The default state is neutral; the explanation is one short line; the amber style is kept only for states that need attention. |
 | UX-15 | P4 | Technical words reach the user: "Demo gateway", "provider", "OCR", "layout interpretation" **[shot]** | several | A glossary decision is recorded; visible copy uses it consistently. |
 | UX-16 | P4 | "1 page(s)" and "image-only, no extracted text" read like an error for a plain image **[code]** | `ai-reference-files.js:60` | An image shows its name and size only; the no-text note appears for PDFs only. |
@@ -44,7 +45,7 @@ Priority: **P1** the user cannot tell what is happening; **P2** layout and scrol
 
 ## Suggested slices
 
-1. **S1, low risk:** UX-08, 09, 11, 12, 13, 16 (the references area; no wording of the run itself).
+1. **S1, low risk:** UX-08, 09, 11, 12, 16 (the references area; no wording of the run itself).
 2. **S2, copy:** UX-01 to UX-03, 10, 14, 15 (needs the glossary decision).
 3. **S3, layout:** UX-05 to UX-07 (needs browser evidence in three engines).
 4. **S4, audit:** UX-17, 18.
