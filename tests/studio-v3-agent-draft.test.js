@@ -66,4 +66,14 @@ describe('the agent draft',()=> {
   it('has nothing to propose before any step',()=> {
     expect(code(()=>createDraft(newProject()).proposal('Nothing'))).toBe('NO_CHANGES');
   });
+
+  it.each([['label-customer-ship','customer-ship'],['customer-ship','label-customer-ship']])('merges %s and %s as one field property', (first,second)=> {
+    const project = newProject(); project.manifest.studioV3.customer.find(field=>field.id === 'ship').labelStyle = {fontSize:9};
+    const draft = createDraft(project), set = (target,size)=>[{type:'set_field',target,patch:{labelStyle:{fontSize:size}}}];
+    draft.apply('Enlarge',set(first,12)); draft.apply('Adjust',set(second,11));
+    expect(draft.proposal('Final size').diff).toEqual([{target:first,property:'labelStyle',before:'{"fontSize":9}',after:'{"fontSize":11}'}]);
+    draft.apply('Restore',set(second,9));
+    expect(designOf(draft.project)).toEqual(designOf(project));
+    expect(code(()=>draft.proposal('No net change'))).toBe('NO_CHANGES');
+  });
 });

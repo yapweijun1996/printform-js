@@ -72,12 +72,13 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       if (sessionTurns >= DEMO_CONFIG.agent.sessionRequests) { session.clear(); sessionTurns = 0; }
       sessionTurns += 1;
       let guard;
-      if (usesImages(context)) {
+      const images = usesImages(context);
+      if (images) {
         if (!imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
         const generation = discoveryGeneration;
         guard = () => { if (generation !== discoveryGeneration || !imageModels.has(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED'); };
       }
-      const body = agentBody({alias,context,memory,stream:DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
+      const body = agentBody({alias,context,memory,stream:images ? DEMO_CONFIG.stream.images : DEMO_CONFIG.stream.text}), progress = createProgress(onProgress);
       try {
         const payload = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,[assertDispatch]:guard},DEMO_CONFIG.modelTimeoutMs,progress);
         return {output:agentOutput(payload),usage:responsesUsage(payload)};

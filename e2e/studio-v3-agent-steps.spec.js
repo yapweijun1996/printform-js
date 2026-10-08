@@ -15,7 +15,7 @@ async function gateway(page,mode = 'run') {
     const call = (n,name,args)=>({id:`fc_${n}`,type:'function_call',status:'completed',call_id:`call_${n}`,name,arguments:JSON.stringify(args)});
     const navy = {summary:'Navy accents',operations:[{type:'set_style',patch:{color:'#163a65'}}]};
     const script = mode === 'images'
-      ? [()=>call(1,'get_context',{}),()=>call(2,'take_notes',{notes:'Two columns; total bottom right.'}),()=>call(3,'get_context',{}),()=>call(4,'get_context',{}),()=>call(5,'apply_operations',navy),()=>call(6,'finish',{summary:'Navy accents'})]
+      ? [()=>call(1,'get_context',{}),()=>call(2,'take_notes',{notes:'Two columns; total bottom right.'}),()=>call(3,'get_context',{}),()=>call(4,'get_context',{}),()=>call(5,'apply_operations',navy),()=>call(6,'inspect_draft',{}),()=>call(7,'finish',{summary:'Navy accents'})]
       : [()=>call(1,'get_context',{}),()=>call(2,'apply_operations',navy),()=>call(3,'inspect_draft',{}),()=>call(4,'finish',{summary:'Navy accents'})];
     let turns = 0; window.__wire = [];
     window.fetch = async (input,init)=> {
@@ -39,6 +39,8 @@ const send = async(page,text = 'Use navy accents #163a65.')=> { await page.locat
 const wire = page=>page.evaluate(()=>window.__wire);
 
 test('works in steps: a visible timeline, one reviewable proposal, then Apply and Undo',async({page},info)=> {
+  const errors=[]; page.on('pageerror',error=>errors.push(error.message));
+  page.on('console',message=> { if (message.type() === 'error') errors.push(message.text()); });
   await page.addInitScript(()=>{ window.__hold = true; }); await gateway(page); await open(page); await send(page);
   const steps = page.locator('[data-ai-log] .ai-steps li');
   await expect(steps.first()).toContainText('Read the form'); await expect(steps.nth(1)).toContainText('Changed the draft · 1 change');
@@ -55,6 +57,7 @@ test('works in steps: a visible timeline, one reviewable proposal, then Apply an
   expect(sent).toHaveLength(4); expect(sent.every(body=>Array.isArray(body.tools) && body.tool_choice === 'auto')).toBe(true);
   expect(sent.every(body=>body.store === undefined && body.previous_response_id === undefined)).toBe(true);
   expect(sent[1].input.map(item=>item.type || item.role)).toEqual(['system','user','reasoning','function_call','function_call_output']);
+  expect(errors).toEqual([]);
 });
 
 test('falls back to one step when the gateway does not allow tools, and does not ask again',async({page})=> {
@@ -85,7 +88,8 @@ test('works in steps on a reference image: it is sent on the first turns only, a
   await send(page,'Use navy accents #163a65, following the reference.');
   await expect(page.locator('[data-ai-proposal]')).toBeVisible({timeout:30000});
   const sent = (await wire(page)).filter(body=>body.tools);
-  expect(sent.map(body=>JSON.stringify(body.input).includes('data:image/'))).toEqual([true,true,true,true,false,false]);
+  expect(sent.map(body=>JSON.stringify(body.input).includes('data:image/'))).toEqual([true,true,true,true,false,false,false]);
+  expect(sent.map(body=>body.stream)).toEqual([false,false,false,false,true,true,true]);
   expect(JSON.stringify(sent.at(-1).input)).toContain('Two columns; total bottom right.'); expect(JSON.stringify(sent.at(-1).input)).toContain('no longer attached');
   await expect(page.locator('#revision')).toHaveText('r0');
 });

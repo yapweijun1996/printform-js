@@ -3,7 +3,7 @@ import {
   DEMO_SESSION_TTL_SECONDS, DEMO_SESSION_REFRESH_SKEW_MS
 } from '../studio-v2/ui/agent-demo-gateway.js';
 const MIB = 1024 * 1024;
-// Timing. Each gateway request has its own cap; the Send total is only a safety net derived from them.
+// Timing. Each gateway request has its own cap; the single-step Send total is derived from them.
 const DISCOVER_MS = 15_000, MODEL_MS = 60_000, MODEL_REQUESTS = 3, INSPECTION_MS = 10_000;
 // Single home for the Demo Gateway address, session timing and wire limits.
 // The gateway itself is outside this repository; these mirror its published limits.
@@ -21,8 +21,8 @@ export const DEMO_CONFIG = Object.freeze({
   maxModelRequests: MODEL_REQUESTS,
   inspectionAllowanceMs: INSPECTION_MS,
   sendTimeoutMs: DISCOVER_MS + MODEL_REQUESTS * (MODEL_MS + INSPECTION_MS),
-  // A tool-using authoring run. maxRunTokens stops a run before it spends more than that in all (a turn that would
-  // start past it does not start). maxTurns counts tool calls (each continuing model turn makes at least one); the
+  // A tool-using authoring run. maxRunTokens blocks the next request once accounted usage reaches the cap;
+  // an admitted response may cross it. Unreliable usage stops the run. maxTurns counts tool calls; the
   // other two stop a run that is going nowhere or has gone on too long. Stop by the person always works.
   agent: Object.freeze({maxTurns:1000,maxRepeatedFailures:5,maxRunMs:60 * 60 * 1000,sessionRequests:15,keepToolResults:6,maxRunTokens:2_000_000,maxContextChars:400_000,keepTurns:4,maxNoteChars:2000,imageTurns:4}),
   // The gateway's default routing alias; others are discovered from /models.

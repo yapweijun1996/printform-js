@@ -33,13 +33,14 @@ describe('a tool run over the Demo gateway',()=> {
     const {promise,bodies,provider,project} = setup([
       turn([reasoning(1),msg('Reading the form.'),fn(1,'get_context',{})],100),
       turn([reasoning(2),fn(2,'apply_operations',{summary:'Add a note',operations:[note]})],200),
-      turn([reasoning(3),fn(3,'finish',{summary:'Added a footer note'})],300)
+      turn([reasoning(3),fn(3,'inspect_draft',{})],300),
+      turn([reasoning(4),fn(4,'finish',{summary:'Added a footer note'})],400)
     ]);
     const result = await promise;
-    expect(result.kind).toBe('proposal'); expect(result.turns).toBe(3); expect(designOf(result.candidate).footer.some(field=>field.id === 'note-two')).toBe(true);
+    expect(result.kind).toBe('proposal'); expect(result.turns).toBe(4); expect(designOf(result.candidate).footer.some(field=>field.id === 'note-two')).toBe(true);
     expect(designOf(project).footer.some(field=>field.id === 'note-two')).toBe(false);
-    expect(provider.usage()).toEqual({input:600,output:6,total:606});
-    expect(bodies).toHaveLength(3);
+    expect(provider.usage()).toEqual({input:1000,output:8,total:1008});
+    expect(bodies).toHaveLength(4);
     const second = bodies[1].input;
     expect(second.map(item=>item.type || item.role)).toEqual(['system','user','reasoning','message','function_call','function_call_output']);
     expect(second[2]).toEqual({type:'reasoning',id:'rs_1',summary:[],encrypted_content:'enc-1'});

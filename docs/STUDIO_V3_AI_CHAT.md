@@ -49,28 +49,38 @@ form and calls local tools: `get_context` (structure, bindings, authoring target
 typed operations and checks as a single proposal, at most 24 per call), `inspect_draft` (a real print preview of the
 draft), `undo_step`, `finish` (hands the result over) and `report_blocked`. Each step is checked against the previous
 one by the same parser and the same scope rules; the live form is never touched. `finish` turns the draft into one
-proposal with the net change, and the usual Preview, Apply and Undo take it. Its inspection counts as passed only if
-the final draft is the one that was inspected.
+proposal with the net change, and the usual Preview, Apply and Undo take it. A missing, stale or failed inspection
+rejects `finish` with a recoverable `AGENT_INSPECTION_REQUIRED` or `AGENT_INSPECTION_BLOCKED` tool error. The agent must
+inspect the exact final draft successfully before finishing. Label and field aliases merge as one property in the net
+change list; restoring that property to its initial value removes it from the list.
 
 Limits, all in the gateway config: 1000 tool calls per run, a stop after the same failing step repeats 5 times, and 60
-minutes. Stop works at any time and cancels the request in flight. A run also stops if the live form changes. The panel
+minutes from entry into the multi-step loop, after model discovery. The panel and Pi lane use the same configured
+agent deadline. Single-step runs retain the 225-second Send limit; a fallback from agent mode re-arms that short limit.
+Each provider request still has its own 60-second limit. Stop works at any time and cancels the request in flight.
+A run also stops if the live form changes. The panel
 shows the latest steps while it works; a rejected step is shown as such and the model sees its error code and repairs it.
 
 Each turn resends the conversation (the gateway keeps no state), with encrypted reasoning replayed from the previous
 turn; older tool results are folded and the request has a size limit. A fresh gateway session starts every 15
 requests. This needs the gateway to allow client-executed function tools for the project (`agent_tools_enabled`) and a
 native OpenAI route. If the gateway refuses tools, the panel says so once, uses the single-step flow, and does not ask
-again until the page is reloaded or the setting is switched. Questions, requests with images and the setting
-"Work in steps (beta)" in the settings menu (on by default, remembered in the browser) use the single-step flow.
+again until the page is reloaded or the setting is switched. Questions and disabling "Work in steps (beta)" in the
+settings menu use the single-step flow. The setting is on by default and remembered in the browser. Confirmed image
+support permits image-bearing agent runs; otherwise their pixels cannot be sent.
 
-Long runs and cost. A run has a token budget (2,000,000 in all; a turn that would start past it does not start) and the
-status line shows the tokens so far. The model can keep notes with `take_notes`: they replace its earlier notes, are
+Long runs and cost. A run has a token budget (2,000,000; no next request starts once accounted usage reaches it) and the
+status line shows the tokens so far. One admitted response may cross that budget; this is not an exact billing ceiling.
+Usage counts must be non-negative safe integers and consistent. A missing total is derived from valid input and output
+counts; a valid total can be used with unavailable components, which remain `null` in the host usage projection.
+Missing or inconsistent total consumption stops the run with `AGENT_USAGE_UNAVAILABLE`, without another request or a
+proposal. Unknown consumption is never reported as zero. The model can keep notes with `take_notes`: they replace its earlier notes, are
 capped at 2,000 characters, and are shown to it on every turn together with the steps still in the draft, so they
 survive folded results and dropped turns. When the request grows past 400,000 characters the oldest turns are replaced
 by one message carrying the notes and the step list, and only the newest four turns stay; a call is never left without
 its result.
 
-Reference images (and the pages of a visual PDF) go with the request on the first four turns only, because the gateway
+Reference images (and the pages of a visual PDF) go with non-streaming requests on the first four turns only, because the gateway
 keeps no state and every turn would resend them; after that a line says they are gone and the model works from its
 notes. They need the same confirmed image support as the single-step flow. A PDF's extracted text and positions reach
 the agent through `get_context`. Designing a new form from an image or PDF is not done here: the agent amends the

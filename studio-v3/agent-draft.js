@@ -2,6 +2,7 @@ import { parseProposal, fail } from './ai-edits.js';
 import { assertScope } from './ai-chat-protocol.js';
 import { explicitBindingPointers } from './ai-authoring.js';
 import { missesTableBackgroundIntent } from './table-background-intent.js';
+import { labelSelection } from './design-authoring.js';
 
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 // One entry per changed property: the value it had at the start and the value it has now. A change that a later
@@ -9,7 +10,7 @@ const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 function mergeDiff(entries) {
   const merged = new Map();
   for (const entry of entries) {
-    const key = `${entry.target}\u0000${entry.property}`, first = merged.get(key);
+    const key = `${labelSelection(entry.target)}\u0000${entry.property}`, first = merged.get(key);
     merged.set(key,first ? {...first,after:entry.after} : {...entry});
   }
   return [...merged.values()].filter(entry=>!same(entry.before,entry.after));
