@@ -45,7 +45,7 @@ Priority: **P1** the user cannot tell what is happening; **P2** layout and scrol
 ## Suggested slices
 
 1. **S1, low risk:** UX-08, 09, 11, 12, 13, 16 (the references area; no wording of the run itself).
-2. **S2, copy:** UX-01 to UX-04, 10, 14, 15 (needs the glossary decision).
+2. **S2, copy:** UX-01 to UX-03, 10, 14, 15 (needs the glossary decision).
 3. **S3, layout:** UX-05 to UX-07 (needs browser evidence in three engines).
 4. **S4, audit:** UX-17, 18.
 
