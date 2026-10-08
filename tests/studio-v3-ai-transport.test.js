@@ -67,7 +67,7 @@ function visualTransport() {
  }});
  return {transport,state,calls};
 }
-const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {resolve,promise};};
+const deferred=()=>{let resolve,reject;const promise=new Promise((res,rej)=>{resolve=res;reject=rej;});return {resolve,reject,promise};};
 describe('v3 reference media capability boundary',()=>{
  it('rejects unknown capability and other aliases before sending a reference',async()=>{
   const {transport,state,calls}=visualTransport();
@@ -171,5 +171,28 @@ describe('v3 capability revocation and session lifecycle',()=>{
   const error=await pending;await rediscovery;
   expect(error.code).toBe('DEMO_IMAGE_CAPABILITY_UNVERIFIED');expect(inference).toBe(1);expect(transport.supportsImages('demo-fast')).toBe(false);
   expect(errorMessage(error)).toContain('Image analysis is unavailable');expect(errorMessage(error).toLowerCase()).not.toContain('nothing was sent');
+ });
+});
+describe('v3 image request cancellation',()=>{
+ const inflight=honorAbort=>{
+  const held=deferred();let started=false;
+  const transport=createDemoTransport({fetchImpl:async(url,init)=>{
+   if(url.endsWith('/session'))return json({token:'dmo_synthetic123'});
+   if(url.endsWith('/models'))return json({data:[visualModel()]});
+   started=true;
+   if(honorAbort)init.signal.addEventListener('abort',()=>held.reject(new DOMException('aborted','AbortError')));
+   return held.promise;
+  }});
+  return {transport,held,started:()=>started};
+ };
+ it('rejects an image Responses request that is stopped while in flight',async()=>{
+  const {transport,held,started}=inflight(true),controller=new AbortController();await transport.discover();
+  const pending=transport.plan('demo-fast','reference',controller.signal,media),assertion=expect(pending).rejects.toMatchObject({name:'AbortError'});
+  await vi.waitFor(()=>expect(started()).toBe(true));controller.abort();await assertion;void held;
+ });
+ it('does not return a reply that arrives after Stop even when fetch ignores the signal',async()=>{
+  const {transport,held,started}=inflight(false),controller=new AbortController();await transport.discover();
+  const pending=transport.plan('demo-fast','reference',controller.signal,media),assertion=expect(pending).rejects.toThrow();
+  await vi.waitFor(()=>expect(started()).toBe(true));controller.abort();held.resolve(json(visualReply));await assertion;
  });
 });

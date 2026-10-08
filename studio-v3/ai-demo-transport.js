@@ -27,6 +27,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
         source += decoder.decode(part.value,{stream:true});
         if (source.length > 64000) throw fail('DEMO_RESPONSE_LIMIT');
       }
+      options.signal?.throwIfAborted();
       source += decoder.decode(); return JSON.parse(source);
     } catch (error) { if (error.code || error.name === 'AbortError') throw error; throw fail('MALFORMED_PROPOSAL'); }
     finally { await reader.cancel().catch(()=>{}); }
