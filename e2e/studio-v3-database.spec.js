@@ -137,7 +137,9 @@ test('dataset import/export, deletion persistence, reset cancellation and mobile
   for (const width of [820,390]) {
     await page.setViewportSize({width,height:980}); await enter(page,'customer');
     await page.getByLabel('/customer/name',{exact:true}).fill(`Client width ${width}`); await save(page,true);
-    await expect(frame(page).locator('[data-v3-id=customer-bill]').first()).toHaveText(`Client width ${width}`);
+    // Page thumbnails are cloned from the rendered pages in the main document (open shadow DOM). Firefox
+    // intermittently cannot reach a re-navigated srcdoc frame even though the paper renders correctly.
+    await expect(page.locator('.thumbnail-scene [data-v3-id=customer-bill]').first()).toHaveText(`Client width ${width}`);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:info.outputPath(`database-width-${width}.png`)});
     await button(page,'preview').click(); await expect(page.locator('#database-workbench')).toBeHidden();
