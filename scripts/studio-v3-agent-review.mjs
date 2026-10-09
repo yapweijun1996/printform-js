@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const KINDS = Object.freeze(['updated','no-impact','reconciled']);
+// Committed release state: the last successful publication (recorded from the live site) and the owner dispositions.
+export const RELEASE_DIR = 'docs/studio-v3-agent-release';
 const SAFE = /^[a-zA-Z0-9_./-]+$/;
 const sameBaseline = (a,b) => (a === null && b === null) || (a && b && a.release === b.release && a.packageHash === b.packageHash);
 
@@ -52,3 +54,23 @@ function checkDisposition(change,item,{firstBaseline,previousIndex,currentIndex,
   }
   return errors;
 }
+
+export function readReleaseState(root = process.cwd()) {
+  const read = name => { const file = path.resolve(root,RELEASE_DIR,name); return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file,'utf8')) : null; };
+  const baseline = read('baseline-manifest.json'), review = read('review.json');
+  if (!baseline || !review) throw new Error(`Missing release baseline or review in ${RELEASE_DIR}; run scripts/record-studio-v3-agent-baseline.mjs.`);
+  return {baseline,baselineIndex:read('baseline-index.json'),review};
+}
+// Publication gate: throws with every unreviewed, stale or unsupported change.
+export function assertReleaseReview(generated,{root = process.cwd(),state = readReleaseState(root)} = {}) {
+  const {errors,reviewed} = checkReleaseReview({report:generated.changes,review:state.review,manifest:generated.manifest,previousIndex:state.baselineIndex,currentIndex:generated.index,root});
+  if (errors.length) throw new Error(`Studio v3 agent release review failed (${errors.length}):\n${errors.join('\n')}\nDraft dispositions: node scripts/draft-studio-v3-agent-review.mjs`);
+  return {reviewed,changes:generated.changes.changes.length};
+}
+// Skeleton dispositions for the pending changes, bound to their current digests; an owner fills in each decision.
+export function draftDispositions(generated) {
+  const hashes = new Map(generated.manifest.entries.map(entry => [entry.id,entry.hash]));
+  return generated.changes.changes.map(change => ({entries:{[change.id]:change.kind === 'removed' ? 'removed' : hashes.get(change.id)},disposition:'TODO: updated | no-impact',
+    justification:'TODO',evidence:[...(change.impacts?.evaluations || [])].slice(0,1),causes:change.causes,impacts:change.impacts}));
+}
+

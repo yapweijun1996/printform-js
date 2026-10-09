@@ -19,7 +19,9 @@ describe('Studio v3 agent discovery and lifecycle (COV-05)', () => {
   afterEach(() => { for (const id of ['agent-registry','agent-handlers','agent-knowledge']) vi.doUnmock(`../studio-v3/${id}.js`); vi.resetModules(); });
 
   it('keeps the generated workflow module in sync with the ledger', () => {
-    expect(fs.readFileSync(MODULE,'utf8')).toBe(renderWorkflowsModule(fs.readFileSync(LEDGER,'utf8')));
+    // Compare with LF on both sides: a Windows checkout (text=auto, autocrlf) holds these files with CRLF.
+    const lf = file => fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
+    expect(lf(MODULE)).toBe(renderWorkflowsModule(lf(LEDGER)));
     const rows = parseCsv(fs.readFileSync(LEDGER,'utf8')).rows, notCallable = rows.filter(row => row.disposition !== 'agent-callable' || row.agent_path === 'none');
     expect(LEDGER_WORKFLOWS.map(row => row[0])).toEqual(notCallable.map(row => row.id));
   });
