@@ -1,24 +1,12 @@
 import {describe,it,expect} from 'vitest';
 import fs from 'node:fs';
+import {read,parseCsv} from './support/feature-ledger.js';
 
-const read = file => fs.readFileSync(file,'utf8');
-const parseCsv = text => {
-  const rows = []; let row = [], cell = '', quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quoted) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') quoted = false; else cell += c; }
-    else if (c === '"') quoted = true;
-    else if (c === ',') { row.push(cell); cell = ''; }
-    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
-    else cell += c;
-  }
-  const [header,...body] = rows;
-  return body.map(values => Object.fromEntries(header.map((name,i) => [name,values[i] ?? ''])));
-};
 const LEDGER_MD = read('docs/STUDIO_V3_FEATURE_LEDGER.md');
 const ROWS = parseCsv(read('docs/STUDIO_V3_FEATURE_LEDGER.csv'));
 const DISPOSITIONS = ['agent-callable','human-mediated','intentionally-unavailable'];
-const ledgerIds = new Set(ROWS.flatMap(row => row.ui_entries.split(';').filter(Boolean)));
+// Bare entries are action IDs; `attr:value` selector entries are checked in the selector test.
+const ledgerIds = new Set(ROWS.flatMap(row => row.ui_entries.split(';').filter(id => id && !id.includes(':'))));
 const sourceFiles = ['studio-v3/index.html','studio-v3/app.js','studio-v3/database-controller.js','studio-v3/database-view.js','studio-v3/views.js','studio-v3/workspace-views.js','studio-v3/form-drafts.js'];
 const between = (text,start,end) => text.slice(text.indexOf(start),end ? text.indexOf(end,text.indexOf(start)) : undefined);
 const names = text => [...text.matchAll(/name === '([a-z-]+)'/g)].map(m => m[1]);
