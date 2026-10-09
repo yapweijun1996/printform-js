@@ -32,7 +32,8 @@ describe('Studio v3 feature ledger (selector entries)', () => {
     expect(required.filter(id => !mapped.has(id))).toEqual([]);
   });
   it('does not keep selector entries that no longer exist in the source', () => {
-    expect([...mapped].filter(id => !selectorEntries(source).has(id)).sort()).toEqual([]);
+    const present = selectorEntries(source);
+    expect([...mapped].filter(id => !present.has(id)).sort()).toEqual([]);
   });
   it('detects a newly added selector value (negative control)', () => {
     const extra = selectorEntries(`${source}\n<button data-mode="pilot-new-mode">`);
