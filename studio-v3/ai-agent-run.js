@@ -11,6 +11,6 @@ export async function runPanelAgent({transport,alias,payload,media,project,signa
   const memory = createAgentMemory();
   const provider = createGatewayModel({transport,alias,signal,assertContext,memory,onTurn:({totals})=>{ spent = totals.total; },onPhase:(text,options)=>onPhase(spent ? `${text} · ${spent.toLocaleString('en-US')} tokens` : text,options)});
   const result = await runAgentLoop({...provider,memory,media,project,request:payload.request,scope:payload.scope,references:payload.references,
-    context:current=>chatRequest(current,payload),inspect:inspectCandidate,signal,onStep});
+    context:(current,info)=>chatRequest(current,payload,{mode:'steps',...info}),inspect:inspectCandidate,signal,onStep});
   return {...result,mode:'steps',usage:provider.usage()};
 }

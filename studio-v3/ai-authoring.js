@@ -19,7 +19,9 @@ function reorder(list,order,ids) {
   if (!Array.isArray(order) || order.length !== list.length || new Set(order).size !== list.length || order.some(id=>!ids.includes(id))) unsafe();
   return order.map(id=>list[ids.indexOf(id)]);
 }
-export const AUTHORING_TYPES = ['set_element_style','set_style','set_table_style','set_field','add_field','remove_field','reorder_fields','set_section','reorder_sections','set_page','set_logo','set_collection','set_heading'];
+export { AUTHORING_TYPES } from './agent-operation-schemas.js';
+import { AUTHORING_TYPES } from './agent-operation-schemas.js';
+import { financialField, protectedBindings, assertProtectedBindings } from './agent-binding-invariants.js';
 export function applyAuthoring(design,operations,project,explicitPointers=[]) {
   if (!Array.isArray(operations) || !operations.length) unsafe();
   if (operations.length > MAX_AUTHORING_OPERATIONS) throw contractError('AUTHORING_OPERATION_LIMIT',{operationCount:operations.length,maxOperations:MAX_AUTHORING_OPERATIONS});
@@ -55,7 +57,7 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       object(op,['type','target','patch']); object(op.patch,fieldKeys);
       const selected = selectionField(design,op.target); if (!selected) unsafe();
       if (op.target.startsWith('label-') && Object.keys(op.patch).some(key=>!['label','showLabel','labelStyle'].includes(key))) unsafe();
-      const financial = selected.field.pointer && (selected.field.format === 'currency' || /(?:^|[-/_])(amount|total|subtotal|tax|rate|price|balance|discount)(?:[-/_]|$)/i.test(`${selected.field.id}/${selected.field.pointer}`));
+      const financial = financialField(selected.field);
       const suppliedNumber = selected.field.pointer && (['currency','number','percent'].includes(selected.field.format) || financial);
       if (suppliedNumber && (Object.hasOwn(op.patch,'text') || (op.patch.kind !== undefined && op.patch.kind !== 'bound') || (financial && op.patch.pointer !== undefined && op.patch.pointer !== selected.field.pointer) || (op.patch.format !== undefined && op.patch.format !== selected.field.format))) unsafe();
       for (const [key,value] of Object.entries(op.patch)) {
@@ -113,6 +115,7 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
     if (f.pointer && (f.pointer !== old?.pointer || (block === 'items' && design.collection !== project.manifest.studioV3.collection)) && !availableBindings(project,explicitPointers,design.collection).some(b=>b.pointer === f.pointer && b.relative === (block === 'items') && (!b.relative || b.collection === design.collection) && b.type !== 'array')) unsafe();
   }
   if (design.collection !== project.manifest.studioV3.collection && !availableBindings(project,explicitPointers).some(b=>b.pointer === design.collection && b.type === 'array')) unsafe();
+  assertProtectedBindings(protectedBindings(project.manifest.studioV3),design);
   return {diff,targets};
 }
 

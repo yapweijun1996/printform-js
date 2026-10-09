@@ -10,6 +10,7 @@ import {newProject} from '../studio-v3/model.js';
 import {createBus} from '../studio-v3/controller.js';
 import {saveProject} from '../studio-v3/file-io.js';
 import {runtimeSources} from '../studio-v3/runtime-assets.js';
+import {generateAgentPackage} from '../scripts/generate-studio-v3-agent.mjs';
 import {finalizeStudioV3Pwa} from '../scripts/studio-v3-pwa.mjs';
 import {checkRegistration,navigateUpdate} from '../studio-v3/update.js';
 import {restoreDraftRecords} from '../studio-v3/form-drafts.js';
@@ -140,6 +141,7 @@ it('build emits an isolated scope, immutable asset URLs and a complete content m
     fs.writeFileSync(path.join(temp,'studio-v2/icon.svg'),'<svg/>');
     for(const name of ['app.js','tokens.css','styles.css','ai-panel.css','update.css'])fs.writeFileSync(path.join(temp,'studio-v3',name),name);
     for(const name of ['printform.js','printform-document.js'])fs.writeFileSync(path.join(temp,'dist',name),name);
+    generateAgentPackage({output:temp,revision:'a'.repeat(40)});
     finalizeStudioV3Pwa(temp,'a'.repeat(40));
     const html=fs.readFileSync(path.join(temp,'studio-v3/index.html'),'utf8');expect(html).toContain(`releases/${'a'.repeat(40)}/app.js`);
     const sw=fs.readFileSync(path.join(temp,'studio-v3/sw.js'),'utf8');expect(sw).not.toContain('__PRINTFORM');expect(sw).toContain('printform-document.js');

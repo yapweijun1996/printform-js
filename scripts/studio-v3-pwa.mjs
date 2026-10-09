@@ -9,6 +9,11 @@ export function finalizeStudioV3Pwa(output, revision = process.env.GITHUB_SHA ||
   const target = path.resolve(root,release); fs.mkdirSync(target,{recursive:true});
   const names = ['app.js','tokens.css','styles.css','ai-panel.css','update.css'];
   for (const name of names) fs.copyFileSync(path.resolve(root,name),path.resolve(target,name));
+  const agent = path.resolve(root,'agent');
+  if (!fs.existsSync(path.resolve(agent,'agent-manifest.json'))) throw new Error('Missing Studio v3 agent package.');
+  const identity = JSON.parse(fs.readFileSync(path.resolve(agent,'agent-manifest.json'),'utf8'));
+  if (identity.release !== revision) throw new Error('Studio v3 agent package revision mismatch.');
+  fs.cpSync(agent,path.resolve(target,'agent'),{recursive:true});
   if (fs.existsSync(path.resolve(root,'chunks'))) fs.cpSync(path.resolve(root,'chunks'),path.resolve(target,'chunks'),{recursive:true});
   for (const name of ['printform.js','printform-document.js']) fs.copyFileSync(path.resolve(output,'dist',name),path.resolve(target,name));
   fs.copyFileSync(path.resolve(output,'studio-v2/icon.svg'),path.resolve(root,'icon.svg'));

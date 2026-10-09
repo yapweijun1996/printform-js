@@ -1,12 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { build } from 'vite';
+import { generateAgentPackage } from './generate-studio-v3-agent.mjs';
 import { newProject } from '../studio-v3/model.js';
 import { validateProject } from '../studio-v2/core/acceptance.js';
 import { serializeStandalone } from '../studio-v2/core/project-model.js';
 
-export async function buildStudioV3({root,output}) {
-  await build({root,base:'./',configFile:false,logLevel:'warn',worker:{rollupOptions:{output:{entryFileNames:'chunks/[name]-[hash].js'}}},build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/app.js'),formats:['es'],fileName:()=> 'app.js'},rollupOptions:{output:{chunkFileNames:'chunks/[name]-[hash].js'}},minify:true,sourcemap:false}});
+export async function buildStudioV3App({root,output,revision=process.env.GITHUB_SHA || 'local'}) {
+  const {identity} = generateAgentPackage({root,output,revision});
+  await build({root,define:{__PRINTFORM_V3_AGENT_IDENTITY__:JSON.stringify(identity)},base:'./',configFile:false,logLevel:'warn',worker:{rollupOptions:{output:{entryFileNames:'chunks/[name]-[hash].js'}}},build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/app.js'),formats:['es'],fileName:()=> 'app.js'},rollupOptions:{output:{chunkFileNames:'chunks/[name]-[hash].js'}},minify:true,sourcemap:false}});
+  return identity;
+}
+
+export async function buildStudioV3({root,output,revision=process.env.GITHUB_SHA || 'local'}) {
+  await buildStudioV3App({root,output,revision});
   // The diagnostic page is a separate, self-contained bundle: its imports reach files outside studio-v3.
   await build({root,base:'./',configFile:false,logLevel:'warn',build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/gateway-probe-page.js'),formats:['es'],fileName:()=> 'gateway-probe-page.js'},minify:true,sourcemap:false}});
   const directory = path.resolve(output,'studio-v3/samples');

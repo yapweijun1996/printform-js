@@ -1,4 +1,6 @@
 export const AI_MESSAGES = {
+  AGENT_RELEASE_MISMATCH:'The assistant and product resources belong to different versions. Reload Studio before retrying. Nothing changed.',
+  AGENT_KNOWLEDGE_UNAVAILABLE:'This version’s assistant resources are unavailable. Retry when online or reload a complete offline installation. Nothing changed.',
   DEMO_IMAGE_CAPABILITY_UNVERIFIED:'Image support is not confirmed for this Demo model. Image analysis is unavailable. Use Check image support to try again, or choose Text & positions and reattach the PDF to send without images.',
   DEMO_SESSION_FORBIDDEN:'Demo session rejected (HTTP 403) for this project and browser Origin. The gateway owner must check the existing registration. Nothing changed.',
   DEMO_SESSION_UNAVAILABLE:'Demo session unavailable. Check connection or existing origin registration. Nothing changed.',

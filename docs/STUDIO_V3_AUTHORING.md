@@ -26,7 +26,9 @@ Amounts, rates, quantities, taxes, rounding, and totals are supplied by the ERP.
 Authoring never creates formulas, computes financial values, or changes sample
 JSON values. Manual binding changes select the source value to display; they do not
 change that value. AI numeric-bound fields cannot become static/image or receive
-replacement text/format; existing financial-bound pointers are also protected.
+replacement text/format; existing financial-bound pointers and item collection are also protected.
+AI step runs retain the initial numeric/financial contract across removal and re-addition of a stable field identity.
+Structural removal remains supported; a rejected re-addition leaves the last valid draft intact.
 Ordinary source bindings can be changed to a disclosed typed candidate path. Invalid or missing bound values block export until resolved.
 
 ## Stable targets
