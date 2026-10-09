@@ -1,0 +1,1 @@
+task_id,profile,attempt,outcome,critical_violation,source_commit,app_digest,knowledge_digest,runner_image,provider_route,model_version,browser_os,budgets_digest,oracle_result,evidence_digest,duration_ms,usage,note
