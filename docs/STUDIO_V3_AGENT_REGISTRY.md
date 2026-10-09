@@ -44,6 +44,27 @@ The catalog no longer carries a hand-written unsupported list. `workflows` count
 
 A deprecated entry stays callable with `status:'deprecated'` and an active `replacementId`. A removed entry leaves a bounded tombstone in `AGENT_TOMBSTONES` (id, name, replacement or null, `removedIn`, advice), published as `removed` in the catalog and in the manifest. The change report carries the replacement advice; a removal without a tombstone is reported with `tombstone:false` for the release gate to reject.
 
+## Knowledge synchronization and release review (CA-02, G2)
+
+`scripts/studio-v3-agent-impact.mjs` follows every static and literal dynamic relative import from each entry's declared sources, so an entry's hash covers its contract, the full import closure (including shared `studio-v2/core` renderer and validator modules) and the contents of its evaluations. Hashes normalize CRLF, so a Windows checkout gives the CI identity. A non-literal dynamic import cannot be tracked and fails the build. The runtime part of `packageHash` uses the same closure instead of a hand-kept list.
+
+The generator writes `studio-v3/agent-index/dependency-index.json` (file hashes plus each entry's files, evaluations and guides). It sits outside the release folder, so the offline shell does not cache it. Given a baseline manifest and index, every change in `capability-changes.json` lists `causes` (changed files it depends on) and `impacts` (dependent guides and evaluations). Without a known predecessor every entry is `added` and `causes` is `null`.
+
+`scripts/studio-v3-agent-review.mjs` is the gate. Each change needs a disposition bound to the entry's current digest:
+
+```json
+{"version":1,"baseline":{"release":"<sha>","packageHash":"<hash>"},"dispositions":[
+  {"entries":{"printform.agent.finish":"<current entry hash>"},"disposition":"no-impact",
+   "justification":"Why the guides and evaluations stay correct.","evidence":["tests/studio-v3-agent-loop.test.js"]}]}
+```
+
+- `updated` needs evidence of a dependent guide, source or evaluation that actually changed since the baseline.
+- `no-impact` needs one of the entry's evaluations and a justification of at least 20 characters.
+- `reconciled` is allowed only for the first full baseline.
+- A changed digest makes the disposition stale. A disposition for an unchanged entry, or one written against another baseline, is reported for removal. A removal without a tombstone is always rejected.
+
+Evidence for each G2 case: KNO-01/02/03/05 and the gate in `tests/studio-v3-agent-knowledge-sync.test.js`, plus deprecation and removal advice in `tests/studio-v3-agent-discovery.test.js`. KNO-06 (mixed release and missing resource stop before model calls, online, offline and cache upgrade) remains covered by the existing registry unit tests and the agent-registry/upgrade browser specs; its runner/artifact part waits for CA-07. KNO-07 is covered by a test showing one identity per run and a refresh on the next run; durable resumable summaries do not exist yet.
+
 ## Version binding and offline operation
 
 Before Vite bundles the app, the generator validates registry IDs, references and existing source/evaluation files, then writes:

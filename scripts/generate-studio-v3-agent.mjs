@@ -5,17 +5,12 @@ import { createHash } from 'node:crypto';
 import { capabilityCatalog, validateRegistry, AGENT_TOMBSTONES } from '../studio-v3/agent-registry.js';
 import { AGENT_SKILLS } from '../studio-v3/agent-knowledge.js';
 import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
+import { fileHash, importClosure, dependencyIndex, entryFileHashes, explainChanges } from './studio-v3-agent-impact.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])) : value;
 const json = value => JSON.stringify(canonical(value));
 const hash = value => createHash('sha256').update(value).digest('hex');
 const revisionPattern = /^(?:[a-f0-9]{40}|local)$/;
-const sourceHash = (root,name) => {
-  if (!/^[a-zA-Z0-9_./-]+$/.test(name) || name.split('/').includes('..') || path.isAbsolute(name)) throw new Error('Invalid agent resource dependency.');
-  const target = path.resolve(root,name);
-  if (!fs.statSync(target).isFile()) throw new Error(`Missing agent dependency: ${name}`);
-  return hash(fs.readFileSync(target));
-};
 export function capabilityChanges(previous,current) {
   if (previous && (previous.version!==1 || !revisionPattern.test(previous.release) || !Array.isArray(previous.entries) ||
       new Set(previous.entries.map(e=>e.id)).size!==previous.entries.length || previous.entries.some(e=>typeof e.id!=='string' || !/^[a-f0-9]{64}$/.test(e.hash)))) throw new Error('Invalid published agent baseline.');
@@ -33,43 +28,47 @@ export function capabilityChanges(previous,current) {
   }
   return {version:1,baseline:previous ? {release:previous.release,packageHash:previous.packageHash} : null,current:{release:current.release,packageHash:current.packageHash},changes};
 }
-export function generateAgentPackage({root=process.cwd(),output,revision=process.env.GITHUB_SHA || 'local',baseline=null}={}) {
+// Runtime/build code whose change alters the package identity even when no capability contract changes.
+const RUNTIME_ROOTS=['studio-v3/agent-loop.js','studio-v3/agent-release.js','studio-v3/ai-agent-run.js','scripts/build-studio-v3.mjs','scripts/studio-v3-pwa.mjs'];
+const skillEntry=skill=>({id:`printform.knowledge.${skill.id}`,sources:[...new Set(['studio-v3/agent-knowledge.js',...skill.sources])],evaluations:skill.evaluations,skills:[skill.id]});
+export function generateAgentPackage({root=process.cwd(),output,revision=process.env.GITHUB_SHA || 'local',baseline=null,baselineIndex=null}={}) {
   if (!revisionPattern.test(revision)) throw new Error('Invalid agent package revision.');
   const capabilities=validateRegistry(), catalog=JSON.parse(json(capabilityCatalog()));
   delete catalog.identity; delete catalog.run;
-  const entries=capabilities.map(entry=> {
-    const sources=Object.fromEntries(entry.sources.map(name=>[name,sourceHash(root,name)]));
-    entry.evaluations.forEach(name=>sourceHash(root,name));
-    return {id:entry.id,status:entry.status || 'active',...(entry.status==='deprecated' ? {replacementId:entry.replacementId} : {}),hash:hash(json({...entry,sourceHashes:sources}))};
-  });
-  const skills=AGENT_SKILLS.map(skill=> {
-    if (!/^[a-z0-9-]{1,80}$/.test(skill.id) || !skill.description || skill.content.length>16000 || !skill.sources.length || !skill.evaluations.length) throw new Error('Invalid bundled agent skill.');
-    skill.evaluations.forEach(name=>sourceHash(root,name));
-    return {id:skill.id,description:skill.description,resource:`resources/${skill.id}.md`,hash:hash(skill.content),
-      sourceHashes:Object.fromEntries([...new Set(['studio-v3/agent-knowledge.js',...skill.sources])].map(name=>[name,sourceHash(root,name)])),evaluations:skill.evaluations};
-  });
+  for (const skill of AGENT_SKILLS) if (!/^[a-z0-9-]{1,80}$/.test(skill.id) || !skill.description || skill.content.length>16000 || !skill.sources.length || !skill.evaluations.length) throw new Error('Invalid bundled agent skill.');
+  // Each entry is hashed over its contract, its sources' full import closure and its evaluations (KNO-01/03).
+  const index=dependencyIndex(root,[...capabilities,...AGENT_SKILLS.map(skillEntry)]);
+  if (index.untracked.length) throw new Error(`Untracked dynamic agent dependency: ${index.untracked.join(', ')}`);
+  const entries=capabilities.map(entry=>({id:entry.id,status:entry.status || 'active',...(entry.status==='deprecated' ? {replacementId:entry.replacementId} : {}),
+    hash:hash(json({...entry,fileHashes:entryFileHashes(index,entry.id)}))}));
+  const skills=AGENT_SKILLS.map(skill=>({id:skill.id,description:skill.description,resource:`resources/${skill.id}.md`,hash:hash(skill.content),
+    sourceHashes:Object.fromEntries(skillEntry(skill).sources.map(name=>[name,fileHash(root,name)])),evaluations:skill.evaluations}));
   const knowledge={version:1,skills}, contractHash=hash(json({catalog,entries})), knowledgeHash=hash(json(knowledge));
-  const runtimeDependencies=['studio-v3/agent-loop.js','studio-v3/agent-release.js','studio-v3/ai-agent-run.js','studio-v3/ai-chat-protocol.js','studio-v3/ai-gateway-config.js','studio-v3/agent-binding-invariants.js','scripts/build-studio-v3.mjs','scripts/studio-v3-pwa.mjs'];
-  const packageHash=hash(json({release:revision,contractHash,knowledgeHash,runtimeHashes:Object.fromEntries(runtimeDependencies.map(name=>[name,sourceHash(root,name)]))}));
-  entries.push(...skills.map(skill=>({id:`printform.knowledge.${skill.id}`,status:'active',hash:hash(json(skill))})));
+  const runtime=importClosure(root,RUNTIME_ROOTS).files;
+  const packageHash=hash(json({release:revision,contractHash,knowledgeHash,runtimeHashes:Object.fromEntries(runtime.map(name=>[name,fileHash(root,name)]))}));
+  entries.push(...skills.map(skill=>({id:`printform.knowledge.${skill.id}`,status:'active',hash:hash(json({...skill,fileHashes:entryFileHashes(index,`printform.knowledge.${skill.id}`)}))})));
   const identity={release:revision,contractHash,knowledgeHash,packageHash};
   const documents={'capabilities.json':json({...catalog,version:1,contractHash,entries})+'\n','knowledge-index.json':json(knowledge)+'\n',
     ...Object.fromEntries(AGENT_SKILLS.map(skill=>[`resources/${skill.id}.md`,skill.content]))};
   const tombstones=AGENT_TOMBSTONES.map(({id,name,replacementId,removedIn,advice})=>({id,name,replacementId,removedIn,advice}));
   const manifest={version:1,...identity,entries,tombstones,files:Object.fromEntries(Object.entries(documents).map(([name,content])=>[name,hash(content)]))};
-  const changes=capabilityChanges(baseline,manifest);
+  const report=capabilityChanges(baseline,manifest), changes={...report,changes:explainChanges(report.changes,baselineIndex,index)};
   if (output) {
-    const directory=path.resolve(output,'studio-v3/agent');
-    for (const [name,content] of Object.entries({...documents,'agent-manifest.json':json(manifest)+'\n','capability-changes.json':json(changes)+'\n'})) {
-      const target=path.resolve(directory,name); fs.mkdirSync(path.dirname(target),{recursive:true}); fs.writeFileSync(target,content);
+    // The dependency index is for release review; it is published outside the release folder, so the offline shell does not cache it.
+    const files={...Object.fromEntries(Object.entries({...documents,'agent-manifest.json':json(manifest)+'\n','capability-changes.json':json(changes)+'\n'}).map(([name,content])=>[`agent/${name}`,content])),
+      'agent-index/dependency-index.json':json(index)+'\n'};
+    for (const [name,content] of Object.entries(files)) {
+      const target=path.resolve(output,'studio-v3',name); fs.mkdirSync(path.dirname(target),{recursive:true}); fs.writeFileSync(target,content);
     }
   }
-  return {identity,manifest,catalog,knowledge,changes};
+  return {identity,manifest,catalog,knowledge,changes,index};
 }
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const args=process.argv.slice(2), baselinePath=args.includes('--baseline') ? args[args.indexOf('--baseline')+1] : null;
   const output=args.includes('--output') ? args[args.indexOf('--output')+1] : undefined;
+  const indexPath=args.includes('--baseline-index') ? args[args.indexOf('--baseline-index')+1] : null;
   const conformance=await checkAgentConformance();
-  const result=generateAgentPackage({output,baseline:baselinePath ? JSON.parse(fs.readFileSync(baselinePath,'utf8')) : null});
+  const read=file=>file ? JSON.parse(fs.readFileSync(file,'utf8')) : null;
+  const result=generateAgentPackage({output,baseline:read(baselinePath),baselineIndex:read(indexPath)});
   console.log(`Studio v3 agent package checked: ${result.catalog.tools.length} tools, ${result.catalog.operations.length} operations, ${result.knowledge.skills.length} skill, ${conformance.examples} contract examples; ${result.changes.changes.length} changes${baselinePath ? '' : ' (initial baseline)'}.`);
 }
