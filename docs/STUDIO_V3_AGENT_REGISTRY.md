@@ -11,6 +11,9 @@ The complete source-coding extension, whole-Studio coverage and future release g
 | Operation names and closed wire schemas | `studio-v3/agent-operation-schemas.js` |
 | Tool contracts, capability IDs, source/skill/evaluation references | `studio-v3/agent-registry.js` |
 | Tool effect handlers and inspection gate | `studio-v3/agent-tools.js` |
+| Contract version, output schemas, declared errors, accepted/rejected examples | `studio-v3/agent-contracts.js` |
+| Error codes mapped to contract families, recoverability and retry advice | `studio-v3/agent-errors.js` |
+| Executing every example through the real handlers before publication | `scripts/studio-v3-agent-conformance.mjs` |
 | Dynamic field/path/scope/design checks | Existing authoring/parser modules |
 | Frozen numeric/financial binding invariant | `studio-v3/agent-binding-invariants.js` |
 | Browser-readable guide and knowledge index | `studio-v3/agent-knowledge.js` |
@@ -22,6 +25,14 @@ The operation schema describes legal shapes and static bounds. Dynamic rules (av
 Nine tools are registered: `get_capabilities`, `read_skill`, `get_context`, `apply_operations`, `inspect_draft`, `undo_step`, `take_notes`, `finish`, `report_blocked`. `apply_operations` uses a closed union of thirteen operation schemas instead of unrestricted records. The operation list consumed by local authoring comes from that same schema owner. Runtime startup rejects tool/handler drift. Argument preparation rejects implicit type coercion and counts schema-invalid calls before Pi validation, so they cannot bypass tool-call/repeated-failure limits.
 
 The small orchestration prompt directs the model to discover capabilities and read the relevant guide. `get_capabilities` supplies schemas, guide metadata and the current run limits. `read_skill` supplies only a known bounded bundled guide; arbitrary paths/URLs are unsupported. The guide is product knowledge, while `take_notes` is temporary task memory. Guide reading is model-driven and synthetic tests demonstrate the mechanism, not independent real-model competence.
+
+## Executable contracts (CA-02)
+
+Every tool and operation declares `contractVersion` (SemVer, currently `1.0.0`), the error codes it can raise, at least one accepted example and one rejected example; tools also declare an `outputSchema`. `validateRegistry` checks the static part: known error codes, examples that match the parameter schema without coercion, and rejected examples that are declared as schema rejections exactly when the schema rejects them.
+
+`checkAgentConformance` then runs all 49 examples through the real `createAgentTools` handlers on a fresh draft (optionally after `setup` steps, with a named fixture). An accepted example must succeed and its parsed result must match the tool's `outputSchema`; a rejected example must raise its declared code. It runs before the package is generated in both `npm run check:studio-v3-agent` and the site build, so a broken example, an undeclared result or error code, or a registered tool without a handler stops publication.
+
+Error codes are not renamed. `agent-errors.js` maps each one to a contract family (or none), a category, `recoverable` and retry advice; `get_capabilities` publishes that table. The model-facing catalog lists example inputs and error codes but omits output schemas and rejection fixtures, which stay host-side; it grew from about 27 KB to 36 KB. Handler messages keep their existing `CODE. ...` form.
 
 ## Version binding and offline operation
 
@@ -47,7 +58,7 @@ Numeric-bound fields retain their original bound kind and format, with no replac
 
 ## Updating a capability
 
-1. Add or amend the feature schema and registry descriptor. Declare its handler, effect/result semantics, source dependencies, guide and evaluation references. Keep tool names/IDs stable when behavior is compatible.
+1. Add or amend the feature schema and registry descriptor. Declare its handler, effect/result semantics, source dependencies, guide and evaluation references. Add its contract in `agent-contracts.js`: output schema, error codes and at least one accepted and one rejected example. Bump `contractVersion` major for an incompatible shape or meaning change. Keep tool names/IDs stable when behavior is compatible.
 2. Implement the local service/handler. Reuse dynamic validators and the private draft boundary. Do not grant file, data-write or committed-state authority merely by adding a descriptor.
 3. Update the guide when behavior or workflow changes. Add meaningful task and rejection coverage; no core-prompt operation manual edit is needed.
 4. Run `npm run check:studio-v3-agent`, relevant tests and the normal site build. Missing references, duplicate IDs/skill references or unmatched handlers fail checks.
