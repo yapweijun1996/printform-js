@@ -2,6 +2,8 @@
 
 This first implementation makes existing draft authoring capabilities discoverable and gives the agent a bundled product guide. It preserves the current provider, selected scope, inspection and user Preview/Apply flow. The broader [architecture plan](STUDIO_V3_AGENT_ARCHITECTURE_PLAN.md) and [baseline inventory](STUDIO_V3_AGENT_COVERAGE_INVENTORY.md) remain the roadmap; their proposed IDs are not all runtime capabilities.
 
+The complete source-coding extension, whole-Studio coverage and future release gates are specified in the [coding-agent plan](STUDIO_V3_CODING_AGENT_PLAN.md) and [acceptance standard](STUDIO_V3_CODING_AGENT_ACCEPTANCE.md); they are not implemented by this first slice.
+
 ## Authoritative owners
 
 | Concern | Source owner |

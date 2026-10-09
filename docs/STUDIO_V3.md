@@ -3,6 +3,8 @@
 Studio v3 0.2.0 is a separate Pilot at `/studio-v3/`. The v2 editor and its
 existing release gates remain available at `/studio-v2/`.
 
+Complete built-in coding-agent target: [architecture and delivery](STUDIO_V3_CODING_AGENT_PLAN.md), [proposed contracts](STUDIO_V3_CODING_AGENT_CONTRACTS.md), [acceptance gates](STUDIO_V3_CODING_AGENT_ACCEPTANCE.md) and [task ledger](../TASK.md). Source execution and broader workflow coverage remain planned.
+
 ## What ships
 
 The blue/white three-column workspace follows the user-selected concept:
