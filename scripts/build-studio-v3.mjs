@@ -3,13 +3,18 @@ import path from 'node:path';
 import { build } from 'vite';
 import { generateAgentPackage } from './generate-studio-v3-agent.mjs';
 import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
+import { readReleaseState, assertReleaseReview } from './studio-v3-agent-review.mjs';
 import { newProject } from '../studio-v3/model.js';
 import { validateProject } from '../studio-v2/core/acceptance.js';
 import { serializeStandalone } from '../studio-v2/core/project-model.js';
 
 export async function buildStudioV3App({root,output,revision=process.env.GITHUB_SHA || 'local'}) {
   await checkAgentConformance(); // Broken examples or undeclared results/errors stop the build before publication.
-  const {identity} = generateAgentPackage({root,output,revision});
+  // Compare with the last successful publication; an unreviewed agent change stops publication (KNO-04).
+  const state = readReleaseState(root);
+  const generated = generateAgentPackage({root,output,revision,baseline:state.baseline,baselineIndex:state.baselineIndex});
+  assertReleaseReview(generated,{root,state});
+  const {identity} = generated;
   await build({root,define:{__PRINTFORM_V3_AGENT_IDENTITY__:JSON.stringify(identity)},base:'./',configFile:false,logLevel:'warn',worker:{rollupOptions:{output:{entryFileNames:'chunks/[name]-[hash].js'}}},build:{target:'es2022',emptyOutDir:false,outDir:path.resolve(output,'studio-v3'),lib:{entry:path.resolve(root,'studio-v3/app.js'),formats:['es'],fileName:()=> 'app.js'},rollupOptions:{output:{chunkFileNames:'chunks/[name]-[hash].js'}},minify:true,sourcemap:false}});
   return identity;
 }

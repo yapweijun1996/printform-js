@@ -1,0 +1,129 @@
+{
+ "contractHash": "8f6f574d67138a16d76bbe10e4d5ad2d5e8244ee569baaa3b564f673422ff7ae",
+ "entries": [
+  {
+   "hash": "7c2c698a6c8a725b7b0d367512cd8489845976f80e91fc6e8ff0bf2648c4ef1a",
+   "id": "printform.agent.get_capabilities",
+   "status": "active"
+  },
+  {
+   "hash": "3d7127ae0dd4e43baa75a311208e506ff972597aa9df720ef50bc29c39d6804f",
+   "id": "printform.agent.read_skill",
+   "status": "active"
+  },
+  {
+   "hash": "43a3638f5a2233b108be32024097b976fd3160159b12ea3139f8b552e2f8bf69",
+   "id": "printform.agent.get_context",
+   "status": "active"
+  },
+  {
+   "hash": "cfd5689e39e0af180cf20aaae056503343c22e55c8bb04d0225a030308a6b566",
+   "id": "printform.agent.apply_operations",
+   "status": "active"
+  },
+  {
+   "hash": "a94eb811c0cb69d0f943f8d4e557e0229b711f4de8adcfac7255fd7ae30087f3",
+   "id": "printform.agent.inspect_draft",
+   "status": "active"
+  },
+  {
+   "hash": "57a7d73515bf6774f3e5e6840120627dbe2f48341d57430acca7e7626eb895c9",
+   "id": "printform.agent.undo_step",
+   "status": "active"
+  },
+  {
+   "hash": "b99fee671d255b1c79529a9ddb89a3cfafdac97b64386c28925e5b857d361e08",
+   "id": "printform.agent.take_notes",
+   "status": "active"
+  },
+  {
+   "hash": "0ad3b2042ebb43419bb0f215be9d5ec5a0ff5c6e645c0ca410717c209124a52b",
+   "id": "printform.agent.finish",
+   "status": "active"
+  },
+  {
+   "hash": "09dbdc3e41c1bf336733c046464a3b73386f228f3940195a9500901169410bbd",
+   "id": "printform.agent.report_blocked",
+   "status": "active"
+  },
+  {
+   "hash": "6be3cae44ae80c2c4d012639795c237aa62a7ef3c24b7f3d9d1d6d3283d0f999",
+   "id": "printform.authoring.set_element_style",
+   "status": "active"
+  },
+  {
+   "hash": "f21ca1b0473f7490b3b9f92d3ee91ef786238a386c7da42bb2f4c50ef4748230",
+   "id": "printform.authoring.set_style",
+   "status": "active"
+  },
+  {
+   "hash": "cca0444be0905af0d0e72525e7d0326ccaa6119ba1b10dd86a1e537c84cd130b",
+   "id": "printform.authoring.set_table_style",
+   "status": "active"
+  },
+  {
+   "hash": "27521742b7d5270af7481185f958048ee7c941fbe59c60137c4011e375d8ba9d",
+   "id": "printform.authoring.set_field",
+   "status": "active"
+  },
+  {
+   "hash": "5c9d693c34fad0ce174dc381722feade8d068fa8b0f4df4f98d5b4f14a60c58d",
+   "id": "printform.authoring.add_field",
+   "status": "active"
+  },
+  {
+   "hash": "3890b88ec707613e032a13b4107b173ac5d7df88318138a5e04049f74a326a98",
+   "id": "printform.authoring.remove_field",
+   "status": "active"
+  },
+  {
+   "hash": "fbc9ef79d6a1ecf1ed77983461be8a4fef1be8d103dcf1163d1679d9a52b61d2",
+   "id": "printform.authoring.reorder_fields",
+   "status": "active"
+  },
+  {
+   "hash": "aa591177445dfafed05f77bd58e629553e9164749ec45fb61d4cab728a081088",
+   "id": "printform.authoring.set_section",
+   "status": "active"
+  },
+  {
+   "hash": "d02aea0eef7c57dc5b0b49b77965f96c23538d695bb2683d9ab610ea7600f726",
+   "id": "printform.authoring.reorder_sections",
+   "status": "active"
+  },
+  {
+   "hash": "d195e0d7226d3d497c650398f570899235f1feb668e4c8a88715c3a0b8008f7b",
+   "id": "printform.authoring.set_page",
+   "status": "active"
+  },
+  {
+   "hash": "c59160c28793e7b681012b17e44f707276d716514e3fd17f439079d45276ba42",
+   "id": "printform.authoring.set_logo",
+   "status": "active"
+  },
+  {
+   "hash": "3cb620abcb8ad2fb0851b93495924406e644b2b9672728cd181b58e447ed0f21",
+   "id": "printform.authoring.set_collection",
+   "status": "active"
+  },
+  {
+   "hash": "809b38b4c45ecdf14f5e622a126a8db89493d5f52d75f99211f6fff913ca4ada",
+   "id": "printform.authoring.set_heading",
+   "status": "active"
+  },
+  {
+   "hash": "2973a3de83a3b8b68236385e4044221e3f80498a8af4ab72c6a866383fcad021",
+   "id": "printform.knowledge.form-authoring",
+   "status": "active"
+  }
+ ],
+ "files": {
+  "capabilities.json": "881c39d4df81ccf5208ca38d45788ad5480ddfa3646680ab59dcdfbfec92e70f",
+  "knowledge-index.json": "81c77713b681dc32a6ccf05429dc99047ae854bc1ff9705661aafbaf8ca8066e",
+  "resources/form-authoring.md": "7af70d00fc21535a6d8973e8d199da0f358f0fb22e65cae949fa27f45373ef57"
+ },
+ "knowledgeHash": "3d0dcf4ae640de5ef2b71ee129193e324a5d5080cd648b78800cdf4760511970",
+ "packageHash": "6040e3f5c12db2bdb87a2ee1663659a222b923c745b6bcaa37038d6624936d7c",
+ "release": "11cab7b8d3c62ca99dd1d467ff486a0d4f72eb75",
+ "version": 1
+}

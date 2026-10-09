@@ -65,6 +65,18 @@ The generator writes `studio-v3/agent-index/dependency-index.json` (file hashes 
 
 Evidence for each G2 case: KNO-01/02/03/05 and the gate in `tests/studio-v3-agent-knowledge-sync.test.js`, plus deprecation and removal advice in `tests/studio-v3-agent-discovery.test.js`. KNO-06 (mixed release and missing resource stop before model calls, online, offline and cache upgrade) remains covered by the existing registry unit tests and the agent-registry/upgrade browser specs; its runner/artifact part waits for CA-07. KNO-07 is covered by a test showing one identity per run and a refresh on the next run; durable resumable summaries do not exist yet.
 
+## Publication gate and runbook (CA-02)
+
+`docs/studio-v3-agent-release/` holds the committed release state: `baseline-manifest.json` (and `baseline-index.json` once the live site publishes one) from the last successful publication, plus `review.json` with the owner dispositions. `buildStudioV3App`, which the site build and therefore the Pages deployment use, compares the generated package with that baseline and throws on any unreviewed, stale or unsupported change, so the deployment stops. `npm run check:studio-v3-agent` runs the same gate, and `tests/studio-v3-agent-release-gate.test.js` checks that the committed state passes on the current tree.
+
+The first baseline is the live release `11cab7b`, which predates the dependency index. Its 24 changes are covered by one `reconciled` disposition (the first full reconciliation). An edit to a shared module moves many digests at once: a single comment in `studio-v3/ai-authoring.js` invalidates 23 entries. One disposition record may list all of them.
+
+Runbook:
+
+1. Changing agent code, guides, contracts or their evaluations: run `node scripts/draft-studio-v3-agent-review.mjs`, which prints skeleton dispositions bound to the current digests with causes and impacts. Decide `updated` or `no-impact`, add a justification and evidence, and put them in `review.json` in the same PR.
+2. After a successful Pages deployment: run `node scripts/record-studio-v3-agent-baseline.mjs` and commit the result. It reads the release named by the live page, its manifest and, when present, the dependency index, and fails closed on any mismatch, including a deployment in flight. It writes nothing on failure and resets the dispositions to the new baseline. The live site only switches after a successful deployment, so a failed deployment cannot advance the baseline.
+3. Never edit digests by hand to silence the gate; regenerate the draft instead.
+
 ## Version binding and offline operation
 
 Before Vite bundles the app, the generator validates registry IDs, references and existing source/evaluation files, then writes:

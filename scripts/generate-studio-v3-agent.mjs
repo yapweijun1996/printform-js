@@ -6,6 +6,7 @@ import { capabilityCatalog, validateRegistry, AGENT_TOMBSTONES } from '../studio
 import { AGENT_SKILLS } from '../studio-v3/agent-knowledge.js';
 import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
 import { fileHash, importClosure, dependencyIndex, entryFileHashes, explainChanges } from './studio-v3-agent-impact.mjs';
+import { readReleaseState, assertReleaseReview } from './studio-v3-agent-review.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])) : value;
 const json = value => JSON.stringify(canonical(value));
@@ -37,7 +38,7 @@ export function generateAgentPackage({root=process.cwd(),output,revision=process
   delete catalog.identity; delete catalog.run;
   for (const skill of AGENT_SKILLS) if (!/^[a-z0-9-]{1,80}$/.test(skill.id) || !skill.description || skill.content.length>16000 || !skill.sources.length || !skill.evaluations.length) throw new Error('Invalid bundled agent skill.');
   // Each entry is hashed over its contract, its sources' full import closure and its evaluations (KNO-01/03).
-  const index=dependencyIndex(root,[...capabilities,...AGENT_SKILLS.map(skillEntry)]);
+  const index={release:revision,...dependencyIndex(root,[...capabilities,...AGENT_SKILLS.map(skillEntry)])};
   if (index.untracked.length) throw new Error(`Untracked dynamic agent dependency: ${index.untracked.join(', ')}`);
   const entries=capabilities.map(entry=>({id:entry.id,status:entry.status || 'active',...(entry.status==='deprecated' ? {replacementId:entry.replacementId} : {}),
     hash:hash(json({...entry,fileHashes:entryFileHashes(index,entry.id)}))}));
@@ -69,6 +70,9 @@ if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta
   const indexPath=args.includes('--baseline-index') ? args[args.indexOf('--baseline-index')+1] : null;
   const conformance=await checkAgentConformance();
   const read=file=>file ? JSON.parse(fs.readFileSync(file,'utf8')) : null;
-  const result=generateAgentPackage({output,baseline:read(baselinePath),baselineIndex:read(indexPath)});
-  console.log(`Studio v3 agent package checked: ${result.catalog.tools.length} tools, ${result.catalog.operations.length} operations, ${result.knowledge.skills.length} skill, ${conformance.examples} contract examples; ${result.changes.changes.length} changes${baselinePath ? '' : ' (initial baseline)'}.`);
+  // Without an explicit baseline, compare with the committed last publication and enforce the release review.
+  const state=baselinePath ? null : readReleaseState();
+  const result=generateAgentPackage({output,baseline:state ? state.baseline : read(baselinePath),baselineIndex:state ? state.baselineIndex : read(indexPath)});
+  if (state) assertReleaseReview(result,{state});
+  console.log(`Studio v3 agent package checked: ${result.catalog.tools.length} tools, ${result.catalog.operations.length} operations, ${result.knowledge.skills.length} skill, ${conformance.examples} contract examples; ${result.changes.changes.length} changes since ${result.changes.baseline?.release.slice(0,12) || 'no baseline'}${state ? ', all reviewed' : ''}.`);
 }
