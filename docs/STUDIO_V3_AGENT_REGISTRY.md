@@ -14,6 +14,8 @@ The complete source-coding extension, whole-Studio coverage and future release g
 | Contract version, output schemas, declared errors, accepted/rejected examples | `studio-v3/agent-contracts.js` |
 | Error codes mapped to contract families, recoverability and retry advice | `studio-v3/agent-errors.js` |
 | Executing every example through the real handlers before publication | `scripts/studio-v3-agent-conformance.mjs` |
+| Trusted tool handlers keyed by tool name | `studio-v3/agent-handlers.js` |
+| Workflows the agent cannot perform, generated from the feature ledger | `studio-v3/agent-workflows.js` (`scripts/generate-studio-v3-workflows.mjs`) |
 | Dynamic field/path/scope/design checks | Existing authoring/parser modules |
 | Frozen numeric/financial binding invariant | `studio-v3/agent-binding-invariants.js` |
 | Browser-readable guide and knowledge index | `studio-v3/agent-knowledge.js` |
@@ -33,6 +35,14 @@ Every tool and operation declares `contractVersion` (SemVer, currently `1.0.0`),
 `checkAgentConformance` then runs all 49 examples through the real `createAgentTools` handlers on a fresh draft (optionally after `setup` steps, with a named fixture). An accepted example must succeed and its parsed result must match the tool's `outputSchema`; a rejected example must raise its declared code. It runs before the package is generated in both `npm run check:studio-v3-agent` and the site build, so a broken example, an undeclared result or error code, or a registered tool without a handler stops publication.
 
 Error codes are not renamed. `agent-errors.js` maps each one to a contract family (or none), a category, `recoverable` and retry advice; `get_capabilities` publishes that table. The model-facing catalog lists example inputs and error codes but omits output schemas and rejection fixtures, which stay host-side; it grew from about 27 KB to 36 KB. Handler messages keep their existing `CODE. ...` form.
+
+## Discovery, workflows and lifecycle (CA-02)
+
+`createAgentTools` takes its definitions and handlers from the registry and `TOOL_HANDLERS`, and `get_capabilities` lists exactly the tools given to the run. A new feature adds a descriptor, a contract, a handler and a guide; the core prompt and handler wiring stay unchanged. A test proves this end to end: a synthetic tool and guide are discovered, read and called through a Pi run without editing `agent-loop.js` or `agent-tools.js`.
+
+The catalog no longer carries a hand-written unsupported list. `workflows` counts the human-mediated, not-yet-callable and intentionally unavailable ledger rows, and the bundled `product-workflows` guide lists each with its human path or reason. Both come from `agent-workflows.js`, which is generated from the ledger CSV; a test fails while it is stale. `unsupported` keeps only the two planned capabilities with no ledger row (source/shell execution, preview pixels). `get_capabilities` is contract `1.1.0` because these fields are additive.
+
+A deprecated entry stays callable with `status:'deprecated'` and an active `replacementId`. A removed entry leaves a bounded tombstone in `AGENT_TOMBSTONES` (id, name, replacement or null, `removedIn`, advice), published as `removed` in the catalog and in the manifest. The change report carries the replacement advice; a removal without a tombstone is reported with `tombstone:false` for the release gate to reject.
 
 ## Version binding and offline operation
 
@@ -60,7 +70,7 @@ Numeric-bound fields retain their original bound kind and format, with no replac
 
 1. Add or amend the feature schema and registry descriptor. Declare its handler, effect/result semantics, source dependencies, guide and evaluation references. Add its contract in `agent-contracts.js`: output schema, error codes and at least one accepted and one rejected example. Bump `contractVersion` major for an incompatible shape or meaning change. Keep tool names/IDs stable when behavior is compatible.
 2. Implement the local service/handler. Reuse dynamic validators and the private draft boundary. Do not grant file, data-write or committed-state authority merely by adding a descriptor.
-3. Update the guide when behavior or workflow changes. Add meaningful task and rejection coverage; no core-prompt operation manual edit is needed.
+3. Update the guide when behavior or workflow changes. After editing the feature ledger CSV, run `node scripts/generate-studio-v3-workflows.mjs`. Add meaningful task and rejection coverage; no core-prompt operation manual edit is needed.
 4. Run `npm run check:studio-v3-agent`, relevant tests and the normal site build. Missing references, duplicate IDs/skill references or unmatched handlers fail checks.
 5. Compare with the last successfully published agent manifest. Review source/schema/guide changes and their evaluations before release. Hashes expose changes but cannot prove a guide is semantically correct.
 

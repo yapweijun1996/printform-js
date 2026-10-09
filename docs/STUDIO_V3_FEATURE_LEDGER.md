@@ -24,6 +24,8 @@ Origins: 66 rows from the historical inventory, 13 added by this reconciliation.
 
 Decision recorded: the `validate-all` action is the existing `printform.validation.matrix` row, so it is not duplicated. `rename` and `data.rows-page` / `data.draft-apply` stay as separate rows for stable, individually testable IDs even though they overlap broader rows.
 
+The agent reads this ledger at runtime through the generated `studio-v3/agent-workflows.js` and the `product-workflows` guide. After editing the CSV, run `node scripts/generate-studio-v3-workflows.mjs`; a test fails while the module is stale.
+
 ## Disposition rules used
 
 | Rule | Disposition |
