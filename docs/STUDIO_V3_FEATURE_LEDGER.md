@@ -40,7 +40,7 @@ Data 10, Project 5, Observation 5, Authoring 4, References 3, Agent runtime 1. H
 
 ## UI entry mapping
 
-The CSV column `ui_entries` links each `data-action` / database action ID to its row. The test fails when a UI action exists without a row, or a row names an action that no longer exists. Selector-style entries (`data-mode`, `data-sample`, `data-template`, `data-ai-*`, `data-layout`) are not yet enforced.
+The CSV column `ui_entries` links UI entry points to rows. Bare IDs are `data-action` / database action IDs. `attr:value` entries are delegated workflow selectors (for example `mode:data`, `template:blank`, `ai:models`, `form:locale`); `attr:*` covers a selector whose values are generated at runtime (samples, datasets, issues, tree paths). Tests fail when a UI entry exists without a row, or a row names an entry that no longer exists. Preview internals (`data-v3-*`), element identity (`data-ai-tag-id`) and validation markers are not workflows and are excluded.
 
 ## Initial task families (seed for the CA-09 corpus)
 
