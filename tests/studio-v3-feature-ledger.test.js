@@ -38,6 +38,7 @@ describe('Studio v3 feature ledger (COV-01 integrity)', () => {
       expect(row.reason, row.id).not.toBe('');
       expect(['yes','no'], row.id).toContain(row.eligible_gap);
       expect(row.eligible_gap === 'yes' ? row.disposition : 'agent-callable', row.id).toBe('agent-callable');
+      if (row.agent_path === 'none') expect(row.reason, row.id).not.toMatch(/^Reachable/);
     }
   });
   it('names a service, knowledge and evaluation owner and human path where required', () => {

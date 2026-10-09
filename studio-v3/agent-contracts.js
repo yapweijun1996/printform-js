@@ -16,8 +16,10 @@ const navy = {type:'set_style',patch:{color:'#163a65'}};
 const prepared = [['apply_operations',{summary:'Navy accents',operations:[navy]}],['inspect_draft',{}]];
 
 export const TOOL_CONTRACTS = Object.freeze({
-  get_capabilities:{outputSchema:closed({version:Type.Literal(1),identity,tools:list,operations:list,knowledge:list,run:open({mode:Type.String()}),
-    commit:Type.String(),unsupported:Type.Array(Type.String()),errors:open({})}),errors:[ARGS],examples:[{args:{}}],invalid:[{args:{extra:true},error:ARGS}]},
+  // 1.1.0 adds the removed (tombstone) list and the ledger workflow summary; both are additive.
+  get_capabilities:{contractVersion:'1.1.0',outputSchema:closed({version:Type.Literal(1),identity,tools:list,operations:list,knowledge:list,run:open({mode:Type.String()}),
+    commit:Type.String(),unsupported:Type.Array(Type.String()),errors:open({}),removed:list,
+    workflows:closed({guide:Type.String(),humanMediated:Type.Integer(),notYetCallable:Type.Integer(),intentionallyUnavailable:Type.Integer()})}),errors:[ARGS],examples:[{args:{}}],invalid:[{args:{extra:true},error:ARGS}]},
   read_skill:{outputSchema:closed({id:Type.String(),description:Type.String(),sources:Type.Array(Type.String()),evaluations:Type.Array(Type.String()),content:Type.String({minLength:1}),identity}),
     errors:[ARGS,'AGENT_SKILL_UNAVAILABLE'],examples:[{args:{id:'form-authoring'}}],invalid:[{args:{id:'missing'},error:'AGENT_SKILL_UNAVAILABLE'},{args:{id:''},error:ARGS}]},
   get_context:{outputSchema:open({request:Type.String(),scope:open({mode:Type.String()}),authoring:open({}),run:open({mode:Type.String()})}),errors:[ARGS],examples:[{args:{}}],invalid:[{args:{id:1},error:ARGS}]},

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { capabilityCatalog, validateRegistry } from '../studio-v3/agent-registry.js';
+import { capabilityCatalog, validateRegistry, AGENT_TOMBSTONES } from '../studio-v3/agent-registry.js';
 import { AGENT_SKILLS } from '../studio-v3/agent-knowledge.js';
 import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
 
@@ -22,9 +22,15 @@ export function capabilityChanges(previous,current) {
   const before=new Map((previous?.entries || []).map(entry=>[entry.id,entry])), after=new Map(current.entries.map(entry=>[entry.id,entry])), changes=[];
   for (const entry of current.entries) {
     const old=before.get(entry.id);
-    if (!old || old.hash!==entry.hash) changes.push({id:entry.id,kind:!old ? 'added' : entry.status==='deprecated' && old.status!=='deprecated' ? 'deprecated' : 'changed',reviewRequired:true});
+    if (!old || old.hash!==entry.hash) changes.push({id:entry.id,kind:!old ? 'added' : entry.status==='deprecated' && old.status!=='deprecated' ? 'deprecated' : 'changed',reviewRequired:true,
+      ...(entry.status==='deprecated' ? {replacementId:entry.replacementId} : {})});
   }
-  for (const entry of before.values()) if (!after.has(entry.id)) changes.push({id:entry.id,kind:'removed',reviewRequired:true});
+  // A removal reports its tombstone advice; tombstone:false marks a removal the release gate must reject.
+  const stones=new Map((current.tombstones || []).map(stone=>[stone.id,stone]));
+  for (const entry of before.values()) if (!after.has(entry.id)) {
+    const stone=stones.get(entry.id);
+    changes.push({id:entry.id,kind:'removed',reviewRequired:true,...(stone ? {tombstone:true,replacementId:stone.replacementId,advice:stone.advice} : {tombstone:false})});
+  }
   return {version:1,baseline:previous ? {release:previous.release,packageHash:previous.packageHash} : null,current:{release:current.release,packageHash:current.packageHash},changes};
 }
 export function generateAgentPackage({root=process.cwd(),output,revision=process.env.GITHUB_SHA || 'local',baseline=null}={}) {
@@ -34,7 +40,7 @@ export function generateAgentPackage({root=process.cwd(),output,revision=process
   const entries=capabilities.map(entry=> {
     const sources=Object.fromEntries(entry.sources.map(name=>[name,sourceHash(root,name)]));
     entry.evaluations.forEach(name=>sourceHash(root,name));
-    return {id:entry.id,status:entry.status || 'active',hash:hash(json({...entry,sourceHashes:sources}))};
+    return {id:entry.id,status:entry.status || 'active',...(entry.status==='deprecated' ? {replacementId:entry.replacementId} : {}),hash:hash(json({...entry,sourceHashes:sources}))};
   });
   const skills=AGENT_SKILLS.map(skill=> {
     if (!/^[a-z0-9-]{1,80}$/.test(skill.id) || !skill.description || skill.content.length>16000 || !skill.sources.length || !skill.evaluations.length) throw new Error('Invalid bundled agent skill.');
@@ -49,7 +55,8 @@ export function generateAgentPackage({root=process.cwd(),output,revision=process
   const identity={release:revision,contractHash,knowledgeHash,packageHash};
   const documents={'capabilities.json':json({...catalog,version:1,contractHash,entries})+'\n','knowledge-index.json':json(knowledge)+'\n',
     ...Object.fromEntries(AGENT_SKILLS.map(skill=>[`resources/${skill.id}.md`,skill.content]))};
-  const manifest={version:1,...identity,entries,files:Object.fromEntries(Object.entries(documents).map(([name,content])=>[name,hash(content)]))};
+  const tombstones=AGENT_TOMBSTONES.map(({id,name,replacementId,removedIn,advice})=>({id,name,replacementId,removedIn,advice}));
+  const manifest={version:1,...identity,entries,tombstones,files:Object.fromEntries(Object.entries(documents).map(([name,content])=>[name,hash(content)]))};
   const changes=capabilityChanges(baseline,manifest);
   if (output) {
     const directory=path.resolve(output,'studio-v3/agent');
