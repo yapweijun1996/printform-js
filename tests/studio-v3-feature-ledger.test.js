@@ -1,9 +1,9 @@
 import {describe,it,expect} from 'vitest';
 import fs from 'node:fs';
-import {read,parseCsv} from './support/feature-ledger.js';
+import {read,ledgerRows} from './support/feature-ledger.js';
 
 const LEDGER_MD = read('docs/STUDIO_V3_FEATURE_LEDGER.md');
-const ROWS = parseCsv(read('docs/STUDIO_V3_FEATURE_LEDGER.csv'));
+const ROWS = ledgerRows();
 const DISPOSITIONS = ['agent-callable','human-mediated','intentionally-unavailable'];
 // Bare entries are action IDs; `attr:value` selector entries are checked in the selector test.
 const ledgerIds = new Set(ROWS.flatMap(row => row.ui_entries.split(';').filter(id => id && !id.includes(':'))));

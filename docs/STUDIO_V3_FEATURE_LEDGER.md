@@ -42,19 +42,20 @@ Data 10, Project 5, Observation 5, Authoring 4, References 3, Agent runtime 1. H
 
 The CSV column `ui_entries` links UI entry points to rows. Bare IDs are `data-action` / database action IDs. `attr:value` entries are delegated workflow selectors (for example `mode:data`, `template:blank`, `ai:models`, `form:locale`); `attr:*` covers a selector whose values are generated at runtime (samples, datasets, issues, tree paths). Tests fail when a UI entry exists without a row, or a row names an entry that no longer exists. Preview internals (`data-v3-*`), element identity (`data-ai-tag-id`) and validation markers are not workflows and are excluded.
 
-## Initial task families (seed for the CA-09 corpus)
+## Task families (CA-09 corpus)
 
-Names only; inputs and oracles are not frozen here.
+The ten G8 families and their rules are owned by the [task register](STUDIO_V3_TASK_REGISTER.md); this table only links them to ledger domains. Task `capabilities` must be IDs from this ledger, which `tests/studio-v3-feature-ledger-register.test.js` enforces.
 
-| Family | Seed content | Oracle owner |
+| Family | Main ledger domains | Likely oracle type |
 | --- | --- | --- |
-| Product Q&A | Read-only answers about the current release | Independent reviewer |
-| Form edit | Style, fields, sections, page geometry | Deterministic design diff plus human render check |
-| Create / import | Blank, starter, imported project | Independent reviewer |
-| Data | Binding, collection, dataset draft | Data fixture comparison |
-| Photo reconstruction | Reference image to form | Independent visual oracle |
-| Print repair | Overflow, pagination, quality fixes | Print diagnostics plus pixel receipt |
-| Source coding | Fix, test, build, diff | Runner build and test receipts |
+| `qa` | Observation, Agent runtime | reviewer |
+| `authoring` | Project, Authoring | deterministic |
+| `layout` | Authoring, Observation | deterministic plus visual-blinded |
+| `bindings` | Authoring (binding, collection) | deterministic |
+| `data` | Data | deterministic |
+| `references` | References | visual-blinded |
+| `files` | Lifecycle, Release | deterministic |
+| `source-repair`, `source-implement`, `source-artifact` | CA-07/CA-08 workspace (no Studio ledger rows yet) | runner-receipt |
 
 ## Open items
 
