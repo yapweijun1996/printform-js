@@ -30,7 +30,7 @@
     "printform.authoring.set_collection": "2f0171937208bb4dc9221e906f5c3037830ad8ad50a3901a83f2bb7c97a53104",
     "printform.authoring.set_heading": "2c4ec1c959e8aa289b42f1fec7ad0dcdffee50ac21a47bb281ceb8fcb2a3a456",
     "printform.knowledge.form-authoring": "a9519db951750c55aac6198c212cf1bbd325ebf1d84f93887f80337c785ca728",
-    "printform.knowledge.product-workflows": "dc54bdfe56f69e37adc873543058d447e291301579209cb635fb9d5009bc1a21"
+    "printform.knowledge.product-workflows": "b971e96f0d8e60066ca966784d0b62c92fbc2bb761a625ab5b386f7ff1f2f4bf"
    },
    "disposition": "reconciled",
    "justification": "First tracked baseline (CA-02): live release 11cab7b has no dependency index, so every capability and guide was reconciled in full. All 22 tool/operation contracts run their accepted and rejected examples through the real handlers; the form-authoring guide was re-read against those contracts; the new product-workflows guide is generated from the 79-row feature ledger.",
