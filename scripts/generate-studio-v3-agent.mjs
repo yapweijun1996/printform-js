@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { capabilityCatalog, validateRegistry } from '../studio-v3/agent-registry.js';
 import { AGENT_SKILLS } from '../studio-v3/agent-knowledge.js';
+import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])) : value;
 const json = value => JSON.stringify(canonical(value));
@@ -61,6 +62,7 @@ export function generateAgentPackage({root=process.cwd(),output,revision=process
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const args=process.argv.slice(2), baselinePath=args.includes('--baseline') ? args[args.indexOf('--baseline')+1] : null;
   const output=args.includes('--output') ? args[args.indexOf('--output')+1] : undefined;
+  const conformance=await checkAgentConformance();
   const result=generateAgentPackage({output,baseline:baselinePath ? JSON.parse(fs.readFileSync(baselinePath,'utf8')) : null});
-  console.log(`Studio v3 agent package checked: ${result.catalog.tools.length} tools, ${result.catalog.operations.length} operations, ${result.knowledge.skills.length} skill; ${result.changes.changes.length} changes${baselinePath ? '' : ' (initial baseline)'}.`);
+  console.log(`Studio v3 agent package checked: ${result.catalog.tools.length} tools, ${result.catalog.operations.length} operations, ${result.knowledge.skills.length} skill, ${conformance.examples} contract examples; ${result.changes.changes.length} changes${baselinePath ? '' : ' (initial baseline)'}.`);
 }
