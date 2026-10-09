@@ -1,16 +1,18 @@
 # Studio v3 Built In Agent Architecture Plan
 
-Draft for review, 2026-10-09. Source baseline: `main` at `86db88c8eea242f6a83b7a4a519e6ae3b3132019`.
+Updated design for review, 2026-10-09. Current baseline: `main` at `b195b59ab297717168b34d007045d5e742615200` (PR #37 merged). The complete source-coding extension and delivery gates are owned by [the coding-agent plan](STUDIO_V3_CODING_AGENT_PLAN.md), [contracts](STUDIO_V3_CODING_AGENT_CONTRACTS.md) and [acceptance standard](STUDIO_V3_CODING_AGENT_ACCEPTANCE.md).
 
 Studio needs a built-in agent that understands the current product, discovers its available capabilities, plans work, executes through Studio services, observes results and corrects failures. Natural-language design, photographs, binding changes, print debugging and product questions are tasks of this agent. A photograph-specific pipeline is one acceptance scenario, not the product architecture.
 
 The target is stronger Studio expertise and more direct, reliable control than an external agent working through UI clicks. Being built in does not by itself establish better model intelligence. The advantage must come from authoritative product knowledge, typed tools, exact state, efficient observations and measured task performance.
 
-This plan governs the agent foundation. The [photo design plan](STUDIO_V3_PHOTO_DESIGN_PLAN.md) becomes a domain-specific backlog and evaluation case. Neither plan implements the proposed runtime changes.
+This plan governs the product-agent foundation. The [photo design plan](STUDIO_V3_PHOTO_DESIGN_PLAN.md) is a domain workflow and evaluation case. The first registry/guide/release-binding slice is implemented; remaining product coverage and literal source coding are proposed and require their own acceptance.
 
-## Current implementation and root gaps
+## Investigation baseline and remaining gaps
 
-| Current evidence | Consequence | Foundation change |
+The table records the pre-registry investigation at `86db88c`. PR #37 resolves fixed tool discovery, open operation shapes and prompt-sliced guidance with nine tools, thirteen closed operations and one bundled guide. Whole-product services, read-only tool routing and visual observation remain open. Frozen original-binding checks are also implemented; full release-impact automation is not.
+
+| Pre-registry evidence | Consequence | Foundation change |
 | --- | --- | --- |
 | `agent-tools.js` constructs seven fixed tools and separately maintains their name list. | Useful draft editing, but no general product capability discovery. | Derive Pi tools and names from a versioned registry. |
 | `apply_operations` exposes arbitrary records containing `Type.Any`; actual operation shapes are specified in prompt text and manually validated elsewhere. | Discovery cannot reliably explain precise schemas; descriptions and execution can drift. | Make operation schemas, supported values, examples and validators share authoritative definitions. |
@@ -95,7 +97,7 @@ Always ground answers in the current product state and release. Generic model kn
 
 ## Keeping the agent current
 
-The tracking method is a versioned feature ledger, a knowledge dependency map, a build-time change report and a runtime release handshake. These are proposed additions. The current v3 build already publishes immutable production assets under `releases/<commit>` with a hash-verified service-worker shell; extend that mechanism to include the agent catalog and knowledge resources.
+The tracking method is a versioned feature ledger, a knowledge dependency map, a build-time change report and a runtime release handshake. The first registry package, declared direct dependency fingerprints, explicit baseline diff and release preflight are implemented in PR #37. Complete feature coverage, transitive impact tracking, last-successful-publication selection and enforced reviewed-impact gates remain proposed. The agent resources already join immutable `releases/<commit>` assets and the hash-verified service-worker shell.
 
 ### Authoritative feature ledger
 
@@ -144,7 +146,7 @@ The checker validates disposition/evidence references against the change digests
 
 ### Build and publish the agent package
 
-Proposed generated artifacts:
+Generated first-slice artifacts, with proposed broader metadata:
 
 | Artifact | Purpose |
 | --- | --- |
@@ -156,7 +158,7 @@ Proposed generated artifacts:
 
 Generate and validate the package before the v3 app build. Bundle local tool implementations with the app; never execute handler names or paths fetched from JSON. Publish generated resources in the same release directory, and include them in the verified PWA shell. Resource URLs resolve against the running release, never a mutable `latest` documentation endpoint.
 
-Hook the generator/checker into `buildStudioV3` before bundling and copy the generated resources during `finalizeStudioV3Pwa`. The existing `npm run build:site` already invokes unit tests through `npm run build`; add the new checks to that pipeline rather than claiming that the current pipeline checks agent knowledge. Avoid changing the release/cache protocol solely to introduce this package.
+The generator already runs before bundling in `buildStudioV3App`, and `finalizeStudioV3Pwa` copies the matching package. The target adds feature coverage, reviewed knowledge impact and qualification gates to this pipeline. Current reference/hash checks do not prove semantic knowledge freshness. Preserve the existing release/cache protocol.
 
 Use deterministic input/content hashes for contract/knowledge identity and exclude self-referential digest fields from hashing. A source commit alone does not establish matching contracts, docs or a clean local build. Production release identity includes the deployed commit and verified package digests; development builds need an identity reflecting their actual generated inputs.
 
@@ -226,7 +228,7 @@ For the built-in advantage, compare equivalent Studio tasks with an external age
 
 Keep phases small enough to review independently. Contract/registry work comes before expanding screenshot-specific tools. Preserve the existing provider and draft loop until adapters reach parity. Do not copy v2 privileged commit/export tools wholesale into the v3 model-visible registry.
 
-First implementation slice: inventory + registry for the existing authoring surface, closed operation schemas generated from that registry, `get_capabilities`, one bundled form-authoring skill, and conformance tests. This demonstrates the architecture before adding every product action. The known remove/add financial-binding path must receive a frozen-baseline invariant check before broader reconstruction is enabled.
+Implemented first slice: existing authoring registry, closed operation schemas, `get_capabilities`, `read_skill`, one bundled guide, release identity preflight and conformance tests. Frozen initial numeric/financial binding checks cover remove/re-add paths. This demonstrates the foundation; it does not complete every product action or qualify real-model reconstruction.
 
 ## Verification and operating limits
 
@@ -243,17 +245,17 @@ A missing tool/guide gives a specific unavailable result; a version mismatch end
 
 ## Literal code execution
 
-If a task requires editing framework source, installing dependencies or running shell/build commands, add a separate isolated coding workspace/service with authenticated ownership and bounded tools. Its artifacts must pass validation before import or release. That execution is not available merely because Pi is present in a browser.
+The user now requests complete coding-agent capability. An authenticated isolated source workspace with real read/search/write/patch, shell/process, test/build and diff/artifact handoff is therefore a required target gate. It does not execute inside the trusted browser UI or replace the running app automatically.
 
-This is an optional execution backend of the same capability architecture. Product-design tools and code-workspace tools can share discovery/knowledge/observations while retaining distinct state and permissions. The roadmap should distinguish complete Studio operation from complete source-development access; neither should be promised as the other.
+Product and code workspaces share discovery/knowledge/orchestration while retaining distinct state and permissions. [The complete coding-agent plan](STUDIO_V3_CODING_AGENT_PLAN.md) owns runner choices, integration and delivery; [G6/G7 acceptance](STUDIO_V3_CODING_AGENT_ACCEPTANCE.md) must pass before source coding is claimed. Complete Studio operation alone cannot close that target.
 
 ## Investigation evidence and status
 
-The first registry/guide/release-binding slice has now been implemented; see [implementation and maintenance](STUDIO_V3_AGENT_REGISTRY.md). The broader service/adapters, observations, question routing and product-workflow expansion below remain proposed.
+The first registry/guide/release-binding slice has now been implemented; see [implementation and maintenance](STUDIO_V3_AGENT_REGISTRY.md). The broader shared services, observations, question routing, product-workflow expansion and isolated source execution remain proposed.
 
-The [current capability and knowledge inventory](STUDIO_V3_AGENT_COVERAGE_INVENTORY.md) and [row-level CSV](STUDIO_V3_AGENT_COVERAGE_INVENTORY.csv) map existing product functions, tool access, knowledge delivery and verification leads. Use that inventory as the starting ownership checklist; its proposed capability IDs are not yet registered runtime tools.
+The [baseline capability and knowledge inventory](STUDIO_V3_AGENT_COVERAGE_INVENTORY.md) and [row-level CSV](STUDIO_V3_AGENT_COVERAGE_INVENTORY.csv) record the pre-registry product functions, tool access, knowledge delivery and verification leads. Reconcile that historical ownership checklist against the running release; its proposed IDs are not all registered runtime capabilities.
 
-This is a design revision following the user's clarification that the built-in agent should master all Studio workflows and stay aligned with product upgrades. Product code remains unchanged. The broader registry, skill loader, release handshake and shared services are proposed; no live-model performance or general-agent coverage claim has been verified.
+This documentation revision follows merged PR #37 and the request for complete coding-agent planning. Registry, bundled guide loading and release preflight are current; broader service/knowledge-impact automation and coding workspace remain targets. This amendment changes documentation only. No live-model performance, whole-Studio mastery or source-coding claim has been verified.
 
 Local source evidence: [v3 tools](../studio-v3/agent-tools.js), [loop and prompt construction](../studio-v3/agent-loop.js), [operation implementation/context](../studio-v3/ai-authoring.js), [current contract](../studio-v3/ai-authoring-contract.js), [question routing](../studio-v3/ai-panel.js), [UI actions](../studio-v3/app.js), [state bridge](../studio-v3/controller.js), [database controller](../studio-v3/database-controller.js).
 
