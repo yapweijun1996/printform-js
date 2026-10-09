@@ -64,23 +64,24 @@ request is read as a plain body. Reasoning is opaque (encrypted) and never shown
 are named from the HTTP status and the gateway's own code (network unreachable, origin not
 registered, rate limit, service disabled, no provider available, slow gateway) and each
 has its own message. Every gateway request has its own timeout (15 s for model discovery,
-60 s for a model request, including its session and the one 401 refresh); one Send is bounded
-by their sum (225 s). A timeout is a failure, never a retry, so a Send still makes at most
-three model requests. No native provider tools, arbitrary schema, files, background,
+60 s for a model request, including its session and the one 401 refresh). A single-step Send is
+bounded by their sum (225 s) and at most three model requests. Work-in-steps runs instead use
+a 60-minute deadline, 1000 tool-call cap and accounted-token budget. A timeout is a failure, never a retry. No native provider tools, arbitrary schema, files, background,
 web search, gateway key or private `/v1/*` request is sent. A first 401 refreshes
 once; authoring repair is capped and disclosed. No model fallback occurs: a default the
 user never changed adapts to the aliases the gateway offers, but a model the user chose
 that is no longer offered stops the Send, refreshes the list and waits for a new Send.
 
-The panel displays the selected alias, recipient and exact initial JSON.
+The panel displays the selected alias and recipient notice; there is no initial-JSON preview control.
 Send deliberately accepts the adjacent notice; there is no consent checkbox.
 The owner-requested framework-native authoring surface is described in
 [Authoring contract](STUDIO_V3_AUTHORING.md) and [Pi chat](STUDIO_V3_AI_CHAT.md).
 It includes stable element references/comments, label/value typography, structural
 fields/columns, bindings, section/page layout and embedded local raster assets.
 
-One explicit Send is bounded to three model requests and three real local
-preview inspections, with a code/geometry-only dynamic diagnostic boundary.
+A single-step Send is bounded to three model requests and three real local
+preview inspections, with a code/geometry-only dynamic diagnostic boundary. Step-mode tools
+discover their actual limits and bundled guide from the [release-bound registry](STUDIO_V3_AGENT_REGISTRY.md).
 The previous reviewed context and model proposal may be resent for repair.
 Questions remain read-only. Local tools build one unapplied candidate and a
 complete diff. Above 900 px the unapplied candidate is previewed on paper and

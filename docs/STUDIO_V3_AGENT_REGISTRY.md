@@ -1,0 +1,74 @@
+# Studio v3 Agent Registry and Release-Bound Knowledge
+
+This first implementation makes existing draft authoring capabilities discoverable and gives the agent a bundled product guide. It preserves the current provider, selected scope, inspection and user Preview/Apply flow. The broader [architecture plan](STUDIO_V3_AGENT_ARCHITECTURE_PLAN.md) and [baseline inventory](STUDIO_V3_AGENT_COVERAGE_INVENTORY.md) remain the roadmap; their proposed IDs are not all runtime capabilities.
+
+## Authoritative owners
+
+| Concern | Source owner |
+| --- | --- |
+| Operation names and closed wire schemas | `studio-v3/agent-operation-schemas.js` |
+| Tool contracts, capability IDs, source/skill/evaluation references | `studio-v3/agent-registry.js` |
+| Tool effect handlers and inspection gate | `studio-v3/agent-tools.js` |
+| Dynamic field/path/scope/design checks | Existing authoring/parser modules |
+| Frozen numeric/financial binding invariant | `studio-v3/agent-binding-invariants.js` |
+| Browser-readable guide and knowledge index | `studio-v3/agent-knowledge.js` |
+| Build package, fingerprints and change diff | `scripts/generate-studio-v3-agent.mjs` |
+| Pre-run release handshake | `studio-v3/agent-release.js` |
+
+The operation schema describes legal shapes and static bounds. Dynamic rules (available assets, current paths, exact permutations, item/non-item geometry, total widths and user scope) still require local validation. Transport validation does not replace those services.
+
+Nine tools are registered: `get_capabilities`, `read_skill`, `get_context`, `apply_operations`, `inspect_draft`, `undo_step`, `take_notes`, `finish`, `report_blocked`. `apply_operations` uses a closed union of thirteen operation schemas instead of unrestricted records. The operation list consumed by local authoring comes from that same schema owner. Runtime startup rejects tool/handler drift. Argument preparation rejects implicit type coercion and counts schema-invalid calls before Pi validation, so they cannot bypass tool-call/repeated-failure limits.
+
+The small orchestration prompt directs the model to discover capabilities and read the relevant guide. `get_capabilities` supplies schemas, guide metadata and the current run limits. `read_skill` supplies only a known bounded bundled guide; arbitrary paths/URLs are unsupported. The guide is product knowledge, while `take_notes` is temporary task memory. Guide reading is model-driven and synthetic tests demonstrate the mechanism, not independent real-model competence.
+
+## Version binding and offline operation
+
+Before Vite bundles the app, the generator validates registry IDs, references and existing source/evaluation files, then writes:
+
+- `agent/capabilities.json`: tool/operation contracts and capability fingerprints.
+- `agent/knowledge-index.json`: guide resources, content hashes and reverse source dependencies.
+- `agent/resources/form-authoring.md`: the bundled guide.
+- `agent/agent-manifest.json`: release, contract/knowledge/package hashes and file hashes.
+- `agent/capability-changes.json`: added/changed/deprecated/removed entries, with review required.
+
+The app embeds the generated identity. PWA finalization requires the same revision, copies the package into `releases/<revision>/agent/`, and includes every file in the hash-verified offline shell. The guide used by tools is also embedded in the same app bundle, so no file/shell environment or mutable external knowledge service is needed.
+
+Before a built step run creates its Pi lane/provider request, it checks the page's exact immutable asset prefix and fetches that release's small manifest with a five-second abort-backed timeout. Release, contract, knowledge and package hashes must match the embedded identity. A mismatch or missing resource stops with a specific error; it does not fall back to unverified knowledge. The verified identity stays fixed for the run and is attached to capability/context/guide responses and the final proposal. Unbundled test/development execution explicitly reports `verified:false`.
+
+The manifest is a consistency handshake, not an authentication signature. The hash-verified shell protects cached assets and the bundle is the trusted guide owner. No runtime download of arbitrary guide content is authorized by a manifest field.
+
+## Context and binding corrections
+
+Single-step context derives its three request/inspection cap and 225-second deadline from the gateway config. Step context declares actual tool-call/time/token/repeated-failure/image limits and release identity; it no longer claims three model requests or inspections. Tool calls and provider requests are different measures.
+
+Numeric-bound fields retain their original bound kind and format, with no replacement text. Financial-bound fields additionally retain pointer and, for row fields, collection identity. The draft freezes that contract at task start and checks it after every accepted candidate and at handoff. Removing a field is supported, but re-adding the same protected identity cannot reset its financial contract. Rejection preserves the prior valid draft. Single-step authoring also validates its final candidate against its initial design. This protects original identities; it does not prove the business intent of every newly added field.
+
+## Updating a capability
+
+1. Add or amend the feature schema and registry descriptor. Declare its handler, effect/result semantics, source dependencies, guide and evaluation references. Keep tool names/IDs stable when behavior is compatible.
+2. Implement the local service/handler. Reuse dynamic validators and the private draft boundary. Do not grant file, data-write or committed-state authority merely by adding a descriptor.
+3. Update the guide when behavior or workflow changes. Add meaningful task and rejection coverage; no core-prompt operation manual edit is needed.
+4. Run `npm run check:studio-v3-agent`, relevant tests and the normal site build. Missing references, duplicate IDs/skill references or unmatched handlers fail checks.
+5. Compare with the last successfully published agent manifest. Review source/schema/guide changes and their evaluations before release. Hashes expose changes but cannot prove a guide is semantically correct.
+
+Initial builds have no published baseline and label every entry added. They do not pretend to have compared against a previous release. To generate an explicit release diff into a build directory:
+
+```sh
+node scripts/generate-studio-v3-agent.mjs --baseline /path/to/published/agent-manifest.json --output /path/to/build
+```
+
+The baseline must be a saved manifest from the last successful publication. This slice supports explicit baseline comparison; it does not fetch deployment history or enforce a human approval in CI. Contract/knowledge/package identity changes automatically when declared dependencies or schemas/guides change. A feature owner must maintain dependency declarations and semantic guidance; automatic hashes are not autonomous learning.
+
+## Verification and remaining scope
+
+New unit coverage exercises discovery/guide reading through Pi, recovery from an unavailable guide, closed-schema rejection, lane-specific limits, baseline binding re-addition, matching/missing/mixed release resources, package determinism, change kinds and offline-shell inclusion. Browser coverage uses a synthetic gateway and checks registry/guide/context replay, current inspection, Apply/Undo, and zero model-content requests on release mismatch.
+
+Verification completed:
+
+- `npm run check:studio-v3-agent` passed: nine tools, thirteen operation types and one bundled guide; all dependency/evaluation references resolve.
+- Final full Vitest run: **180 files / 1507 tests passed**. Schema rejection, strict primitive typing, budget/repeated-error stops, frozen bindings and release failure paths are included.
+- Site build passed, followed by a rebuilt site artifact after the app-builder extraction. Current-source release identity and every declared resource content hash match that artifact.
+- The six-file, three-browser selection covered **102 scenarios**: 99 passed in the broad run; three test assertion/timing failures were corrected. The focused nine-case run (discovery/guide/Apply/Undo, mixed-release rejection and failed-integrity/offline recovery in all browsers) then passed, covering every prior failure. Core authoring, reference steps, update protection and draft/history recovery also passed in the broad run.
+- All modified/new source and document files are below 300 lines, with whitespace and local-link checks passing. Prior plan/inventory files are preserved.
+
+The update fixture now compiles a genuinely distinct app/knowledge identity for each synthetic release using the production app builder in native Node. Offline tests await completion of update checks before publishing the next fixture. They preserve the existing integrity checks and unsaved-work policy. No production deployment or live model task qualification is implied by these tests. Read-only questions still use the single-step lane. New-project creation, asset import, dataset services, save/export preparation, preview pixels, external MCP and isolated source execution remain later capability slices.

@@ -122,7 +122,7 @@ describe('what the run remembers',()=> {
 
 describe('the agent prompt',()=> {
   it('keeps the printform.js authoring rules, and no longer asks for a JSON envelope',()=> {
-    for (const needle of ['set_field','set_table_style','rowBackground','stable field ID','at most 24']) expect(AGENT_PROMPT).toContain(needle);
+    for (const needle of ['get_capabilities','read_skill','operation schemas','actual run limits']) expect(AGENT_PROMPT).toContain(needle);
     expect(AGENT_PROMPT).not.toContain('Return ONE JSON object');
     for (const tool of ['get_context','apply_operations','inspect_draft','undo_step','take_notes','finish','report_blocked']) expect(AGENT_PROMPT).toContain(tool);
   });

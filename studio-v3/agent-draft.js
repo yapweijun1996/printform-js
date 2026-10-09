@@ -3,6 +3,7 @@ import { assertScope } from './ai-chat-protocol.js';
 import { explicitBindingPointers } from './ai-authoring.js';
 import { missesTableBackgroundIntent } from './table-background-intent.js';
 import { labelSelection } from './design-authoring.js';
+import { protectedBindings, assertProtectedBindings } from './agent-binding-invariants.js';
 
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 // One entry per changed property: the value it had at the start and the value it has now. A change that a later
@@ -18,7 +19,7 @@ function mergeDiff(entries) {
 // The agent's working copy. Every step is checked by the same parser and scope rules as a single proposal, against
 // the previous step's result, and the live form is never touched: only a human Apply of the final proposal changes it.
 export function createDraft(project,{scope = {mode:'whole'},request = '',references = []} = {}) {
-  const steps = [], explicit = explicitBindingPointers(request,references);
+  const steps = [], explicit = explicitBindingPointers(request,references), baseline = protectedBindings(project.manifest.studioV3);
   let current = project;
   return {
     get project() { return current; },
@@ -26,6 +27,7 @@ export function createDraft(project,{scope = {mode:'whole'},request = '',referen
     apply(summary,operations) {
       const step = parseProposal(JSON.stringify({summary,operations}),current,explicit);
       assertScope(step,scope);
+      assertProtectedBindings(baseline,step.design);
       steps.push({before:current,...step}); current = step.candidate;
       return step;
     },
@@ -39,6 +41,7 @@ export function createDraft(project,{scope = {mode:'whole'},request = '',referen
     proposal(summary) {
       const diff = mergeDiff(steps.flatMap(step=>step.diff)), last = steps.at(-1);
       if (!last || !diff.length) throw fail('NO_CHANGES');
+      assertProtectedBindings(baseline,last.design);
       // Judged once on the net result: a single step is not expected to satisfy the whole request.
       if (missesTableBackgroundIntent(request,last.design,diff,references)) throw fail('TABLE_BACKGROUND_INTENT');
       return {

@@ -45,10 +45,12 @@ anything outside the references is rejected (`UNSAFE_SCOPE`).
 ## Working in steps
 
 An edit request can run as a tool loop instead of one reply. The model works on a private draft copy of the
-form and calls local tools: `get_context` (structure, bindings, authoring targets), `apply_operations` (the same
+form and calls registry-defined local tools: `get_capabilities` (release, tools, schemas and knowledge index),
+`read_skill` (bundled product guide), `get_context` (structure, bindings, authoring targets), `apply_operations` (the same
 typed operations and checks as a single proposal, at most 24 per call), `inspect_draft` (a real print preview of the
-draft), `undo_step`, `finish` (hands the result over) and `report_blocked`. Each step is checked against the previous
-one by the same parser and the same scope rules; the live form is never touched. `finish` turns the draft into one
+draft), `undo_step`, `take_notes`, `finish` (hands the result over) and `report_blocked`. Each step is checked against the previous
+one by the same parser and scope rules, and numeric/financial bindings are also checked against the initial run baseline;
+the live form is never touched. Removal does not erase protection when an identity is re-added. `finish` turns the draft into one
 proposal with the net change, and the usual Preview, Apply and Undo take it. A missing, stale or failed inspection
 rejects `finish` with a recoverable `AGENT_INSPECTION_REQUIRED` or `AGENT_INSPECTION_BLOCKED` tool error. The agent must
 inspect the exact final draft successfully before finishing. Label and field aliases merge as one property in the net
@@ -121,9 +123,9 @@ Add to chat is available from paper, structure and properties. Chips support
 remove, highlight and locate. Deleted, older, cross-document or recovered tags
 block Send until explicitly removed and added again.
 
-## Bounded inspected run
+## Bounded single-step inspected run
 
-One Send uses the pinned real Pi AgentHarness/MemorySessionRepo and Demo provider
+A single-step Send uses the pinned real Pi AgentHarness/MemorySessionRepo and Demo provider
 extension. The gateway accepts ordinary text completions; local validated
 operations implement authoring. A run allows at most three model requests and
 three real isolated print-preview inspections, with Stop and a 60-second
@@ -212,9 +214,18 @@ Verified against the real gateway: function tools, one call with its argument, a
 rotation every 15 requests, token expiry), the full `apply_operations` flow, reference images with tools, streamed progress
 and the session request and concurrency caps.
 
-Not built yet: agent skills and a registry for tools. The tool set and the system prompt are fixed. Pi has a skills API
-(`Skill`, `resources.skills`, `formatSkillsForSystemPrompt`, `harness.skill`); its `loadSkills` needs a file system and shell
-environment, so in the browser the plan is to build `Skill` objects from bundled text, list them in the system prompt, and
-add a `read_skill` tool. An in-memory check with Pi's test provider showed that the listing reaches the first request and a
-tool result reaches the next; whether the model reads a skill on its own is not yet observed. Designing a new form from an
-image or PDF is not supported: the agent amends the current form.
+The first v3 capability registry and bundled guide are implemented. Nine tools and thirteen authoring operation schemas
+are declared in `agent-registry.js` / `agent-operation-schemas.js`; tools use those contracts directly. `get_capabilities`
+returns the release identity, supported operations, skill index and actual step limits. `read_skill` loads the bounded
+`form-authoring` guide from trusted bundled product text. The step prompt contains orchestration rules rather than a copy
+of the single-step operation manual. These resources use local browser tools, not Pi's filesystem/shell skill loader.
+
+Builds generate capabilities, knowledge index, guide, agent manifest and capability changes. The bundle embeds the same
+release/package identity. Before its first model request, a built step run checks the immutable release manifest against
+that identity and the page asset prefix; unavailable/mixed resources stop the run. The complete package joins the
+hash-verified offline shell. Unbundled tests use an explicitly unverified development identity.
+
+Synthetic Pi and browser tests cover discovery, guide reading, editing, inspection, Apply/Undo and a mixed-release block.
+The real model's independent guide uptake and full task competence are not yet qualified. Creating a new form, asset
+import, source execution, dataset mutation and preview-image observation remain outside this first slice. The gateway
+probe's `read_skill` stand-in is separate from the new product tool. See [Registry maintenance](STUDIO_V3_AGENT_REGISTRY.md).

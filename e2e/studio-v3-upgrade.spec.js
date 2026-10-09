@@ -72,8 +72,10 @@ test('failed integrity download and offline check retain old build; explicit dis
   try {
     await open(page,server.url); await page.locator('[data-ai-toggle]').click(); await page.locator('#ai-prompt').fill('Fictional draft only');
     server.publish({broken:true}); await page.locator('#update-button').click();
+    await expect(page.locator('#update-button')).toBeEnabled();
     await version(page,OLD); await expect(page.locator('#update-button')).toHaveText('Check for updates');
-    await context.setOffline(true); await page.locator('#update-button').click(); await version(page,OLD); await ready(page);
+    await context.setOffline(true); await page.locator('#update-button').click();
+    await expect(page.locator('#update-button')).toBeEnabled(); await version(page,OLD); await ready(page);
     await context.setOffline(false); server.publish(); await offer(page);
     await choose(page,'discard'); await version(page,NEXT); await ready(page);
     expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();

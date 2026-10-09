@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const compile = promisify(execFile);
 import { finalizeStudioV3Pwa } from '../scripts/studio-v3-pwa.mjs';
 
 export const OLD = 'a'.repeat(40), NEXT = 'b'.repeat(40);
@@ -14,6 +17,9 @@ export async function upgradeServer() {
     fs.mkdirSync(path.join(root,'studio-v2')); fs.copyFileSync('studio-v2/icon.svg',path.join(root,'studio-v2/icon.svg'));
     fs.copyFileSync('studio-v3/index.html',path.join(root,'studio-v3/index.html'));
     fs.copyFileSync('studio-v3/sw.js',path.join(root,'studio-v3/sw.js'));
+    // Compile each fixture against its own generated knowledge identity, as a real release does.
+    await compile(process.execPath,['--input-type=module','-e',
+      "import {buildStudioV3App} from './scripts/build-studio-v3.mjs'; await buildStudioV3App({root:process.cwd(),output:process.argv[1],revision:process.argv[2]});",root,revision],{timeout:20000,maxBuffer:1024*1024});
     // Different bytes in build B demonstrate that immutable URLs really switch.
     fs.appendFileSync(path.join(root,'studio-v3/app.js'),`\n;globalThis.__upgradeFixtureBuild='${revision}';\n`);
     if (revision === NEXT) fs.appendFileSync(path.join(root,'studio-v3/styles.css'),'\n:root { --upgrade-marker:build-b; }\n');

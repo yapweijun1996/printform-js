@@ -1,0 +1,33 @@
+import { Type } from '@earendil-works/pi-ai';
+import { BLOCKS, FIELD_KINDS, PAPERS, ORIENTATIONS, ALIGNMENTS, FORMATS } from './design-authoring.js';
+
+const object = properties => Type.Object(properties,{additionalProperties:false});
+const choice = values => Type.Union(values.map(value=>Type.Literal(value)));
+const optional = properties => Object.fromEntries(Object.entries(properties).map(([key,value])=>[key,Type.Optional(value)]));
+const color = Type.String({pattern:'^#[0-9a-fA-F]{6}$'});
+const id = Type.String({minLength:1,maxLength:80});
+const section = choice(BLOCKS);
+const typography = object(optional({fontSize:Type.Number({minimum:6,maximum:72}),bold:Type.Boolean(),color,align:choice(ALIGNMENTS)}));
+export const GLOBAL_STYLE_SCHEMA = object(optional({color,font:Type.Number({minimum:6,maximum:14}),padding:Type.Number({minimum:2,maximum:16}),
+  ...Object.fromEntries(['striped','borders','repeatHeader','repeatTable','pageNumbers','breakBefore'].map(key=>[key,Type.Boolean()]))}));
+const fieldProperties = {label:Type.String({maxLength:100}),kind:choice(FIELD_KINDS),pointer:Type.String({maxLength:240}),text:Type.String({maxLength:10000}),format:choice(FORMATS),
+  showLabel:Type.Boolean(),labelStyle:typography,valueStyle:typography,width:Type.Number({minimum:1,maximum:400}),assetId:Type.String({pattern:'^[a-z0-9-]{1,60}$'}),height:Type.Number({minimum:8,maximum:200}),fit:choice(['contain','cover'])};
+const operation = (type,properties) => object({type:Type.Literal(type),...properties});
+// These transport schemas describe shapes/bounds. Dynamic binding, scope and final design invariants stay local.
+export const OPERATION_SCHEMAS = Object.freeze({
+  set_element_style:operation('set_element_style',{target:choice(['header-title','page-number']),patch:typography}),
+  set_style:operation('set_style',{patch:GLOBAL_STYLE_SCHEMA}),
+  set_table_style:operation('set_table_style',{target:Type.Literal('items'),patch:object({rowBackground:Type.Optional(Type.Union([color,Type.Null()]))})}),
+  set_field:operation('set_field',{target:id,patch:object(optional(fieldProperties))}),
+  add_field:operation('add_field',{section,field:object({id:Type.String({pattern:'^[a-z0-9-]{1,60}$'}),...optional(fieldProperties)})}),
+  remove_field:operation('remove_field',{target:id}),
+  reorder_fields:operation('reorder_fields',{section,order:Type.Array(id,{maxItems:30,uniqueItems:true})}),
+  set_section:operation('set_section',{target:section,patch:object(optional({enabled:Type.Boolean(),label:Type.String({maxLength:100}),
+    layout:object(optional({columns:Type.Integer({minimum:1,maximum:4}),gap:Type.Number({minimum:0,maximum:48})})),breakBefore:Type.Boolean(),keepTogether:Type.Boolean()}))}),
+  reorder_sections:operation('reorder_sections',{order:Type.Array(section,{minItems:5,maxItems:5,uniqueItems:true})}),
+  set_page:operation('set_page',{patch:object(optional({paper:choice(PAPERS),orientation:choice(ORIENTATIONS),margins:object(optional(Object.fromEntries(['top','right','bottom','left'].map(key=>[key,Type.Number({minimum:0,maximum:72})]))))}))}),
+  set_logo:operation('set_logo',{value:Type.Union([Type.Null(),object({assetId:fieldProperties.assetId,width:Type.Number({minimum:8,maximum:400}),height:fieldProperties.height,fit:Type.Optional(fieldProperties.fit)})])}),
+  set_collection:operation('set_collection',{value:Type.String({minLength:1,maxLength:240})}),
+  set_heading:operation('set_heading',{value:Type.String({maxLength:100})})
+});
+export const AUTHORING_TYPES = Object.freeze(Object.keys(OPERATION_SCHEMAS));
