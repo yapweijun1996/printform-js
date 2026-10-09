@@ -11,7 +11,7 @@ Target: both complete eligible Studio operation and real isolated source coding.
 | ID | Work / scope | Dependencies | Exit evidence | Status |
 | --- | --- | --- | --- | --- |
 | CA-00 | Record merged registry/guide/release foundation and remaining gaps | PR #37 | Current nine-tool/13-operation slice and its bounded evidence recorded; no broader closure | Recorded / implemented slice |
-| CA-01 | Reconcile full product feature ledger; freeze initial task families/oracles | CA-00 | G1 COV-01: 100% workflows classified, eligible core gaps explicit; planned capability-to-service/guide/fixture ownership map | Pending |
+| CA-01 | Reconcile full product feature ledger; freeze initial task families/oracles | CA-00 | G1 COV-01: 100% workflows classified, eligible core gaps explicit; planned capability-to-service/guide/fixture ownership map | In progress: [draft ledger](docs/STUDIO_V3_FEATURE_LEDGER.md) + ID drift guard; reviewer confirmation and 66-row re-verification open |
 | CA-02 | Harden input/output/error contracts and knowledge/release tracking | CA-01 | G1 COV-04/05 + G2: examples/dependencies, successful-publication baseline and digest-bound impact review gate | Pending |
 | CA-03 | Unified run controller, effect grants, answers, budgets and recovery | CA-02 | G3: read-only answers, scope/revision/approval rejection, idempotency and truthful completion | Pending |
 | CA-04 | Extract shared Studio services; UI/Pi adapter parity | CA-02, CA-03 | G1 COV-03: equivalent candidate/diagnostics/errors for every callable workflow | Pending |
