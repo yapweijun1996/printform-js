@@ -5,6 +5,8 @@ import { stepLabel } from './agent-step-labels.js';
 import { createDemoTransport } from './ai-demo-transport.js';
 import { assertProposalCurrent, fail } from './ai-edits.js';
 import { chatRequest,readOnlyRequest } from './ai-chat-protocol.js';
+import { profileFor } from './agent-effects.js';
+import { createIntentLedger, newIntentKey } from './intent-ledger.js';
 import { Conversation, cleanMessages } from './ai-conversation.js';
 import { renderConversation, setupPanelLayout } from './ai-chat-view.js';
 import { errorMessage } from './ai-messages.js';
@@ -19,7 +21,7 @@ const RECIPIENT_NOTICE = 'Sent to the Demo gateway · use fictional data only';
 export class AIPanel {
   constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,restore,commit,undo,sync,transport=createDemoTransport()}) {
     Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,restore,commit,undo,sync,transport});
-    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.agentSteps = []; this.agentUnavailable = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.conversation = new Conversation();
+    this.root = document.querySelector('#ai-panel'); this.viewing = false; this.agentSteps = []; this.agentUnavailable = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.intents = createIntentLedger(); this.conversation = new Conversation();
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
     this.node('#ai-agent').checked = agentEnabled();
     this.root.addEventListener('change',event=> { if (event.target.id === 'ai-agent') { setAgentEnabled(event.target.checked); this.agentUnavailable = false; }
@@ -33,7 +35,7 @@ export class AIPanel {
       if (action === 'cancel') void this.stop();
       if (action === 'discard') void this.discard();
       if (action === 'preview') void this.guard(()=>this.preview()).catch(error=>this.error(error));
-      if (action === 'apply') void this.guard(()=>this.apply()).catch(error=>this.error(error));
+      if (action === 'apply') { const intent = button.dataset.intent; void this.guard(()=>this.apply(intent)).catch(error=>this.error(error)); }
       if (action === 'undo') void this.guard(()=>this.undoCard(button.dataset.cardId)).catch(error=>this.error(error));
       if (action === 'models') void this.discover();
       if (action === 'clear') { this.node('.ai-settings').open = false; void this.clear(); }
@@ -140,8 +142,11 @@ export class AIPanel {
   setModels(aliases) { const kept = fillModels(this.node('#ai-model'),aliases); this.referenceFiles?.capabilityChanged(); return kept; }
   restoreAlias(alias) { const valid = isDemoAlias(alias) ? alias : DEMO_CONFIG.defaultAlias; showAlias(this.node('#ai-model'),valid); this.modelChosen = valid !== DEMO_CONFIG.defaultAlias; }
   finish() { clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.agentSteps = []; this.update(); }
-  // Work in steps unless it is off, known to be unavailable, or the request is a question. Images need confirmed support.
-  useSteps(payload,media,alias) { return agentEnabled() && !this.agentUnavailable && (!media.length || this.transport.supportsImages?.(alias) === true) && typeof this.transport.agentTurn === 'function' && !readOnlyRequest(payload.request,payload.conversation); }
+  // Work in steps unless it is off, known to be unavailable, or images lack confirmed support. A question runs the same
+  // way under a read-only grant (see grantProfile); with steps unavailable it keeps the single-step answer flow.
+  useSteps(payload,media,alias) { return agentEnabled() && !this.agentUnavailable && (!media.length || this.transport.supportsImages?.(alias) === true) && typeof this.transport.agentTurn === 'function'; }
+  // The effect grant comes from host state. The question check can only narrow it to read-only, never widen it.
+  grantProfile(payload) { return profileFor({question:readOnlyRequest(payload.request,payload.conversation)}); }
   stepDone(step,id) { if (id === this.generation) { this.agentSteps.push({text:stepLabel(step),ok:step.ok,code:step.code}); this.update(); } }
   async send() {
     if (this.busy || this.applying || this.restoring) return;
@@ -175,7 +180,7 @@ export class AIPanel {
       if (this.useSteps(payload,media,alias)) {
         this.setRunTimeout(id,DEMO_CONFIG.agent.maxRunMs,'AGENT_TIMEOUT');
         this.agentSteps = [];
-        try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id)}); }
+        try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext,inspectCandidate,onPhase,onStep:step=>this.stepDone(step,id),profile:this.grantProfile(payload)}); }
         catch (error) {
           // The gateway refusing tools is remembered. A model that ignored the tools on its first turn is only skipped
           // this once. A run that already took steps and then ended without a result is reported, not restarted.
@@ -191,7 +196,8 @@ export class AIPanel {
       assertProposalCurrent(this.getBus(),{bus,revision,baseDesign});
       if (epoch !== this.epoch || selection !== this.getSelection() || scope !== JSON.stringify(this.scope())) throw fail('STALE_PROPOSAL');
       const card = this.conversation.add('assistant',result.kind === 'answer' ? result.message : result.summary,result.kind === 'answer' ? 'answer' : 'ready',{documentKey:this.documentKey(),...(result.diff ? {diff:result.diff} : {})});
-      if (result.kind === 'proposal') this.proposal = {...result,bus,revision,baseDesign,epoch,selection,scope,cardId:card.id};
+      // The host mints one intent key per proposal; Apply is idempotent under it (see intent-ledger.js).
+      if (result.kind === 'proposal') this.proposal = {...result,bus,revision,baseDesign,epoch,selection,scope,cardId:card.id,intentKey:newIntentKey()};
       if (result.kind === 'answer' && this.viewing) { await this.restore(); this.viewing = false; }
       // Wide screens preview the unapplied candidate right away; narrow screens keep the Preview button (it hides the full-screen panel).
       const auto = result.kind === 'proposal' && innerWidth > 900, next = auto && result.inspection?.ready ? 'Review the paper preview, then Apply.' : 'Preview before Apply.';
@@ -211,12 +217,16 @@ export class AIPanel {
     this.update(); this.sync();
     if (innerWidth <= 900) { this.suspend(); document.querySelector('[data-ai-toggle]').focus(); }
   }
-  async apply() {
+  // A duplicate Apply for a key already seen (a second click, a queued repeat) waits for the original outcome and does
+  // nothing more: one commit, no stale-proposal or busy error for the harmless repeat.
+  async apply(intentKey = this.proposal?.intentKey) {
+    const duplicate = this.intents.replay(intentKey);
+    if (duplicate) { await duplicate.catch(() => {}); return; }
     const proposal = this.proposal; this.assertCurrent(proposal); if (!this.checked || this.busy) throw fail('AI_RUN_FAILED');
     const card = this.conversation.messages.find(m=>m.id === proposal.cardId), generation = this.generation;
     this.applying = true; this.busy = true; this.update(); let canonical = false;
     try {
-      const applied = await this.commit(proposal,generation); canonical = true;
+      const applied = await this.intents.run(proposal.intentKey,JSON.stringify([proposal.revision,proposal.baseDesign,proposal.design]),() => this.commit(proposal,generation)); canonical = true;
       if (card) Object.assign(card,{status:'applied',appliedBus:applied.bus,appliedRevision:applied.revision,appliedEpoch:proposal.epoch});
       // The references pointed at the revision just replaced; keeping them would block the next Send as outdated.
       if (applied.bus === this.getBus()) { this.elementTags?.consume(); this.showScopeHint(); }

@@ -67,8 +67,9 @@ Each turn resends the conversation (the gateway keeps no state), with encrypted 
 turn; older tool results are folded and the request has a size limit. A fresh gateway session starts every 15
 requests. This needs the gateway to allow client-executed function tools for the project (`agent_tools_enabled`) and a
 native OpenAI route. If the gateway refuses tools, the panel says so once, uses the single-step flow, and does not ask
-again until the page is reloaded or the setting is switched. Questions and disabling "Work in steps (beta)" in the
-settings menu use the single-step flow. The setting is on by default and remembered in the browser. Confirmed image
+again until the page is reloaded or the setting is switched. Disabling "Work in steps (beta)" in the settings menu uses
+the single-step flow. Questions also run in steps, under a read-only effect grant, unless steps are off or unavailable.
+The setting is on by default and remembered in the browser. Confirmed image
 support permits image-bearing agent runs; otherwise their pixels cannot be sent.
 
 Long runs and cost. A run has a token budget (2,000,000; no next request starts once accounted usage reaches it) and the
@@ -96,7 +97,20 @@ contains a change verb (change, set, make, increase, reduce, adjust, improve, en
 enlarge, shrink). The starting actions in the empty state must stay edit requests, and a test
 checks each of them against this rule.
 
-Ordinary questions use a closed answer envelope and remain read-only. Font
+In a step run the host builds a frozen effect grant before the first model call. A question gets the read-only grant:
+the model is shown only the read, notes, `finish_answer` and `report_blocked` tools, so it cannot change a draft or
+propose a change, and an answer needs a prior read of a guide, the form context or an inspection. Any other request
+gets the design grant (private draft plus a proposal for Preview and Apply). The question check can only narrow the
+grant; it never widens it, and no argument, model text or reference text can change it. Data and coding grants exist
+by name only and fail as unavailable until their tools are added.
+
+Apply is idempotent. The host mints one intent key per proposal (never from the model) and the Apply button carries it.
+A second click, a queued repeat or a late repeat for a key already seen waits for the original outcome and does nothing
+more, so there is one commit and no error for the harmless repeat. The same key with different content is rejected
+(`INTENT_CONFLICT`); a new proposal gets a new key. A failed outcome is replayed, never retried blindly. The ledger keeps
+the last 64 keys in memory only.
+
+Ordinary questions use a closed answer envelope in the single-step flow and remain read-only. Font
 questions use measured computed typography in the committed sandbox preview,
 with stable label/value/title/page-number IDs. Zoom is separate from print size.
 Missing measurements are explicitly unavailable.
