@@ -27,6 +27,15 @@ Document type labels remain visible and part of each card's accessible name on
 compact screens. Resizing, filtering, language changes and card-height changes
 recalculate placement without changing the catalogue or the preview controls.
 
+The Gallery viewer isolates each preview session so a delayed close or load
+cannot clear a newer preview. On narrow or short screens the school-invoice
+previews (PF-058–063) place Paper and Dataset behind **Preview options**;
+their status remains visible and the outer Print action replaces the duplicate
+inner button. Print is disabled during school-invoice recalculation and after
+formatting errors; it resumes only when the current preview is ready.
+The original standalone controls and print layout are unchanged.
+Other designs retain their own preview controls and native iframe scrolling.
+
 Share a filtered view using `?category=sales&type=Quotation&paper=A4&q=green`. Unknown category/type/paper values are reset safely. Back/Forward restores filters; typing is grouped into one history entry per search focus session. Loading, invalid-manifest and request-error states are distinct from an empty result, with a retry button. New gallery modules must also be listed in `scripts/gallery-pwa-build.mjs` for offline use.
 
 PF-053 adds a green A4 SANYO Singapore sales quotation design sample with entirely fictional transaction/contact details. Its five-item default is one measured print page; `?overflow=1` is a bounded 35-item pagination QA fixture.

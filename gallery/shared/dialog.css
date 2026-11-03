@@ -34,3 +34,9 @@
 .preview-status[hidden] { display: none; }
 @media (prefers-color-scheme: dark) { :root { --dialog-border: #424b5d; } }
 @media (max-height: 450px) { .pf-dialog { --dialog-space: 8px; } .modal-header h2 { font-size: 14px; } }
+@media (max-width: 680px), (max-height: 450px) {
+  .pf-dialog { --dialog-space: 8px; }
+  .modal-header h2 { font-size: 15px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .modal-header p { line-height: 1.2; }
+  .modal-actions .button:not([hidden]) { min-height: 44px; }
+}
