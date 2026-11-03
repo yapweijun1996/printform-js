@@ -20,6 +20,13 @@ Category counts show catalogue totals, while the result counter shows matching/t
 
 The catalogue defaults to newest-first by descending numeric PF number, the explicit addition-order convention because the manifest has no creation dates. Filtering, reset, locale and history retain this order without mutating the manifest.
 
+The gallery uses an image-first masonry layout: two columns on narrow screens,
+three on tablets and up to five on wide screens. Cards keep their natural image
+aspect ratios; DOM, keyboard and top-to-bottom visual order remain newest-first.
+Document type labels remain visible and part of each card's accessible name on
+compact screens. Resizing, filtering, language changes and card-height changes
+recalculate placement without changing the catalogue or the preview controls.
+
 Share a filtered view using `?category=sales&type=Quotation&paper=A4&q=green`. Unknown category/type/paper values are reset safely. Back/Forward restores filters; typing is grouped into one history entry per search focus session. Loading, invalid-manifest and request-error states are distinct from an empty result, with a retry button. New gallery modules must also be listed in `scripts/gallery-pwa-build.mjs` for offline use.
 
 PF-053 adds a green A4 SANYO Singapore sales quotation design sample with entirely fictional transaction/contact details. Its five-item default is one measured print page; `?overflow=1` is a bounded 35-item pagination QA fixture.
