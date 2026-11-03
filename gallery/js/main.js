@@ -15,6 +15,40 @@ const status = document.querySelector("#load-status");
 const retry = document.querySelector("#retry-load");
 let manifest, modal, syncControls, filters, loadState = "loading", editingQuery = false;
 
+// Keep the DOM in reading order while packing each card into the shortest column.
+let layoutFrame = 0;
+function layoutCards() {
+  const cards = [...grid.children];
+  const width = grid.clientWidth;
+  if (!width) return;
+  const columns = width < 580 ? 2 : width < 860 ? 3 : width < 1100 ? 4 : 5;
+  const gap = width < 580 ? 10 : 18;
+  const cardWidth = (width - gap * (columns - 1)) / columns;
+  grid.classList.add("is-masonry");
+  cards.forEach((card) => { card.style.width = `${cardWidth}px`; });
+  const cardHeights = cards.map((card) => card.offsetHeight);
+  const heights = Array(columns).fill(0);
+  cards.forEach((card, index) => {
+    const column = heights.indexOf(Math.min(...heights));
+    card.style.left = `${column * (cardWidth + gap)}px`;
+    card.style.top = `${heights[column]}px`;
+    heights[column] += cardHeights[index] + gap;
+  });
+  grid.style.height = `${Math.max(0, ...heights) - (cards.length ? gap : 0)}px`;
+}
+function scheduleLayout() {
+  cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(layoutCards);
+}
+const layoutObserver = new ResizeObserver(scheduleLayout);
+function observeCards() {
+  layoutObserver.disconnect();
+  layoutObserver.observe(grid);
+  [...grid.children].forEach((card) => layoutObserver.observe(card));
+  layoutCards();
+}
+window.addEventListener("resize", layoutCards);
+
 function update(patch, historyMode = "pushState") {
   filters = normalizeFilters(manifest, { ...filters, ...patch });
   const url = filterURL(location.href, filters);
@@ -56,6 +90,7 @@ function render() {
     card.addEventListener("click", () => modal.show(design, card));
     return card;
   }));
+  observeCards();
   empty.hidden = designs.length !== 0;
   const noun = designs.length === 1 ? text("resultOne") : text("resultMany");
   count.textContent = `${designs.length}/${manifest.length} ${noun}`;
