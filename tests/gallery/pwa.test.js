@@ -2,12 +2,22 @@ import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { JSDOM } from "jsdom";
 import { requireBuildIdentity } from "../../gallery/require-build-identity.js";
 import { smartScrollDecision } from "../../gallery/js/smart-scroll.js";
 import { buildGalleryPrecache } from "../../scripts/gallery-pwa-build.mjs";
 const root = path.resolve(import.meta.dirname, "../..");
 
 describe("gallery PWA", () => {
+  it("declares mobile app capability once for generic and Apple platforms", () => {
+    const html = fs.readFileSync(path.join(root, "gallery/index.html"), "utf8");
+    const document = new JSDOM(html).window.document;
+    for (const name of ["mobile-web-app-capable", "apple-mobile-web-app-capable"]) {
+      const tags = document.head.querySelectorAll(`meta[name="${name}"]`);
+      expect(tags).toHaveLength(1);
+      expect(tags[0].getAttribute("content")).toBe("yes");
+    }
+  });
   it("requires matching successful build identity", async () => {
     const response = (body, ok = true) => Promise.resolve({ ok, json: async () => body });
     await expect(requireBuildIdentity("a", response({ build: "a" }))).resolves.toEqual({ build: "a" });
