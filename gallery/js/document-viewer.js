@@ -55,7 +55,9 @@ export function createDocumentViewer(dialog) {
       transform: settings ? 'none' : `translate(${-bounds.left * scale}px, ${-bounds.top * scale}px) scale(${scale})`
     });
     Object.assign(stage.style, { width: `${settings ? viewport.clientWidth : bounds.width * scale}px`, height: `${settings ? viewport.clientHeight : bounds.height * scale}px` });
-    query('[data-zoom]').value = Math.round(scale * 100);
+    // Observer redraws must not replace a zoom value still being edited.
+    const zoomInput = query('[data-zoom]');
+    if (document.activeElement !== zoomInput) zoomInput.value = Math.round(scale * 100);
     query('[data-out]').disabled = scale <= .5;
     query('[data-in]').disabled = scale >= 2;
     query('[data-page-total]').textContent = `/ ${sheets.length}`;
@@ -97,7 +99,9 @@ export function createDocumentViewer(dialog) {
     if (!bounds) return;
     const y = viewport.scrollTop / scale, x = viewport.scrollLeft / scale;
     fit = false;
-    scale = Math.min(2, Math.max(.5, value));
+    scale = Math.min(2, Math.max(.5, Number.isFinite(value) ? value : .5));
+    // Explicit commits normalize even while the input retains focus.
+    query('[data-zoom]').value = Math.round(scale * 100);
     draw();
     viewport.scrollTo(x * scale, y * scale);
   }
