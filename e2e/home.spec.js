@@ -89,14 +89,16 @@ test('reflows in both languages, including expanded fixtures and large text', as
   expect(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme)).toBe('light');
 });
 
-test('supports keyboard skip, language switching and fixture disclosure', async ({ page }) => {
+test('supports keyboard skip, language switching and fixture disclosure', async ({ page, browserName }) => {
+  const tabKey = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+  // macOS WebKit follows the native default: Option+Tab focuses links.
   await page.goto('/');
-  await page.keyboard.press('Tab');
+  await page.keyboard.press(tabKey);
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('main')).toBeFocused();
   await page.goto('/');
-  for (let i = 0; i < 6; i++) await page.keyboard.press('Tab');
+  for (let i = 0; i < 6; i++) await page.keyboard.press(tabKey);
   await expect(page.getByRole('button', { name: '中文', exact: true })).toBeFocused();
   const focusStyle = await page.locator(':focus').evaluate(el => {
     const css = getComputedStyle(el);
@@ -108,12 +110,12 @@ test('supports keyboard skip, language switching and fixture disclosure', async 
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   for (let i = 0; i < 30; i++) {
     if (await page.locator('summary').evaluate(el => el === document.activeElement)) break;
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey);
   }
   await expect(page.locator('summary')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('details')).toHaveAttribute('open', '');
-  await page.keyboard.press('Tab');
+  await page.keyboard.press(tabKey);
   await expect(page.locator('a[href="index_subtotal_test.html"]')).toBeFocused();
 });
 
