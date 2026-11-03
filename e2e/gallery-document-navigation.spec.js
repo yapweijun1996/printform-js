@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { chooseFit } from './helpers/viewer-presets.js';
 
 async function open(page, number) {
   await page.goto(`/gallery/index.html?q=PF-${number}`);
@@ -14,7 +15,7 @@ test('desktop narrow paper defaults to at most 100% while manual zoom reaches 20
   await page.locator('[data-zoom]').fill('200');
   await page.locator('[data-zoom]').press('Enter');
   await expect(page.locator('[data-zoom]')).toHaveValue('200');
-  await page.locator('[data-fit]').click();
+  await chooseFit(page);
   await expect(page.locator('[data-zoom]')).toHaveValue('100');
   await page.setViewportSize({ width: 375, height: 667 });
   await page.locator('[data-close]').click();
@@ -48,6 +49,20 @@ for (const sequence of [['048'], ['047', '048', '049', '048']]) {
       await expect(page.locator('[data-print]')).toBeEnabled();
       await expect(page.locator('[data-page-total]')).not.toHaveText('/ 0');
       const count = Number((await page.locator('[data-page-total]').textContent()).replace('/ ', ''));
+      if (count === 1) {
+        await expect(page.locator('[data-prev]')).toBeHidden();
+        await expect(page.locator('[data-next]')).toBeHidden();
+        await expect.poll(() => page.locator('iframe').evaluate(frame => {
+          const doc = frame.contentDocument;
+          const paper = (doc.querySelector('.physical_page_wrapper') || doc.querySelector('.printform_page')).getBoundingClientRect();
+          const box = frame.getBoundingClientRect(), view = frame.closest('.frame-wrap').getBoundingClientRect();
+          const scale = box.width / frame.offsetWidth;
+          return box.top + paper.top * scale >= view.top - 1 && box.top + paper.bottom * scale <= view.bottom + 1 &&
+            box.left + paper.left * scale >= view.left - 1 && box.left + paper.right * scale <= view.right + 1;
+        })).toBe(true);
+        await page.locator('[data-close]').click();
+        continue;
+      }
       await page.locator('[data-page]').fill(String(count));
       // Re-measurement must not overwrite an in-progress page jump.
       await page.setViewportSize({ width: 375, height: number === '048' ? 668 : 667 });

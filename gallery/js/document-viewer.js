@@ -15,18 +15,39 @@ export function createDocumentViewer(dialog) {
   stage.append(viewport.querySelector('iframe'));
   const bar = document.createElement('div');
   bar.className = 'viewer-controls';
-  bar.innerHTML = `<div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
-    <div class="viewer-tools"><button type="button" data-fit></button><button type="button" data-out>−</button>
-    <label><input data-zoom type="number" min="50" max="200" step="10" value="100">%</label><button type="button" data-in>+</button></div>
+  bar.innerHTML = `<button type="button" data-read></button><div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
+    <div class="viewer-tools"><button type="button" data-out>−</button>
+    <label><input data-zoom type="number" max="200" step="any" value="100">%</label><button type="button" data-in>+</button>
+    <div class="viewer-presets"><button type="button" data-presets aria-expanded="false" aria-controls="viewer-preset-menu">▾</button>
+    <div id="viewer-preset-menu" class="viewer-preset-menu" hidden><button type="button" data-fit></button><button type="button" data-preset="1">100%</button><button type="button" data-preset="1.5">150%</button><button type="button" data-preset="2">200%</button></div></div></div>
     <div class="viewer-pages"><button type="button" data-prev>‹</button><label><input data-page type="number" min="1" value="1"><span data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
   viewport.before(bar);
   const hint = document.createElement('p');
   hint.className = 'viewer-hint';
   hint.hidden = true;
   viewport.before(hint);
+  const readingHint = document.createElement('p');
+  readingHint.className = 'viewer-reading-hint';
+  readingHint.hidden = true;
+  viewport.before(readingHint);
   const query = selector => bar.querySelector(selector);
   let frame, sheets = [], bounds, scale = 1, fit = true, settings = false, page = 0;
-  let observer, resize, scheduled, requested;
+  let observer, resize, scheduled, requested, hintTimer;
+  function closePresets(restoreFocus = false) {
+    query('.viewer-preset-menu').hidden = true;
+    query('[data-presets]').setAttribute('aria-expanded', 'false');
+    if (restoreFocus) query('[data-presets]').focus();
+  }
+  function menuEscape(event) {
+    if (event.key === 'Escape' && !query('.viewer-preset-menu').hidden) {
+      event.preventDefault(); event.stopImmediatePropagation(); closePresets(true);
+    }
+  }
+  dialog.addEventListener('keydown', menuEscape, true);
+  dialog.addEventListener('close', () => { if (!dialog.open) closePresets(); });
+  document.addEventListener('pointerdown', event => {
+    if (!query('.viewer-presets').contains(event.target)) closePresets();
+  }, true);
   const current = () => {
     if (!bounds || settings) return;
     const y = viewport.scrollTop / scale + bounds.top + 2;
@@ -50,8 +71,11 @@ export function createDocumentViewer(dialog) {
     hint.hidden = !settings;
     query('[data-settings]').setAttribute('aria-expanded', String(settings));
     query('[data-preview]').setAttribute('aria-pressed', String(!settings));
+    query('[data-preview]').hidden = !settings;
+    query('[data-read]').hidden = settings;
     query('.viewer-tools').hidden = settings;
-    query('.viewer-pages').hidden = settings;
+    query('.viewer-pages').hidden = settings || sheets.length <= 1;
+    bar.classList.toggle('is-single-page', sheets.length <= 1);
     // Source context remains unscaled. Only its screen presentation is transformed.
     Object.assign(frame.style, {
       width: '1440px', height: `${settings ? viewport.clientHeight : Math.ceil(bounds.bottom + 8)}px`,
@@ -110,14 +134,26 @@ export function createDocumentViewer(dialog) {
     viewport.scrollTo(x * scale, y * scale);
   }
   function mode(value) {
+    readingHint.hidden = true;
+    closePresets();
     settings = value;
     frame?.contentWindow.scrollTo(0, 0);
     measure();
     viewport.scrollTo(0, 0);
   }
   query('[data-settings]').addEventListener('click', () => mode(!settings));
-  query('[data-preview]').addEventListener('click', () => mode(false));
-  query('[data-fit]').addEventListener('click', () => { fit = true; draw(); viewport.scrollLeft = 0; });
+  query('[data-preview]').addEventListener('click', () => { mode(false); viewport.focus({ preventScroll: true }); });
+  query('[data-presets]').addEventListener('click', () => {
+    const menu = query('.viewer-preset-menu');
+    menu.hidden = !menu.hidden;
+    query('[data-presets]').setAttribute('aria-expanded', String(!menu.hidden));
+  });
+  query('[data-fit]').addEventListener('click', () => { closePresets(true); readingHint.hidden = true; fit = true; draw(); viewport.scrollLeft = 0; });
+  bar.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => { closePresets(true); readingHint.hidden = true; zoom(Number(button.dataset.preset)); }));
+  query('[data-read]').addEventListener('click', () => {
+    closePresets(); zoom(1); readingHint.hidden = false; viewport.focus({ preventScroll: true });
+    clearTimeout(hintTimer); hintTimer = setTimeout(() => { readingHint.hidden = true; }, 4000);
+  });
   query('[data-out]').addEventListener('click', () => zoom(scale - .1));
   query('[data-in]').addEventListener('click', () => zoom(scale + .1));
   query('[data-zoom]').addEventListener('change', event => zoom(Number(event.target.value) / 100));
@@ -132,6 +168,10 @@ export function createDocumentViewer(dialog) {
   viewport.addEventListener('keydown', event => {
     if (event.target !== viewport || settings) return;
     if (['Home', 'End', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', ' '].includes(event.key)) trackScroll();
+    if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      viewport.scrollLeft += event.key === 'ArrowRight' ? 40 : -40;
+      event.preventDefault();
+    }
     if (event.key === 'Home') { viewport.scrollTo(0, 0); event.preventDefault(); }
     if (event.key === 'End') { viewport.scrollTo(viewport.scrollWidth, viewport.scrollHeight); event.preventDefault(); }
   });
@@ -143,23 +183,42 @@ export function createDocumentViewer(dialog) {
       for (const [index, selector] of ['[data-preview]', '[data-settings]', '[data-fit]', '[data-out]', '[data-in]', '[data-zoom]', '[data-prev]', '[data-next]', '[data-page]'].entries()) {
         const node = query(selector);
         node.setAttribute('aria-label', words[index]);
-        if (index < 3) node.textContent = words[index];
+        if (index === 0) node.textContent = language === 'zh' ? '返回预览' : 'Back to Preview';
+        if (index === 1) node.textContent = '⚙';
+        if (index === 2) node.textContent = words[index];
       }
       viewport.setAttribute('aria-label', words[9]);
       hint.textContent = words[10];
+      query('[data-read]').textContent = language === 'zh' ? '阅读' : 'Read';
+      query('[data-read]').setAttribute('aria-label', language === 'zh' ? '放大阅读' : 'Read');
+      query('[data-preview]').setAttribute('aria-label', language === 'zh' ? '返回预览' : 'Back to Preview');
+      query('[data-presets]').setAttribute('aria-label', language === 'zh' ? '缩放预设' : 'Zoom Presets');
+      readingHint.textContent = language === 'zh' ? '平移和滚动以阅读' : 'Pan and scroll to read';
     },
     reset() {
-      observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled);
+      observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled); clearTimeout(hintTimer); closePresets();
       frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0; requested = null;
       stage.removeAttribute('style'); viewport.scrollTo(0, 0);
+      viewport.classList.remove('is-settings');
+      bar.classList.remove('is-single-page');
       query('[data-settings]').setAttribute('aria-expanded', 'false');
+      query('[data-preview]').setAttribute('aria-pressed', 'true');
+      query('[data-preview]').hidden = true;
+      query('[data-read]').hidden = false;
       query('[data-page-total]').textContent = '/ 0';
       query('[data-page]').value = '1';
-      query('.viewer-pages').hidden = false;
-      hint.hidden = true; query('.viewer-tools').hidden = false;
+      query('.viewer-pages').hidden = true;
+      hint.hidden = true; readingHint.hidden = true; query('.viewer-tools').hidden = false;
     },
     bind(candidate) {
       frame = candidate;
+      const source = candidate.contentDocument;
+      source.addEventListener('keydown', event => {
+        if (dialog.open && frame === candidate && candidate.contentDocument === source) menuEscape(event);
+      }, true);
+      source.addEventListener('pointerdown', () => {
+        if (frame === candidate && candidate.contentDocument === source) closePresets();
+      }, true);
       frame.style.width = '1440px';
       observer = new MutationObserver(schedule);
       observer.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'disabled'] });
