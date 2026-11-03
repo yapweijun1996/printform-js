@@ -1,37 +1,40 @@
-// The school invoice toolbar is a sibling of the generated paper, never its content.
-export function adaptEmbeddedPreview(doc, language) {
-  const nav = doc.querySelector('body > nav.controls[aria-label="Invoice preview controls"]');
-  if (!nav || !doc.querySelector('body > #invoice-root') || !nav.querySelector('#paper') || !nav.querySelector('#sample')) return;
-  let toggle = doc.getElementById('gallery-preview-options');
-  if (!toggle) {
-    const style = doc.createElement('style');
-    style.textContent = `
-      #gallery-preview-options { display: none; }
-      @media screen and (max-width: 680px), screen and (max-height: 450px) {
-        #gallery-preview-options { display: block; min-height: 44px; width: 100%; padding: 8px 12px; font: 16px sans-serif; color: #203249; background: #fff; border: 1px solid #8b9aab; text-align: left; }
-        body > nav.controls[data-gallery-collapsed="true"] { display: block; padding: 2px 8px; }
-        body > nav.controls[data-gallery-collapsed="true"] > :not(#status) { display: none; }
-        body > nav.controls:not([data-gallery-collapsed="true"]) { padding: 8px; gap: 8px; }
-        body > nav.controls select, body > nav.controls input { font-size: 16px; min-height: 44px; }
-        body > nav.controls #print { display: none; }
-        body > #invoice-root { padding-top: 12px; }
-      }
-      @media print { #gallery-preview-options { display: none !important; } }
-    `;
-    doc.head.append(style);
-    toggle = doc.createElement('button');
-    toggle.id = 'gallery-preview-options';
-    toggle.type = 'button';
-    nav.id = nav.id || 'gallery-preview-controls';
-    toggle.setAttribute('aria-controls', nav.id);
-    toggle.setAttribute('aria-expanded', 'false');
-    nav.dataset.galleryCollapsed = 'true';
-    toggle.addEventListener('click', () => {
-      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
-      toggle.setAttribute('aria-expanded', String(expanded));
-      nav.dataset.galleryCollapsed = String(!expanded);
-    });
-    nav.before(toggle);
+// Only known source chrome and paper ancestors receive screen-only overrides.
+export function adaptEmbeddedPreview(doc, settings = false, width = 375) {
+  const chrome = doc.querySelector('body > .toolbar, body > nav.controls');
+  if (chrome && !chrome.closest('.printform_page, .physical_page_wrapper')) {
+    chrome.dataset.galleryChrome = '';
+    chrome.querySelector('#print')?.setAttribute('data-gallery-source-print', '');
   }
-  toggle.textContent = language === 'zh' ? '预览选项' : 'Preview options';
+  for (const sheet of doc.querySelectorAll('.physical_page_wrapper, .printform_page')) {
+    for (let parent = sheet.parentElement; parent && parent !== doc.body; parent = parent.parentElement) {
+      parent.dataset.galleryPaperAncestor = '';
+    }
+  }
+  doc.documentElement.dataset.galleryView = settings ? 'settings' : 'preview';
+  doc.documentElement.style.setProperty('--gallery-settings-width', `${width}px`);
+  if (doc.getElementById('gallery-viewer-screen')) return;
+  const style = doc.createElement('style');
+  style.id = 'gallery-viewer-screen';
+  style.textContent = `@media screen {
+    html[data-gallery-view="preview"], html[data-gallery-view="preview"] body { overflow: hidden !important; }
+    [data-gallery-view="preview"] [data-gallery-chrome] { display: none !important; }
+    [data-gallery-view="preview"] [data-gallery-paper-ancestor] { overflow: visible !important; }
+    [data-gallery-view] [data-gallery-chrome] { box-sizing: border-box; width: var(--gallery-settings-width); max-width: var(--gallery-settings-width); margin: 0; padding: 12px; }
+    [data-gallery-view] [data-gallery-chrome] input,
+    [data-gallery-view] [data-gallery-chrome] select,
+    [data-gallery-view] [data-gallery-chrome] button { min-height: 44px; max-width: 100%; font-size: 16px; }
+    [data-gallery-view] [data-gallery-source-print] { display: none !important; }
+  }`;
+  doc.head.append(style);
+}
+
+export function sourceState(frame) {
+  const win = frame.contentWindow, doc = frame.contentDocument;
+  const failed = doc.body?.dataset.state === 'error' || win.SCHOOL_ERROR || doc.querySelector('#status[role="alert"]');
+  if (failed) return 'previewError';
+  const flags = ['SCHOOL_READY', 'ASTER_READY', 'ATLAS_READY', 'LUMEN_READY', 'MERIDIAN_READY'];
+  const blocked = flags.some(key => typeof win[key] === 'boolean' && !win[key]);
+  const state = doc.body?.dataset.state;
+  return win.__printFormProcessed === true && !blocked && !doc.querySelector('#print')?.disabled &&
+    (!state || state === 'ready') ? '' : 'previewLoading';
 }

@@ -9,5 +9,5 @@ test("pinned embedded preview adapter works offline", async ({ page, context }) 
   await page.reload();
   await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
   await expect(page.locator("[data-print]")).toBeEnabled();
-  await expect(page.frameLocator("iframe").locator("#gallery-preview-options")).toBeVisible();
+  await expect(page.locator("[data-settings]")).toBeVisible();
 });

@@ -1,0 +1,147 @@
+import { adaptEmbeddedPreview } from './embedded-preview.js';
+
+const labels = {
+  en: ['Preview', 'Settings', 'Fit width', 'Zoom out', 'Zoom in', 'Zoom percentage', 'Previous page', 'Next page', 'Page', 'Document viewport', 'Settings change the source layout; zoom only changes the view.'],
+  zh: ['预览', '设置', '适合宽度', '缩小', '放大', '缩放百分比', '上一页', '下一页', '页码', '文档阅读区', '设置会重新排版源文档；缩放只改变阅读比例。']
+};
+
+export function createDocumentViewer(dialog) {
+  const viewport = dialog.querySelector('.frame-wrap');
+  viewport.classList.add('document-viewport');
+  viewport.tabIndex = 0;
+  const stage = document.createElement('div');
+  stage.className = 'viewer-stage';
+  viewport.append(stage);
+  stage.append(viewport.querySelector('iframe'));
+  const bar = document.createElement('div');
+  bar.className = 'viewer-controls';
+  bar.innerHTML = `<div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
+    <div class="viewer-tools"><button type="button" data-fit></button><button type="button" data-out>−</button>
+    <label><input data-zoom type="number" min="50" max="200" step="10" value="100">%</label><button type="button" data-in>+</button>
+    <button type="button" data-prev>‹</button><label><input data-page type="number" min="1" value="1"><span data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
+  viewport.before(bar);
+  const hint = document.createElement('p');
+  hint.className = 'viewer-hint';
+  hint.hidden = true;
+  viewport.before(hint);
+  const query = selector => bar.querySelector(selector);
+  let frame, sheets = [], bounds, scale = 1, fit = true, settings = false, page = 0;
+  let observer, resize, scheduled;
+  const current = () => {
+    if (!bounds || settings) return;
+    const y = viewport.scrollTop / scale + bounds.top + 2;
+    page = Math.max(0, sheets.findLastIndex(rect => rect.top <= y));
+    query('[data-page]').value = page + 1;
+    query('[data-prev]').disabled = page === 0;
+    query('[data-next]').disabled = page >= sheets.length - 1;
+  };
+  function draw() {
+    if (!frame || !bounds) return;
+    if (fit) scale = Math.min(2, viewport.clientWidth / bounds.width);
+    const doc = frame.contentDocument;
+    adaptEmbeddedPreview(doc, settings, viewport.clientWidth);
+    viewport.classList.toggle('is-settings', settings);
+    hint.hidden = !settings;
+    query('[data-settings]').setAttribute('aria-expanded', String(settings));
+    query('[data-preview]').setAttribute('aria-pressed', String(!settings));
+    query('.viewer-tools').hidden = settings;
+    // Source context remains unscaled. Only its screen presentation is transformed.
+    Object.assign(frame.style, {
+      width: '1440px', height: `${settings ? viewport.clientHeight : Math.ceil(bounds.bottom + 8)}px`,
+      transform: settings ? 'none' : `translate(${-bounds.left * scale}px, ${-bounds.top * scale}px) scale(${scale})`
+    });
+    Object.assign(stage.style, { width: `${settings ? viewport.clientWidth : bounds.width * scale}px`, height: `${settings ? viewport.clientHeight : bounds.height * scale}px` });
+    query('[data-zoom]').value = Math.round(scale * 100);
+    query('[data-page-total]').textContent = `/ ${sheets.length}`;
+    query('[data-page]').max = sheets.length;
+    current();
+  }
+  function measure() {
+    if (!frame?.isConnected) return;
+    const doc = frame.contentDocument;
+    adaptEmbeddedPreview(doc, settings, viewport.clientWidth);
+    const physical = [...doc.querySelectorAll('.physical_page_wrapper')];
+    const nodes = physical.length ? physical : [...doc.querySelectorAll('.printform_page')];
+    sheets = nodes.map(node => {
+      const rect = node.getBoundingClientRect();
+      return { left: rect.left + frame.contentWindow.scrollX, top: rect.top + frame.contentWindow.scrollY,
+        right: rect.right + frame.contentWindow.scrollX, bottom: rect.bottom + frame.contentWindow.scrollY };
+    }).filter(rect => rect.right > rect.left && rect.bottom > rect.top);
+    if (!sheets.length) return;
+    const left = Math.min(...sheets.map(rect => rect.left)), top = sheets[0].top;
+    const right = Math.max(...sheets.map(rect => rect.right)), bottom = Math.max(...sheets.map(rect => rect.bottom));
+    bounds = { left, top, right, bottom, width: right - left, height: bottom - top };
+    draw();
+  }
+  const schedule = () => {
+    cancelAnimationFrame(scheduled);
+    scheduled = requestAnimationFrame(measure);
+  };
+  function go(value) {
+    if (!sheets.length) return;
+    const index = Math.min(sheets.length - 1, Math.max(0, value - 1));
+    viewport.scrollTop = (sheets[index].top - bounds.top) * scale;
+    current();
+  }
+  function zoom(value) {
+    if (!bounds) return;
+    const y = viewport.scrollTop / scale, x = viewport.scrollLeft / scale;
+    fit = false;
+    scale = Math.min(2, Math.max(.5, value));
+    draw();
+    viewport.scrollTo(x * scale, y * scale);
+  }
+  function mode(value) {
+    settings = value;
+    frame?.contentWindow.scrollTo(0, 0);
+    measure();
+    viewport.scrollTo(0, 0);
+  }
+  query('[data-settings]').addEventListener('click', () => mode(!settings));
+  query('[data-preview]').addEventListener('click', () => mode(false));
+  query('[data-fit]').addEventListener('click', () => { fit = true; draw(); viewport.scrollLeft = 0; });
+  query('[data-out]').addEventListener('click', () => zoom(scale - .1));
+  query('[data-in]').addEventListener('click', () => zoom(scale + .1));
+  query('[data-zoom]').addEventListener('change', event => zoom(Number(event.target.value) / 100));
+  query('[data-page]').addEventListener('change', event => go(Number(event.target.value)));
+  query('[data-prev]').addEventListener('click', () => go(page));
+  query('[data-next]').addEventListener('click', () => go(page + 2));
+  viewport.addEventListener('scroll', current);
+  viewport.addEventListener('keydown', event => {
+    if (event.target !== viewport || settings) return;
+    if (event.key === 'Home') { viewport.scrollTo(0, 0); event.preventDefault(); }
+    if (event.key === 'End') { viewport.scrollTo(viewport.scrollWidth, viewport.scrollHeight); event.preventDefault(); }
+  });
+  const outerResize = new ResizeObserver(schedule);
+  outerResize.observe(viewport);
+  return {
+    localize(language) {
+      const words = labels[language] || labels.en;
+      for (const [index, selector] of ['[data-preview]', '[data-settings]', '[data-fit]', '[data-out]', '[data-in]', '[data-zoom]', '[data-prev]', '[data-next]', '[data-page]'].entries()) {
+        const node = query(selector);
+        node.setAttribute('aria-label', words[index]);
+        if (index < 3) node.textContent = words[index];
+      }
+      viewport.setAttribute('aria-label', words[9]);
+      hint.textContent = words[10];
+    },
+    reset() {
+      observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled);
+      frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0;
+      stage.removeAttribute('style'); viewport.scrollTo(0, 0);
+      query('[data-settings]').setAttribute('aria-expanded', 'false');
+      hint.hidden = true; query('.viewer-tools').hidden = false;
+    },
+    bind(candidate) {
+      frame = candidate;
+      frame.style.width = '1440px';
+      observer = new MutationObserver(schedule);
+      observer.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'disabled'] });
+      resize = new ResizeObserver(schedule);
+      resize.observe(frame.contentDocument.body);
+      measure();
+      frame.contentDocument.fonts.ready.then(() => { if (frame === candidate) schedule(); });
+    },
+    refresh: schedule
+  };
+}

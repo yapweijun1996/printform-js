@@ -22,10 +22,10 @@ for (const [width, height] of [[320, 568], [360, 640], [390, 664]]) {
     await page.goto("/gallery/index.html");
     await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
     await expect(page.locator("[data-print]")).toBeEnabled();
-    const box = await page.locator("iframe").boundingBox();
+    const box = await page.locator(".document-viewport").boundingBox();
     const top = await page.frameLocator("iframe").locator(".printform_page").first().evaluate((node) => node.getBoundingClientRect().top);
     expect(top).toBeLessThanOrEqual(100);
-    if (width === 390) expect(box.height).toBeGreaterThanOrEqual(height * 0.7);
+    if (width === 390) expect(box.height).toBeGreaterThanOrEqual(height * 0.6);
   });
 }
 
@@ -42,7 +42,7 @@ test("repeated and different synchronous reopen, then close restores focus and s
     await expect(page.locator("[data-print]")).toBeEnabled();
     await expect.poll(() => page.frameLocator("iframe").locator("body").evaluate(() => location.pathname)).toContain(id === a ? "bilingual-academy-invoice" : "premium-international-school-invoice");
   }
-  await page.frameLocator("iframe").locator("#gallery-preview-options").focus();
+  await page.frameLocator("iframe").locator("body").evaluate(node => { node.tabIndex = -1; node.focus(); });
   await page.keyboard.press("Escape");
   await expect(page.locator("dialog")).not.toBeVisible();
   await expect(page.locator(b)).toBeFocused();
@@ -55,7 +55,7 @@ test("options preserve paper and dataset; print and standalone stay intact", asy
   await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
   await expect(page.locator("[data-print]")).toBeEnabled();
   const frame = page.frameLocator("iframe");
-  const options = frame.locator("#gallery-preview-options");
+  const options = page.locator("[data-settings]");
   await expect(options).toHaveAttribute("aria-expanded", "false");
   expect((await options.boundingBox()).height).toBeGreaterThanOrEqual(44);
   await options.focus();
@@ -76,7 +76,7 @@ test("options preserve paper and dataset; print and standalone stay intact", asy
   await page.locator("[data-print]").click();
   expect(await frame.locator("body").evaluate(() => window.__galleryPrintCalls)).toBe(1);
   await page.emulateMedia({ media: "print" });
-  await expect(options).toBeHidden();
+  await expect(frame.locator("nav.controls")).toBeHidden();
   await expect(frame.locator(".printform_page").first()).toBeVisible();
   await page.emulateMedia({ media: "screen" });
   const standalone = await context.newPage();
@@ -181,7 +181,7 @@ test("print geometry matches standalone and Tab stays inside the dialog", async 
   await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
   await expect(page.locator("[data-print]")).toBeEnabled();
   const frame = page.frameLocator("iframe");
-  await frame.locator("#gallery-preview-options").focus();
+  await page.locator("[data-settings]").focus();
   for (let i = 0; i < 8; i++) {
     await page.keyboard.press("Tab");
     expect(await page.evaluate(() => document.querySelector("dialog").contains(document.activeElement))).toBe(true);
@@ -206,7 +206,7 @@ for (const [name, width, height] of [["320", 320, 568], ["390", 390, 664], ["lan
     await page.goto("/gallery/index.html");
     await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
     await expect(page.locator("[data-print]")).toBeEnabled();
-    const box = await page.locator("iframe").boundingBox();
+    const box = await page.locator(".document-viewport").boundingBox();
     expect(box.height).toBeGreaterThan(80);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     for (const selector of ["[data-close]", "[data-print]", "[data-open]"]) {
@@ -225,8 +225,8 @@ test("Chinese dark preview keeps controls after viewport changes", async ({ page
   await page.goto("/gallery/index.html");
   await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
   await expect(page.locator("[data-print]")).toBeEnabled();
-  const frame = page.frameLocator("iframe"), options = frame.locator("#gallery-preview-options");
-  await expect(options).toHaveText("预览选项");
+  const frame = page.frameLocator("iframe"), options = page.locator("[data-settings]");
+  await expect(options).toHaveText("设置");
   await options.click();
   await frame.locator("#paper").selectOption("A5");
   await expect.poll(() => frame.locator("body").evaluate(() => window.SCHOOL_RESULT?.paper)).toBe("A5");
