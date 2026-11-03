@@ -43,7 +43,10 @@ export function createDocumentViewer(dialog) {
       event.preventDefault(); event.stopImmediatePropagation(); closePresets(true);
     }
   }, true);
-  dialog.addEventListener('close', () => closePresets());
+  dialog.addEventListener('close', () => { if (!dialog.open) closePresets(); });
+  document.addEventListener('pointerdown', event => {
+    if (!query('.viewer-presets').contains(event.target)) closePresets();
+  }, true);
   const current = () => {
     if (!bounds || settings) return;
     const y = viewport.scrollTop / scale + bounds.top + 2;
@@ -144,10 +147,10 @@ export function createDocumentViewer(dialog) {
     menu.hidden = !menu.hidden;
     query('[data-presets]').setAttribute('aria-expanded', String(!menu.hidden));
   });
-  query('[data-fit]').addEventListener('click', () => { closePresets(); readingHint.hidden = true; fit = true; draw(); viewport.scrollLeft = 0; });
-  bar.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => { closePresets(); readingHint.hidden = true; zoom(Number(button.dataset.preset)); }));
+  query('[data-fit]').addEventListener('click', () => { closePresets(true); readingHint.hidden = true; fit = true; draw(); viewport.scrollLeft = 0; });
+  bar.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => { closePresets(true); readingHint.hidden = true; zoom(Number(button.dataset.preset)); }));
   query('[data-read]').addEventListener('click', () => {
-    zoom(1); readingHint.hidden = false; viewport.focus({ preventScroll: true });
+    closePresets(); zoom(1); readingHint.hidden = false; viewport.focus({ preventScroll: true });
     clearTimeout(hintTimer); hintTimer = setTimeout(() => { readingHint.hidden = true; }, 4000);
   });
   query('[data-out]').addEventListener('click', () => zoom(scale - .1));
@@ -164,6 +167,10 @@ export function createDocumentViewer(dialog) {
   viewport.addEventListener('keydown', event => {
     if (event.target !== viewport || settings) return;
     if (['Home', 'End', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', ' '].includes(event.key)) trackScroll();
+    if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      viewport.scrollLeft += event.key === 'ArrowRight' ? 40 : -40;
+      event.preventDefault();
+    }
     if (event.key === 'Home') { viewport.scrollTo(0, 0); event.preventDefault(); }
     if (event.key === 'End') { viewport.scrollTo(viewport.scrollWidth, viewport.scrollHeight); event.preventDefault(); }
   });
@@ -199,6 +206,10 @@ export function createDocumentViewer(dialog) {
     },
     bind(candidate) {
       frame = candidate;
+      const source = candidate.contentDocument;
+      source.addEventListener('pointerdown', () => {
+        if (frame === candidate && candidate.contentDocument === source) closePresets();
+      }, true);
       frame.style.width = '1440px';
       observer = new MutationObserver(schedule);
       observer.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'disabled'] });
