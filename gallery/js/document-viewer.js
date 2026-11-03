@@ -26,12 +26,15 @@ export function createDocumentViewer(dialog) {
   viewport.before(hint);
   const query = selector => bar.querySelector(selector);
   let frame, sheets = [], bounds, scale = 1, fit = true, settings = false, page = 0;
-  let observer, resize, scheduled;
+  let observer, resize, scheduled, requested;
   const current = () => {
     if (!bounds || settings) return;
     const y = viewport.scrollTop / scale + bounds.top + 2;
     const atEnd = viewport.scrollTop > 0 && viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
-    page = atEnd ? sheets.length - 1 : Math.max(0, sheets.findLastIndex(rect => rect.top <= y));
+    // A requested sheet can share the clamped scroll position with other sheets.
+    // Keep that intent across scroll events/redraws, but not a real position change.
+    if (requested && Math.abs(viewport.scrollTop - requested.top) > 1) requested = null;
+    page = requested ? requested.index : atEnd ? sheets.length - 1 : Math.max(0, sheets.findLastIndex(rect => rect.top <= y));
     // Layout/font observers may run while a page jump is still being edited.
     const input = query('[data-page]');
     if (document.activeElement !== input) input.value = page + 1;
@@ -93,6 +96,7 @@ export function createDocumentViewer(dialog) {
     }
     const index = Math.min(sheets.length - 1, Math.max(0, value - 1));
     viewport.scrollTop = (sheets[index].top - bounds.top) * scale;
+    requested = { index, top: viewport.scrollTop };
     current();
   }
   function zoom(value) {
@@ -118,11 +122,16 @@ export function createDocumentViewer(dialog) {
   query('[data-in]').addEventListener('click', () => zoom(scale + .1));
   query('[data-zoom]').addEventListener('change', event => zoom(Number(event.target.value) / 100));
   query('[data-page]').addEventListener('change', event => go(Number(event.target.value)));
+  query('[data-page]').addEventListener('blur', current);
   query('[data-prev]').addEventListener('click', () => go(page));
   query('[data-next]').addEventListener('click', () => go(page + 2));
   viewport.addEventListener('scroll', current);
+  const trackScroll = () => { requested = null; current(); };
+  viewport.addEventListener('wheel', trackScroll, { passive: true });
+  viewport.addEventListener('touchmove', trackScroll, { passive: true });
   viewport.addEventListener('keydown', event => {
     if (event.target !== viewport || settings) return;
+    if (['Home', 'End', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', ' '].includes(event.key)) trackScroll();
     if (event.key === 'Home') { viewport.scrollTo(0, 0); event.preventDefault(); }
     if (event.key === 'End') { viewport.scrollTo(viewport.scrollWidth, viewport.scrollHeight); event.preventDefault(); }
   });
@@ -141,7 +150,7 @@ export function createDocumentViewer(dialog) {
     },
     reset() {
       observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled);
-      frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0;
+      frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0; requested = null;
       stage.removeAttribute('style'); viewport.scrollTo(0, 0);
       query('[data-settings]').setAttribute('aria-expanded', 'false');
       query('[data-page-total]').textContent = '/ 0';
