@@ -38,11 +38,12 @@ export function createDocumentViewer(dialog) {
     query('[data-presets]').setAttribute('aria-expanded', 'false');
     if (restoreFocus) query('[data-presets]').focus();
   }
-  dialog.addEventListener('keydown', event => {
+  function menuEscape(event) {
     if (event.key === 'Escape' && !query('.viewer-preset-menu').hidden) {
       event.preventDefault(); event.stopImmediatePropagation(); closePresets(true);
     }
-  }, true);
+  }
+  dialog.addEventListener('keydown', menuEscape, true);
   dialog.addEventListener('close', () => { if (!dialog.open) closePresets(); });
   document.addEventListener('pointerdown', event => {
     if (!query('.viewer-presets').contains(event.target)) closePresets();
@@ -141,7 +142,7 @@ export function createDocumentViewer(dialog) {
     viewport.scrollTo(0, 0);
   }
   query('[data-settings]').addEventListener('click', () => mode(!settings));
-  query('[data-preview]').addEventListener('click', () => mode(false));
+  query('[data-preview]').addEventListener('click', () => { mode(false); viewport.focus({ preventScroll: true }); });
   query('[data-presets]').addEventListener('click', () => {
     const menu = query('.viewer-preset-menu');
     menu.hidden = !menu.hidden;
@@ -212,6 +213,9 @@ export function createDocumentViewer(dialog) {
     bind(candidate) {
       frame = candidate;
       const source = candidate.contentDocument;
+      source.addEventListener('keydown', event => {
+        if (dialog.open && frame === candidate && candidate.contentDocument === source) menuEscape(event);
+      }, true);
       source.addEventListener('pointerdown', () => {
         if (frame === candidate && candidate.contentDocument === source) closePresets();
       }, true);
