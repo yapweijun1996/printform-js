@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { chooseFit } from './helpers/viewer-presets.js';
 
 async function open(page, number) {
   await page.goto(`/gallery/index.html?q=PF-${number}`);
@@ -14,7 +15,7 @@ test('desktop narrow paper defaults to at most 100% while manual zoom reaches 20
   await page.locator('[data-zoom]').fill('200');
   await page.locator('[data-zoom]').press('Enter');
   await expect(page.locator('[data-zoom]')).toHaveValue('200');
-  await page.locator('[data-fit]').click();
+  await chooseFit(page);
   await expect(page.locator('[data-zoom]')).toHaveValue('100');
   await page.setViewportSize({ width: 375, height: 667 });
   await page.locator('[data-close]').click();

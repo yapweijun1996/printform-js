@@ -226,7 +226,7 @@ test("Chinese dark preview keeps controls after viewport changes", async ({ page
   await page.locator('[data-design-id="bilingual-academy-invoice"]').click();
   await expect(page.locator("[data-print]")).toBeEnabled();
   const frame = page.frameLocator("iframe"), options = page.locator("[data-settings]");
-  await expect(options).toHaveText("设置");
+  await expect(options).toHaveAccessibleName("设置");
   await options.click();
   await frame.locator("#paper").selectOption("A5");
   await expect.poll(() => frame.locator("body").evaluate(() => window.SCHOOL_RESULT?.paper)).toBe("A5");

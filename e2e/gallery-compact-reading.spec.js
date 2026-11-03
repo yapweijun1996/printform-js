@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { chooseFit } from './helpers/viewer-presets.js';
 
 test('Read uses natural scale with guidance and returns to fit', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
@@ -12,7 +13,8 @@ test('Read uses natural scale with guidance and returns to fit', async ({ page }
   await page.getByRole('button', { name: 'Read', exact: true }).click();
   await expect.poll(scale).toBe(1);
   await expect(page.getByText('Pan and scroll to read')).toBeVisible();
-  await page.getByRole('button', { name: 'Fit width', exact: true }).click();
+  await expect(page.locator('.document-viewport')).toBeFocused();
+  await chooseFit(page);
   await expect.poll(scale).toBeCloseTo(fitted, 3);
 });
 

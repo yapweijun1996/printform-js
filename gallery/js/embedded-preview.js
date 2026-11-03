@@ -23,6 +23,7 @@ export function adaptEmbeddedPreview(doc, settings = false, width = 375) {
     [data-gallery-view] [data-gallery-chrome] input,
     [data-gallery-view] [data-gallery-chrome] select,
     [data-gallery-view] [data-gallery-chrome] button { min-height: 44px; max-width: 100%; font-size: 16px; }
+    [data-gallery-view] [data-gallery-chrome] select { height: 44px; }
     [data-gallery-view] [data-gallery-source-print] { display: none !important; }
   }`;
   doc.head.append(style);
