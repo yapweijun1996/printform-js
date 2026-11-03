@@ -34,6 +34,7 @@ export function createDialog(dialog, resolveFocus) {
     doc.addEventListener("keydown", escape);
   }
   dialog.addEventListener("close", () => {
+    if (dialog.open) return;
     detachFrame();
     if (!saved) return;
     const { x, y, style } = saved;
@@ -53,8 +54,10 @@ export function createDialog(dialog, resolveFocus) {
     bindFrame,
     open() {
       if (dialog.open) return;
-      saved = { x: scrollX, y: scrollY, style: document.body.style.cssText };
-      Object.assign(document.body.style, { position: "fixed", top: `${-saved.y}px`, left: `${-saved.x}px`, width: "100%", overflow: "hidden" });
+      if (!saved) {
+        saved = { x: scrollX, y: scrollY, style: document.body.style.cssText };
+        Object.assign(document.body.style, { position: "fixed", top: `${-saved.y}px`, left: `${-saved.x}px`, width: "100%", overflow: "hidden" });
+      }
       dialog.showModal();
       dialog.querySelector("[data-close]").focus({ preventScroll: true });
       document.dispatchEvent(new Event("gallery-dialog-change"));
