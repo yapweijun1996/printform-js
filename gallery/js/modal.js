@@ -1,6 +1,7 @@
 import { currentLanguage, pageCount, text, typeName } from "./i18n.js";
 import { createDialog } from "../shared/dialog.js";
-import { adaptEmbeddedPreview } from "./embedded-preview.js";
+import { sourceState } from "./embedded-preview.js";
+import { createDocumentViewer } from "./document-viewer.js";
 
 export function createModal(dialog, manifest) {
   let frame = dialog.querySelector("iframe");
@@ -10,6 +11,7 @@ export function createModal(dialog, manifest) {
   const print = dialog.querySelector("[data-print]");
   const studio = dialog.querySelector("[data-studio]");
   const status = dialog.querySelector(".preview-status");
+  const viewer = createDocumentViewer(dialog);
   let returnFocus, currentDesign, framePoll, stopWatching = () => {}, designUrl = "", state = "previewLoading", session = 0;
   const primitive = createDialog(dialog, () => {
     const card = [...document.querySelectorAll(".gallery-card")].find((node) => node.dataset.designId === returnFocus?.dataset.designId);
@@ -17,12 +19,7 @@ export function createModal(dialog, manifest) {
   });
   function cancelPoll() { clearTimeout(framePoll); framePoll = null; }
   function ready(candidate) {
-    const win = candidate.contentWindow;
-    if (win.__printFormProcessed !== true) return false;
-    if (typeof win.SCHOOL_READY === "boolean") {
-      return win.SCHOOL_READY && !candidate.contentDocument.querySelector("#print")?.disabled;
-    }
-    return true;
+    return sourceState(candidate) === "";
   }
   function showStatus(next) {
     state = next;
@@ -36,7 +33,7 @@ export function createModal(dialog, manifest) {
     open.textContent = text("openDesign");
     studio.textContent = text("openStudio");
     showStatus(state);
-    try { if (dialog.open && new URL(frame.contentWindow.location.href).pathname === new URL(designUrl).pathname) adaptEmbeddedPreview(frame.contentDocument, currentLanguage()); } catch { /* Preview remains recoverable. */ }
+    viewer.localize(currentLanguage());
   }
   function bindPreviewFrame(candidate, owner) {
     const active = () => dialog.open && owner === session && frame === candidate;
@@ -47,37 +44,37 @@ export function createModal(dialog, manifest) {
       cancelPoll();
       stopWatching();
       const doc = candidate.contentDocument;
-      const sourcePrint = doc.querySelector("#print");
-      const sourceStatus = doc.querySelector("#status");
-      const school = typeof candidate.contentWindow.SCHOOL_READY === "boolean" && sourcePrint && sourceStatus;
+      viewer.bind(candidate);
       const sync = () => {
         if (!active()) return;
         try {
-          print.disabled = !ready(candidate);
-          showStatus(print.disabled ? (candidate.contentWindow.SCHOOL_ERROR ? "previewError" : "previewLoading") : "");
+          const next = sourceState(candidate);
+          print.disabled = Boolean(next);
+          showStatus(next);
         } catch { print.disabled = true; showStatus("previewError"); }
       };
-      if (school) {
-        const onChange = (event) => {
-          if (event.target.matches("#paper, #sample")) {
-            print.disabled = true;
-            showStatus("previewLoading");
-          }
-        };
-        const observer = new MutationObserver(sync);
-        observer.observe(sourcePrint, { attributes: true, attributeFilter: ["disabled"] });
-        observer.observe(sourceStatus, { childList: true, characterData: true, subtree: true });
-        doc.addEventListener("change", onChange, true);
-        stopWatching = () => { observer.disconnect(); doc.removeEventListener("change", onChange, true); };
-      }
+      const onChange = () => {
+        print.disabled = true;
+        showStatus("previewLoading");
+        queueMicrotask(sync);
+      };
+      const observer = new MutationObserver(() => { sync(); viewer.refresh(); });
+      observer.observe(doc.body, { attributes: true, attributeFilter: ["disabled", "data-state", "role"], childList: true, characterData: true, subtree: true });
+      doc.addEventListener("change", onChange, true);
+      doc.addEventListener("input", onChange, true);
+      stopWatching = () => {
+        observer.disconnect();
+        doc.removeEventListener("change", onChange, true);
+        doc.removeEventListener("input", onChange, true);
+      };
       const started = Date.now();
       const poll = () => {
         if (!active()) return;
         try {
-          adaptEmbeddedPreview(candidate.contentDocument, currentLanguage());
+          viewer.refresh();
           primitive.bindFrame(candidate.contentDocument);
           if (ready(candidate)) { sync(); return; }
-          if (candidate.contentWindow.SCHOOL_ERROR) { sync(); return; }
+          if (sourceState(candidate) === "previewError") { sync(); return; }
         } catch { /* A failed/cross-origin load keeps the recoverable action. */ }
         if (Date.now() - started >= 10000) { showStatus("previewError"); return; }
         framePoll = setTimeout(poll, 100);
@@ -92,7 +89,7 @@ export function createModal(dialog, manifest) {
     try {
       if (!dialog.open || print.disabled || !ready(frame)) {
         print.disabled = true;
-        showStatus(frame.contentWindow.SCHOOL_ERROR ? "previewError" : "previewLoading");
+        showStatus(sourceState(frame));
         return;
       }
     } catch { print.disabled = true; showStatus("previewError"); return; }
@@ -106,6 +103,7 @@ export function createModal(dialog, manifest) {
     session++;
     cancelPoll();
     stopWatching();
+    viewer.reset();
     print.disabled = true;
     frame.contentWindow.location.replace("about:blank");
     currentDesign = null;
@@ -115,6 +113,7 @@ export function createModal(dialog, manifest) {
     show(design, trigger) {
       session++;
       stopWatching();
+      viewer.reset();
       primitive.bindFrame(null);
       const previousFrame = frame;
       frame = previousFrame.cloneNode(false);

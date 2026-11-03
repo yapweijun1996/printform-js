@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 export function buildGalleryPrecache(galleryRoot, siteRoot) {
   const data = JSON.parse(fs.readFileSync(path.join(galleryRoot, "manifest.json"), "utf8"));
   const shell = ["index.html", "gallery.css", "manifest.json", "manifest.webmanifest", "js/main.js", "js/modal.js", "js/embedded-preview.js", "js/filter.js", "js/categories.js", "js/filter-state.js", "js/filter-controls.js", "js/i18n.js", "js/manifest-loader.js", "js/smart-scroll.js", "js/pwa.js", "js/pwa-update.js", "js/order.js", "shared/dialog.js", "shared/dialog.css", "require-build-identity.js", "build-identity-classic.js", "sw.js", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon-180.png"];
+  shell.push("js/document-viewer.js");
   for (const entry of data) shell.push(entry.file);
   for (const dir of ["designs/shared", "designs/assets"]) {
     const absolute = path.join(galleryRoot, dir);
