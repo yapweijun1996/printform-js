@@ -18,8 +18,8 @@ import { finalizeGalleryPwa } from "./gallery-pwa-build.mjs";
 
 const root = process.cwd();
 const output = path.resolve(root, "site-dist");
-const allowedDirectories = ["dist", "docs", "gallery", "img", "studio", "studio-v2", "studio-v3"];
-const allowedRootFiles = ["index.html", "README.md", "README.zh-CN.md"];
+const allowedDirectories = ["dist", "docs", "gallery", "homepage", "img", "studio", "studio-v2", "studio-v3"];
+const allowedRootFiles = ["index.html", "README.md", "README.zh-CN.md", "multiple_page_preview.html"];
 
 function copy(source, destination) {
   fs.cpSync(source, destination, { recursive: true, filter: (entry) => !entry.includes("site-dist") });
