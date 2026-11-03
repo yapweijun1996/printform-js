@@ -47,6 +47,25 @@ test('loads the captured invoice and publishes every local destination', async (
     expect(response.status(), path).toBe(200);
   }
 });
+test('reflows expanded homepage headings at 320px with 200% root text in both languages', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('summary').click();
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+
+  for (const language of ['EN', '中文']) {
+    await page.getByRole('button', { name: language, exact: true }).click();
+    const headings = page.locator('main h1, main h2, main h3');
+    for (const heading of await headings.all()) {
+      await expect(heading).toBeVisible();
+      const box = await heading.boundingBox();
+      expect(box, language).not.toBeNull();
+      expect(box.x + box.width, language).toBeLessThanOrEqual(320);
+    }
+    await expect(page.locator('.test-links a').first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), language).toBeLessThanOrEqual(320);
+  }
+});
 
 test('reflows in both languages, including expanded fixtures and large text', async ({ page }) => {
   await page.goto('/');
