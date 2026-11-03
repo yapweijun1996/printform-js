@@ -48,6 +48,8 @@
 .viewer-controls input { box-sizing: border-box; min-height: 44px; width: 58px; font: inherit; font-size: 16px; color: inherit; background: transparent; border: 1px solid var(--dialog-border); border-radius: 4px; }
 .viewer-controls [hidden] { display: none; }
 .viewer-hint { margin: 0; padding: 4px 8px; font-size: 12px; }
+.viewer-reading-hint { position: absolute; z-index: 1; right: 12px; bottom: 64px; margin: 0; padding: 6px 10px; border-radius: 4px; background: #245fcc; color: white; font-size: 12px; pointer-events: none; }
+.viewer-reading-hint[hidden] { display: none; }
 .document-viewport { overflow: auto; overscroll-behavior: contain; position: relative; touch-action: pan-x pan-y pinch-zoom; }
 .viewer-stage { position: relative; overflow: hidden; margin: 0 auto; }
 .viewer-stage iframe { position: absolute; left: 0; top: 0; transform-origin: top left; max-width: none; }
@@ -63,9 +65,10 @@
   .modal-header p, .viewer-hint { display: none; }
 }
 .viewer-controls { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+.viewer-controls > [data-read] { grid-column: 1; grid-row: 2; }
 .viewer-modes { grid-column: 1; grid-row: 1; }
 .viewer-pages { display: flex; gap: 2px; align-items: center; justify-content: end; grid-column: 2; grid-row: 1; }
-.viewer-tools { grid-column: 1 / -1; grid-row: 2; }
+.viewer-tools { grid-column: 2; grid-row: 2; }
 @media (max-width: 680px) {
   .viewer-controls.is-single-page { display: flex; flex-wrap: nowrap; overflow-x: auto; }
   .viewer-controls.is-single-page .viewer-modes, .viewer-controls.is-single-page .viewer-tools { flex-wrap: nowrap; flex-shrink: 0; }

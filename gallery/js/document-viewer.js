@@ -15,7 +15,7 @@ export function createDocumentViewer(dialog) {
   stage.append(viewport.querySelector('iframe'));
   const bar = document.createElement('div');
   bar.className = 'viewer-controls';
-  bar.innerHTML = `<div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
+  bar.innerHTML = `<button type="button" data-read></button><div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
     <div class="viewer-tools"><button type="button" data-fit></button><button type="button" data-out>−</button>
     <label><input data-zoom type="number" min="50" max="200" step="10" value="100">%</label><button type="button" data-in>+</button></div>
     <div class="viewer-pages"><button type="button" data-prev>‹</button><label><input data-page type="number" min="1" value="1"><span data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
@@ -24,6 +24,10 @@ export function createDocumentViewer(dialog) {
   hint.className = 'viewer-hint';
   hint.hidden = true;
   viewport.before(hint);
+  const readingHint = document.createElement('p');
+  readingHint.className = 'viewer-reading-hint';
+  readingHint.hidden = true;
+  viewport.before(readingHint);
   const query = selector => bar.querySelector(selector);
   let frame, sheets = [], bounds, scale = 1, fit = true, settings = false, page = 0;
   let observer, resize, scheduled, requested;
@@ -111,6 +115,7 @@ export function createDocumentViewer(dialog) {
     viewport.scrollTo(x * scale, y * scale);
   }
   function mode(value) {
+    readingHint.hidden = true;
     settings = value;
     frame?.contentWindow.scrollTo(0, 0);
     measure();
@@ -118,7 +123,8 @@ export function createDocumentViewer(dialog) {
   }
   query('[data-settings]').addEventListener('click', () => mode(!settings));
   query('[data-preview]').addEventListener('click', () => mode(false));
-  query('[data-fit]').addEventListener('click', () => { fit = true; draw(); viewport.scrollLeft = 0; });
+  query('[data-fit]').addEventListener('click', () => { readingHint.hidden = true; fit = true; draw(); viewport.scrollLeft = 0; });
+  query('[data-read]').addEventListener('click', () => { zoom(1); readingHint.hidden = false; });
   query('[data-out]').addEventListener('click', () => zoom(scale - .1));
   query('[data-in]').addEventListener('click', () => zoom(scale + .1));
   query('[data-zoom]').addEventListener('change', event => zoom(Number(event.target.value) / 100));
@@ -148,6 +154,8 @@ export function createDocumentViewer(dialog) {
       }
       viewport.setAttribute('aria-label', words[9]);
       hint.textContent = words[10];
+      query('[data-read]').textContent = language === 'zh' ? '放大阅读' : 'Read';
+      readingHint.textContent = language === 'zh' ? '平移和滚动以阅读' : 'Pan and scroll to read';
     },
     reset() {
       observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled);
@@ -157,7 +165,7 @@ export function createDocumentViewer(dialog) {
       query('[data-page-total]').textContent = '/ 0';
       query('[data-page]').value = '1';
       query('.viewer-pages').hidden = false;
-      hint.hidden = true; query('.viewer-tools').hidden = false;
+      hint.hidden = true; readingHint.hidden = true; query('.viewer-tools').hidden = false;
     },
     bind(candidate) {
       frame = candidate;
