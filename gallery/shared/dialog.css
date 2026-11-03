@@ -65,7 +65,6 @@
   .viewer-controls { gap: 2px; }
 }
 @media (max-height: 450px) {
-  .viewer-controls { flex-wrap: nowrap; overflow-x: auto; }
   .viewer-modes, .viewer-tools { flex-wrap: nowrap; flex-shrink: 0; }
   .modal-header p, .viewer-hint { display: none; }
 }
@@ -86,6 +85,7 @@
   .viewer-pages span { font-size: 12px; }
 }
 @media (max-height: 450px) {
-  .viewer-controls { display: flex; }
+  .viewer-controls { position: relative; z-index: 2; overflow: visible; }
+  .viewer-preset-menu { grid-template-columns: repeat(2, auto); }
   .viewer-pages { flex-shrink: 0; }
 }

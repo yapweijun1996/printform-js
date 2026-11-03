@@ -198,10 +198,15 @@ export function createDocumentViewer(dialog) {
       observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(scheduled); clearTimeout(hintTimer); closePresets();
       frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0; requested = null;
       stage.removeAttribute('style'); viewport.scrollTo(0, 0);
+      viewport.classList.remove('is-settings');
+      bar.classList.remove('is-single-page');
       query('[data-settings]').setAttribute('aria-expanded', 'false');
+      query('[data-preview]').setAttribute('aria-pressed', 'true');
+      query('[data-preview]').hidden = true;
+      query('[data-read]').hidden = false;
       query('[data-page-total]').textContent = '/ 0';
       query('[data-page]').value = '1';
-      query('.viewer-pages').hidden = false;
+      query('.viewer-pages').hidden = true;
       hint.hidden = true; readingHint.hidden = true; query('.viewer-tools').hidden = false;
     },
     bind(candidate) {
