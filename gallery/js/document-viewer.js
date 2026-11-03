@@ -51,7 +51,8 @@ export function createDocumentViewer(dialog) {
     query('[data-settings]').setAttribute('aria-expanded', String(settings));
     query('[data-preview]').setAttribute('aria-pressed', String(!settings));
     query('.viewer-tools').hidden = settings;
-    query('.viewer-pages').hidden = settings;
+    query('.viewer-pages').hidden = settings || sheets.length <= 1;
+    bar.classList.toggle('is-single-page', sheets.length <= 1);
     // Source context remains unscaled. Only its screen presentation is transformed.
     Object.assign(frame.style, {
       width: '1440px', height: `${settings ? viewport.clientHeight : Math.ceil(bounds.bottom + 8)}px`,
