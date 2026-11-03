@@ -81,7 +81,7 @@ for (const [name, width, height] of [["desktop", 1365, 900], ["short", 1365, 480
       await page.keyboard.press("Escape");
       await expect(page.locator("dialog")).not.toBeVisible();
       await expect(page.locator(".gallery-card")).toBeFocused();
-      expect(await page.evaluate(() => scrollY)).toBe(position);
+      await expect.poll(() => page.evaluate(() => scrollY)).toBe(position);
       expect(await page.evaluate(() => document.body.style.position)).toBe("");
     } finally { await context.close(); }
   });

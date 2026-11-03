@@ -62,3 +62,17 @@
   .viewer-modes, .viewer-tools { flex-wrap: nowrap; flex-shrink: 0; }
   .modal-header p, .viewer-hint { display: none; }
 }
+.viewer-controls { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+.viewer-modes { grid-column: 1; grid-row: 1; }
+.viewer-pages { display: flex; gap: 2px; align-items: center; justify-content: end; grid-column: 2; grid-row: 1; }
+.viewer-tools { grid-column: 1 / -1; grid-row: 2; }
+@media (max-width: 350px) {
+  .viewer-controls { padding-inline: 4px; gap: 2px; }
+  .viewer-controls button { padding-inline: 4px; font-size: 14px; }
+  .viewer-pages input { width: 44px; }
+  .viewer-pages span { font-size: 12px; }
+}
+@media (max-height: 450px) {
+  .viewer-controls { display: flex; }
+  .viewer-pages { flex-shrink: 0; }
+}

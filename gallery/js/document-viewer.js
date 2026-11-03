@@ -17,8 +17,8 @@ export function createDocumentViewer(dialog) {
   bar.className = 'viewer-controls';
   bar.innerHTML = `<div class="viewer-modes"><button type="button" data-preview></button><button type="button" data-settings aria-expanded="false"></button></div>
     <div class="viewer-tools"><button type="button" data-fit></button><button type="button" data-out>−</button>
-    <label><input data-zoom type="number" min="50" max="200" step="10" value="100">%</label><button type="button" data-in>+</button>
-    <button type="button" data-prev>‹</button><label><input data-page type="number" min="1" value="1"><span data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
+    <label><input data-zoom type="number" min="50" max="200" step="10" value="100">%</label><button type="button" data-in>+</button></div>
+    <div class="viewer-pages"><button type="button" data-prev>‹</button><label><input data-page type="number" min="1" value="1"><span data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
   viewport.before(bar);
   const hint = document.createElement('p');
   hint.className = 'viewer-hint';
@@ -30,14 +30,17 @@ export function createDocumentViewer(dialog) {
   const current = () => {
     if (!bounds || settings) return;
     const y = viewport.scrollTop / scale + bounds.top + 2;
-    page = Math.max(0, sheets.findLastIndex(rect => rect.top <= y));
-    query('[data-page]').value = page + 1;
+    const atEnd = viewport.scrollTop > 0 && viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
+    page = atEnd ? sheets.length - 1 : Math.max(0, sheets.findLastIndex(rect => rect.top <= y));
+    // Layout/font observers may run while a page jump is still being edited.
+    const input = query('[data-page]');
+    if (document.activeElement !== input) input.value = page + 1;
     query('[data-prev]').disabled = page === 0;
     query('[data-next]').disabled = page >= sheets.length - 1;
   };
   function draw() {
     if (!frame || !bounds) return;
-    if (fit) scale = Math.min(2, viewport.clientWidth / bounds.width);
+    if (fit) scale = Math.min(1, viewport.clientWidth / bounds.width);
     const doc = frame.contentDocument;
     adaptEmbeddedPreview(doc, settings, viewport.clientWidth);
     viewport.classList.toggle('is-settings', settings);
@@ -45,6 +48,7 @@ export function createDocumentViewer(dialog) {
     query('[data-settings]').setAttribute('aria-expanded', String(settings));
     query('[data-preview]').setAttribute('aria-pressed', String(!settings));
     query('.viewer-tools').hidden = settings;
+    query('.viewer-pages').hidden = settings;
     // Source context remains unscaled. Only its screen presentation is transformed.
     Object.assign(frame.style, {
       width: '1440px', height: `${settings ? viewport.clientHeight : Math.ceil(bounds.bottom + 8)}px`,
@@ -52,6 +56,8 @@ export function createDocumentViewer(dialog) {
     });
     Object.assign(stage.style, { width: `${settings ? viewport.clientWidth : bounds.width * scale}px`, height: `${settings ? viewport.clientHeight : bounds.height * scale}px` });
     query('[data-zoom]').value = Math.round(scale * 100);
+    query('[data-out]').disabled = scale <= .5;
+    query('[data-in]').disabled = scale >= 2;
     query('[data-page-total]').textContent = `/ ${sheets.length}`;
     query('[data-page]').max = sheets.length;
     current();
@@ -79,6 +85,10 @@ export function createDocumentViewer(dialog) {
   };
   function go(value) {
     if (!sheets.length) return;
+    if (!Number.isInteger(value) || value < 1 || value > sheets.length) {
+      query('[data-page]').value = page + 1;
+      return;
+    }
     const index = Math.min(sheets.length - 1, Math.max(0, value - 1));
     viewport.scrollTop = (sheets[index].top - bounds.top) * scale;
     current();
@@ -130,6 +140,9 @@ export function createDocumentViewer(dialog) {
       frame = null; bounds = null; sheets = []; fit = true; settings = false; page = 0;
       stage.removeAttribute('style'); viewport.scrollTo(0, 0);
       query('[data-settings]').setAttribute('aria-expanded', 'false');
+      query('[data-page-total]').textContent = '/ 0';
+      query('[data-page]').value = '1';
+      query('.viewer-pages').hidden = false;
       hint.hidden = true; query('.viewer-tools').hidden = false;
     },
     bind(candidate) {
@@ -142,6 +155,6 @@ export function createDocumentViewer(dialog) {
       measure();
       frame.contentDocument.fonts.ready.then(() => { if (frame === candidate) schedule(); });
     },
-    refresh: schedule
+    refresh: measure
   };
 }
