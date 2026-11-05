@@ -2,6 +2,34 @@
 
 > Studio v3 is an independent structured-authoring Pilot. Current scope, architecture and acceptance: [docs/STUDIO_V3.md](docs/STUDIO_V3.md). Its checks do not close v2 release gates.
 
+## Gallery follow-up (2026-11-05)
+
+Status: GAL-01 through GAL-04 are completed and verified locally. The modified code is not deployed. Historical Studio release gates retain their existing status.
+
+| ID | Work / scope | Delivered behavior | Verification / limits | Status |
+| --- | --- | --- | --- | --- |
+| GAL-01 | PF-068 repeated row-header border lines | A template-scoped adjacency rule gives the main heading sole ownership of the shared boundary; an independent recovery heading keeps its top edge. | All 200 source/rendered row IDs, amount text and order match; six pages, one signature area and page numbering preserved in Chromium/Firefox/WebKit. Chromium PDF: six pages. | Done locally |
+| GAL-02 | Main row header plus multiple subheaders | Existing repeated `pdocinfo002` plus distinct `data-pf-table-id` child headers meets the requested model without changing the formatter API. | Real two-child-table proof in three engines covers main-before-child order, transitions and keep-with-first-row; 0/1/20-row and legacy fallback cases pass. Arbitrary nested or duplicate-ID hierarchies remain unsupported. See [header contract](docs/GALLERY_HEADERS.md). | Done: supported model assessed and verified |
+| GAL-03 | Slow Gallery update checking | Separate checking/preparing/prolonged preparation states; bounded registration/update waits; six-worker precache pool with complete SHA-256 checks, resource deadlines and drained failure cleanup. | Manager observed live build e29 still checking/installing at 47.3s. Local controller/precache cases and real upgrade, integrity, retry, offline, old-tab and preview-protection paths pass. Exact original-session conditions and deployed-new-code performance are unverified. See [performance evidence](docs/GALLERY_UPDATE_PERFORMANCE.md). | Done locally |
+| GAL-04 | Gallery document-preview toolbar layout | Desktop modes left, zoom center and pagination right in one row; cohesive zoom field, responsive wrapping, light/dark canvas and paper shadow. | Chromium viewer suite 46 passed; 42 Firefox/WebKit viewer/state/accessibility cases covered by passing runs. 44px targets, EN/ZH, narrow/short viewports, keyboard, settings, page/zoom input and source-print geometry retained. See [viewer contract](docs/GALLERY_VIEWER_TOOLBAR.md). | Done locally |
+
+### Refactor decision and boundaries
+
+- GAL-01 was resolved in the template; the pagination engine is unchanged.
+- GAL-02 uses the existing global-heading/active-child model. A future arbitrary nested hierarchy requires a separately scoped contract; no speculative engine abstraction was added.
+- GAL-03 belongs to the Gallery updater/service worker, independently of PrintForm pagination.
+- GAL-04 is a scoped Gallery markup/CSS refactor; source pagination and print geometry remain unchanged.
+- Preserve monetary data, row order, paper geometry, page-number accuracy, legacy header defaults, integrity checks and user-driven update activation.
+
+### Existing completed work and supporting verification
+
+- PF-068 gallery registration: local commit `5d0c6e3`; default Chromium preview/PDF: six pages and 200 recovery entries.
+- Compact Gallery status/details and startup check protection: local commit `e29a6c1`; initial-label punctuation was corrected before commit.
+- Prior verification: Linux WSL, Node 24.22.2, locked dependencies, single-worker Vitest: 312 files / 3744 tests passed, nine Docker integration tests skipped. The final punctuation correction then passed 16 focused Windows tests; no full-suite rerun was required for that static text change.
+- Final GAL-01..04 verification: Linux WSL / Node 24.22.2 / locked dependencies: 313 test files and 3754 tests passed, nine Docker integration tests skipped; complete site build passed. [Aggregate browser and verification evidence](docs/GALLERY_FOLLOWUP_VERIFICATION.md) records exact coverage, reruns and unverified physical/device surfaces.
+
+Next: review the verified local Gallery result before any separately authorized publication. Historical Studio work below remains independently scoped and open where recorded.
+
 ## Studio v3 complete coding-agent program (2026-10-09)
 
 Current: PR #37 merged at `b195b59`; nine tools, thirteen operation shapes, one guide and release binding are implemented. Verified first slice: 180 unit files / 1507 tests; 102 final browser scenarios with all prior failures covered by focused reruns; site/registry checks passed. These are bounded synthetic/deterministic results, not full-agent or live-model qualification.

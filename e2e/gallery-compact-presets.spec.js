@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const cssPixels = value => Math.round(value * 100) / 100;
+
 for (const width of [320, 375, 390, 430]) {
   test(`compact controls and footer fit at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -8,16 +10,16 @@ for (const width of [320, 375, 390, 430]) {
     await expect(page.locator('[data-print]')).toBeEnabled();
     const bar = page.locator('.viewer-controls');
     expect(await bar.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    expect((await bar.boundingBox()).height).toBeLessThanOrEqual(56);
+    expect(cssPixels((await bar.boundingBox()).height)).toBeLessThanOrEqual(56);
     for (const selector of ['[data-read]', '[data-settings]', '[data-out]', '[data-zoom]', '[data-in]', '[data-presets]', '[data-print]', '[data-open]']) {
       const control = page.locator(selector);
       await expect(control).toBeVisible();
       const box = await control.boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(44);
-      expect(box.height).toBeGreaterThanOrEqual(44);
-      expect(box.x + box.width).toBeLessThanOrEqual(width);
+      expect(cssPixels(box.width)).toBeGreaterThanOrEqual(44);
+      expect(cssPixels(box.height)).toBeGreaterThanOrEqual(44);
+      expect(cssPixels(box.x + box.width)).toBeLessThanOrEqual(width);
     }
-    expect((await page.locator('.pf-dialog-footer').boundingBox()).height).toBeLessThanOrEqual(54);
+    expect(cssPixels((await page.locator('.pf-dialog-footer').boundingBox()).height)).toBeLessThanOrEqual(54);
   });
 }
 

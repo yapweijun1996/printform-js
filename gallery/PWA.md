@@ -37,14 +37,18 @@ The topbar labels the **loaded page**, never network metadata or another tab's w
 A source checkout without the site build is explicitly local/unversioned.
 
 Installation checks network-only `build-info.json`, downloads the complete release,
-verifies SHA-256 for every precached resource, and rechecks build identity. Any failed
-asset or integrity check deletes only the incomplete new application shell cache.
-The active build remains usable. Metadata requests bypass shell and HTTP caches.
+verifies SHA-256 for every precached resource, and rechecks build identity. The
+shell uses a bounded six-worker pool and a generous per-resource deadline; any
+failed asset or integrity check deletes only the incomplete new application shell
+cache after in-flight workers settle. The active build remains usable. Metadata
+requests bypass shell and HTTP caches.
 Root navigation uses the active shell, not new HTML mixed with cached old modules.
 
 The existing Gallery policy is preserved: discover/download automatically, but
 **activate and reload only on Update now**. Check for updates really calls
-`registration.update()` and reports checking, current, available, offline or failure.
+`registration.update()` and reports checking, preparing, slow preparation, current,
+available, offline or failure. UI deadlines never cancel a browser-managed install;
+a late verified worker can still become available.
 A waiting worker must report a valid installed build before it is offered, even if
 it matches the loaded shell: the original network-first worker can serve shell B
 while legacy A still controls it and B waits. No GET_BUILD support is required from

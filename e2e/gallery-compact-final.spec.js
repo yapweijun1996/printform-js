@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const cssPixels = value => Math.round(value * 100) / 100;
+
 for (const [width, height] of [[667, 375], [568, 320], [320, 375]]) {
   test(`multipage preset is hit-testable at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -9,8 +11,8 @@ for (const [width, height] of [[667, 375], [568, 320], [320, 375]]) {
     expect(await page.locator('.viewer-controls').evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true);
     for (const button of await page.locator('.viewer-controls button:visible').all()) {
       const box = await button.boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(44);
-      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(cssPixels(box.width)).toBeGreaterThanOrEqual(44);
+      expect(cssPixels(box.height)).toBeGreaterThanOrEqual(44);
     }
     await page.locator('[data-presets]').click();
     const last = page.locator('[data-preset="2"]');

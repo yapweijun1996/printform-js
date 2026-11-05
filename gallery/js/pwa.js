@@ -24,7 +24,10 @@ const updater = createUpdater({
   },
   render({ state, available, checking, activating, blocked }) {
     document.querySelector("#running-version").textContent = running === "local" ? text("localBuild") : running;
-    document.querySelector(".topbar-update").dataset.state = checking ? "checking" : state;
+    const updateControl = document.querySelector(".topbar-update");
+    updateControl.dataset.state = state;
+    updateControl.dataset.checking = String(checking);
+    updateControl.setAttribute("aria-busy", String(checking || activating));
     document.querySelector("#update-state").textContent = text(state);
     banner.hidden = !available;
     banner.querySelector("span").textContent = `${text(blocked ? "updateDeferred" : "updateAvailable")} · ${available}`;

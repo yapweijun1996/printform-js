@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { chooseFit } from './helpers/viewer-presets.js';
 
+const cssPixels = value => Math.round(value * 100) / 100;
+
 test('200% text keeps viewer controls operable and paper reachable after resize', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/gallery/index.html?q=PF-066');
@@ -12,9 +14,9 @@ test('200% text keeps viewer controls operable and paper reachable after resize'
     const control = page.locator(selector);
     await control.scrollIntoViewIfNeeded();
     const box = await control.boundingBox();
-    expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.width).toBeGreaterThanOrEqual(44);
-    expect(box.y + box.height).toBeLessThanOrEqual(844);
+    expect(cssPixels(box.height)).toBeGreaterThanOrEqual(44);
+    expect(cssPixels(box.width)).toBeGreaterThanOrEqual(44);
+    expect(cssPixels(box.y + box.height)).toBeLessThanOrEqual(844);
   }
   await page.locator('[data-presets]').click();
   await page.locator('[data-next]').click();

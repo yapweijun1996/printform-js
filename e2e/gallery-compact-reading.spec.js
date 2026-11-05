@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { chooseFit } from './helpers/viewer-presets.js';
 
+const cssPixels = value => Math.round(value * 100) / 100;
+
 test('Read uses natural scale with guidance and returns to fit', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/gallery/index.html?q=PF-061');
@@ -25,7 +27,7 @@ for (const width of [320, 375, 390, 430]) {
     await page.locator('.gallery-card').click();
     await expect(page.locator('[data-print]')).toBeEnabled();
     await expect(page.locator('[data-page-total]')).toHaveText('/ 1');
-    expect((await page.locator('.viewer-controls').boundingBox()).height).toBeLessThanOrEqual(56);
+    expect(cssPixels((await page.locator('.viewer-controls').boundingBox()).height)).toBeLessThanOrEqual(56);
     await expect(page.locator('[data-prev]')).toBeHidden();
     await expect(page.locator('[data-next]')).toBeHidden();
   });

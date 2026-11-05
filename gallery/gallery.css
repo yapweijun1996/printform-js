@@ -117,7 +117,7 @@ body { margin: 0; min-width: 0; }
 .topbar-update summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 1px solid #dfe3ea; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; overflow-wrap: anywhere; }
 .topbar-update summary::-webkit-details-marker { display: none; }
 .update-indicator { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: #297a4c; }
-.topbar-update[data-state=checking] .update-indicator { border: 2px solid #b9cae9; border-top-color: #1f65db; background: transparent; animation: spin .8s linear infinite; }
+.topbar-update[data-state=checking] .update-indicator, .topbar-update[data-state=preparing] .update-indicator, .topbar-update[data-state=preparingSlow] .update-indicator, .topbar-update[data-state=updating] .update-indicator { border: 2px solid #b9cae9; border-top-color: #1f65db; background: transparent; animation: spin .8s linear infinite; }
 .topbar-update[data-state=updateFailed] .update-indicator, .topbar-update[data-state=offline] .update-indicator { background: #ae4a31; }
 .topbar-update[data-state=unsupported] .update-indicator { background: #687286; }
 .topbar-update[data-state=updateAvailable] .update-indicator { background: #1f65db; }

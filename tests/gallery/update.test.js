@@ -67,10 +67,120 @@ describe("Gallery safe update controller", () => {
     expect(app.states.at(-1).state).toBe("upToDate");
     expect(app.serviceWorker.getRegistration).toHaveBeenCalledTimes(2);
   });
+  it("bounds a stalled registration lookup and retries cleanly", async () => {
+    vi.useFakeTimers();
+    try {
+      const app = setup();
+      app.serviceWorker.getRegistration.mockImplementationOnce(() => new Promise(() => {}));
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(10001);
+      await pending;
+      expect(app.states.at(-1).state).toBe("updateFailed");
+      await app.updater.check();
+      expect(app.states.at(-1).state).toBe("upToDate");
+    } finally { vi.useRealTimers(); }
+  });
+  it("bounds a stalled new registration and retries through an existing registration", async () => {
+    vi.useFakeTimers();
+    try {
+      const app = setup();
+      app.serviceWorker.getRegistration.mockResolvedValueOnce(null);
+      app.serviceWorker.register.mockImplementationOnce(() => new Promise(() => {}));
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(10001);
+      await pending;
+      expect(app.states.at(-1).state).toBe("updateFailed");
+      await app.updater.check();
+      expect(app.states.at(-1).state).toBe("upToDate");
+    } finally { vi.useRealTimers(); }
+  });
+  it("bounds a stalled registration update and keeps manual retry available", async () => {
+    vi.useFakeTimers();
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const app = setup();
+      app.registration.update.mockImplementationOnce(() => new Promise(() => {}));
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(10001);
+      await pending;
+      expect(app.states.at(-1).state).toBe("updateFailed");
+      await app.updater.check();
+      expect(app.states.at(-1).state).toBe("upToDate");
+    } finally { warning.mockRestore(); vi.useRealTimers(); }
+  });
+  it("continues preparing when update() is pending after updatefound starts a worker", async () => {
+    vi.useFakeTimers();
+    try {
+      const app = setup();
+      const worker = new app.Worker("b"); worker.state = "installing";
+      app.registration.update.mockImplementationOnce(() => new Promise(() => {
+        setTimeout(() => {
+          app.registration.installing = worker;
+          app.registration.dispatchEvent(new Event("updatefound"));
+        }, 5000);
+      }));
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(app.states.at(-1)).toMatchObject({ state: "preparing", checking: true });
+      await vi.advanceTimersByTimeAsync(5001);
+      worker.state = "installed"; app.registration.waiting = worker;
+      worker.dispatchEvent(new Event("statechange"));
+      await pending;
+      expect(app.states.at(-1)).toMatchObject({ state: "updateAvailable", available: "b", checking: false });
+    } finally { vi.useRealTimers(); }
+  });
   it("never labels a network-only new build as installed/ready", async () => {
     const app = setup(); app.setLatest("b"); await app.updater.start();
     expect(app.states.at(-1)).toMatchObject({ state: "updateFailed", available: "" });
     expect(app.reload).not.toHaveBeenCalled();
+  });
+  it("distinguishes offline preparation from the metadata check and offers only after install", async () => {
+    const app = setup();
+    const worker = new app.Worker("b");
+    worker.state = "installing";
+    app.registration.installing = worker;
+    const pending = app.updater.start();
+    await vi.waitFor(() => expect(app.states.at(-1)).toMatchObject({ state: "preparing", checking: true }));
+    worker.state = "installed";
+    app.registration.waiting = worker;
+    worker.dispatchEvent(new Event("statechange"));
+    await pending;
+    expect(app.states.at(-1)).toMatchObject({ state: "updateAvailable", available: "b", checking: false });
+  });
+  it("keeps a slow install preparing after the UI deadline and accepts its late offer", async () => {
+    vi.useFakeTimers();
+    try {
+      const app = setup();
+      const worker = new app.Worker("b"); worker.state = "installing";
+      app.registration.installing = worker;
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(app.states.at(-1)).toMatchObject({ state: "preparing", checking: true });
+      await vi.advanceTimersByTimeAsync(25001);
+      await pending;
+      expect(app.states.at(-1)).toMatchObject({ state: "preparingSlow", checking: false });
+      worker.state = "installed"; app.registration.waiting = worker;
+      worker.dispatchEvent(new Event("statechange"));
+      await vi.waitFor(() => expect(app.states.at(-1)).toMatchObject({ state: "updateAvailable", available: "b" }));
+    } finally { vi.useRealTimers(); }
+  });
+  it("reports a late redundant worker after the UI deadline without requiring registration.installing", async () => {
+    vi.useFakeTimers();
+    try {
+      const app = setup();
+      const worker = new app.Worker("b"); worker.state = "installing";
+      app.registration.installing = worker;
+      const pending = app.updater.start();
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(25001);
+      await pending;
+      expect(app.states.at(-1).state).toBe("preparingSlow");
+      app.registration.installing = null;
+      worker.state = "redundant";
+      worker.dispatchEvent(new Event("statechange"));
+      expect(app.states.at(-1)).toMatchObject({ state: "updateFailed", available: "" });
+    } finally { vi.useRealTimers(); }
   });
   it("blocks offline checking and activation, preserving the waiting build", async () => {
     const app = setup({ waiting: true }); await app.updater.start();

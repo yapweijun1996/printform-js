@@ -4,25 +4,69 @@ const SHELL_CACHE = `pf-gallery-shell-${BUILD}`;
 const THUMB_CACHE = "pf-gallery-thumbs-v1";
 const PRECACHE = "__PF_GALLERY_PRECACHE__";
 const HASHES = "__PF_GALLERY_HASHES__";
+// Keep the network bounded while avoiding the serial install cost of a large shell.
+// The worker still verifies and writes every resource before it becomes usable.
+const PRECACHE_CONCURRENCY = 6;
+// A stalled asset must eventually release install cleanup; two minutes leaves
+// room for the release's 11 MB font on a slow connection without hanging forever.
+const PRECACHE_RESOURCE_TIMEOUT = 120000;
 const canon = (url) => { const value = new URL(url); value.search = ""; value.hash = ""; return value.href; };
+
+async function fetchResource(input, init = {}, consume) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PRECACHE_RESOURCE_TIMEOUT);
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    return consume ? await consume(response) : response;
+  }
+  finally { clearTimeout(timeout); }
+}
+
+function fetchBuildIdentity(input) {
+  return fetchResource(input, { cache: "no-store" }, async (response) => {
+    if (!response.ok) return { ok: false, async json() { return null; } };
+    const identity = await response.clone().json();
+    return { ok: true, async json() { return identity; } };
+  });
+}
+
+async function cacheResource(cache, path) {
+  const url = new URL(path, self.registration.scope);
+  url.searchParams.set("v", BUILD);
+  const { response, body } = await fetchResource(url, { cache: "no-store" }, async (value) => {
+    if (!value.ok) throw new Error(`Precache failed: ${path}`);
+    return { response: value, body: await value.clone().arrayBuffer() };
+  });
+  const digest = await crypto.subtle.digest("SHA-256", body);
+  const hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  if (hex !== HASHES[path]) throw new Error(`Precache integrity failed: ${path}`);
+  await cache.put(canon(url), response);
+}
+
+async function cachePrecache(cache) {
+  let next = 0;
+  let firstError;
+  const worker = async () => {
+    while (!firstError) {
+      const path = PRECACHE[next++];
+      if (path === undefined) return;
+      try { await cacheResource(cache, path); }
+      catch (error) { if (!firstError) firstError = error; }
+    }
+  };
+  const count = Math.min(PRECACHE_CONCURRENCY, PRECACHE.length);
+  await Promise.all(Array.from({ length: count }, worker));
+  if (firstError) throw firstError;
+}
 
 self.addEventListener("install", (event) => event.waitUntil((async () => {
   // Do not install an unbuilt source checkout.
   if (!Array.isArray(PRECACHE)) throw new Error("Gallery worker requires a site build");
   try {
-    await self.requireBuildIdentity(BUILD, fetch(`./build-info.json?v=${BUILD}`, { cache: "no-store" }));
+    await self.requireBuildIdentity(BUILD, fetchBuildIdentity(`./build-info.json?v=${BUILD}`));
     const cache = await caches.open(SHELL_CACHE);
-    for (const path of PRECACHE) {
-      const url = new URL(path, self.registration.scope);
-      url.searchParams.set("v", BUILD);
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Precache failed: ${path}`);
-      const digest = await crypto.subtle.digest("SHA-256", await response.clone().arrayBuffer());
-      const hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-      if (hex !== HASHES[path]) throw new Error(`Precache integrity failed: ${path}`);
-      await cache.put(canon(url), response);
-    }
-    await self.requireBuildIdentity(BUILD, fetch(`./build-info.json?v=${BUILD}`, { cache: "no-store" }));
+    await cachePrecache(cache);
+    await self.requireBuildIdentity(BUILD, fetchBuildIdentity(`./build-info.json?v=${BUILD}`));
   } catch (error) {
     await caches.delete(SHELL_CACHE);
     throw error;

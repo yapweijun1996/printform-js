@@ -75,4 +75,13 @@ describe("active table context", () => {
       "variation",
     ]);
   });
+
+  it("keeps the legacy default header fallback when no table map exists", () => {
+    const formatter = new HeaderFormatter();
+    const sections = makeSections();
+    const legacySections = { rowHeader: sections.rowHeader, rowHeadersById: {} };
+
+    expect(formatter.getSectionRowHeader(legacySections, "default")).toBe(sections.rowHeader);
+    expect(formatter.getSectionRowHeader(sections, "unknown")).toBeNull();
+  });
 });
