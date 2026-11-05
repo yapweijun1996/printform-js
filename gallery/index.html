@@ -27,10 +27,13 @@
       <button type="button" data-language="en" aria-pressed="true">EN</button>
       <button type="button" data-language="zh" aria-pressed="false">中文</button>
     </div>
-    <div class="topbar-update">
-      <div class="version-info"><span><span data-i18n="runningBuild">Running build</span>: <output id="running-version"></output></span><span id="update-state" role="status"></span></div>
-      <button id="check-update" class="button secondary" type="button" data-i18n="checkUpdates">Check for updates</button>
-    </div>
+    <details class="topbar-update">
+      <summary><span class="update-indicator" aria-hidden="true"></span><span id="update-state" role="status">Checking for updates...</span></summary>
+      <div class="update-details">
+        <div><span data-i18n="runningBuild">Running build</span>: <output id="running-version"></output></div>
+        <button id="check-update" class="button secondary" type="button" data-i18n="checkUpdates">Check for updates</button>
+      </div>
+    </details>
   </header>
   <main>
     <section class="intro">

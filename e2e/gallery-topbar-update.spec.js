@@ -8,21 +8,24 @@ test.afterAll(async () => { await server?.close(); });
 
 test("topbar loaded build, languages, responsive controls and long status", async ({ page }, info) => {
   await page.goto(server.url);
-  await expect(page.locator(".gallery-card")).toHaveCount(67);
+  await expect(page.locator(".gallery-card")).toHaveCount(68);
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
-  for (const width of [320, 390, 801, 1440]) for (const language of ["en", "zh"]) {
+  for (const width of [320, 390, 801, 1440, 1920]) for (const language of ["en", "zh"]) {
     await page.setViewportSize({ width, height: 844 });
     await page.locator('[data-language="' + language + '"]').click();
+    if (!(await page.locator(".topbar-update").evaluate(e => e.open))) await page.locator(".topbar-update summary").click();
     const check = page.locator("#check-update");
     await expect(check).toHaveText(language === "en" ? "Check for updates" : "检查更新");
     await expect(check).toBeEnabled();
     await page.locator('[data-language="zh"]').focus();
     await page.keyboard.press("Tab");
+    await expect(page.locator(".topbar-update summary")).toBeFocused();
+    await page.keyboard.press("Tab");
     await expect(check).toBeFocused();
     expect(await check.evaluate(e => e.matches(":focus-visible"))).toBe(true);
     const metrics = await page.locator(".topbar").evaluate(bar => ({
       rect: bar.getBoundingClientRect().toJSON(),
-      buttons: [...bar.querySelectorAll("button")].map(e => e.getBoundingClientRect().toJSON()),
+      buttons: [...bar.querySelectorAll(".language button")].map(e => e.getBoundingClientRect().toJSON()),
       overflow: document.documentElement.scrollWidth > innerWidth
     }));
     expect(metrics.overflow).toBe(false);
@@ -59,6 +62,7 @@ test("real workers: check current, offline, failure, then explicit N to N+1 acti
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
+  await page.locator(".topbar-update summary").click();
   const check = page.locator("#check-update");
   await check.focus(); await page.keyboard.press("Enter");
   await expect(page.locator("#update-state")).toHaveText("Up to date");

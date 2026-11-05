@@ -28,6 +28,16 @@ function setup({ waiting = false, supported = true, running = "a" } = {}) {
 }
 
 describe("Gallery safe update controller", () => {
+  it("marks startup as checking until registration and the first check complete", async () => {
+    const app = setup();
+    let release;
+    app.serviceWorker.getRegistration.mockImplementation(() => new Promise(resolve => { release = () => resolve(app.registration); }));
+    const pending = app.updater.start();
+    expect(app.states.at(-1)).toMatchObject({ state: "checking", checking: true });
+    release();
+    await pending;
+    expect(app.states.at(-1)).toMatchObject({ state: "upToDate", checking: false });
+  });
   it("clearly reports unsupported and same-version checks", async () => {
     const unsupported = setup({ supported: false });
     await unsupported.updater.start();

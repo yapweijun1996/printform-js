@@ -58,3 +58,5 @@ Gallery control sizing is owned by `--gallery-control-min-size` (44px) and
 `--gallery-input-font-size` (16px). These shell tokens do not enter print iframes.
 
 PF-068 adds a fictional subcontractor progress payment certificate with 200 recovery entries. It preserves the supplied sample structure and uses the Gallery PrintForm runtime; its measured default is six pages in Chromium. Figures are illustrative and the blank certification totals are not calculated by this sample.
+
+The topbar update status opens build details and a manual check. Automatic checks disable the manual action while running; an available update still requires the existing explicit Update now action.

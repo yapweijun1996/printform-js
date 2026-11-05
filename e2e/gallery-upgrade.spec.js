@@ -7,9 +7,13 @@ let server;
 test.beforeAll(async () => { server = await galleryServer(); });
 test.afterAll(async () => { await server?.close(); });
 test.beforeEach(() => server.switchBuild("a"));
+async function openCheck(page) {
+  if (!(await page.locator(".topbar-update").evaluate(e => e.open))) await page.locator(".topbar-update summary").click();
+  await page.locator("#check-update").click();
+}
 async function ready(page, url) {
   await page.goto(url || server.url);
-  await expect(page.locator("#result-count")).toContainText("/64");
+  await expect(page.locator("#result-count")).toContainText("/68");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
@@ -23,7 +27,7 @@ test("real A to B waiting worker, safe manual activation, immutable old tab and 
   let navigations = 0;
   page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) navigations++; });
   server.switchBuild("b");
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-banner")).toContainText("bbbbbbbbbbbb", { timeout: 35000 });
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
   expect(await page.evaluate(async () => Boolean((await navigator.serviceWorker.getRegistration()).waiting))).toBe(true);
@@ -49,14 +53,14 @@ test("real A to B waiting worker, safe manual activation, immutable old tab and 
   await expect(other.frameLocator("iframe").locator(".printform_page")).toHaveCount(20);
   expect(other.frames().find((frame) => frame.url().includes("/designs/"))?.url()).toContain("releases/aaaaaaaaaaaa/");
   await other.locator("[data-close]").click();
-  await other.locator("#check-update").click();
+  await openCheck(other);
   await expect(other.locator("#update-button")).toBeEnabled();
   await other.locator("#update-button").click();
   await expect(other.locator("#running-version")).toHaveText("bbbbbbbbbbbb");
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-state")).toHaveText("Up to date");
   await context.setOffline(true);
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-state")).toHaveText("Offline");
   await context.setOffline(false);
   await expect(page.locator("#update-state")).toHaveText("Up to date");
@@ -65,11 +69,11 @@ test("real A to B waiting worker, safe manual activation, immutable old tab and 
   await expect(page.locator("#running-version")).toHaveText("bbbbbbbbbbbb");
   await expect(page.locator(".gallery-card")).toHaveCount(1);
   await page.locator("#clear-filters").click();
-  await expect(page.locator(".gallery-card .card-id").first()).toHaveText("PF-064");
+  await expect(page.locator(".gallery-card .card-id").first()).toHaveText("PF-068");
   await context.setOffline(false);
   // Chromium may report navigator.onLine=true after an offline cached reload,
   // so no new online event is guaranteed. The real manual retry must work too.
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-state")).toHaveText("Up to date");
   await page.screenshot({ path: info.outputPath("updated-B.png") });
 });
@@ -87,9 +91,9 @@ test("legacy Update now message remains a working user-driven migration path", a
 test("unsupported worker browser keeps a usable catalogue and truthful state", async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "serviceWorker", { get: () => undefined, configurable: true }));
   await page.goto(server.url);
-  await expect(page.locator(".gallery-card")).toHaveCount(64);
+  await expect(page.locator(".gallery-card")).toHaveCount(68);
   await expect(page.locator("#update-state")).toHaveText("Updates are not supported in this browser");
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-state")).toHaveText("Updates are not supported in this browser");
 });
 
@@ -98,14 +102,14 @@ for (const corrupt of [false, true]) test(`failed ${corrupt ? "integrity" : "dow
   await ready(page);
   await page.evaluate(() => localStorage.setItem("synthetic-user-data", "preserve"));
   server.switchBuild("b", !corrupt, corrupt);
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-state")).toContainText("Update failed", { timeout: 35000 });
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
   await page.reload();
-  await expect(page.locator(".gallery-card")).toHaveCount(64);
+  await expect(page.locator(".gallery-card")).toHaveCount(68);
   expect(await page.evaluate(() => localStorage.getItem("synthetic-user-data"))).toBe("preserve");
   server.switchBuild("b");
-  await page.locator("#check-update").click();
+  await openCheck(page);
   await expect(page.locator("#update-button")).toBeEnabled({ timeout: 35000 });
   await page.locator("#update-button").click();
   await expect(page.locator("#running-version")).toHaveText("bbbbbbbbbbbb");

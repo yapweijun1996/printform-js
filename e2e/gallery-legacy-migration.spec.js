@@ -60,6 +60,7 @@ test("exact public original worker migrates shell B / active A / waiting B only 
     await page.reload();
     await expect(page.locator("#running-version")).toHaveText(candidateBuild);
     await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting?.state), { timeout: 35000 }).toBe("installed");
+    await page.locator(".topbar-update summary").click();
     await expect(page.locator("#check-update")).toBeEnabled();
     evidence.stages.beforeManualCheck = await snapshot(page, context);
     await page.locator("#check-update").click();
@@ -70,7 +71,7 @@ test("exact public original worker migrates shell B / active A / waiting B only 
     expect(evidence.stages.beforeActivation).toMatchObject({ shell: candidateBuild, controller: "no-GET_BUILD", active: "no-GET_BUILD", waiting: candidateBuild, waitingState: "installed" });
     expect(evidence.stages.beforeActivation.installedWorkers.sort()).toEqual([legacyBuild, candidateBuild].sort());
     await expect(page.locator("#update-banner")).toBeVisible();
-    await expect(page.locator("#update-state")).toHaveText(`New version available · ${candidateBuild}`);
+    await expect(page.locator("#update-state")).toHaveText("New version available");
     await expect(page.locator("#update-button")).toBeEnabled();
 
     const other = await context.newPage();
@@ -91,22 +92,23 @@ test("exact public original worker migrates shell B / active A / waiting B only 
     await expect(page.locator("#running-version")).toHaveText(candidateBuild);
     await expect(page.locator("#search")).toHaveValue("PF-062");
     await expect(page).toHaveURL(/category=sales.*paper=A4.*q=PF-062/);
-    await page.locator("#running-version").scrollIntoViewIfNeeded();
+    await page.locator(".topbar-update summary").scrollIntoViewIfNeeded();
     await page.screenshot({ path: info.outputPath("legacy-after-update-status.png") });
+    await other.locator(".topbar-update summary").click();
     await other.locator("#check-update").click();
     await expect(other.locator("#update-state")).toHaveText("Up to date");
     await expect(other.locator("#update-banner")).toBeHidden();
     await page.locator("#clear-filters").click();
-    await expect(page.locator(".gallery-card")).toHaveCount(64);
-    await expect(page.locator(".card-id").first()).toHaveText("PF-064");
+    await expect(page.locator(".gallery-card")).toHaveCount(68);
+    await expect(page.locator(".card-id").first()).toHaveText("PF-068");
     evidence.stages.afterActivation = await snapshot(page, context);
     evidence.stages.otherTab = await snapshot(other, context);
     evidence.reloads = reloads; evidence.otherReloads = otherReloads;
     await page.screenshot({ path: info.outputPath("legacy-after-activation.png") });
-    await page.locator("#running-version").scrollIntoViewIfNeeded();
+    await page.locator(".topbar-update summary").scrollIntoViewIfNeeded();
     await page.screenshot({ path: info.outputPath("legacy-after-update-footer.png") });
     save();
-    expect(evidence.stages.afterActivation).toMatchObject({ shell: candidateBuild, running: candidateBuild, controller: candidateBuild, active: candidateBuild, waiting: null, bannerHidden: true, catalogue: 64, userData: "preserve", sessionData: "preserve-session", studioCache: "preserve-cache" });
+    expect(evidence.stages.afterActivation).toMatchObject({ shell: candidateBuild, running: candidateBuild, controller: candidateBuild, active: candidateBuild, waiting: null, bannerHidden: true, catalogue: 68, userData: "preserve", sessionData: "preserve-session", studioCache: "preserve-cache" });
     expect(evidence.stages.otherTab).toMatchObject({ shell: candidateBuild, controller: candidateBuild, active: candidateBuild, waiting: null });
     expect(reloads).toBe(1);
     expect(otherReloads).toBe(0);

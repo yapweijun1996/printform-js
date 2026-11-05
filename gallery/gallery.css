@@ -112,13 +112,27 @@ body { margin: 0; min-width: 0; }
 
 .modal-actions .button:not([hidden]) { flex: 0 1 auto; display: inline-flex; align-items: center; justify-content: center; }
 
-/* One loaded-build/update control group; updater IDs and state owner are unchanged. */
-.topbar-update { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-width: 0; max-width: 440px; }
-.version-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
+/* Update details disclose the build and manual check without crowding the header. */
+.topbar-update { position: relative; min-width: 0; }
+.topbar-update summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 1px solid #dfe3ea; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; overflow-wrap: anywhere; }
+.topbar-update summary::-webkit-details-marker { display: none; }
+.update-indicator { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: #297a4c; }
+.topbar-update[data-state=checking] .update-indicator { border: 2px solid #b9cae9; border-top-color: #1f65db; background: transparent; animation: spin .8s linear infinite; }
+.topbar-update[data-state=updateFailed] .update-indicator, .topbar-update[data-state=offline] .update-indicator { background: #ae4a31; }
+.topbar-update[data-state=unsupported] .update-indicator { background: #687286; }
+.topbar-update[data-state=updateAvailable] .update-indicator { background: #1f65db; }
+.update-details { position: absolute; right: 0; top: calc(100% + 8px); z-index: 22; width: max-content; max-width: min(320px, 90vw); display: grid; gap: 12px; padding: 14px; border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px #17203324; font-size: 13px; overflow-wrap: anywhere; }
 #running-version { font-variant-numeric: tabular-nums; }
-#check-update { flex: none; font: inherit; font-size: 13px; background: transparent; cursor: pointer; }
+#check-update { font: inherit; background: transparent; cursor: pointer; }
 #check-update:disabled { opacity: .65; cursor: default; }
-@media (max-width: 800px) {
+.language { gap: 0; border: 1px solid #dfe3ea; border-radius: 9px; overflow: hidden; }
+.language button { border: 0; border-radius: 0; min-height: 44px; }
+@media (max-width: 600px) {
   .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; }
-  .topbar-update { grid-column: 1 / -1; max-width: none; }
+  .topbar-update { grid-column: 1 / -1; justify-self: end; max-width: 100%; }
+  .topbar-update summary { min-height: 44px; }
+}
+@media (prefers-color-scheme: dark) {
+  .topbar-update summary, .language, .update-details { border-color: #424b5d; }
+  .update-details { background: #191f2a; }
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-const catalogueCount = 64;
+const catalogueCount = 68;
 const category = (page, id) => page.locator(`#category-filters [data-filter-value="${id}"]`);
 test.use({ serviceWorkers: "block" });
 
@@ -7,13 +7,12 @@ test("categories combine with compact filters, keep focus and restore history", 
   await page.goto("/gallery/index.html");
   await expect(page.locator(".gallery-card")).toHaveCount(catalogueCount);
   await page.locator("#advanced-toggle").click();
-  await expect(page.locator("#category-filters button")).toHaveCount(8);
-  await expect(page.locator(".gallery-card .card-id").first()).toHaveText("PF-063");
+  await expect(page.locator("#category-filters button")).toHaveCount(9);
+  await expect(page.locator(".gallery-card .card-id").first()).toHaveText("PF-068");
   await expect(page.locator(".gallery-card .card-id").last()).toHaveText("PF-001");
-  await expect(page.locator("#check-update")).toBeEnabled();
   await page.locator('[data-language="zh"]').focus();
   await page.keyboard.press("Tab");
-  await expect(page.locator("#check-update")).toBeFocused();
+  await expect(page.locator(".topbar-update summary")).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.locator("#search")).toBeFocused();
   await page.keyboard.press("Tab");
@@ -23,7 +22,7 @@ test("categories combine with compact filters, keep focus and restore history", 
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await expect(category(page, "sales")).toBeFocused();
-  await expect(page.locator("#result-count")).toHaveText("18/64 designs");
+  await expect(page.locator("#result-count")).toHaveText("18/68 designs");
   await page.locator("#type-filter").selectOption("Quotation");
   await expect(page.locator(".gallery-card")).toHaveCount(3);
   await page.locator("#paper-filter").selectOption("A4");
@@ -43,7 +42,7 @@ test("categories combine with compact filters, keep focus and restore history", 
   await page.locator("#type-filter").selectOption("Quotation");
   await category(page, "purchasing").click();
   await expect(page.locator("#type-filter")).toHaveValue("all");
-  await expect(page.locator(".gallery-card")).toHaveCount(7);
+  await expect(page.locator(".gallery-card")).toHaveCount(8);
 });
 
 test("URL state is safe, reloadable and bilingual", async ({ page }) => {
@@ -82,7 +81,7 @@ test("loading and failed manifests can be retried without duplicate controls", a
   await page.keyboard.press("Enter");
   await expect(page.locator(".gallery-card")).toHaveCount(catalogueCount);
   await expect(page.locator("#search")).toBeFocused();
-  await expect(page.locator("#category-filters button")).toHaveCount(8);
+  await expect(page.locator("#category-filters button")).toHaveCount(9);
   await expect(page.locator("#load-status")).toBeHidden();
 });
 
@@ -115,14 +114,22 @@ for (const [name, width, colorScheme, language] of [["desktop-light", 1200, "lig
     await expect(page.locator(".gallery-card")).toHaveCount(catalogueCount);
     await page.locator(`[data-language="${language}"]`).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const collapsedHeight = await page.locator(".controls").evaluate(element => element.offsetHeight);
     await page.locator("#advanced-toggle").click();
+    await expect(page.locator("#advanced-filters")).toBeVisible();
+    const expandedHeight = await page.locator(".controls").evaluate(element => element.offsetHeight);
+    expect(expandedHeight).toBeGreaterThan(collapsedHeight);
     for (const control of await page.locator("#category-filters button, .controls select, #search").all()) {
       const box = await control.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(width);
       expect(box.height).toBeGreaterThanOrEqual(44);
     }
-    if (width === 1200) expect(await page.locator(".controls").evaluate((element) => element.offsetHeight)).toBeLessThan(300);
+    const sections = await page.locator(".controls > .search, .controls > .advanced-filters, .controls > .filter-summary").all();
+    for (let i = 1; i < sections.length; i++) {
+      const previous = await sections[i - 1].boundingBox(), current = await sections[i].boundingBox();
+      expect(current.y).toBeGreaterThanOrEqual(previous.y + previous.height);
+    }
     await page.screenshot({ path: testInfo.outputPath(`${name}.jpg`), type: "jpeg", quality: 60 });
   });
 }
@@ -149,7 +156,7 @@ test.describe("offline category navigation", () => {
     await expect(page.locator(".gallery-card")).toHaveCount(catalogueCount);
     await page.locator("#advanced-toggle").click();
     await category(page, "hr-administration").click();
-    await expect(page.locator("#result-count")).toHaveText("4/64 designs");
+    await expect(page.locator("#result-count")).toHaveText("4/68 designs");
     await page.locator("#type-filter").selectOption("Work Order");
     await expect(page.locator(".gallery-card")).toHaveCount(1);
     await category(page, "sales").click();
@@ -210,7 +217,7 @@ test("closing a modal after history navigation restores a connected focus target
   await page.goBack();
   await expect(category(page, "all")).toHaveAttribute("aria-pressed", "true");
   await page.locator("[data-close]").click();
-  await expect(page.locator(".gallery-card").filter({ has: page.locator(`.card-id`, { hasText: "PF-063" }) })).toBeFocused();
+  await expect(page.locator(`.gallery-card[data-design-id="${id}"]`)).toBeFocused();
   expect(await page.locator(":focus").getAttribute("data-design-id")).toBe(id);
   await category(page, "purchasing").click();
   await category(page, "sales").click();

@@ -5,7 +5,7 @@ export function createUpdater({ serviceWorker, scope, running, online, busy, ren
   let offerSequence = 0;
   function publish(next = state) {
     state = next;
-    render({ state, available: target?.build || "", checking: Boolean(checking), activating, blocked: busy() });
+    render({ state, available: target?.build || "", checking: Boolean(checking || starting), activating, blocked: busy() });
   }
   function identity(worker) {
     return new Promise((resolve, reject) => {
@@ -116,7 +116,8 @@ export function createUpdater({ serviceWorker, scope, running, online, busy, ren
         await check();
       } catch { publish(online() ? "updateFailed" : "offline"); }
     })();
-    try { await starting; } finally { starting = null; }
+    publish();
+    try { await starting; } finally { starting = null; publish(); }
   }
   return { check, activate, start, refresh: () => publish() };
 }
