@@ -1427,5 +1427,34 @@
     "type": "Learning Portfolio", "paper": "A4", "pages": 9,
     "tags": ["education", "learning", "portfolio", "teacher-authored", "counts-not-scores", "bilingual", "JSON", "multi-page", "fictional", "sample", "offline"],
     "file": "designs/lumen-learning-progress-portfolio.html", "thumb": "thumbs/lumen-learning-progress-portfolio.png", "width": 794, "height": 1123
+  },
+  {
+    "id": "subcontractor-payment-certificate",
+    "no": "PF-068",
+    "style": {
+      "en": "Slate / construction",
+      "zh": "??? / ??"
+    },
+    "title": {
+      "en": "Subcontractor Progress Payment Certificate",
+      "zh": "???????????"
+    },
+    "type": "Payment Certificate",
+    "paper": "A4",
+    "pages": 6,
+    "tags": [
+      "finance",
+      "construction",
+      "payment",
+      "recovery",
+      "200-entries",
+      "multi-page",
+      "fictional",
+      "sample"
+    ],
+    "file": "designs/subcontractor-payment-certificate.html",
+    "thumb": "thumbs/subcontractor-payment-certificate.png",
+    "width": 750,
+    "height": 1050
   }
 ]
