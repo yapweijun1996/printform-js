@@ -10,6 +10,7 @@ import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
 import { sectionOrderChange } from './section-order.js';
 import { logoReferenceChange } from './image-reference.js';
+import { pageGeometryChange } from './page-geometry.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -111,15 +112,9 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       for (const {target,property,before,after} of change.changes) record(target,property,before,after);
       design.sectionOrder = change.design.sectionOrder;
     } else if (op.type === 'set_page') {
-      object(op,['type','patch']); object(op.patch,['paper','orientation','margins','customSizeMm','printerProfile']);
-      const next = {...design.page,...structuredClone(op.patch)};
-      if (op.patch.margins) next.margins = {...design.page?.margins,...op.patch.margins};
-      if (op.patch.paper !== undefined && op.patch.paper !== 'CUSTOM' && op.patch.customSizeMm === undefined) delete next.customSizeMm;
-      if (next.printerProfile === null) delete next.printerProfile;
-      for (const key of new Set([...Object.keys(design.page || {}),...Object.keys(next)])) {
-        if (!same(design.page?.[key],next[key])) record('document',`page.${key}`,design.page?.[key],next[key]);
-      }
-      design.page = next;
+      object(op,['type','patch']); const change = pageGeometryChange(design,op.patch);
+      for (const {target,property,before,after} of change.changes) record(target,property,before,after);
+      design.page = change.design.page;
     } else if (op.type === 'set_logo') {
       object(op,['type','value']); if (op.value !== null) object(op.value,['assetId','width','height','fit']);
       const change = logoReferenceChange(design,op.value);

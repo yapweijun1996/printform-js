@@ -18,6 +18,7 @@ Gallery code is published in main 1a74845, with the prior browser failures and e
 | CA04-SECTIONS | Shared section properties/grid with typed bounds, rejection/recovery, candidate/diagnostic parity and native decimal controls | Done; 23 new cases, nine files / 169 tests, 6/6 related browser cases |
 | CA04-ORDER | Shared permutation validation/transform, final repeat-header guard, rendered order and Undo | Done; 12 new cases, five files / 91 tests, 4/4 final related browser cases |
 | CA04-LOGO | Shared existing-asset reference/geometry/remove service, native decimal bounds and Undo | Done; 12 new cases, five files / 94 tests, 2/2 new plus 2/2 adjacent browser cases |
+| CA04-PAGE | Shared page patch normalization, atomic final validation, native geometry, manual Apply and Undo | Done; 15 new cases, five files / 107 tests, 2/2 new plus 8/8 adjacent browser cases |
 | CA04-REMAINING | Each remaining parallel register entry gains real shared service plus independent adapter/effect evidence | Pending; preserve existing human-only routes |
 | CA06-WORKFLOWS | Reconcile eligible feature ledger and actual implementation, then close missing adapters/contracts and workflow cases | Pending after applicable parity |
 | CA05-VISUAL | Preserve existing receipt/PNG wire; obtain required independent frozen-rubric visual comparison | Open |
@@ -70,3 +71,10 @@ The user narrowed execution to tasks feasible in the current environment; do not
 - New Chromium/Firefox cases 2/2 pass, using an actual local-file import of a fictional one-pixel PNG and real inspector/Pi paths. Native 64.25x32.5px controls, 7px rejection, actual image geometry, diagnostics, saved content, asset-preserving removal and Undo are verified. Adjacent native ordered-sections/images/column browser cases also pass 2/2. No test failures occurred in this slice.
 - Image width/height controls now permit finite fractions within their unchanged limits, matching the existing operation schema; shared controls also benefit human field images, without awarding field.image transformation parity. No model/pixel disclosure permission changes.
 - Advisor approved logic. Agent gate (129 examples) and site build passed; full suite baseline retains its original date/scope. Register: ten shared / 11 parallel / 15 agent-only. External and prior Firefox typography limitations remain open.
+
+## CA04-PAGE evidence
+
+- Actual paper inspector and Pi set_page use pageGeometryChange to normalize private-copy patches, merge partial margins and clear obsolete custom size / explicitly removed printer profile. The unchecked human profile maps to existing null removal. This helper does not certify geometry or device capability; whole-design validation remains after the atomic batch so coupled changes can repair each other.
+- Five focused files / 107 tests pass, including 15 new cases covering nine paper types, fractional margins, custom/profile removal, input immutability, same-batch repair, invalid bounds, no-op/duplicate/scope rejection, unchanged data/schema and Undo.
+- Chromium/Firefox: 2/2 new browser cases and 8/8 adjacent four-paper geometry regressions pass without retries. Native 8.25mm margins, invalid 73mm rejection, actual LETTER landscape 1056x816 geometry, saved content and diagnostics agree. Pi still requires manual Apply: the project remains unchanged before approval, then Apply/Undo succeed. Provider responses are synthetic. No failing attempts occurred in this slice.
+- Independent advisor approved logic and the deep-clone isolation; agent gate (129 examples) and site build pass with the original release baseline. Register: 11 shared / 10 parallel / 15 agent-only. Historical Firefox typography instability, unavailable WebKit and external qualification remain open.

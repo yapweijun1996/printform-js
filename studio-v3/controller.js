@@ -11,6 +11,7 @@ import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
 import { sectionOrderChange } from './section-order.js';
 import { logoReferenceChange } from './image-reference.js';
+import { pageGeometryChange } from './page-geometry.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -117,7 +118,7 @@ export function formDesign(project, selected, form, kind) {
     d = globalStyleChange(d,{color:text('color'),font:Number(values.get('font')),padding:Number(values.get('padding')),
       striped:checked('striped'),borders:checked('borders'),pageNumbers:checked('pageNumbers')}).design;
     if (values.has('pageNumberStyle.fontSize')) d = elementStyleChange(d,'page-number',fieldStyle('pageNumberStyle')).design;
-    if (values.has('paper')) d.page = pageFromForm(values);
+    if (values.has('paper')) { const page = pageFromForm(values); d = pageGeometryChange(d,{...page,printerProfile:page.printerProfile ?? null}).design; }
   } else if (kind === 'field' && selection) {
     for (const key of ['label','format']) if (values.has(key)) selection.field[key] = text(key);
     if (isTable(d,selection.block) && values.has('width')) selection.field.width = Number(values.get('width'));
