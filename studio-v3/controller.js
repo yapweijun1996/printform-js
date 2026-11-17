@@ -1,3 +1,4 @@
+import { columnWidthChange } from './column-width.js';
 import { CommandBus } from '../studio-v2/core/command-bus.js';
 import { compileProject, designOf, selectionField } from './model.js';
 import { validateDesign } from './file-io.js';
@@ -121,7 +122,7 @@ export function formDesign(project, selected, form, kind) {
     if (values.has('paper')) { const page = pageFromForm(values); d = pageGeometryChange(d,{...page,printerProfile:page.printerProfile ?? null}).design; }
   } else if (kind === 'field' && selection) {
     for (const key of ['label','format']) if (values.has(key)) selection.field[key] = text(key);
-    if (isTable(d,selection.block) && values.has('width')) selection.field.width = Number(values.get('width'));
+    if (isTable(d,selection.block) && values.has('width')) Object.assign(selection.field,columnWidthChange(selection.field,Number(values.get('width'))));
     if (values.has('showLabel-present')) selection.field.showLabel = checked('showLabel');
     for (const prefix of ['labelStyle','valueStyle']) if (values.has(`${prefix}.fontSize`)) {
       const style = fieldStyle(prefix); if (Object.keys(style).length) selection.field[prefix] = style; else delete selection.field[prefix];

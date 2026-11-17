@@ -1,3 +1,4 @@
+import { validateColumnWidth } from './column-width.js';
 import { BLOCKS, FIELD_KINDS, FORMATS, validPointer, fieldKind, sectionOrder } from './design-authoring.js';
 import { validatePageSettings } from './paper-settings.js';
 import { A4_PRESET_IDS } from './a4-presets.js';
@@ -72,7 +73,7 @@ function validateField(f,id,assets,ids,relative = id === 'items') {
       if (f.format || f.text) fail('Image fields cannot contain text or numeric formatting.');
     } else if (['assetId','height','fit'].some(key => f[key] !== undefined) || (!relative && f.width !== undefined)) fail('Image dimensions belong to image fields.');
   }
-  if (relative && !number(f.width,1,100)) fail('Column width must be between 1 and 100%.');
+  if (relative) validateColumnWidth(f.width);
 }
 export function validateDesign(d) {
   exactDesignKeys(d,['version','title','type','color','font','padding','striped','borders','repeatHeader','repeatTable','pageNumbers','breakBefore','blocks','header','customer','collection','columns','totals','footer','sectionOrder','page','assets','logo','titleStyle','pageNumberStyle','tableStyle','layoutPreset','additionalTables'],'design');
