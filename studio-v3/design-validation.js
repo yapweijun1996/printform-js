@@ -5,6 +5,7 @@ import { validateTableStyle } from './table-style.js';
 import { validateFieldStyle } from './element-style.js';
 import { validateAdditionalTables } from './additional-tables.js';
 import { validateGlobalStyle } from './global-style.js';
+import { validateHeading } from './heading-text.js';
 export { validateFieldStyle } from './element-style.js';
 const number = (value,min,max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const identifier = value => typeof value === 'string' && /^[a-z0-9-]{1,60}$/.test(value);
@@ -90,7 +91,7 @@ export function validateDesign(d) {
   exactDesignKeys(d,['version','title','type','color','font','padding','striped','borders','repeatHeader','repeatTable','pageNumbers','breakBefore','blocks','header','customer','collection','columns','totals','footer','sectionOrder','page','assets','logo','titleStyle','pageNumberStyle','tableStyle','layoutPreset','additionalTables'],'design');
   if (d.layoutPreset !== undefined && !A4_PRESET_IDS.includes(d.layoutPreset)) fail('Unsupported document layout preset.');
   if (d.version !== 1 || !['invoice','purchase','delivery'].includes(d.type)) fail('Unsupported v3 template version or document type.');
-  if (!text(d.title,100)) fail('Document heading must contain at most 100 characters.');
+  validateHeading(d.title);
   validateGlobalStyle(d);
   if (d.tableStyle !== undefined) validateTableStyle(d.tableStyle);
   exactDesignKeys(d.blocks,BLOCKS,'blocks');

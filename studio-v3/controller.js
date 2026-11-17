@@ -7,6 +7,7 @@ import { sectionOrder, fieldKind } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
 import { elementStyleChange } from './element-style.js';
 import { globalStyleChange } from './global-style.js';
+import { headingTextChange } from './heading-text.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -142,7 +143,7 @@ export function formDesign(project, selected, form, kind) {
     const id = selected.startsWith('header-') && !selection ? 'header' : selected === 'items-header' ? 'items' : selected;
     if (!d.blocks[id]) throw new Error('Select an existing section before Apply.');
     d.blocks[id].label = text('label'); d.blocks[id].enabled = checked('enabled');
-    if (id === 'header') { d.title = text('title'); d = globalStyleChange(d,{repeatHeader:checked('repeatHeader')}).design; }
+    if (id === 'header') { d = headingTextChange(d,text('title')).design; d = globalStyleChange(d,{repeatHeader:checked('repeatHeader')}).design; }
     if (id === 'header' && values.has('titleStyle.fontSize')) d = elementStyleChange(d,'header-title',fieldStyle('titleStyle')).design;
     if (id === 'items') { d = globalStyleChange(d,{repeatTable:checked('repeatTable'),breakBefore:checked('breakBefore')}).design; tableStyle(); }
     else if (values.has('layoutColumns')) {

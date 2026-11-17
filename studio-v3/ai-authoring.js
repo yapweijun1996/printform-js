@@ -6,6 +6,7 @@ import { resolvePointer } from '../studio-v2/core/json.js';
 import { validPointer } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
 import { globalStyleChange } from './global-style.js';
+import { headingTextChange } from './heading-text.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -121,7 +122,9 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
     } else if (op.type === 'set_collection') {
       object(op,['type','value']); record('items','collection',design.collection,op.value); design.collection = op.value;
     } else if (op.type === 'set_heading') {
-      object(op,['type','value']); record('header-title','title',design.title,op.value); design.title = op.value;
+      object(op,['type','value']); const change = headingTextChange(design,op.value);
+      for (const {target,property,before,after} of change.changes) record(target,property,before,after);
+      design.title = change.design.title;
     }
   }
   if (design.columns.reduce((sum,c)=>sum+c.width,0) > 100.01) throw Object.assign(new Error('COLUMN_WIDTH_LIMIT'),{code:'COLUMN_WIDTH_LIMIT'});

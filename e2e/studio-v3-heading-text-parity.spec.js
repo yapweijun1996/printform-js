@@ -1,0 +1,35 @@
+import {test,expect} from './studio-v3-test.js';
+import {expectApplied} from './ai-applied.js';
+import {gateway,save,normalized,diagnostics} from './studio-v3-element-style.js';
+
+test.use({workInSteps:true});
+test.setTimeout(90000);
+const ready = page => expect(page.locator('[data-action=export]')).toBeEnabled();
+const title = '交付确认 / Delivery';
+const steps = [['apply_operations',{summary:'Heading',operations:[{type:'set_heading',value:title}]}],['inspect_draft'],['finish',{summary:'Heading'}]];
+test('heading inspector and Pi agree on printed text, saved content and Undo',async({page},info)=> {
+  const errors=[]; page.on('pageerror',error=>errors.push(error.message));
+  await gateway(page,steps); await page.goto('/studio-v3/'); await ready(page);
+  const before = (await save(page,info,'before.json')).project;
+  const structure=page.locator('[data-layout=structure]').first();
+  if(await structure.getAttribute('aria-expanded')!=='true')await structure.click();
+  await page.locator('#left-panel [data-select=header]').click();
+  const form=page.locator('form[data-form=block]');
+  await expect(form.locator('[name=title]')).toHaveAttribute('maxlength','100');
+  await form.locator('[name=title]').fill(title); await form.getByRole('button',{name:'Apply section',exact:true}).click(); await ready(page);
+  await expect(page.frameLocator('#preview-frame').locator('[data-v3-id=header-title]').first()).toHaveText(title);
+  const ui=(await save(page,info,'ui.json')).project, expected=normalized(before); expected.manifest.studioV3.title=title;
+  expect(normalized(ui)).toEqual(expected); const uiDiagnostics=await diagnostics(page,ui);
+  expect(uiDiagnostics.diagnostics.ready).toBe(true);
+  await page.locator('[data-action=undo]').click(); await ready(page);
+  expect(normalized((await save(page,info,'undone.json')).project)).toEqual(normalized(before));
+  await page.locator('[data-ai-toggle]').click(); await page.locator('#ai-prompt').fill('Change the heading to '+title);
+  await page.locator('[data-ai-send]').click(); await expectApplied(page,3,{timeout:60000}); await ready(page);
+  const pi=(await save(page,info,'pi.json')).project;
+  expect(normalized(pi)).toEqual(normalized(ui)); expect((await diagnostics(page,pi)).diagnostics).toEqual(uiDiagnostics.diagnostics);
+  await expect(page.frameLocator('#preview-frame').locator('[data-v3-id=header-title]').first()).toHaveText(title);
+  await page.screenshot({path:info.outputPath('heading.png')});
+  await page.locator('[data-ai=undo]').click(); await ready(page);
+  expect(normalized((await save(page,info,'ai-undone.json')).project)).toEqual(normalized(before));
+  expect(errors).toEqual([]);
+});
