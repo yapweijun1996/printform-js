@@ -10,6 +10,7 @@ import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
 import { sectionOrderChange } from './section-order.js';
+import { logoReferenceChange } from './image-reference.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -159,8 +160,8 @@ export function formDesign(project, selected, form, kind) {
       if (order.indexOf(id) !== position) { const next = order.filter(block=>block !== id); next.splice(position,0,id); d = sectionOrderChange(d,next).design; }
     }
   } else if (kind === 'logo') {
-    if (checked('removeLogo')) d.logo = null;
-    else d.logo = {assetId:text('assetId'),width:Number(values.get('imageWidth')),height:Number(values.get('imageHeight')),fit:text('imageFit')};
+    const value = checked('removeLogo') ? null : {assetId:text('assetId'),width:Number(values.get('imageWidth')),height:Number(values.get('imageHeight')),fit:text('imageFit')};
+    d = logoReferenceChange(d,value).design;
   }
   return d;
 }

@@ -8,6 +8,7 @@ import { validateGlobalStyle } from './global-style.js';
 import { validateHeading } from './heading-text.js';
 import { validateSection } from './section-properties.js';
 import { validateSectionOrder } from './section-order.js';
+import { validateImageReference, validateLogoReference } from './image-reference.js';
 export { validateFieldStyle } from './element-style.js';
 const number = (value,min,max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const identifier = value => typeof value === 'string' && /^[a-z0-9-]{1,60}$/.test(value);
@@ -20,11 +21,6 @@ export function validateBarcodeSettings(value) {
   exactDesignKeys(value,['format','moduleWidth','height','displayValue'],'barcode');
   if (!['CODE128','EAN13'].includes(value.format) || !Number.isInteger(value.moduleWidth) || !number(value.moduleWidth,1,4) || !Number.isInteger(value.height) || !number(value.height,20,160) || typeof value.displayValue !== 'boolean') fail('Invalid barcode format or dimensions.');
   return value;
-}
-function image(value,assets,label) {
-  if (!identifier(value.assetId) || !assets.has(value.assetId)) fail(`${label} must reference an existing embedded raster asset.`);
-  if (!number(value.width,8,400) || !number(value.height,8,200)) fail(`${label} dimensions must be 8–400px wide and 8–200px high.`);
-  if (value.fit !== undefined && !['contain','cover'].includes(value.fit)) fail('Unsupported image fit.');
 }
 function validateAssets(d) {
   const assets = new Set();
@@ -45,7 +41,7 @@ function validateAssets(d) {
     if (bytes > 5592408) fail('Embedded assets exceed the 4 MB total limit.');
   }
   if (d.logo !== undefined && d.logo !== null) {
-    exactDesignKeys(d.logo,['assetId','width','height','fit'],'logo'); image(d.logo,assets,'Logo');
+    validateLogoReference(d.logo,assets);
   }
   const references = [d.logo,...BLOCKS.filter(id=>id !== 'items').flatMap(id=>Array.isArray(d[id]) ? d[id].filter(f=>f?.kind === 'image') : [])].filter(Boolean);
   const projectedBytes = (d.assets || []).reduce((sum,a)=>sum+a.src.length,0)+references.reduce((sum,ref)=>sum+(d.assets?.find(a=>a.id===ref.assetId)?.src.length || 0),0);
@@ -72,7 +68,7 @@ function validateField(f,id,assets,ids,relative = id === 'items') {
     if (f.barcode !== undefined) fail('Barcode settings belong to barcode fields.');
     if (fieldKind(f) === 'image') {
       if (relative) fail('Table columns support bound values, barcodes or static text.');
-      image(f,assets,'Image field');
+      validateImageReference(f,assets,'Image field');
       if (f.format || f.text) fail('Image fields cannot contain text or numeric formatting.');
     } else if (['assetId','height','fit'].some(key => f[key] !== undefined) || (!relative && f.width !== undefined)) fail('Image dimensions belong to image fields.');
   }

@@ -1,0 +1,33 @@
+import {test,expect} from './studio-v3-test.js';
+import {expectApplied} from './ai-applied.js';
+import {gateway,save,normalized,diagnostics} from './studio-v3-element-style.js';
+import {newProject,designOf,compileProject} from '../studio-v3/model.js';
+import {saveProject} from '../studio-v3/file-io.js';
+
+test.use({workInSteps:true});test.setTimeout(90000);
+const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled();
+const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+const logo={assetId:'brand',width:64.25,height:32.5,fit:'cover'};
+const completion=value=>[['apply_operations',{summary:'Logo reference',operations:[{type:'set_logo',value}]}],['inspect_draft'],['finish',{summary:'Logo reference'}]];
+test('logo inspector and Pi preserve assets, render fractional dimensions, remove and undo',async({page},info)=> {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));await gateway(page,[...completion(logo),...completion(null)]);
+  await page.goto('/studio-v3/');await ready(page);
+  const project=newProject(),d=designOf(project);d.assets=[{id:'brand',src:PNG,alt:'Fictional mark'}];
+  await page.locator('#open-file').setInputFiles({name:'fictional-logo.printform.json',mimeType:'application/json',buffer:Buffer.from(saveProject(compileProject(project,d)))});
+  await expect(page.locator('#status')).toContainText('Opened editable');await ready(page);const before=(await save(page,info,'before.json')).project;
+  const structure=page.locator('[data-layout=structure]').first();if(await structure.getAttribute('aria-expanded')!=='true')await structure.click();
+  await page.locator('#left-panel [data-select=header]').click();await page.getByText('Logo / embedded image',{exact:true}).click();const form=page.locator('form[data-form=logo]');
+  await form.locator('[name=assetId]').selectOption({value:'brand'});await form.locator('[name=imageWidth]').fill('7');await form.getByRole('button',{name:'Apply logo',exact:true}).click();await expect(page.locator('#revision')).toHaveText('r0');
+  await form.locator('[name=imageWidth]').fill('64.25');await form.locator('[name=imageHeight]').fill('32.5');await form.locator('[name=imageFit]').selectOption({value:'cover'});
+  await form.getByRole('button',{name:'Apply logo',exact:true}).click();await expect(page.locator('#revision')).toHaveText(/^r1\b/);await ready(page);
+  const image=page.frameLocator('#preview-frame').locator('img[data-v3-id=header-logo]').first();await expect(image).toHaveCSS('width','64.25px');await expect(image).toHaveCSS('height','32.5px');await expect(image).toHaveCSS('object-fit','cover');
+  const ui=(await save(page,info,'ui.json')).project,expected=normalized(before);expected.manifest.studioV3.logo=logo;expect(normalized(ui)).toEqual(expected);const uiDiagnostics=await diagnostics(page,ui);expect(uiDiagnostics.diagnostics.ready).toBe(true);
+  await page.locator('[data-action=undo]').click();await ready(page);expect(normalized((await save(page,info,'undone.json')).project)).toEqual(normalized(before));
+  await page.locator('[data-ai-toggle]').click();await page.locator('#ai-prompt').fill('Use existing asset brand as logo, 64.25 by 32.5 pixels, cover fit.');await page.locator('[data-ai-send]').click();await expectApplied(page,3,{timeout:60000});await ready(page);
+  const pi=(await save(page,info,'pi.json')).project;expect(normalized(pi)).toEqual(normalized(ui));expect((await diagnostics(page,pi)).diagnostics).toEqual(uiDiagnostics.diagnostics);await expect(image).toHaveCSS('width','64.25px');
+  await page.screenshot({path:info.outputPath('logo.png')});await page.locator('[data-ai=undo]').click();await ready(page);expect(normalized((await save(page,info,'ai-undone.json')).project)).toEqual(normalized(before));
+  await page.locator('#ai-prompt').fill('Remove the logo and default brand mark.');await page.locator('[data-ai-send]').click();await expectApplied(page,5,{timeout:60000});await ready(page);
+  await expect(page.frameLocator('#preview-frame').locator('[data-v3-id=header-logo]')).toHaveCount(0);
+  const removed=(await save(page,info,'removed.json')).project,removedExpected=normalized(before);removedExpected.manifest.studioV3.logo=null;expect(normalized(removed)).toEqual(removedExpected);
+  await page.locator('[data-ai=undo]').last().click();await ready(page);expect(normalized((await save(page,info,'restored.json')).project)).toEqual(normalized(before));expect(errors).toEqual([]);
+});

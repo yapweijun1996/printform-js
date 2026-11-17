@@ -9,6 +9,7 @@ import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
 import { sectionOrderChange } from './section-order.js';
+import { logoReferenceChange } from './image-reference.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -121,7 +122,9 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       design.page = next;
     } else if (op.type === 'set_logo') {
       object(op,['type','value']); if (op.value !== null) object(op.value,['assetId','width','height','fit']);
-      record('header-logo','logo',design.logo,op.value); design.logo = structuredClone(op.value);
+      const change = logoReferenceChange(design,op.value);
+      for (const {target,property,before,after} of change.changes) record(target,property,before,after);
+      design.logo = change.design.logo;
     } else if (op.type === 'set_collection') {
       object(op,['type','value']); record('items','collection',design.collection,op.value); design.collection = op.value;
     } else if (op.type === 'set_heading') {

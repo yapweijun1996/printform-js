@@ -39,7 +39,7 @@ export function fieldBinding(project,selected) {
 export function imageControls(design,image={},target='header-logo') {
   const options = (design.assets || []).map(asset=>`<option value="${escape(asset.id)}" ${image.assetId === asset.id ? 'selected' : ''}>${escape(asset.id)}</option>`).join('');
   return `<div class="form-stack"><label>Embedded asset<select name="assetId"><option value="">Choose an embedded image</option>${options}</select></label>
-    ${input('Image width (px)','imageWidth',image.width || 80,'type="number" min="8" max="400"')}${input('Image height (px)','imageHeight',image.height || 60,'type="number" min="8" max="200"')}
+    ${input('Image width (px)','imageWidth',image.width || 80,'type="number" min="8" max="400" step="any"')}${input('Image height (px)','imageHeight',image.height || 60,'type="number" min="8" max="200" step="any"')}
     <label>Image fit<select name="imageFit"><option value="contain" ${image.fit !== 'cover' ? 'selected' : ''}>Contain</option><option value="cover" ${image.fit === 'cover' ? 'selected' : ''}>Cover</option></select></label>
     <label>Upload embedded image<input type="file" data-image-target="${escape(target)}" accept="image/png,image/jpeg,image/gif,image/webp"></label>
     <p class="hint">PNG, JPEG, GIF or WebP under 1 MB. Choosing a file commits it locally to this element. Images are excluded from AI context.</p></div>`;
