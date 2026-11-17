@@ -4,8 +4,8 @@ import { A4_PRESET_IDS } from './a4-presets.js';
 import { validateTableStyle } from './table-style.js';
 import { validateFieldStyle } from './element-style.js';
 import { validateAdditionalTables } from './additional-tables.js';
+import { validateGlobalStyle } from './global-style.js';
 export { validateFieldStyle } from './element-style.js';
-const color = value => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
 const number = (value,min,max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const identifier = value => typeof value === 'string' && /^[a-z0-9-]{1,60}$/.test(value);
 const text = (value,max) => typeof value === 'string' && value.length <= max;
@@ -91,7 +91,7 @@ export function validateDesign(d) {
   if (d.layoutPreset !== undefined && !A4_PRESET_IDS.includes(d.layoutPreset)) fail('Unsupported document layout preset.');
   if (d.version !== 1 || !['invoice','purchase','delivery'].includes(d.type)) fail('Unsupported v3 template version or document type.');
   if (!text(d.title,100)) fail('Document heading must contain at most 100 characters.');
-  if (!color(d.color) || !number(d.font,6,14) || !number(d.padding,2,16)) fail('Invalid print style settings.');
+  validateGlobalStyle(d);
   if (d.tableStyle !== undefined) validateTableStyle(d.tableStyle);
   exactDesignKeys(d.blocks,BLOCKS,'blocks');
   const assets = validateAssets(d), ids = new Set();
@@ -103,7 +103,6 @@ export function validateDesign(d) {
   });
   validateAdditionalTables(d,validateField,assets,ids);
   if (!validPointer(d.collection)) fail('Collection must be an absolute JSON pointer such as /items.');
-  for (const key of ['striped','borders','repeatHeader','repeatTable','pageNumbers','breakBefore']) if (typeof d[key] !== 'boolean') fail(`Invalid ${key} setting.`);
   if (d.columns.reduce((sum,c) => sum+c.width,0) > 100.01) fail('Column widths must total 100% or less.');
   if (d.sectionOrder !== undefined && (!Array.isArray(d.sectionOrder) || d.sectionOrder.length !== BLOCKS.length || new Set(d.sectionOrder).size !== BLOCKS.length || d.sectionOrder.some(id => !BLOCKS.includes(id)))) fail('Section order must contain every section exactly once.');
   if (d.repeatHeader && sectionOrder(d)[0] !== 'header') fail('A repeating document header must be the first section.');

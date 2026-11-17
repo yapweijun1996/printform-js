@@ -6,6 +6,7 @@ import { dataSource } from './data-provenance.js';
 import { sectionOrder, fieldKind } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
 import { elementStyleChange } from './element-style.js';
+import { globalStyleChange } from './global-style.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -109,9 +110,8 @@ export function formDesign(project, selected, form, kind) {
   };
   if (kind === 'style') {
     tableStyle();
-    for (const key of ['color']) d[key] = text(key);
-    for (const key of ['font','padding']) d[key] = Number(values.get(key));
-    for (const key of ['striped','borders','pageNumbers']) d[key] = checked(key);
+    d = globalStyleChange(d,{color:text('color'),font:Number(values.get('font')),padding:Number(values.get('padding')),
+      striped:checked('striped'),borders:checked('borders'),pageNumbers:checked('pageNumbers')}).design;
     if (values.has('pageNumberStyle.fontSize')) d = elementStyleChange(d,'page-number',fieldStyle('pageNumberStyle')).design;
     if (values.has('paper')) d.page = pageFromForm(values);
   } else if (kind === 'field' && selection) {
@@ -142,9 +142,9 @@ export function formDesign(project, selected, form, kind) {
     const id = selected.startsWith('header-') && !selection ? 'header' : selected === 'items-header' ? 'items' : selected;
     if (!d.blocks[id]) throw new Error('Select an existing section before Apply.');
     d.blocks[id].label = text('label'); d.blocks[id].enabled = checked('enabled');
-    if (id === 'header') { d.title = text('title'); d.repeatHeader = checked('repeatHeader'); }
+    if (id === 'header') { d.title = text('title'); d = globalStyleChange(d,{repeatHeader:checked('repeatHeader')}).design; }
     if (id === 'header' && values.has('titleStyle.fontSize')) d = elementStyleChange(d,'header-title',fieldStyle('titleStyle')).design;
-    if (id === 'items') { d.repeatTable = checked('repeatTable'); d.breakBefore = checked('breakBefore'); tableStyle(); }
+    if (id === 'items') { d = globalStyleChange(d,{repeatTable:checked('repeatTable'),breakBefore:checked('breakBefore')}).design; tableStyle(); }
     else if (values.has('layoutColumns')) {
       if (text('layoutColumns') || text('layoutGap')) d.blocks[id].layout = {columns:Number(values.get('layoutColumns') || 1),gap:Number(values.get('layoutGap') || 0)}; else delete d.blocks[id].layout;
       d.blocks[id].keepTogether = checked('keepTogether'); if (id !== 'header') d.blocks[id].breakBefore = checked('sectionBreakBefore');

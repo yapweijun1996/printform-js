@@ -1,10 +1,11 @@
-import { MAX_AUTHORING_OPERATIONS, GLOBAL_STYLE_KEYS, AUTHORING_CONTRACT, contractError, assertOperationContract } from './ai-authoring-contract.js';
+import { MAX_AUTHORING_OPERATIONS, AUTHORING_CONTRACT, contractError, assertOperationContract } from './ai-authoring-contract.js';
 import { DEMO_BINDING_PATHS } from './demo-binding-paths.js';
 import { BLOCKS, selectionField, defaultDesign } from './model.js';
 import { validateDesign } from './file-io.js';
 import { resolvePointer } from '../studio-v2/core/json.js';
 import { validPointer } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
+import { globalStyleChange } from './global-style.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -51,8 +52,8 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       else design[change.key] = change.design[change.key];
     } else if (op.type === 'set_style') {
       object(op,['type','patch']);
-      object(op.patch,GLOBAL_STYLE_KEYS);
-      for (const [key,value] of Object.entries(op.patch)) { record('style',key,design[key],value); design[key] = structuredClone(value); }
+      const change = globalStyleChange(design,op.patch);
+      for (const {target,property,before,after} of change.changes) { record(target,property,before,after); design[property] = change.design[property]; }
     } else if (op.type === 'set_table_style') {
       object(op,['type','target','patch']);
       const change = tableStyleChange(design,op.target,op.patch);
