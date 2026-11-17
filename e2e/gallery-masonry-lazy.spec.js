@@ -1,3 +1,4 @@
+import { catalogCount } from './gallery-catalog.js';
 import { test, expect } from "@playwright/test";
 
 test.use({ serviceWorkers: "block" });
@@ -8,7 +9,7 @@ test("distant thumbnails are requested only as the reader scrolls toward them", 
   page.on("request", (request) => requests.add(request.url()));
   await page.goto("/gallery/index.html");
   const cards = page.locator(".gallery-card");
-  await expect(cards).toHaveCount(67);
+  await expect(cards).toHaveCount(catalogCount);
   const firstImage = cards.first().locator("img");
   const lastImage = cards.last().locator("img");
   await expect.poll(() => firstImage.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
@@ -27,7 +28,7 @@ test("a card growing after initial layout repacks the gallery without overlaps",
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/gallery/index.html");
   const cards = page.locator(".gallery-card");
-  await expect(cards).toHaveCount(67);
+  await expect(cards).toHaveCount(catalogCount);
   await expect.poll(() => cards.first().locator("img").evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
   const before = await cards.evaluateAll((elements) => elements.map((element) => {
     const box = element.getBoundingClientRect();

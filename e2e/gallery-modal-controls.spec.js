@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 test.use({ serviceWorkers: "block" });
+// DOMRect subtraction in Firefox has sub-0.0001px float noise; keep the 8px visual gap requirement.
+const RECT_EPSILON = 0.0001;
 for (const width of [320, 390, 1440]) for (const colorScheme of ["light", "dark"]) {
   test(`modal controls at ${width}px ${colorScheme}: pointer, keyboard and footer`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 844 });
@@ -23,7 +25,7 @@ for (const width of [320, 390, 1440]) for (const colorScheme of ["light", "dark"
     });
     expect(englishFooter.buttons).toHaveLength(2);
     expect(Math.abs(englishFooter.buttons[1].right - englishFooter.right)).toBeLessThan(1);
-    expect(englishFooter.buttons[1].left - englishFooter.buttons[0].right).toBeGreaterThanOrEqual(8);
+    expect(englishFooter.buttons[1].left - englishFooter.buttons[0].right + RECT_EPSILON).toBeGreaterThanOrEqual(8);
     for (const button of englishFooter.buttons) {
       expect(button.left).toBeGreaterThanOrEqual(0); expect(button.right).toBeLessThanOrEqual(width);
       expect(button.width).toBeGreaterThanOrEqual(44); expect(button.height).toBeGreaterThanOrEqual(44);
@@ -59,7 +61,7 @@ for (const width of [320, 390, 1440]) for (const colorScheme of ["light", "dark"
         expect(button.bottom).toBeLessThanOrEqual(844);
       }
       const [open, print] = geometry.buttons;
-      if (open.y === print.y) expect(print.left - open.right).toBeGreaterThanOrEqual(8);
+      if (open.y === print.y) expect(print.left - open.right + RECT_EPSILON).toBeGreaterThanOrEqual(8);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });

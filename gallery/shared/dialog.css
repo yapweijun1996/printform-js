@@ -119,3 +119,5 @@
   .viewer-preset-menu { grid-template-columns: repeat(2, auto); }
   .viewer-pages { flex-shrink: 0; }
 }
+
+.viewer-controls .gallery-icon { display: inline-block; vertical-align: middle; flex-shrink: 0; pointer-events: none; }

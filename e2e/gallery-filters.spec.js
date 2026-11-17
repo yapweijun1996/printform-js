@@ -123,7 +123,8 @@ for (const [name, width, colorScheme, language] of [["desktop-light", 1200, "lig
       const box = await control.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(width);
-      expect(box.height).toBeGreaterThanOrEqual(44);
+      // Keep real geometry: allow only float subtraction noise (Firefox returns 43.999969 for 44px).
+      expect(box.height + 0.0001).toBeGreaterThanOrEqual(44);
     }
     const sections = await page.locator(".controls > .search, .controls > .advanced-filters, .controls > .filter-summary").all();
     for (let i = 1; i < sections.length; i++) {

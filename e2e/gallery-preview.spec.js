@@ -1,8 +1,19 @@
+import { catalogCount } from './gallery-catalog.js';
 import { test, expect } from "@playwright/test";
 test.use({ serviceWorkers: "block" });
 const metrics = (page) => page.locator('.document-viewport').evaluate(node => ({
   top: node.scrollTop, height: node.scrollHeight, viewport: node.clientHeight
 }));
+// Firefox clamps an individual wheel event, even for delta=100000.
+// Use a bounded sequence of normal native wheel input, retaining the same end-position checks.
+async function wheelToBoundary(page, direction) {
+  for (let step = 0; step < 80; step++) {
+    const m = await metrics(page);
+    if (direction > 0 ? m.height - m.viewport - m.top < 2 : m.top === 0) return;
+    await page.mouse.wheel(0, direction * 1000);
+    await page.waitForTimeout(50); // Let the native async wheel scroll reach a rendered frame.
+  }
+}
 async function frameReady(page, number) {
   await page.locator("#search").fill(`PF-${number}`);
   await page.locator(".gallery-card").click();
@@ -25,7 +36,7 @@ for (const [name, width, height] of [["desktop", 1365, 900], ["short", 1365, 480
     const page = await context.newPage();
     try {
       await page.goto("/gallery/index.html");
-      await expect(page.locator(".gallery-card")).toHaveCount(67);
+      await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
       await page.locator("#search").fill("PF-062");
       await page.locator(".gallery-card").scrollIntoViewIfNeeded();
       const position = await page.evaluate(() => scrollY);
@@ -95,9 +106,9 @@ test("long PF055/056, bilingual PF057/063, repeated opens, resize, Tab and recov
     await layout(page);
     const box = await page.locator(".document-viewport").boundingBox();
     await page.mouse.move(box.x + 200, box.y + 200);
-    await page.mouse.wheel(0, 100000);
+    await wheelToBoundary(page, 1);
     await expect.poll(async () => { const m = await metrics(page); return m.height - m.viewport - m.top; }).toBeLessThan(2);
-    await page.mouse.wheel(0, -100000);
+    await wheelToBoundary(page, -1);
     await expect.poll(async () => (await metrics(page)).top).toBe(0);
     await page.setViewportSize({ width: 1000, height: 520 });
     await layout(page);

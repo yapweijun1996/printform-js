@@ -48,8 +48,12 @@ test("topbar loaded build, languages, responsive controls and long status", asyn
   await page.locator("#running-version").evaluate(e => e.textContent = "a".repeat(80));
   await page.locator("#update-state").evaluate(e => e.textContent = "Updates are not supported in this browser. Update failed. Retry when online.");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  const bar = await page.locator(".topbar").boundingBox(), state = await page.locator("#update-state").boundingBox();
-  expect(state.y + state.height).toBeLessThanOrEqual(bar.y + bar.height);
+  // Read both bounds in one frame: the sticky bar may still be transitioning after scrollTo.
+  const bounds = await page.evaluate(() => ({
+    bar: document.querySelector(".topbar").getBoundingClientRect().bottom,
+    state: document.querySelector("#update-state").getBoundingClientRect().bottom
+  }));
+  expect(bounds.state).toBeLessThanOrEqual(bounds.bar);
   await page.screenshot({ path: info.outputPath("320-long-status.png") });
   await page.setViewportSize({ width: 801, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -64,7 +68,8 @@ test("real workers: check current, offline, failure, then explicit N to N+1 acti
   await expect(page.locator("#running-version")).toHaveText("aaaaaaaaaaaa");
   await page.locator(".topbar-update summary").click();
   const check = page.locator("#check-update");
-  await check.focus(); await page.keyboard.press("Enter");
+  await expect(check).toBeEnabled();
+  await check.focus(); await expect(check).toBeFocused(); await page.keyboard.press("Enter");
   await expect(page.locator("#update-state")).toHaveText("Up to date");
   await context.setOffline(true);
   await check.click();

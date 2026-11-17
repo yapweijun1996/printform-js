@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import { adaptEmbeddedPreview } from './embedded-preview.js';
 
 const labels = {
@@ -15,12 +16,12 @@ export function createDocumentViewer(dialog) {
   stage.append(viewport.querySelector('iframe'));
   const bar = document.createElement('div');
   bar.className = 'viewer-controls';
-  bar.innerHTML = `<div class="viewer-modes"><button type="button" data-settings aria-expanded="false"></button><button type="button" data-read></button><button type="button" data-preview></button></div>
-    <div class="viewer-tools"><button type="button" data-out>−</button>
-    <label class="viewer-zoom"><input data-zoom type="number" max="200" step="any" value="100"><span class="viewer-zoom-unit" aria-hidden="true">%</span></label><button type="button" data-in>+</button>
-    <div class="viewer-presets"><button type="button" data-presets aria-expanded="false" aria-controls="viewer-preset-menu">▾</button>
+  bar.innerHTML = `<div class="viewer-modes"><button type="button" data-settings aria-expanded="false">${icon('settings')}</button><button type="button" data-read></button><button type="button" data-preview></button></div>
+    <div class="viewer-tools"><button type="button" data-out>${icon('minus')}</button>
+    <label class="viewer-zoom"><input data-zoom type="number" max="200" step="any" value="100"><span class="viewer-zoom-unit" aria-hidden="true">%</span></label><button type="button" data-in>${icon('plus')}</button>
+    <div class="viewer-presets"><button type="button" data-presets aria-expanded="false" aria-controls="viewer-preset-menu">${icon('down')}</button>
     <div id="viewer-preset-menu" class="viewer-preset-menu" hidden><button type="button" data-fit></button><button type="button" data-preset="1">100%</button><button type="button" data-preset="1.5">150%</button><button type="button" data-preset="2">200%</button></div></div></div>
-    <div class="viewer-pages"><button type="button" data-prev>‹</button><label class="viewer-page"><input data-page type="number" min="1" value="1"><span class="viewer-page-total" data-page-total>/ 0</span></label><button type="button" data-next>›</button></div>`;
+    <div class="viewer-pages"><button type="button" data-prev>${icon('left')}</button><label class="viewer-page"><input data-page type="number" min="1" value="1"><span class="viewer-page-total" data-page-total>/ 0</span></label><button type="button" data-next>${icon('right')}</button></div>`;
   viewport.before(bar);
   const hint = document.createElement('p');
   hint.className = 'viewer-hint';
@@ -184,7 +185,6 @@ export function createDocumentViewer(dialog) {
         const node = query(selector);
         node.setAttribute('aria-label', words[index]);
         if (index === 0) node.textContent = language === 'zh' ? '返回预览' : 'Back to Preview';
-        if (index === 1) node.textContent = '⚙';
         if (index === 2) node.textContent = words[index];
       }
       viewport.setAttribute('aria-label', words[9]);

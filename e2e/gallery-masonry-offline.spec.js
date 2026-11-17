@@ -1,3 +1,4 @@
+import { catalogCount, sixtiesNumbers } from './gallery-catalog.js';
 import { test, expect } from "@playwright/test";
 
 test.use({ serviceWorkers: "allow", viewport: { width: 320, height: 844 } });
@@ -46,7 +47,7 @@ async function expectMasonry(page, count) {
 test("installed gallery retains 320px masonry on offline reload and search", async ({ page, context }) => {
   test.setTimeout(90_000);
   await page.goto("/gallery/index.html");
-  await expect(page.locator(".gallery-card")).toHaveCount(67);
+  await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
 
   // The real worker finishes its integrity-checked precache before activation.
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
@@ -66,7 +67,7 @@ test("installed gallery retains 320px masonry on offline reload and search", asy
   // Initial thumbnails may have loaded before the worker claimed this page.
   await page.reload();
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
-  await expect(page.locator(".gallery-card")).toHaveCount(67);
+  await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
 
   // Thumbnails use a separate runtime cache rather than the shell precache.
   await loadThumbnails(page);
@@ -80,24 +81,24 @@ test("installed gallery retains 320px masonry on offline reload and search", asy
   try {
     await page.reload();
     await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
-    await expect(page.locator(".gallery-card")).toHaveCount(67);
+    await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
     await loadThumbnails(page);
-    await expectMasonry(page, 67);
+    await expectMasonry(page, catalogCount);
 
     await page.locator("#search").fill("PF-06");
     await expect(page.locator(".gallery-card .card-id")).toHaveText(
-      Array.from({ length: 8 }, (_, index) => `PF-0${67 - index}`),
+      sixtiesNumbers,
     );
     await loadThumbnails(page);
-    await expectMasonry(page, 8);
+    await expectMasonry(page, sixtiesNumbers.length);
 
     await page.reload();
     await expect(page.locator("#search")).toHaveValue("PF-06");
     await expect(page.locator(".gallery-card .card-id")).toHaveText(
-      Array.from({ length: 8 }, (_, index) => `PF-0${67 - index}`),
+      sixtiesNumbers,
     );
     await loadThumbnails(page);
-    await expectMasonry(page, 8);
+    await expectMasonry(page, sixtiesNumbers.length);
   } finally {
     await context.setOffline(false);
   }

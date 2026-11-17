@@ -2,6 +2,12 @@
 
 > Studio v3 is an independent structured-authoring Pilot. Current scope, architecture and acceptance: [docs/STUDIO_V3.md](docs/STUDIO_V3.md). Its checks do not close v2 release gates.
 
+## Gallery SVG / Studio AI layout (2026-11-17)
+
+- [x] **GALLERY-SVG** — SVG interface icons and versioned PWA dependency complete; Chromium/Firefox SVG, controls, localization and measurement checks passed. Accepted for this separate main-branch commit; broader test limits remain recorded.
+- [ ] **STUDIO-AI-LAYOUT** — compact selected-element context, remove artificial conversation height, keep composer reachable; six Chromium/Firefox layout cases passed; separate task commit follows Gallery.
+Logic review, preserved failures and verification limits: [UI review record](docs/GALLERY_STUDIO_UI_REVIEW_2026-11-17.md). Neither checkbox claims deployment or full AI qualification.
+
 ## Gallery follow-up (2026-11-05)
 
 Status: GAL-01 through GAL-04 are completed and verified locally. The modified code is not deployed. Historical Studio release gates retain their existing status.

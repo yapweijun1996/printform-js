@@ -1,3 +1,4 @@
+import { catalogCount, catalogNumbers } from './gallery-catalog.js';
 import { test, expect } from "@playwright/test";
 
 test.use({ serviceWorkers: "block" });
@@ -6,7 +7,7 @@ test("320px gallery presents the newest cards in two columns", async ({ page }) 
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/gallery/index.html");
   const cards = page.locator(".gallery-card");
-  await expect(cards).toHaveCount(67);
+  await expect(cards).toHaveCount(catalogCount);
   const first = await cards.nth(0).boundingBox();
   const second = await cards.nth(1).boundingBox();
   expect(second.x).toBeGreaterThan(first.x + first.width);
@@ -35,7 +36,7 @@ test("mobile cards expose their visible document type in the accessible name", a
 test("masonry preserves order, full images and layout through resize and filtering", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("/gallery/index.html");
-  await expect(page.locator(".gallery-card")).toHaveCount(67);
+  await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
   // Load every real thumbnail, including cards outside the viewport.
   await page.locator(".gallery-card img").evaluateAll(async (images) => {
     await Promise.all(images.map(async (image) => {
@@ -55,7 +56,7 @@ test("masonry preserves order, full images and layout through resize and filteri
         id: card.querySelector(".card-id").textContent, title: card.querySelector("h2").textContent,
         details: card.querySelector(".card-info p:last-child").textContent };
     }));
-    expect(layout.map((card) => card.id)).toEqual(Array.from({ length: 67 }, (_, i) => `PF-${String(67 - i).padStart(3, "0")}`));
+    expect(layout.map((card) => card.id)).toEqual(catalogNumbers);
     expect(new Set(layout.map((card) => Math.round(card.height))).size).toBeGreaterThan(2);
     for (const [index, card] of layout.entries()) {
       expect(card.title).not.toBe("");
@@ -81,7 +82,7 @@ test("masonry preserves order, full images and layout through resize and filteri
   await expect(page.locator("#empty-state")).toBeVisible();
   await expect.poll(() => page.locator("#gallery-grid").evaluate((grid) => grid.getBoundingClientRect().height)).toBe(0);
   await page.goBack();
-  await expect(cards).toHaveCount(67);
+  await expect(cards).toHaveCount(catalogCount);
 });
 
 for (const colorScheme of ["light", "dark"]) {
@@ -89,7 +90,7 @@ for (const colorScheme of ["light", "dark"]) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
     await page.goto("/gallery/index.html");
-    await expect(page.locator(".gallery-card")).toHaveCount(67);
+    await expect(page.locator(".gallery-card")).toHaveCount(catalogCount);
     await page.locator('[data-language="zh"]').click();
     await page.locator("#search").fill("PF-004");
     await page.locator(".gallery-card").click();

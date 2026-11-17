@@ -76,7 +76,7 @@ body { margin: 0; min-width: 0; }
  .scroll-top svg { width: 24px; height: 24px; }
  .update-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px; background: #101725eF; color: white; font-weight: 700; }
  .update-overlay[hidden] { display: none; }
- .loader { width: 24px; height: 24px; border: 3px solid #ffffff66; border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; }
+ .loader { width: 24px; height: 24px; flex-shrink: 0; animation: spin .8s linear infinite; }
  @keyframes spin { to { transform: rotate(360deg); } }
  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } .topbar { transition: none; } }
  @media (prefers-color-scheme: dark) { .update-banner { background: #1f65db; } }
@@ -116,11 +116,11 @@ body { margin: 0; min-width: 0; }
 .topbar-update { position: relative; min-width: 0; }
 .topbar-update summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 1px solid #dfe3ea; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; overflow-wrap: anywhere; }
 .topbar-update summary::-webkit-details-marker { display: none; }
-.update-indicator { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: #297a4c; }
-.topbar-update[data-state=checking] .update-indicator, .topbar-update[data-state=preparing] .update-indicator, .topbar-update[data-state=preparingSlow] .update-indicator, .topbar-update[data-state=updating] .update-indicator { border: 2px solid #b9cae9; border-top-color: #1f65db; background: transparent; animation: spin .8s linear infinite; }
-.topbar-update[data-state=updateFailed] .update-indicator, .topbar-update[data-state=offline] .update-indicator { background: #ae4a31; }
-.topbar-update[data-state=unsupported] .update-indicator { background: #687286; }
-.topbar-update[data-state=updateAvailable] .update-indicator { background: #1f65db; }
+.update-indicator { width: 10px; height: 10px; flex: 0 0 10px; fill: currentColor; color: #297a4c; }
+.topbar-update[data-state=checking] .update-indicator, .topbar-update[data-state=preparing] .update-indicator, .topbar-update[data-state=preparingSlow] .update-indicator, .topbar-update[data-state=updating] .update-indicator { fill: none; stroke: #1f65db; stroke-width: 4; stroke-dasharray: 42 15; animation: spin .8s linear infinite; }
+.topbar-update[data-state=updateFailed] .update-indicator, .topbar-update[data-state=offline] .update-indicator { color: #ae4a31; }
+.topbar-update[data-state=unsupported] .update-indicator { color: #687286; }
+.topbar-update[data-state=updateAvailable] .update-indicator { color: #1f65db; }
 .update-details { position: absolute; right: 0; top: calc(100% + 8px); z-index: 22; width: max-content; max-width: min(320px, 90vw); display: grid; gap: 12px; padding: 14px; border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px #17203324; font-size: 13px; overflow-wrap: anywhere; }
 #running-version { font-variant-numeric: tabular-nums; }
 #check-update { font: inherit; background: transparent; cursor: pointer; }
