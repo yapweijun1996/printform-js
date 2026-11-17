@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 test.use({workInSteps:true});
 test.setTimeout(90000);
 const ready = page => expect(page.locator('[data-action=export]')).toBeEnabled();
-const patch = {color:'#123456',font:10.5,padding:12,striped:false,borders:false,pageNumbers:false};
+const patch = {color:'#123456',font:10.25,padding:12.25,striped:false,borders:false,pageNumbers:false};
 const normalize = project => {
   const {revision,...content} = project, design = content.manifest.studioV3;
   return {...content,manifest:{...content.manifest,studioV3:{...design,page:pageSettings(design)}}};
@@ -58,7 +58,7 @@ test('global style inspector and real Pi preserve content, render the same style
   await page.locator('[data-action=undo]').click(); await ready(page);
   expect(normalize(await save(page,info,'undone.json'))).toEqual(normalize(before));
   await page.locator('[data-ai-toggle]').click();
-  await page.locator('#ai-prompt').fill('Use blue #123456, font 10.5pt, padding 12; disable stripes, borders and page numbers.');
+  await page.locator('#ai-prompt').fill('Use blue #123456, font 10.25pt, padding 12.25; disable stripes, borders and page numbers.');
   await page.locator('[data-ai-send]').click(); await expectApplied(page,3,{timeout:60000}); await ready(page);
   const pi = await save(page,info,'pi.json'); expect(normalize(pi)).toEqual(normalize(ui));
   await expect(page.frameLocator('#preview-frame').locator('.brand-mark').first()).toHaveCSS('color','rgb(18, 52, 86)');

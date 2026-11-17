@@ -30,8 +30,8 @@ function sampleList(state) {
 function styleForm(design) {
   return `<form data-form="style" class="form-stack">
     ${input('Brand color','color',design.color,'color')}
-    ${input('Font size (pt)','font',design.font,'number','min="6" max="14" step="0.5"')}
-    ${input('Cell padding (px)','padding',design.padding,'number','min="2" max="16"')}
+    ${input('Font size (pt)','font',design.font,'number','min="6" max="14" step="any"')}
+    ${input('Cell padding (px)','padding',design.padding,'number','min="2" max="16" step="any"')}
     ${rowFill(design)}
     ${check('Alternate item rows','striped',design.striped)}${check('Table borders','borders',design.borders)}${check('Page numbers','pageNumbers',design.pageNumbers)}
     ${typographyControls('Page number','pageNumberStyle',design.pageNumberStyle,false,'any')}
@@ -61,7 +61,7 @@ function blockProperties(design,id) {
     ${id === 'header' ? typographyControls('Heading','titleStyle',design.titleStyle,true,'any') : ''}
     ${id === 'items' ? check('Repeat table header','repeatTable',design.repeatTable)+check('Page break before items','breakBefore',design.breakBefore)+rowFill(design) : ''}
     ${select('Section position','sectionPosition',order.indexOf(id),order.map((_,index)=>[String(index),String(index+1)]))}
-    ${id !== 'items' ? `<details><summary>Section layout</summary><div class="form-stack">${input('Layout columns','layoutColumns',block.layout?.columns ?? '','number','min="1" max="4" placeholder="Template default"')}${input('Layout gap (px)','layoutGap',block.layout?.gap ?? '','number','min="0" max="48" placeholder="Template default"')}${check('Keep section together','keepTogether',block.keepTogether)}${id !== 'header' ? check('Page break before section','sectionBreakBefore',block.breakBefore) : ''}</div></details>` : ''}
+    ${id !== 'items' ? `<details><summary>Section layout</summary><div class="form-stack">${input('Layout columns','layoutColumns',block.layout?.columns ?? '','number','min="1" max="4" placeholder="Template default"')}${input('Layout gap (px)','layoutGap',block.layout?.gap ?? '','number','min="0" max="48" step="any" placeholder="Template default"')}${check('Keep section together','keepTogether',block.keepTogether)}${id !== 'header' ? check('Page break before section','sectionBreakBefore',block.breakBefore) : ''}</div></details>` : ''}
     ${applyRow('Apply section')}
   </form>${id === 'header' ? `<details><summary>Logo / embedded image</summary><form data-form="logo" class="form-stack">${imageControls(design,design.logo || {},'header-logo')}${check('Remove logo / brand mark','removeLogo',design.logo === null)}${applyRow('Apply logo')}</form></details>` : ''}<p class="hint muted">New fields are inserted at the end of this section. Moving the header requires turning off its repeat setting first.</p>${button('add-field',id === 'items' ? 'Add column at end' : 'Add field at end','plus')}`;
 }

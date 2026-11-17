@@ -1,0 +1,33 @@
+import {test,expect} from './studio-v3-test.js';
+import {expectApplied} from './ai-applied.js';
+import {gateway,save,normalized,diagnostics} from './studio-v3-element-style.js';
+
+test.use({workInSteps:true});
+test.setTimeout(90000);
+const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled();
+const patch={label:'Recipients / 收件人',layout:{columns:3,gap:12.5},keepTogether:true};
+const normalize=project=>{const next=normalized(project);next.manifest.studioV3.blocks.customer.keepTogether??=false;next.manifest.studioV3.blocks.customer.breakBefore??=false;return next;};
+test('section inspector and Pi agree on grid, diagnostics, source preservation and Undo',async({page},info)=> {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await gateway(page,[['apply_operations',{summary:'Section layout',operations:[{type:'set_section',target:'customer',patch}]}],['inspect_draft'],['finish',{summary:'Section layout'}]]);
+  await page.goto('/studio-v3/');await ready(page);const before=(await save(page,info,'before.json')).project;
+  const structure=page.locator('[data-layout=structure]').first();if(await structure.getAttribute('aria-expanded')!=='true')await structure.click();
+  await page.locator('#left-panel [data-select=customer]').click();
+  const form=page.locator('form[data-form=block]');await form.locator('details').filter({has:page.locator('[name=layoutColumns]')}).locator('summary').click();
+  await form.locator('[name=layoutColumns]').fill('5');await form.getByRole('button',{name:'Apply section',exact:true}).click();
+  await expect(page.locator('#revision')).toHaveText('r0');
+  await form.locator('[name=label]').fill(patch.label);await form.locator('[name=layoutColumns]').fill('3');await form.locator('[name=layoutGap]').fill('12.5');await form.locator('[name=keepTogether]').check();
+  await form.getByRole('button',{name:'Apply section',exact:true}).click();await ready(page);
+  await expect(page.locator('#revision')).toHaveText(/^r1\b/);
+  const grid=page.frameLocator('#preview-frame').locator('.v3-customer').first();
+  await expect(grid).toHaveCSS('gap','12.5px');await expect(grid).toHaveCSS('grid-template-columns',/^\S+ \S+ \S+$/);
+  const ui=(await save(page,info,'ui.json')).project,expected=normalize(before);Object.assign(expected.manifest.studioV3.blocks.customer,patch);
+  expect(normalize(ui)).toEqual(expected);const uiDiagnostics=await diagnostics(page,ui);expect(uiDiagnostics.diagnostics.ready).toBe(true);
+  await page.locator('[data-action=undo]').click();await ready(page);expect(normalize((await save(page,info,'undone.json')).project)).toEqual(normalize(before));
+  await page.locator('[data-ai-toggle]').click();await page.locator('#ai-prompt').fill('Rename the customer section to Recipients / 收件人 and use three columns with 12.5px gap, kept together.');await page.locator('[data-ai-send]').click();
+  await expectApplied(page,3,{timeout:60000});await ready(page);
+  const pi=(await save(page,info,'pi.json')).project;expect(normalize(pi)).toEqual(normalize(ui));expect((await diagnostics(page,pi)).diagnostics).toEqual(uiDiagnostics.diagnostics);
+  await expect(grid).toHaveCSS('gap','12.5px');await expect(grid).toHaveCSS('grid-template-columns',/^\S+ \S+ \S+$/);
+  await page.screenshot({path:info.outputPath('section-grid.png')});await page.locator('[data-ai=undo]').click();await ready(page);
+  expect(normalize((await save(page,info,'ai-undone.json')).project)).toEqual(normalize(before));expect(errors).toEqual([]);
+});

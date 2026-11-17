@@ -8,6 +8,7 @@ import { tableStyleChange } from './table-style.js';
 import { elementStyleChange } from './element-style.js';
 import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
+import { sectionPropertiesChange } from './section-properties.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -142,14 +143,15 @@ export function formDesign(project, selected, form, kind) {
   } else if (kind === 'block') {
     const id = selected.startsWith('header-') && !selection ? 'header' : selected === 'items-header' ? 'items' : selected;
     if (!d.blocks[id]) throw new Error('Select an existing section before Apply.');
-    d.blocks[id].label = text('label'); d.blocks[id].enabled = checked('enabled');
+    const sectionPatch = {label:text('label'),enabled:checked('enabled')};
+    if (id !== 'items' && values.has('layoutColumns')) {
+      sectionPatch.layout = text('layoutColumns') || text('layoutGap') ? {columns:Number(values.get('layoutColumns') || 1),gap:Number(values.get('layoutGap') || 0)} : undefined;
+      sectionPatch.keepTogether = checked('keepTogether'); if (id !== 'header') sectionPatch.breakBefore = checked('sectionBreakBefore');
+    }
+    d = sectionPropertiesChange(d,id,sectionPatch).design;
     if (id === 'header') { d = headingTextChange(d,text('title')).design; d = globalStyleChange(d,{repeatHeader:checked('repeatHeader')}).design; }
     if (id === 'header' && values.has('titleStyle.fontSize')) d = elementStyleChange(d,'header-title',fieldStyle('titleStyle')).design;
     if (id === 'items') { d = globalStyleChange(d,{repeatTable:checked('repeatTable'),breakBefore:checked('breakBefore')}).design; tableStyle(); }
-    else if (values.has('layoutColumns')) {
-      if (text('layoutColumns') || text('layoutGap')) d.blocks[id].layout = {columns:Number(values.get('layoutColumns') || 1),gap:Number(values.get('layoutGap') || 0)}; else delete d.blocks[id].layout;
-      d.blocks[id].keepTogether = checked('keepTogether'); if (id !== 'header') d.blocks[id].breakBefore = checked('sectionBreakBefore');
-    }
     if (values.has('sectionPosition')) {
       const order = sectionOrder(d), position = Number(values.get('sectionPosition'));
       if (!Number.isInteger(position) || position < 0 || position >= order.length) throw new Error('Invalid section position.');

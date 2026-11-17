@@ -7,6 +7,7 @@ import { validPointer } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
 import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
+import { sectionPropertiesChange } from './section-properties.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -18,7 +19,6 @@ const assertFieldWidth = (section,kind,width) => {
   if (section !== 'items' && !section.startsWith('table-') && kind !== 'image' && width !== undefined) throw contractError('FIELD_WIDTH_UNSUPPORTED');
 };
 const fieldKeys = ['label','pointer','format','kind','text','showLabel','labelStyle','valueStyle','width','assetId','height','fit','barcode'];
-const sectionKeys = ['enabled','label','layout','breakBefore','keepTogether'];
 const object = (value,keys) => {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(k=>!keys.includes(k))) unsafe();
 };
@@ -101,8 +101,9 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       const next = reorder(list,op.order,ids); record(op.section,'field_order',ids,op.order);
       if (op.section === 'items') design.columns = next; else design[op.section] = next;
     } else if (op.type === 'set_section') {
-      object(op,['type','target','patch']); object(op.patch,sectionKeys); if (!BLOCKS.includes(op.target)) unsafe();
-      for (const [key,value] of Object.entries(op.patch)) { record(op.target,key,design.blocks[op.target][key],value); design.blocks[op.target][key] = structuredClone(value); }
+      object(op,['type','target','patch']); const change = sectionPropertiesChange(design,op.target,op.patch);
+      for (const {target,property,before,after} of change.changes) record(target,property,before,after);
+      design.blocks[op.target] = change.design.blocks[op.target];
     } else if (op.type === 'reorder_sections') {
       object(op,['type','order']); const next = reorder(BLOCKS,op.order,BLOCKS);
       record('document','sectionOrder',design.sectionOrder || BLOCKS,next); design.sectionOrder = next;

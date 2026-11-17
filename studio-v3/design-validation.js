@@ -6,6 +6,7 @@ import { validateFieldStyle } from './element-style.js';
 import { validateAdditionalTables } from './additional-tables.js';
 import { validateGlobalStyle } from './global-style.js';
 import { validateHeading } from './heading-text.js';
+import { validateSection } from './section-properties.js';
 export { validateFieldStyle } from './element-style.js';
 const number = (value,min,max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const identifier = value => typeof value === 'string' && /^[a-z0-9-]{1,60}$/.test(value);
@@ -50,17 +51,6 @@ function validateAssets(d) {
   if (projectedBytes > 5592408) fail('Repeated embedded images exceed the 4 MB portable asset budget.');
   return assets;
 }
-function validateBlock(block,id) {
-  exactDesignKeys(block,['enabled','label','layout','breakBefore','keepTogether'],`${id} block`);
-  if (typeof block.enabled !== 'boolean' || !text(block.label,100)) fail(`Invalid ${id} block.`);
-  for (const key of ['breakBefore','keepTogether']) if (block[key] !== undefined && typeof block[key] !== 'boolean') fail(`Invalid ${key} setting.`);
-  if (block.layout !== undefined) {
-    exactDesignKeys(block.layout,['columns','gap'],'section layout');
-    if (block.layout.columns !== undefined && (!Number.isInteger(block.layout.columns) || !number(block.layout.columns,1,4))) fail('Section layout needs one to four columns.');
-    if (block.layout.gap !== undefined && !number(block.layout.gap,0,48)) fail('Section gap must be between 0 and 48px.');
-    if (id === 'items') fail('Table layout uses column widths, not section grid columns.');
-  }
-}
 function validateField(f,id,assets,ids,relative = id === 'items') {
   exactDesignKeys(f,['id','label','pointer','lastPointer','format','text','width','kind','labelStyle','valueStyle','showLabel','assetId','height','fit','barcode'],`${id} field`);
   if (!identifier(f.id) || `${id}-${f.id}`.length > 74 || ids.has(`${id}-${f.id}`) || ['header-title','header-logo','items-header','page-number'].includes(`${id}-${f.id}`)) fail('Invalid or duplicate field id.');
@@ -97,7 +87,7 @@ export function validateDesign(d) {
   exactDesignKeys(d.blocks,BLOCKS,'blocks');
   const assets = validateAssets(d), ids = new Set();
   BLOCKS.forEach(id => {
-    validateBlock(d.blocks[id],id);
+    validateSection(d.blocks[id],id);
     const fields = id === 'items' ? d.columns : d[id];
     if (!Array.isArray(fields) || fields.length > 30) fail('A block supports at most 30 fields.');
     fields.forEach(f => validateField(f,id,assets,ids));
