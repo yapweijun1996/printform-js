@@ -147,7 +147,7 @@ export class AIElementTags {
     if (!this.root) return;
     this.root.replaceChildren(); this.root.hidden = !this.references.length;
     if (!this.references.length) return;
-    const heading = node('div','ai-tag-heading'); heading.append(node('strong','','Referenced elements'));
+    const heading = node('div','ai-tag-heading'); heading.append(node('strong','',`Referenced elements · ${this.references.length}`));
     const clear = node('button','','Remove all'); clear.type = 'button'; clear.dataset.aiTagAction = 'clear'; heading.append(clear); this.root.append(heading);
     for (const reference of this.references) {
       const {id,revision,comment} = reference.value, invalid = this.invalid(reference);
@@ -156,7 +156,8 @@ export class AIElementTags {
       locate.type = 'button'; locate.dataset.aiTagAction = 'locate'; locate.title = `Highlight ${id}`; locate.setAttribute('aria-label',`Locate ${reference.caption} (${id})`);
       const remove = node('button','ai-tag-remove'); remove.innerHTML = icon('close'); remove.type = 'button'; remove.dataset.aiTagAction = 'remove'; remove.setAttribute('aria-label',`Remove reference ${id}`);
       row.append(locate,remove); chip.append(row,node('small','ai-tag-meta',`${id} · r${revision}`));
-      const label = node('label','ai-tag-comment','Comment for this element'), input = node('textarea','');
+      const label = node('label','ai-tag-comment'), input = node('textarea','');
+      label.append(node('span','sr-only','Comment for this element'));
       input.dataset.aiTagComment = id; input.maxLength = MAX_ELEMENT_COMMENT; input.rows = 1; input.value = comment; input.placeholder = 'e.g. Make this heading larger and blue'; input.setAttribute('aria-label',`Comment for ${id}`);
       label.append(input); chip.append(label); if (invalid) chip.append(node('p','ai-tag-error',invalid)); this.root.append(chip);
     }

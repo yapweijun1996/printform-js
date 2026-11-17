@@ -6,8 +6,8 @@ Date: 2026-11-17. Scope: user-requested Gallery SVG consistency and Studio v3 AI
 
 | Task | Implementation | Verification / publication |
 | --- | --- | --- |
-| GALLERY-SVG | Fixed SVG paths replace settings, zoom, page-navigation and disclosure glyphs; update status and spinner use SVG. `js/icons.js` is explicitly included in the versioned Gallery shell. | Task-specific Chromium/Firefox checks passed; accepted for its separate main-branch commit. Broader residual failures are recorded below. |
-| STUDIO-AI-LAYOUT | Removed full-height conversation placeholder; compact reference cards and contextual empty-state text; retained a single scroll surface and fixed composer. | All six Chromium/Firefox, three-size reference-layout scenarios passed. Ready for its separate task commit after Gallery; publication is independently checked. |
+| GALLERY-SVG | Fixed SVG paths replace settings, zoom, page-navigation and disclosure glyphs; update status and spinner use SVG. `js/icons.js` is explicitly included in the versioned Gallery shell. | Task-specific Chromium/Firefox checks passed; separately committed and pushed to main as `d303d0f`. Broader residual failures are recorded below. |
+| STUDIO-AI-LAYOUT | Removed full-height conversation placeholder; compact reference cards and contextual empty-state text; retained a single scroll surface and fixed composer. | All six Chromium/Firefox, three-size reference-layout scenarios passed. Advisor accepted; delivered in the separate task commit containing this record update. Hosted publication is independently checked. |
 
 ## Independent review method
 

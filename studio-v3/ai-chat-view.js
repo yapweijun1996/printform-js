@@ -21,7 +21,8 @@ export function renderConversation(panel) {
   if (sharing) sharing.querySelector('.ai-sharing-label').textContent = granted ? `Sharing permissions · ${granted} selected for one run` : 'Sharing permissions · fictional data only';
   log.replaceChildren();
   if (!panel.conversation.messages.length) {
-    const welcome = renderWelcome();
+    const hasElements = Boolean(panel.node('[data-ai-element-tags]')?.querySelector('[data-ai-tag-id]'));
+    const welcome = hasElements ? node('p','ai-selection-intro','Add a note to each element, or describe your changes below.') : renderWelcome();
     for (const button of welcome.querySelectorAll('[data-prompt]')) button.disabled = Boolean(panel.busy || panel.applying || panel.restoring || panel.referenceFiles?.reading);
     log.append(welcome);
   }

@@ -4,8 +4,8 @@
 
 ## Gallery SVG / Studio AI layout (2026-11-17)
 
-- [x] **GALLERY-SVG** — SVG interface icons and versioned PWA dependency complete; Chromium/Firefox SVG, controls, localization and measurement checks passed. Accepted for this separate main-branch commit; broader test limits remain recorded.
-- [ ] **STUDIO-AI-LAYOUT** — compact selected-element context, remove artificial conversation height, keep composer reachable; six Chromium/Firefox layout cases passed; separate task commit follows Gallery.
+- [x] **GALLERY-SVG** — SVG interface icons and versioned PWA dependency complete; Chromium/Firefox SVG, controls, localization and measurement checks passed. Pushed to main in `d303d0f`; broader test limits remain recorded.
+- [x] **STUDIO-AI-LAYOUT** — compact selected-element context, remove artificial conversation height, keep composer reachable; six Chromium/Firefox layout cases and release review passed; advisor accepted. Delivered in this separate main-branch commit.
 Logic review, preserved failures and verification limits: [UI review record](docs/GALLERY_STUDIO_UI_REVIEW_2026-11-17.md). Neither checkbox claims deployment or full AI qualification.
 
 ## Gallery follow-up (2026-11-05)
