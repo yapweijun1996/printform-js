@@ -9,6 +9,7 @@ import { elementStyleChange } from './element-style.js';
 import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
+import { sectionOrderChange } from './section-order.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
@@ -155,7 +156,7 @@ export function formDesign(project, selected, form, kind) {
     if (values.has('sectionPosition')) {
       const order = sectionOrder(d), position = Number(values.get('sectionPosition'));
       if (!Number.isInteger(position) || position < 0 || position >= order.length) throw new Error('Invalid section position.');
-      if (order.indexOf(id) !== position) { d.sectionOrder = order.filter(block=>block !== id); d.sectionOrder.splice(position,0,id); }
+      if (order.indexOf(id) !== position) { const next = order.filter(block=>block !== id); next.splice(position,0,id); d = sectionOrderChange(d,next).design; }
     }
   } else if (kind === 'logo') {
     if (checked('removeLogo')) d.logo = null;

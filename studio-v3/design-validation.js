@@ -7,6 +7,7 @@ import { validateAdditionalTables } from './additional-tables.js';
 import { validateGlobalStyle } from './global-style.js';
 import { validateHeading } from './heading-text.js';
 import { validateSection } from './section-properties.js';
+import { validateSectionOrder } from './section-order.js';
 export { validateFieldStyle } from './element-style.js';
 const number = (value,min,max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const identifier = value => typeof value === 'string' && /^[a-z0-9-]{1,60}$/.test(value);
@@ -95,7 +96,7 @@ export function validateDesign(d) {
   validateAdditionalTables(d,validateField,assets,ids);
   if (!validPointer(d.collection)) fail('Collection must be an absolute JSON pointer such as /items.');
   if (d.columns.reduce((sum,c) => sum+c.width,0) > 100.01) fail('Column widths must total 100% or less.');
-  if (d.sectionOrder !== undefined && (!Array.isArray(d.sectionOrder) || d.sectionOrder.length !== BLOCKS.length || new Set(d.sectionOrder).size !== BLOCKS.length || d.sectionOrder.some(id => !BLOCKS.includes(id)))) fail('Section order must contain every section exactly once.');
+  if (d.sectionOrder !== undefined) validateSectionOrder(d.sectionOrder);
   if (d.repeatHeader && sectionOrder(d)[0] !== 'header') fail('A repeating document header must be the first section.');
   if (d.blocks.header.breakBefore) fail('Use section ordering or body section page breaks; document header cannot break before itself.');
   if (d.blocks.items.keepTogether) fail('The items table paginates per row and cannot keep the whole collection together.');

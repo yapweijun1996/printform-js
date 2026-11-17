@@ -8,6 +8,7 @@ import { tableStyleChange } from './table-style.js';
 import { globalStyleChange } from './global-style.js';
 import { headingTextChange } from './heading-text.js';
 import { sectionPropertiesChange } from './section-properties.js';
+import { sectionOrderChange } from './section-order.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
@@ -105,8 +106,9 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       for (const {target,property,before,after} of change.changes) record(target,property,before,after);
       design.blocks[op.target] = change.design.blocks[op.target];
     } else if (op.type === 'reorder_sections') {
-      object(op,['type','order']); const next = reorder(BLOCKS,op.order,BLOCKS);
-      record('document','sectionOrder',design.sectionOrder || BLOCKS,next); design.sectionOrder = next;
+      object(op,['type','order']); const change = sectionOrderChange(design,op.order);
+      for (const {target,property,before,after} of change.changes) record(target,property,before,after);
+      design.sectionOrder = change.design.sectionOrder;
     } else if (op.type === 'set_page') {
       object(op,['type','patch']); object(op.patch,['paper','orientation','margins','customSizeMm','printerProfile']);
       const next = {...design.page,...structuredClone(op.patch)};
