@@ -140,7 +140,7 @@ SHA256 重算使用现有 runner `policy.mjs` 的 treeDigest/sha，不信 caller
 
 ## 记录及消费者规格
 
-`evaluate` 仅输出判定/证据 digest/错误，不写 attempts.csv、不启动浏览器、不调用模型、不自动重试。操作者核对原始记录后才用现有 CSV 列如实记录；所有失败/Blocked/外部 Invalid environment 均保留。`Pass` 的 evidence_digest 是规范完整 evidence 摘要，应同时保留 envelope/raw 记录的文件摘要。任何 critical 不能被其它成功抵消。
+`evaluate` 的 profile 和签名 envelope 与 `preflight` 使用同一有界严格 JSON 读取器，拒绝重复键和不安全的证据文件。命令仅输出判定/证据 digest/错误，不写 attempts.csv、不启动浏览器、不调用模型、不自动重试。操作者核对原始记录后才用现有 CSV 列如实记录；所有失败/Blocked/外部 Invalid environment 均保留。`Pass` 的 evidence_digest 是规范完整 evidence 摘要，应同时保留 envelope/raw 记录的文件摘要。任何 critical 不能被其它成功抵消。
 
 [消费者规格](../tests/studio-v3-g8-corpus.test.js)覆盖输入/oracle漂移、错误数值、签名缺失/后改、identity、正文hash/alias/未授权值、committed数据与scope、真实几何/金额/缺行、文件重开、缺receipt/伪stdout/改测试/错命令/异源制品。`tests/support/g8-evidence-fixture.js` 全部是隔离合成单元输入，绝不写正式 attempts 或冒充真实模型/浏览器/进程。
 [独立格式/作用域规格](../tests/studio-v3-g8-geometry.test.js)覆盖四种纸张、像素margin、逐格小数/分组/负数和发布身份一致性；[grounded-answer规格](../tests/studio-v3-g8-answer.test.js)拒绝猜中JSON但缺真实read、伪口述/折叠/异源/错误context、缺完成方法及被host替换的输出，并覆盖原始completed SSE。

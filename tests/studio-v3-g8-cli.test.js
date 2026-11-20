@@ -133,6 +133,23 @@ describe('G8 CLI explicit corpus/register scope',()=>{
     expect(fs.readFileSync(path.join(pair.register,'attempts.csv'),'utf8')).toBe(before);
   });
 
+  it.each(['profile','envelope'])('rejects ambiguous duplicate keys in a directly evaluated %s',name=>{
+    const pair=isolatedPair(), envelope=seal(fixture().evidence);
+    const profileFile=jsonFile(pair.root,'profile.json',profile);
+    const envelopeFile=jsonFile(pair.root,'envelope.json',envelope);
+    expect(run('evaluate',profileFile,envelopeFile).status).toBe(0);
+
+    const {key,value,target}=name==='profile'
+      ? {key:'profile',value:profile,target:profileFile}
+      : {key:'signature',value:envelope,target:envelopeFile};
+    // A last-key-wins reader would accept exactly the signed object from the positive control.
+    fs.writeFileSync(target,`{"${key}":"ambiguous-first-value",${JSON.stringify(value).slice(1)}`);
+    const rejected=run('evaluate',profileFile,envelopeFile);
+    expect(rejected.status).toBe(1);
+    expect(rejected.stdout).toBe('');
+    expect(JSON.parse(rejected.stderr.trim().split('\n').at(-1))).toMatchObject({outcome:'Fail',errors:['INVALID_JSON']});
+  });
+
   it('keeps held-out inputs gated in the paired scope',()=>{
     const pair=isolatedPair();
     const heldOut=readCorpus(pair.corpus).find(item=>item.holdout);

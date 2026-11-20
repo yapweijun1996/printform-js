@@ -29,6 +29,11 @@ function assertValid(errors) {
   if (errors.length) throw new Error(errors.join('; '));
 }
 
+function readEvidenceJson(filename) {
+  const file=path.resolve(filename);
+  return parseUpstreamJson(readUpstreamFile(path.dirname(file),path.basename(file)));
+}
+
 // Offline only: no model calls, execution scheduling, automatic attempts or Pass rows.
 function main(command,rawArgs) {
   const scope=readScope(command,rawArgs), {args}=scope;
@@ -56,9 +61,9 @@ function main(command,rawArgs) {
     assertValid(profileErrors(profile,corpus));
     console.log(JSON.stringify(profile,null,2));
   } else if (command==='evaluate') {
-    const profile=JSON.parse(fs.readFileSync(args[0],'utf8'));
+    const profile=readEvidenceJson(args[0]);
     if (scope.overrides) assertValid(profileErrors(profile,corpus));
-    const envelope=JSON.parse(fs.readFileSync(args[1],'utf8'));
+    const envelope=readEvidenceJson(args[1]);
     const c=corpus.find(item=>item.id===envelope.evidence?.taskId);
     if (!c) throw new Error('Unknown evidence task ID');
     const result=evaluateEvidence(c,envelope,profile,{corpus,register});
@@ -66,7 +71,7 @@ function main(command,rawArgs) {
     if (result.outcome!=='Pass') process.exitCode=1;
   } else if (command==='preflight' || command==='upstream' || command==='governance') {
     if (!args[0] || args.length>2) throw new Error(`Usage: studio-v3-g8.mjs ${command} PROFILE_JSON [EVIDENCE_INDEX_JSON]`);
-    const file=path.resolve(args[0]),profile=parseUpstreamJson(readUpstreamFile(path.dirname(file),path.basename(file)));
+    const profile=readEvidenceJson(args[0]);
     if (scope.overrides) assertValid(profileErrors(profile,corpus));
     const result=preflight({corpus,register:register ?? readRegister(),profile,inventory:readInventory(args[1])});
     if (command==='upstream') {
