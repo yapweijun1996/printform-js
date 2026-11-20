@@ -4,5 +4,52 @@
   "release": "481e12e78a2e5f3d6a664726cbf52e6043877ce7",
   "packageHash": "504d21f1c74e148a964b2877922a2594d6ed10b5f5bd6c38ba8f996dadab3b4b"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.agent.get_capabilities": "90c01053443b6a5fe2c32c25cfcd89f6bb9b8b4855ad51658f0525691af4fa3e",
+    "printform.agent.read_skill": "547f131f69d11b7f92e7b575298b460239fef02ad3a2f63777a4516366fb6d21",
+    "printform.agent.get_context": "7f6919db48e379c8fa1b8b45f6d05eadbd5f9a9f76f1bce57d008ecf3d01fc0e",
+    "printform.agent.apply_operations": "88e7cdcbc740d1c466945f7776e0ee9d89dfd5aba794849954d139516c214a9a",
+    "printform.agent.inspect_draft": "c3b190954126b9fdbb7b2c343fc3f3362afd648fb913cda8f8d841d297830d1f",
+    "printform.agent.observe_context": "5e78371853b768ca94843bd1542107db96a2bead827ed6e6a5ddc341c929deed",
+    "printform.agent.retrieve_page": "36724d40a7393f09463965575ba7d74f1b89a8ed27023e1c6ad962c64fa95bb0",
+    "printform.agent.validate_scenarios": "c74a72606c52472c36d2246f3f3f590744b749b6609dea393243ac0c9b93664b",
+    "printform.agent.undo_step": "240fe9fe972319635468a6a58434dbed1c6503323f6edde3d48f7c4b822d1938",
+    "printform.agent.take_notes": "022df981437f272aaa73eaf7102b97c26927289d00ca5038e59168f57c851fbf",
+    "printform.agent.finish": "6f4d73674e737cff45d15f8342c22a9017d9b767a08a0c098529032349f2e9ed",
+    "printform.agent.finish_answer": "76b35bb6b84f0675c6e9b590f90a75c0af6d9086dd23be4907291771d27bf4e9",
+    "printform.agent.report_blocked": "b063ccb62a68610f5ed2ee29ee3f7b6d0d3c5ae1bd434dc8f73a51e032a018cf",
+    "printform.knowledge.form-authoring": "b3471487df8099a0855739ae1838cb6814da90c79214ac74fd7eb100c3a76bb2",
+    "printform.knowledge.product-workflows": "d6854eb45d41decf60cef317e14f1ebeb491b81521c966be9d664ab68ce63ef3",
+    "printform.knowledge.general-print-authoring": "b5f143e987035d1c1eb9c41c2afb1f21037b48bcdf963691c82b0efaf87f3c40"
+   },
+   "disposition": "updated",
+   "justification": "The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
+   "evidence": [
+    "studio-v3/agent-source-guide.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.agent.workspace_list": "e3e882047083636919ff9207fd8ef3c1c657f854f3bc9d9a1650c536adfcd71c",
+    "printform.agent.workspace_read": "6442c4a59e5e565aa8971058fb464ac065bb1a624a32a4d95dc7fafc9d3c87c9",
+    "printform.agent.workspace_search": "3d868546978fdc230576cd3a8870a316897d5feb08cd08c9059667342c4ffdd9",
+    "printform.agent.workspace_write": "f3c14e849c233e99b35e757666eee6632a2dd0c434e8d34e17e012fb8e58d8e2",
+    "printform.agent.workspace_patch": "7c819d9e2a930a8e990fed77a8c5dc83ba3cf8240d2a4d6eae4f8052ba7dfe85",
+    "printform.agent.workspace_run": "455899f28100e3f13a30348c8de4f54dda7fd7fec58f472220f51c15eb13e5d3",
+    "printform.agent.workspace_diff": "401a59d74b57f88444730332a4cf88380d38b5ab49fbab75eb0c90b97e0744d0",
+    "printform.agent.workspace_artifacts": "bbe0f2f72c5abdc2c081299fb82bb4c265380e26b88e27da6d3e1af0ada955e6",
+    "printform.agent.import_artifact": "abeb4833e385dea301b91f5005d0b26d9448507b796ce93f996640d375677c9f",
+    "printform.knowledge.source-workspace": "4befdb0c57188c2c96ab6e0f471b30d4aa75ac7536a7f3fb17d37edd2e23bf3e"
+   },
+   "disposition": "updated",
+   "justification": "The new fixture verifies unchanged revision and digest before attach, and fail-closed cleanup when owned removal fails. The companion skips a duplicate snapshot only after owned removal confirms that a cancelled command never attached, while started and unknown effects retain reconciliation. The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
+   "evidence": [
+    "coding-runner/early-cancel.test.mjs",
+    "coding-runner/workspaces.mjs",
+    "studio-v3/agent-source-guide.js"
+   ]
+  }
+ ]
 }
