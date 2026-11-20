@@ -52,3 +52,24 @@ describe('source-bound automatic apply exclusion',()=> {
     expect(commit).not.toHaveBeenCalled();expect(panel.proposal).toBe(proposal);expect(panel.getBus().revision).toBe(0);
   });
 });
+
+it('keeps model Send blocked after editing the prompt during failed source cleanup',async()=> {
+  const {panel,calls}=setup();
+  const source=panel.sourceWorkspace, prepare=vi.fn();
+  panel.prepareNewForm=prepare;
+  let finishClose;
+  const pending=new Promise(resolve=> { finishClose=resolve; });
+  const close=source.release({close:()=>pending.then(()=> { throw new Error('Fixture cleanup failure'); })});
+  const input=panel.node('#ai-prompt'), send=panel.node('[data-ai-send]');
+  const type=value=> { input.value=value; input.dispatchEvent(new Event('input',{bubbles:true})); };
+  expect(send.disabled).toBe(true);
+  type('Make the header navy.');
+  expect(send.disabled).toBe(true);
+  finishClose(); expect(await close).toBe(false);
+  type('/new blank'); panel.present();
+  expect(send.disabled).toBe(false);
+  await panel.send(); expect(prepare).toHaveBeenCalledOnce();
+  type('Make the header navy.');
+  expect(send.disabled).toBe(true);
+  await panel.send(); expect(calls()).toBe(0); expect(source.cleanupFailed).toBe(true);
+});

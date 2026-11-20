@@ -55,7 +55,7 @@ async function companion(origin,runnerSourceHash) {
   }};
 }
 
-async function startSource(page,site,local) {
+async function startSource(page,site,local,build=OLD) {
   await page.addInitScript(({demo,loopback,target})=> {
     if (window !== window.top) return;
     const native = window.fetch.bind(window);
@@ -74,7 +74,7 @@ async function startSource(page,site,local) {
   },{demo:DEMO,loopback:LOOPBACK,target:local.url});
   await page.goto(site.url);
   await expect(page.locator('[data-action=export]')).toBeEnabled();
-  await expectBuild(page,OLD);
+  await expectBuild(page,build);
   await page.locator('[data-ai-toggle]').click();
   await page.locator('.ai-settings > summary').click();
   await page.locator('.ai-source-setup > summary').click();
@@ -173,3 +173,35 @@ for (const wrongId of [false,true]) {
     }
   });
 }
+
+test('model Send stays blocked after failed cleanup while the local new-form preview remains available',async({page,baseURL,browserName})=> {
+  test.skip(browserName !== 'chromium','Native source-companion transport is exercised with Chromium.');
+  const site = {url:new URL('/studio-v3/',baseURL).href};
+  const manifest = await fetch(new URL('agent/agent-manifest.json',site.url)).then(response=>response.json());
+  const local = await companion(new URL(site.url).origin,manifest.sourceRunnerHash);
+  const modelRequests = [];
+  page.on('request',request=> { if (new URL(request.url()).origin === DEMO) modelRequests.push(request.method()); });
+  try {
+    await startSource(page,site,local,manifest.release);
+    await page.getByRole('button',{name:'Stop request'}).click();
+    await expect.poll(()=>local.calls).toContain(`POST ${CLOSE_PATH}`);
+    const input = page.locator('#ai-prompt'), send = page.locator('[data-ai-send]');
+    await input.fill('Edit the heading in this form.');
+    await expect(send).toBeDisabled();
+    await expect(page.locator('[data-ai-send-reason]')).toContainText('Model requests are paused');
+    local.acknowledge({id:'synthetic-other-workspace',closed:true});
+    await expect(page.locator('[data-source-status]')).toContainText('Local cleanup was not acknowledged');
+    await input.fill('Edit the title instead.');
+    await expect(send).toBeDisabled();
+    const afterStop = [...local.calls];
+    await input.fill('/new blank');
+    await page.locator('[data-ai=close]').click();
+    await page.locator('[data-ai-toggle]').click();
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(page.locator('#local-new-form-dialog')).toContainText('Preview passed');
+    expect(local.calls).toEqual(afterStop);
+    expect(modelRequests).toEqual([]);
+    await expect(page.locator('#revision')).toHaveText(/^r0\b/);
+  } finally { await local.close(); }
+});

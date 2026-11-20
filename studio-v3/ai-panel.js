@@ -245,7 +245,9 @@ export class AIPanel {
     renderConversation(this);
   }
   updateSend() {
-    this.node('[data-ai-send]').disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading || (!this.newFormCommand() && this.referenceFiles?.imageBlocked()));
+    const source = this.sourceWorkspace;
+    const remoteBlocked = !this.newFormCommand() && (source?.closing || source?.cleanupFailed || this.referenceFiles?.imageBlocked());
+    this.node('[data-ai-send]').disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading || remoteBlocked);
     this.showSendReason();
   }
   // Only blocking reasons belong below the composer; the recipient boundary lives in settings.

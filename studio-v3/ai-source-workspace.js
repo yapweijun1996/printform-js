@@ -69,8 +69,8 @@ export class AISourceWorkspace {
     finally { this.disconnecting = false; this.panel.update(); }
   }
   notice() {
-    if (this.closing) return 'Waiting for isolated workspace cleanup; Send is paused.';
-    if (this.cleanupFailed) return 'Local source cleanup is unconfirmed. Reconcile/disconnect before another request.';
+    if (this.closing) return 'Model requests are paused while the isolated workspace closes.';
+    if (this.cleanupFailed) return 'Local source cleanup is unconfirmed. Reconcile or disconnect before another model request.';
     return this.consent.checked ? 'Fictional source/output sharing is enabled for the next request only.' : '';
   }
   update() {
@@ -81,6 +81,5 @@ export class AISourceWorkspace {
     this.code.disabled = busy || paired || this.cleanupFailed;
     this.setup.querySelector('[data-source-pair]').disabled = busy || paired || this.cleanupFailed;
     this.setup.querySelector('[data-source-disconnect]').disabled = Boolean(this.panel.applying || this.disconnecting || this.pairing || !this.connection);
-    if (this.closing || this.cleanupFailed) this.panel.node('[data-ai-send]').disabled = true;
   }
 }
