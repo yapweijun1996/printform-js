@@ -1,5 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {agentBody} from '../studio-v3/agent-wire.js';
+import {buildResponsesBody} from '../studio-v3/ai-responses-wire.js';
+import {chatRequest} from '../studio-v3/ai-chat-protocol.js';
 import {AGENT_TOOL_DEFINITIONS} from '../studio-v3/agent-registry.js';
 import {readRegister} from '../scripts/studio-v3-task-register.mjs';
 import {validateCorpus,publicInput,digest,projectForCase,stateOf} from '../scripts/studio-v3-g8-corpus.mjs';
@@ -108,6 +110,35 @@ describe('G8 frozen corpus and independent evidence consumer',()=> {
     f.evidence.providerBodies=[{route:profile.identity.provider_route,body,digest:digest(body)}];
     f.evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
     expect(evaluate(f)).toMatchObject({admissible:true,outcome:'Blocked',errors:[]});
+  });
+  it.each([
+    ['metadata', prompt=>({input:'Another request.',metadata:{prompt}})],
+    ['system message', prompt=>({input:[{role:'system',content:prompt},{role:'user',content:'Another request.'}]})],
+    ['tool output', prompt=>({input:[{role:'user',content:'Another request.'},{type:'function_call_output',call_id:'unit',output:prompt}]})],
+    ['modified prompt', prompt=>({input:prompt+' Extra instructions.'})],
+    ['later user message', prompt=>({input:[{role:'user',content:'Another request.'},{role:'user',content:prompt}]})],
+    ['extra user text block', prompt=>({input:[{role:'user',content:[{type:'input_text',text:prompt},{type:'input_text',text:'Extra instructions.'}]}]})]
+  ])('excludes a prompt found only in %s even when a later request contains the original',(_name,bodyInput)=>{
+    const f=fixture('T-data-01'), original=f.evidence.providerBodies[0];
+    const body=JSON.stringify({model:profile.modelAlias,...bodyInput(f.c.input.prompt)});
+    f.evidence.providerBodies.unshift({...original,body,digest:digest(body)});
+    f.evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
+    const result=evaluate(f);
+    expect(result).toMatchObject({admissible:false,outcome:'Fail'});
+    expect(result.errors).toContain('initial provider request does not carry the exact frozen user prompt');
+  });
+  it('accepts the real single-step encoder, then rejects an ambiguous nested request',()=>{
+    const f=fixture('T-data-01');
+    const request=chatRequest(projectForCase(f.c),{request:f.c.input.prompt,scope:{mode:'whole'}});
+    const wire=text=>buildResponsesBody({alias:profile.modelAlias,system:'Synthetic request only.',request:text});
+    const check=text=>{
+      const body=wire(text);
+      f.evidence.providerBodies=[{route:profile.identity.provider_route,body,digest:digest(body)}];
+      return evaluate(f);
+    };
+    f.evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
+    expect(check(request)).toMatchObject({admissible:true,outcome:'Blocked',errors:[]});
+    expect(check(`{"request":"Another request.",${request.slice(1)}`)).toMatchObject({admissible:false,outcome:'Fail'});
   });
   it('retains observed disclosure from a hashed request to a foreign route',()=>{
     const f=fixture(),request=f.evidence.providerBodies[0];

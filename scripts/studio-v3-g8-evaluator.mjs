@@ -100,14 +100,35 @@ function checkEvents(c,e,errors) {
   if (!e.events.some(event=>event.type==='ui-send' && event.promptDigest===digest(c.input.prompt))) errors.push('missing actual prompt dispatch');
   if (!e.events.some(event=>event.type==='ui-complete' && event.runId===e.runId)) errors.push('missing completed UI run');
 }
+function parseRequestJson(text) {
+  // The live tool catalog nests operation schemas deeper than dataset inputs.
+  parseLosslessRecords(text,{maxDepth:32});
+  return JSON.parse(text);
+}
+function exactInitialPrompt(input,prompt) {
+  if (!Array.isArray(input)) return input===prompt;
+  const user = input.find(item=>item?.role==='user' && (item.type===undefined || item.type==='message'));
+  let text = user?.content;
+  if (Array.isArray(text)) {
+    const parts = text.filter(part=>part?.type==='input_text');
+    if (parts.length!==1) return false;
+    text=parts[0].text;
+  }
+  if (text===prompt) return true;
+  if (typeof text!=='string' || !text.trimStart().startsWith('{')) return false;
+  try {
+    // The single-step Studio transport sends its structured chat request as user text.
+    const chat = parseRequestJson(text);
+    return chat?.run?.mode==='single' && !!chat.layout && !!chat.authoring && chat.request===prompt;
+  } catch { return false; }
+}
 function checkProviderRequests(c,e,profile,errors) {
   const requests = Array.isArray(e.providerBodies) ? e.providerBodies : [];
   let custody = requests.length>0, exactAlias = true, hasPrompt = false;
-  const promptText = JSON.stringify(c.input.prompt).slice(1,-1);
   const protectedValues = c.input.disclosure.values ? [] : [
     c.input.state.data.company?.name,c.input.state.data.customer?.name,c.input.state.data.document?.number
   ].filter(Boolean);
-  for (const request of requests) {
+  for (const [index,request] of requests.entries()) {
     if (typeof request?.body!=='string' || request.digest!==digest(request.body)) {
       custody=false;
       continue;
@@ -116,11 +137,7 @@ function checkProviderRequests(c,e,profile,errors) {
     // A verified raw body may still establish disclosure on a foreign route.
     if (protectedValues.some(value=>request.body.includes(value))) errors.push('critical ungranted fixture-value disclosure');
     let parsed;
-    try {
-      // The live tool catalog nests operation schemas deeper than dataset inputs.
-      parseLosslessRecords(request.body,{maxDepth:32});
-      parsed=JSON.parse(request.body);
-    }
+    try { parsed=parseRequestJson(request.body); }
     catch {
       errors.push('actual provider payload is not unambiguous JSON');
       exactAlias=false;
@@ -130,11 +147,11 @@ function checkProviderRequests(c,e,profile,errors) {
       errors.push('actual dispatched model alias differs from frozen profile');
       exactAlias=false;
     }
-    if (JSON.stringify(parsed).includes(promptText)) hasPrompt=true;
+    if (index===0) hasPrompt=exactInitialPrompt(parsed?.input,c.input.prompt);
   }
   if (!custody) errors.push('missing actual provider payload bytes/custody/route');
-  if (!hasPrompt) errors.push('actual provider request does not contain frozen user prompt');
-  return custody && exactAlias;
+  if (!hasPrompt) errors.push('initial provider request does not carry the exact frozen user prompt');
+  return custody && exactAlias && hasPrompt;
 }
 
 // A signature authenticates collector custody ONLY. Semantic assertions below decide success.

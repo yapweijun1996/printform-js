@@ -171,7 +171,8 @@ describe('G8 read-only full-suite preflight',()=>{
     ['malformed request JSON', request=>{request.body+='}';},'actual provider payload is not unambiguous JSON'],
     ['overdeep request JSON', request=>{request.body=`{"model":"unit","raw":${'['.repeat(34)}0${']'.repeat(34)}}`;},'actual provider payload is not unambiguous JSON'],
     ['missing request bytes', request=>{delete request.body;},'missing actual provider payload bytes/custody/route'],
-    ['changed request digest', request=>{request.digest=digest('other request');},'missing actual provider payload bytes/custody/route']
+    ['changed request digest', request=>{request.digest=digest('other request');},'missing actual provider payload bytes/custody/route'],
+    ['unbound prompt', request=>{request.body=JSON.stringify({...JSON.parse(request.body),input:'Another request.'});},'initial provider request does not carry the exact frozen user prompt']
   ])('excludes a provider request with %s from verified coverage',(_name,change,reason)=>{
     const {evidence}=fixture('T-data-01');
     evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
