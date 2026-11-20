@@ -26,6 +26,7 @@ import { createValidateAll } from './validate-all.js';
 import { scenarioCandidate } from './scenario-matrix.js';
 import { paperMillimeters } from './paper-settings.js';
 import { setupMobileShell } from './mobile-shell.js';
+import { setupNewFormWorkspace } from './new-form-workspace.js';
 const $ = selector => document.querySelector(selector); setupDemoTemplatePicker();
 const state = {mode:'design',selected:'items',tab:'properties',sample:'erp',report:null,matrix:{},dirty:false,dataDraft:null,running:false,runId:0,collapsed:{},search:'',jsonError:'',fileReads:0};
 let bus, displayed, zoom = 1, pageIndex = 0, editQueue = Promise.resolve();
@@ -72,14 +73,15 @@ const paper = new PaperPreview($('#preview-frame'), (report,view) => {
 });
 const canvas = new CanvasControls({mode:()=>state.mode,resize:resizePaper,guard:work => drafts.guard(work),report:status,context:()=>bus,upload:(file,target)=> {const context = bus; ++state.fileReads; return queueEdit(async()=> {const design = await importRasterAsset(context.project,file,target); if (bus !== context) throw new Error('The document changed. Upload the image again.'); await mutate(designOperations(bus.project,design),'embedded image');}).finally(()=>--state.fileReads);}});
 const elementTags = new AIElementTags({bus:()=>bus,selection:()=>state.selected,guard:work=>drafts.guard(work),report:status,onChange:()=>ai.contextChanged(true),open:()=> {canvas.close(false); ai.show();},highlight:id=>canvas.highlightElement(paper,id || state.selected),select:id=> {state.selected = id; state.mode = 'design'; renderPanels(); goPage(canvas.elementPage(paper,id)); canvas.highlightElement(paper,id); if (innerWidth <= 900) ai.suspend();}});
-const ai = new AIPanel({bus:()=>bus,selection:()=>state.selected,elementTags,facts:()=>paper.factsFor(bus.project),guard:work=>drafts.guard(work),sync:syncControls,
+const newForms = setupNewFormWorkspace({getBus:()=>bus,pending:()=>updateWork.pending()});
+const ai = new AIPanel({prepareNewForm:newForms.prepare,bus:()=>bus,selection:()=>state.selected,elementTags,facts:()=>paper.factsFor(bus.project),guard:work=>drafts.guard(work),sync:syncControls,
   capturePixels:(project,region,signal)=>paper.pixels(project,region,signal),
   preview:async project=> { stopRun(); state.mode = 'design'; renderPanels(); return render(project); },restore:()=>render(),
   commit:(proposal,generation)=>queueEdit(async()=> { ai.assertCurrent(proposal,generation); const context = bus; await editProject(context,designOperations(context.project,proposal.design),'AI layout suggestion'); const revision = context.revision; if (bus === context) await changed(); return {bus:context,revision}; },false),
   undo:check=>queueEdit(async()=> { check(); await action('undo'); },false)
 });
 restoreZoom($('#zoom'));
-const updateWork = createUpdateWork({getBus:()=>bus,state,database,drafts,ai,install,renderPanels,syncControls,render,settle:()=>editQueue});
+const updateWork = createUpdateWork({getBus:()=>bus,state,database,drafts,ai,install,renderPanels,syncControls,render,settle:()=>editQueue,recoveryKey:newForms.recoveryKey});
 function status(text) { $('#status').textContent = text; }
 function syncControls() {
   if (!bus) return;
@@ -282,15 +284,17 @@ $('#paper-scroll').addEventListener('scroll',()=> {
   const current = paper.pages.findLastIndex(page=>page.top <= top+30);
   if (current >= 0 && current !== pageIndex) goPage(current,false);
 });
-window.addEventListener('beforeunload', e => { if (!updateWork.leaving() && updateWork.pending()) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (!newForms.blocked && !updateWork.leaving() && updateWork.pending()) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => {
-  if (!(e.metaKey || e.ctrlKey) || e.altKey || e.isComposing) return;
+  if (newForms.blocked || !(e.metaKey || e.ctrlKey) || e.altKey || e.isComposing) return;
   if (e.key.toLowerCase() === 's') { e.preventDefault(); drafts.guard(() => queueEdit(() => action('save'))).catch(error=>status(error.message)); }
   if (e.key.toLowerCase() === 'z' && !e.target.closest('input,textarea')) { e.preventDefault(); drafts.guard(() => queueEdit(() => action(e.shiftKey ? 'redo' : 'undo'))).catch(error=>status(error.message)); }
 });
-await database.init();
-const initial = database.starting(newProject()); install(initial.project,initial.reference,'builtin-demo');
-await updateWork.restore(); setupUpdates(updateWork);
-setupMobileShell();
+if (!newForms.blocked) {
+  await database.init();
+  const initial = newForms.initial?.() || database.starting(newProject()); install(initial.project,initial.reference,'builtin-demo');
+  await updateWork.restore(); setupUpdates(updateWork); setupMobileShell();
+}
 // Keep startup controls inactive until local dataset loading can no longer replace the document.
 document.body.inert = false; document.body.setAttribute('aria-busy','false');
+if (newForms.blocked) newForms.revealBlocked();

@@ -21,11 +21,11 @@ function restoreProject(record) {
   project.studioV3Session = structuredClone(record.session);
   return project;
 }
-export function verifiedWrite(storage, value) {
+export function verifiedWrite(storage, value, recoveryKey = RECOVERY_KEY) {
   const text = JSON.stringify(value);
   if (new TextEncoder().encode(text).length > LIMIT) throw new Error('Work is too large for update recovery. Save/export it first, or stay on this version.');
-  storage.setItem(RECOVERY_KEY,text);
-  if (storage.getItem(RECOVERY_KEY) !== text) throw new Error('Recovery verification failed. Stay on this version and save/export your work.');
+  storage.setItem(recoveryKey,text);
+  if (storage.getItem(recoveryKey) !== text) throw new Error('Recovery verification failed. Stay on this version and save/export your work.');
   return text;
 }
 export function decodeRecovery(text) {
@@ -42,7 +42,7 @@ export function decodeRecovery(text) {
   if (saved.ai?.proposal) saved.ai.parsed = parseProposal(JSON.stringify(saved.ai.proposal),saved.project);
   return saved;
 }
-export function createUpdateWork({getBus,state,database,drafts,ai,install,renderPanels,syncControls,render,settle}) {
+export function createUpdateWork({getBus,state,database,drafts,ai,install,renderPanels,syncControls,render,settle,recoveryKey=RECOVERY_KEY}) {
   let recoveryFailed = false, updating = false;
   const pending = () => recoveryFailed || state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size || ai.busy || ai.proposal || document.querySelector('#ai-prompt').value || document.querySelector('#document-name').value !== getBus()?.project.manifest.title;
   function capture() {
@@ -56,7 +56,7 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
   async function restore() {
     let text;
     try {
-      text = sessionStorage.getItem(RECOVERY_KEY); if (!text) return false;
+      text = sessionStorage.getItem(recoveryKey); if (!text) return false;
       const saved = decodeRecovery(text);
       install(saved.project,saved.project.studioV3Session.database,saved.project.studioV3Session.source?.kind);
       const bus = getBus(); bus.history.currentProject = saved.project; bus.history.entries = saved.history.entries; bus.history.cursor = saved.history.cursor;
@@ -68,7 +68,7 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
       renderPanels(); syncControls(); await render();
       if (saved.ai) ai.restoreSnapshot(saved.ai);
       document.querySelector('#document-name').value = saved.title;
-      sessionStorage.removeItem(RECOVERY_KEY); return true;
+      sessionStorage.removeItem(recoveryKey); return true;
     } catch {
       recoveryFailed = true;
       document.querySelector('#update-status').textContent = 'Work recovery failed. The backup is retained in this tab; download it before leaving.';
@@ -78,13 +78,13 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     }
   }
   document.querySelector('#recovery-download').onclick = () => {
-    const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(new Blob([sessionStorage.getItem(RECOVERY_KEY)],{type:'application/json'}));
+    const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(new Blob([sessionStorage.getItem(recoveryKey)],{type:'application/json'}));
     anchor.download = 'printform-update-recovery.json'; anchor.click(); setTimeout(()=>URL.revokeObjectURL(anchor.href),3000);
   };
   document.querySelector('#recovery-discard').onclick = () => {
     if (!confirm('Discard the retained update recovery backup? Download it first if you need its work. This permanently removes that backup; the current form and saved datasets stay unchanged.')) return;
     try {
-      sessionStorage.removeItem(RECOVERY_KEY); if (sessionStorage.getItem(RECOVERY_KEY) !== null) throw new Error('Recovery backup could not be removed.');
+      sessionStorage.removeItem(recoveryKey); if (sessionStorage.getItem(recoveryKey) !== null) throw new Error('Recovery backup could not be removed.');
       recoveryFailed = false;
       for (const id of ['recovery-download','recovery-discard']) document.getElementById(id).hidden = true;
       document.querySelector('#update-status').textContent = 'Recovery backup explicitly discarded. Current work remains; Update is available again.';
@@ -110,8 +110,8 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     try {
       await settle();
       checkBusy();
-      if (choice === 'keep') { const snapshot = capture(); decodeRecovery(verifiedWrite(sessionStorage,snapshot)); }
-      else if (choice === 'discard') sessionStorage.removeItem(RECOVERY_KEY);
+      if (choice === 'keep') { const snapshot = capture(); decodeRecovery(verifiedWrite(sessionStorage,snapshot,recoveryKey)); }
+      else if (choice === 'discard') sessionStorage.removeItem(recoveryKey);
       else return false;
       // Cancel only after the user's choice and successful persistence.
       ai.cancel('Update requested. Network request cancelled.'); updating = true; return true;

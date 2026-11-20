@@ -228,3 +228,14 @@ body.preview-only .side-panel { visibility:hidden; }
   .structured-import-table tr {border-bottom:1px solid var(--line);padding:8px 0}
   .structured-import-table th,.structured-import-table td {border:0}
 }
+
+body:has(#local-new-form-origin:not([hidden])) { grid-template-rows:auto auto auto minmax(0,1fr) auto; }
+#local-new-form-origin { display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; padding:4px 12px; border-bottom:1px solid var(--line); background:var(--blue-soft); }
+#local-new-form-origin button { min-height:44px; }
+#local-new-form-dialog { width:min(860px,calc(100vw - 24px)); padding:clamp(12px,3vw,24px); max-height:calc(100dvh - 24px); }
+#local-new-form-dialog .new-form-paper { overflow:auto; max-height:50dvh; background:var(--paper-ground); border:1px solid var(--line); }
+#local-new-form-dialog iframe { display:block; width:794px; min-height:200px; border:0; }
+#local-new-form-dialog [data-new-form-status] { margin:8px 0 0; }
+#local-new-form-dialog .draft-dialog-actions { flex-wrap:wrap; justify-content:flex-end; }
+#local-new-form-dialog a,#local-new-form-dialog button { display:inline-flex; align-items:center; min-height:44px; padding:6px 12px; border-radius:var(--radius); }
+#local-new-form-dialog a { text-decoration:none; }

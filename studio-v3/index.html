@@ -44,6 +44,7 @@
     <button data-ai-toggle data-icon="sparkles" aria-expanded="false" aria-controls="ai-panel">AI editor</button>
     <button data-action="preview" data-icon="eye" aria-pressed="false">Preview</button>
   </nav>
+  <div id="local-new-form-origin" hidden><button type="button" data-new-form-return>Return to original form</button><span data-new-form-return-status role="status"></span></div>
   <main class="studio-grid">
     <aside id="left-panel" class="side-panel" aria-label="Template structure"></aside>
     <section class="paper-workspace" aria-label="Paper preview">
@@ -59,7 +60,7 @@
       <header class="ai-heading">
         <div class="ai-header-copy"><h2><span data-icon="sparkles"></span>AI Assistant <span class="ai-beta">BETA</span></h2></div>
         <div class="ai-header-actions"><button type="button" data-ai-history aria-label="Version history" title="Version history" aria-expanded="false" aria-controls="ai-history"><span data-icon="clock"></span></button><section id="ai-history" class="ai-history" tabindex="-1" aria-label="Version history" hidden></section><details class="ai-settings"><summary aria-label="More settings"><span data-icon="more"></span></summary>
-          <div class="ai-settings-body"><strong>AI settings</strong><p>Demo AI gateway · use fictional data only</p><p>Text and image requests. <span data-ai-commit-help></span></p><p data-ai-origin></p>
+          <div class="ai-settings-body"><strong>AI settings</strong><p>Demo AI gateway · use fictional data only</p><p>Text and image requests. <span data-ai-commit-help></span></p><p data-ai-origin></p><p>Preview a separate local form with <code>/new blank</code>, <code>/new invoice</code>, <code>/new purchase</code> or <code>/new delivery</code>.</p>
             <label>Selected model<select id="ai-model"><option value="demo-auto">demo-auto</option></select></label>
             <label class="ai-agent-toggle" title="The assistant drafts, checks the print preview and repairs over several steps. Edit requests can use one step when the service does not support tools."><input type="checkbox" id="ai-agent" checked> Work in steps (beta)</label>
             <label class="ai-agent-toggle"><input type="checkbox" id="ai-answer-only"> Answer only (requires Work in steps)</label>
@@ -84,7 +85,7 @@
       </div>
       </div>
       <form class="ai-composer">
-        <div class="ai-input"><label class="sr-only" for="ai-prompt">Message AI assistant</label><textarea id="ai-prompt" maxlength="4000" rows="1" placeholder="Ask AI to change your form…"></textarea><div class="ai-composer-toolbar"><button type="button" class="ai-plus" data-ai="attach" data-icon="clip" aria-label="Attach reference" title="Attach reference (PDF, PNG or JPG)"></button><label class="sr-only" for="ai-scope">Edit:</label><select id="ai-scope"><option value="whole">Whole form</option><option value="selected" disabled>Selected elements</option></select><button class="primary ai-send" data-ai-send aria-describedby="ai-send-reason" data-icon="send" aria-label="Send message" title="Send (Enter)"></button><button type="button" class="ai-send" data-ai="cancel" data-icon="stop" aria-label="Stop request" title="Stop request" hidden></button></div></div>
+        <div class="ai-input"><label class="sr-only" for="ai-prompt">Message AI assistant</label><textarea id="ai-prompt" maxlength="4000" rows="1" placeholder="Ask AI to edit, or type /new blank…"></textarea><div class="ai-composer-toolbar"><button type="button" class="ai-plus" data-ai="attach" data-icon="clip" aria-label="Attach reference" title="Attach reference (PDF, PNG or JPG)"></button><label class="sr-only" for="ai-scope">Edit:</label><select id="ai-scope"><option value="whole">Whole form</option><option value="selected" disabled>Selected elements</option></select><button class="primary ai-send" data-ai-send aria-describedby="ai-send-reason" data-icon="send" aria-label="Send message" title="Send (Enter)"></button><button type="button" class="ai-send" data-ai="cancel" data-icon="stop" aria-label="Stop request" title="Stop request" hidden></button></div></div>
         <p class="ai-send-reason" id="ai-send-reason" data-ai-send-reason hidden></p>
         <p data-ai-status role="status" aria-live="polite"></p>
       </form>
@@ -95,6 +96,13 @@
   <input id="dataset-file" type="file" accept=".json,application/json" hidden>
   <button id="drawer-backdrop" aria-label="Close panel backdrop" hidden></button>
   <dialog id="new-dialog" aria-labelledby="new-heading"><h2 id="new-heading">Start a print form</h2><p id="new-warning"></p><div class="new-template-options"><div class="template-options"><button data-template="blank">Blank form<span>Build your structure step by step</span></button><button data-template="invoice">Invoice<span>Customer, line items, supplied totals</span></button><button data-template="purchase">Purchase order<span>Supplier, delivery and approval</span></button><button data-template="delivery">Delivery note<span>Quantities, packages and receipt</span></button></div></div><button data-action="cancel-new">Cancel</button></dialog>
+  <dialog id="local-new-form-dialog" aria-labelledby="local-new-form-heading">
+    <h2 id="local-new-form-heading">Preview a new form</h2>
+    <p>Your original form and its edits will stay in this tab. The new tab starts with fictional data.</p>
+    <div class="new-form-paper" tabindex="0" aria-label="Scrollable new form preview"><iframe title="New form paper preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe></div>
+    <p data-new-form-status role="status"></p>
+    <div class="draft-dialog-actions"><button type="button" data-new-form-cancel autofocus>Cancel</button><a class="primary" data-new-form-apply target="_blank" rel="noopener noreferrer" hidden>Apply &amp; open in new tab</a></div>
+  </dialog>
   <dialog id="draft-dialog" aria-labelledby="draft-heading"><h2 id="draft-heading">Unapplied edits</h2><p>These edits have not changed the print form. Apply commits them to the form; Discard restores current values; Stay keeps editing. Database saves and template-file saves remain explicit.</p><ul id="draft-list"></ul><div class="draft-dialog-actions"><button data-draft-choice="apply" class="primary">Apply</button><button data-draft-choice="discard">Discard</button><button data-draft-choice="stay" autofocus>Stay</button></div></dialog>
   <dialog id="share-dialog" aria-labelledby="share-heading">
     <h2 id="share-heading">Export a share copy · review remaining data</h2>

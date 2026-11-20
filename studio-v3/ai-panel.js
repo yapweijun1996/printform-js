@@ -1,5 +1,6 @@
 import { AIReferenceFiles } from './ai-reference-files.js';
 import { sendPanelMessage } from './ai-panel-run.js';
+import { readNewFormCommand } from './new-form-workspace.js';
 import { agentEnabled,setAgentEnabled } from './agent-preference.js';
 import { stepLabel } from './agent-step-labels.js';
 import { createDemoTransport } from './ai-demo-transport.js';
@@ -18,8 +19,8 @@ import { AISourceWorkspace } from './ai-source-workspace.js';
 import { COMMIT_POLICY_HELP } from './agent-commit-policy.js';
 
 export class AIPanel {
-  constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,capturePixels,restore,commit,undo,sync,transport=createDemoTransport()}) {
-    Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,capturePixels,restore,commit,undo,sync,transport});
+  constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,capturePixels,restore,commit,undo,sync,prepareNewForm,transport=createDemoTransport()}) {
+    Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,capturePixels,restore,commit,undo,sync,prepareNewForm,transport});
     this.root = document.querySelector('#ai-panel'); this.viewing = false; this.agentSteps = []; this.agentUnavailable = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.intents = createIntentLedger(); this.conversation = new Conversation();
     this.node('[data-ai-commit-help]').textContent = COMMIT_POLICY_HELP;
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
@@ -30,7 +31,7 @@ export class AIPanel {
         void this.discard().catch(error=>this.error(error));
       }
       if (event.target.id === 'ai-scope' && event.target.value === 'whole') { this.elementTags?.clear(); this.showScopeHint(); } });
-    this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } } });
+    this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } else this.updateSend(); } });
     this.root.addEventListener('click',event=> {
       const button = event.target.closest('[data-ai]'), action = button?.dataset.ai;
       if (button?.disabled) return;
@@ -84,6 +85,7 @@ export class AIPanel {
   fitPrompt() { const box = this.node('#ai-prompt'); box.style.height = 'auto'; if (box.scrollHeight) box.style.height = `${box.scrollHeight}px`; }
   share() {
     this.fitPrompt();
+    if (this.newFormCommand()) { this.shareBlocked = false; this.sharedRequest = null; return; }
     try { this.sharedRequest = this.request(); this.shareBlocked = false; }
     catch (error) { this.shareBlocked = true; this.sharedRequest = null; this.message(error.message); }
   }
@@ -159,7 +161,14 @@ export class AIPanel {
   useSteps(payload,media,alias) { return agentEnabled() && !this.agentUnavailable && (!media.length || this.transport.supportsImages?.(alias) === true) && typeof this.transport.agentTurn === 'function'; }
   grantProfile() { return this.node('#ai-answer-only')?.checked ? 'read-only' : 'design'; }
   stepDone(step,id) { if (id === this.generation) { this.agentSteps.push({text:stepLabel(step),ok:step.ok,code:step.code}); this.update(); } }
-  async send() { return sendPanelMessage.call(this); }
+  newFormCommand() { return this.prepareNewForm && readNewFormCommand(this.node('#ai-prompt').value); }
+  async send() {
+    const command = this.newFormCommand();
+    if (!command) return sendPanelMessage.call(this);
+    if (this.busy || this.applying || this.restoring) return;
+    if (command.error) { this.message(command.error); return; }
+    try { await this.prepareNewForm(command); } catch (error) { this.message(error.message); }
+  }
   present() { this.update(); }
   async preview(quiet = false,{keepOpen = false} = {}) {
     const proposal = this.proposal; this.assertCurrent(proposal); this.viewing = true; this.checked = false; this.update(); this.sync();
@@ -224,17 +233,21 @@ export class AIPanel {
     this.elementTags?.setBusy(Boolean(this.busy || this.applying || this.restoring)); this.referenceFiles?.setBusy(Boolean(this.busy || this.applying || this.restoring));
     this.updateVersionHistory?.();
     for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,#ai-agent,#ai-answer-only,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
-    this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
+    this.referenceFiles?.capabilityChanged(); this.updateSend();
     this.sourceWorkspace?.update();
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);
     for (const node of this.root.querySelectorAll('[data-ai=close],[data-ai=clear]')) node.disabled = Boolean(this.applying);
-    this.showSendReason(); renderConversation(this);
+    renderConversation(this);
+  }
+  updateSend() {
+    this.node('[data-ai-send]').disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading || (!this.newFormCommand() && this.referenceFiles?.imageBlocked()));
+    this.showSendReason();
   }
   // Only blocking reasons belong below the composer; the recipient boundary lives in settings.
   showSendReason() {
     const files = this.referenceFiles, node = this.node('[data-ai-send-reason]');
     const source = this.sourceWorkspace;
-    const reason = source?.closing || source?.cleanupFailed ? source.notice() : files?.reading ? 'Reading references… Send unlocks when they are ready.' : files?.imageBlocked() ? 'Send is off: image support is not confirmed for this model. Use Check image support, or remove the image.' : '';
+    const reason = this.newFormCommand() ? '' : source?.closing || source?.cleanupFailed ? source.notice() : files?.reading ? 'Reading references… Send unlocks when they are ready.' : files?.imageBlocked() ? 'Send is off: image support is not confirmed for this model. Use Check image support, or remove the image.' : '';
     node.textContent = reason; node.dataset.kind = 'reason'; node.hidden = !reason;
     const consent = this.node('[data-ai-consent-state]');
     consent.textContent = `${this.observationAccess?.notice({compact:true}) || ''} ${source?.notice() || ''}`.trim();
