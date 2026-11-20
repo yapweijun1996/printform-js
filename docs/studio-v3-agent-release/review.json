@@ -31,7 +31,7 @@
   },
   {
    "entries": {
-    "printform.agent.apply_operations": "3cff80f814d4fb41b27e2d7a243b550d44ecefb692f2b3f0c825725c87df54a5"
+    "printform.agent.apply_operations": "0e5e34cc0af924a0c05d3e503a44399357a9fa21aa5cfbe97d2b8c054fb122bc"
    },
    "disposition": "updated",
    "justification": "Typography parity delegates to the shared sampler and retains its style, real mouse and wire assertions. The test helper reads native computed styles from the same render generation. Stripe restoration checks every native row and cell color and the pre-Apply and reset boundaries without a stale Firefox frame context. The registry tracks the native preview helper and stripe restoration test as direct authoring evaluations. The source guide tracks the direct cancellation evaluation and its related capability fingerprints. The source error contract exposes the browser denial as a scope rejection. The run distinguishes a local known admission rejection from a possibly admitted workspace that needs cleanup.",
@@ -119,7 +119,7 @@
   },
   {
    "entries": {
-    "printform.authoring.set_table_style": "8ea1aec5cc14d0061db8bf18b8dce86373832331201de752f6ec51f72fe45f22"
+    "printform.authoring.set_table_style": "192f6bb989869ae86bb7ffb4e5f4ba3c9eb10a0e2726d3c74869829ae8a80298"
    },
    "disposition": "updated",
    "justification": "The test helper reads native computed styles from the same render generation. Stripe restoration checks every native row and cell color and the pre-Apply and reset boundaries without a stale Firefox frame context. The source error contract exposes the browser denial as a scope rejection.",
