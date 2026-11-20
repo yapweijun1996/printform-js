@@ -1,0 +1,137 @@
+{
+  "schema": "printform-cod07-phase-diagnostic-v1",
+  "sourceCommit": "b9c31150db96aa8edd0dfb9a3fedac06511c34e8",
+  "node": "24.19.0",
+  "browser": {
+    "engine": "Chromium Headless Shell",
+    "version": "151.0.7922.34",
+    "playwright": "1.62.0",
+    "playwrightRevision": "1234"
+  },
+  "environment": {
+    "os": "Linux",
+    "architecture": "x64",
+    "concurrentLocalUnitBuild": true
+  },
+  "fixtureStdoutBytes": 64000,
+  "scope": "Two simultaneous synthetic workspaces per endpoint, one pair per endpoint. No qualification outcome or p95 conclusion.",
+  "scriptsSha256": {
+    "trace.mjs": "cae55f8723ce4745b4bf8679affe751f1bb832528a4f97025cfc5f05d998d59d",
+    "run.mjs": "a9f9bbb9a09d68e63efefbe69d976aaaaf1722bfcf7f1bc71a917ce29e761422",
+    "report.mjs": "80ff9232c9f196040f21305bb0e32d9496b646ff366bcb861bf14e486915d164"
+  },
+  "endpoints": [
+    {
+      "image": "sha256:e1e20d5004eb9a5099fee5a1e30c4e5e8168106e39f76927fea8e61f3eddf147",
+      "source": "b6a89aa87b2f8ae3f17adc436fed6e47ef22c7862599bc3a76b5c509b69ef23b",
+      "fixture": {
+        "files": 128,
+        "directories": 128,
+        "bytes": 4194304
+      },
+      "concurrency": 2,
+      "samples": [
+        {
+          "terminal": "cancel",
+          "index": 0,
+          "httpAckMs": 3495.64,
+          "independentDieMs": 88,
+          "statusMs": 19.72,
+          "requestToRunRemovedMs": 366.23,
+          "runRemoveCommandMs": 249.64,
+          "runRemovedToHelperStartMs": 0.04,
+          "helperTotalMs": 3123.73,
+          "helperCreateMs": 2344.08,
+          "helperStartReadTransferMs": 485.28,
+          "helperRemoveMs": 284.67,
+          "hostReconcileMs": 0.54,
+          "workspaceDestroyMs": null,
+          "reconcileEndToResponseMs": 4.99,
+          "activeTreeReconciled": true,
+          "containerGone": true
+        },
+        {
+          "terminal": "cancel",
+          "index": 1,
+          "httpAckMs": 3447.04,
+          "independentDieMs": 100,
+          "statusMs": 15.23,
+          "requestToRunRemovedMs": 391.95,
+          "runRemoveCommandMs": 256.82,
+          "runRemovedToHelperStartMs": 0.03,
+          "helperTotalMs": 3051.66,
+          "helperCreateMs": 2418.07,
+          "helperStartReadTransferMs": 406.64,
+          "helperRemoveMs": 216.61,
+          "hostReconcileMs": 0.2,
+          "workspaceDestroyMs": null,
+          "reconcileEndToResponseMs": 3.2,
+          "activeTreeReconciled": true,
+          "containerGone": true
+        }
+      ],
+      "cleanup": {
+        "kind": "cleanup",
+        "ownedWorkspaces": 2,
+        "remainingResources": 0
+      },
+      "traceSha256": "b2de226444c471d3f7c097f9026afcec47085fe2b8bdd3b462a5a94f8ff5d501"
+    },
+    {
+      "image": "sha256:e1e20d5004eb9a5099fee5a1e30c4e5e8168106e39f76927fea8e61f3eddf147",
+      "source": "b6a89aa87b2f8ae3f17adc436fed6e47ef22c7862599bc3a76b5c509b69ef23b",
+      "fixture": {
+        "files": 128,
+        "directories": 128,
+        "bytes": 4194304
+      },
+      "concurrency": 2,
+      "samples": [
+        {
+          "terminal": "close",
+          "index": 1,
+          "httpAckMs": 2742.59,
+          "independentDieMs": 93,
+          "statusMs": 14.03,
+          "requestToRunRemovedMs": 356.46,
+          "runRemoveCommandMs": 229.96,
+          "runRemovedToHelperStartMs": 0.05,
+          "helperTotalMs": 2005,
+          "helperCreateMs": 1057.61,
+          "helperStartReadTransferMs": 675.87,
+          "helperRemoveMs": 248.43,
+          "hostReconcileMs": 0.54,
+          "workspaceDestroyMs": 376.18,
+          "reconcileEndToResponseMs": 380.44,
+          "activeTreeReconciled": true,
+          "containerGone": true
+        },
+        {
+          "terminal": "close",
+          "index": 0,
+          "httpAckMs": 2656.06,
+          "independentDieMs": 106,
+          "statusMs": 7.76,
+          "requestToRunRemovedMs": 327.58,
+          "runRemoveCommandMs": 197.45,
+          "runRemovedToHelperStartMs": 0.03,
+          "helperTotalMs": 2027.64,
+          "helperCreateMs": 1296.58,
+          "helperStartReadTransferMs": 413.6,
+          "helperRemoveMs": 291.83,
+          "hostReconcileMs": 0.2,
+          "workspaceDestroyMs": 296.04,
+          "reconcileEndToResponseMs": 300.62,
+          "activeTreeReconciled": true,
+          "containerGone": true
+        }
+      ],
+      "cleanup": {
+        "kind": "cleanup",
+        "ownedWorkspaces": 2,
+        "remainingResources": 0
+      },
+      "traceSha256": "b70a83049ab8bcb03bd8c064039e7c14d94c369f421072ccf43308822bd0b71d"
+    }
+  ]
+}
