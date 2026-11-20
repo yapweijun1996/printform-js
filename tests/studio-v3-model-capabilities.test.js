@@ -1,5 +1,5 @@
 import {it,expect} from 'vitest';
-import {imageCapability,modelCapabilityFacts} from '../studio-v3/model-capabilities.js';
+import {imageCapability,modelCapabilityFacts,toolCapability} from '../studio-v3/model-capabilities.js';
 it('accepts only the verified Responses and multimodal boolean pair',()=>{
  expect(imageCapability({capabilities:{responses:true,multimodal:true}})).toBe(true);
  for(const model of [null,undefined,{},[],{input:['image']},{input_modalities:['text','image']},{supports_images:true},
@@ -16,4 +16,12 @@ it('shows only bounded public boolean/modality facts with their actual keys',()=
  const model={id:'demo-fast',account_id:'private',token:'secret',headers:{authorization:'Bearer secret'},endpoint:'https://private.example/account',input_modalities:['text','image','secret'],capabilities:{multimodal:true,streaming:false,account_enabled:true,foo:'secret',endpoints:['responses','https://private.example']}};
  const facts=modelCapabilityFacts(model);expect(facts).toContainEqual({field:'capabilities.multimodal',value:true});expect(facts).toContainEqual({field:'input_modalities',value:['text','image']});expect(facts).toContainEqual({field:'capabilities.endpoints',value:['responses']});
  const text=JSON.stringify(facts);for(const denied of ['private','secret','account','token','headers','https'])expect(text).not.toContain(denied);expect(facts.length).toBeLessThanOrEqual(24);
+});
+
+it('confirms tool support only when both explicit capability booleans are true',()=>{
+  expect(toolCapability({capabilities:{responses:true,tools:true}})).toBe(true);
+  for (const capabilities of [{},{tools:true},{responses:true},{responses:false,tools:true},{responses:true,tools:false},{responses:true,tools:'true'},['responses','tools']]) {
+    expect(toolCapability({capabilities})).toBe(false);
+  }
+  expect(toolCapability({responses:true,tools:true})).toBe(false);
 });

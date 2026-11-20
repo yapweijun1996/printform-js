@@ -31,6 +31,7 @@ export class AISourceWorkspace {
     finally { this.code.value = ''; this.pairing = false; this.panel.update(); }
   }
   consume() {
+    if (this.panel.grantProfile() === 'read-only') { this.resetConsent(); return undefined; }
     if (!this.consent.checked) return undefined;
     this.resetConsent();
     if (this.closing || this.cleanupFailed || !agentEnabled() || this.panel.agentUnavailable) throw sourceFailure('ENVIRONMENT_UNSUPPORTED');
@@ -74,7 +75,7 @@ export class AISourceWorkspace {
     const busy = Boolean(this.panel.busy || this.panel.applying || this.panel.restoring || this.pairing || this.disconnecting || this.closing);
     const paired = Boolean(this.connection?.available);
     this.disclosure.hidden = !this.connection;
-    this.consent.disabled = busy || !paired || this.cleanupFailed || !agentEnabled() || this.panel.agentUnavailable;
+    this.consent.disabled = busy || this.panel.grantProfile() === 'read-only' || !paired || this.cleanupFailed || !agentEnabled() || this.panel.agentUnavailable;
     this.code.disabled = busy || paired || this.cleanupFailed;
     this.setup.querySelector('[data-source-pair]').disabled = busy || paired || this.cleanupFailed;
     this.setup.querySelector('[data-source-disconnect]').disabled = Boolean(this.panel.applying || this.disconnecting || this.pairing || !this.connection);

@@ -16,6 +16,7 @@ export async function sendPanelMessage() {
   try { this.referenceFiles?.assertReady(); payload = this.payload(); request = this.request(); } catch (error) { this.error(error); this.message(error.message); return; }
   if (!payload.request) { this.message('Write a request or a comment on a referenced element before Send.'); return; }
   let alias = this.node('#ai-model').value;
+  const baseProfile = this.grantProfile(payload), answerOnly = baseProfile === 'read-only';
   if (request !== this.sharedRequest) { this.share(); this.message('Layout context updated. Send again to use the current layout.'); return; }
   if (request.length > 40000) { this.message('The shared context is too large. Clear conversation or shorten the request.'); return; }
   const bus = this.getBus(), revision = bus.revision, project = structuredClone(bus.project), baseDesign = JSON.stringify(project.manifest.studioV3), baseData = JSON.stringify(project.sampleData), epoch = this.epoch, selection = this.getSelection(), scope = JSON.stringify(this.scope()), references = JSON.stringify(payload.references), attachmentVersion = this.referenceFiles?.version, media = this.referenceFiles?.projection().media || [];
@@ -26,12 +27,14 @@ export async function sendPanelMessage() {
     if (attachmentVersion !== this.referenceFiles?.version || baseData !== JSON.stringify(bus.project.sampleData) || epoch !== this.epoch || selection !== this.getSelection() || scope !== JSON.stringify(this.scope()) || references !== JSON.stringify(this.elementTags?.payload() || [])) throw fail('STALE_PROPOSAL');
     validateElementReferences(bus.project,payload.references,bus.revision);
   };
+  if (answerOnly && !this.useSteps(payload,media,alias)) { this.error(fail('AI_READ_ONLY_TOOLS_REQUIRED')); return; }
   const {id,signal} = this.begin(); this.conversation.expire(); this.proposal = null; this.checked = false;
   let inspected = false, workspace, applyNow = null;
   this.pendingMessage = payload.request; this.conversation.add('user',[payload.request,...payload.references.filter(r=>r.comment).map(r=>`${r.id}: ${r.comment}`)].join('\n'),'answer',{documentKey:this.documentKey()}); this.node('#ai-prompt').value = ''; this.share(); this.update();
   try {
-    const runId = crypto.randomUUID(), readObservationHost = ()=>this.observationAccess.state(runId), baseProfile = this.grantProfile(payload);
-    workspace = this.sourceWorkspace?.consume();
+    const runId = crypto.randomUUID(), readObservationHost = ()=>this.observationAccess.state(runId);
+    if (answerOnly) this.sourceWorkspace?.resetConsent();
+    else workspace = this.sourceWorkspace?.consume();
     const sourceBound = Boolean(workspace) || [workspace?.profile,baseProfile].some(profile=>profile?.startsWith('coding'));
     const observationAuthorization = await this.observationAccess.consume(runId); assertContext(); signal.throwIfAborted();
     if (this.viewing) { await this.restore(); this.viewing = false; }
@@ -40,7 +43,11 @@ export async function sendPanelMessage() {
     assertContext();
     if (!this.setModels(aliases)) { if (this.modelChosen) throw fail('DEMO_MODEL_UNAVAILABLE'); alias = this.node('#ai-model').value; }
     if (media.length && !this.transport.supportsImages?.(alias)) throw fail('DEMO_IMAGE_CAPABILITY_UNVERIFIED');
-    assertContext();
+    const assertRun = () => {
+      assertContext();
+      if (answerOnly && this.transport.supportsTools?.(alias) !== true) throw fail('AI_READ_ONLY_TOOLS_REQUIRED');
+    };
+    assertRun();
     const inspectCandidate = async proposal=> {
       assertContext(); inspected = true; this.viewing = true; this.update(); this.sync();
       const report = await this.renderPreview(proposal.candidate); assertContext(); signal.throwIfAborted();
@@ -49,18 +56,20 @@ export async function sendPanelMessage() {
     const onPhase = (text,options)=> { if (id === this.generation) this.message(`${alias} · ${text}`,options); };
     let result;
     const steps = this.useSteps(payload,media,alias);
+    if (answerOnly && !steps) throw fail('AI_READ_ONLY_TOOLS_REQUIRED');
     if (workspace && !steps) throw fail('ENVIRONMENT_UNSUPPORTED');
     if (steps) {
       this.setRunTimeout(id,DEMO_CONFIG.agent.maxRunMs,'AGENT_TIMEOUT'); this.agentSteps = [];
-      try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext,inspectCandidate,capturePixels:async(...args)=> { assertContext(); const image=await this.capturePixels?.(...args); assertContext(); return image; },onPhase,onStep:step=>this.stepDone(step,id),profile:workspace?.profile || baseProfile,baseRevision:revision,runId,observationAuthorization,readObservationHost,workspace}); }
+      try { result = await runPanelAgent({transport:this.transport,alias,payload,media,project,signal,assertContext:assertRun,inspectCandidate,capturePixels:async(...args)=> { assertContext(); const image=await this.capturePixels?.(...args); assertContext(); return image; },onPhase,onStep:step=>this.stepDone(step,id),profile:workspace?.profile || baseProfile,baseRevision:revision,runId,observationAuthorization,readObservationHost,workspace}); }
       catch (error) {
         const refused = error.code === 'DEMO_TOOLS_UNAVAILABLE', ignored = error.code === 'AI_RUN_FAILED' && !this.agentSteps.length;
         if (refused) this.agentUnavailable = true;
-        if (workspace || (!refused && !ignored)) throw error;
+        if (answerOnly || workspace || (!refused && !ignored)) throw error;
         this.setRunTimeout(id,DEMO_CONFIG.sendTimeoutMs);
         this.agentSteps = []; onPhase(refused ? 'Step-by-step runs are not available here; using the single-step flow' : 'The model did not use the step tools; using the single-step flow');
       }
     }
+    if (answerOnly && result?.kind !== 'answer') throw fail('AI_RUN_FAILED');
     if (workspace && !result) throw fail('SOURCE_ARTIFACT_REQUIRED');
     result ||= await runLayoutHarness({transport:this.transport,alias,request,project,signal,chat:payload,assertContext,media,inspectCandidate,onPhase});
     if (id !== this.generation) return;

@@ -16,6 +16,7 @@ export const AI_MESSAGES = {
   DEMO_MEDIA_ENDPOINT_BUG:'Internal error: an image request reached the text-only endpoint. Please report this. Nothing changed.',
   DEMO_SESSION_EXPIRED:'Demo session expired after one refresh. Use Edit & resend to try again. Nothing changed.',
   DEMO_MODEL_UNAVAILABLE:'The selected model is no longer available. Choose a model from the list and send again. Nothing changed.',
+  AI_READ_ONLY_TOOLS_REQUIRED:'Answer only needs Work in steps and confirmed tool support from the selected model.',
   DEMO_TOOLS_UNAVAILABLE:'The AI service does not allow step-by-step runs for this app yet. Nothing changed.',
   AGENT_BUDGET:'The run used up its step budget before it finished. Nothing changed.',
   AGENT_TOKEN_BUDGET:'The run used up its token budget before it finished. Nothing changed.',

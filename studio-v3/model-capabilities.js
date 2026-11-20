@@ -1,9 +1,15 @@
 // Verified public Demo Gateway contract: both Responses and multimodal input
-// must be explicitly advertised. Other metadata remains diagnostic only.
+// must be explicitly advertised. Other image metadata remains diagnostic only.
 export function imageCapability(model) {
   const capabilities=model?.capabilities;
   return Boolean(capabilities && typeof capabilities==='object' && !Array.isArray(capabilities)
     && capabilities.responses===true && capabilities.multimodal===true);
+}
+// Require explicit Responses and tool support before dispatching an Answer only request.
+export function toolCapability(model) {
+  const capabilities = model?.capabilities;
+  return Boolean(capabilities && typeof capabilities === 'object' && !Array.isArray(capabilities)
+    && capabilities.responses === true && capabilities.tools === true);
 }
 const containers=new Set(['capabilities','modalities','input','output','endpoints','supported_endpoints','input_modalities','output_modalities','supported_api_variants']);
 const factKey=/^(?:supports?_)?(?:images?|vision|multimodal|responses|chat_completions|streaming|structured_output|tools|audio|files|json)$/;

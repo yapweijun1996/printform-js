@@ -25,6 +25,10 @@ export class AIPanel {
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
     this.node('#ai-agent').checked = agentEnabled();
     this.root.addEventListener('change',event=> { if (event.target.id === 'ai-agent') { setAgentEnabled(event.target.checked); this.agentUnavailable = false; }
+      if (event.target.id === 'ai-answer-only') {
+        this.sourceWorkspace?.resetConsent(); this.showScopeHint();
+        void this.discard().catch(error=>this.error(error));
+      }
       if (event.target.id === 'ai-scope' && event.target.value === 'whole') { this.elementTags?.clear(); this.showScopeHint(); } });
     this.root.addEventListener('input',event=> { if (['ai-prompt','ai-model'].includes(event.target.id)) { this.share(); if (event.target.id === 'ai-model') { this.modelChosen = true; this.update(); } } });
     this.root.addEventListener('click',event=> {
@@ -64,7 +68,9 @@ export class AIPanel {
     selected.disabled = !count; selected.textContent = count ? `${count} selected element${count > 1 ? 's' : ''}` : 'Selected elements'; choice.value = count ? 'selected' : 'whole';
     const how = count ? 'Choose Whole form to edit any part.' : innerWidth <= 900 ? 'To limit them, close this panel, tap an element, then press Add to chat.' : 'To limit them, select an element and press Add to chat.';
     this.node('.ai-scope-help').textContent = count ? 'Only referenced elements can change.' : `Any part can change. ${COMMIT_POLICY_HELP}`;
-    const guidance = `${this.node('.ai-scope-help').textContent} ${how}`;
+    const answerOnly = this.grantProfile() === 'read-only';
+    if (answerOnly) this.node('.ai-scope-help').textContent = 'Answer only. The assistant can inspect the current form.';
+    const guidance = answerOnly ? this.node('.ai-scope-help').textContent : `${this.node('.ai-scope-help').textContent} ${how}`;
     choice.title = guidance; choice.setAttribute('aria-description',guidance);
   }
   documentKey() { return this.getBus()?.project.manifest.documentId; }
@@ -151,7 +157,7 @@ export class AIPanel {
   finish() { this.observationAccess?.end(); clearTimeout(this.timer); this.controller = null; this.busy = false; this.pendingMessage = null; this.agentSteps = []; this.update(); }
   // Work in steps unless it is off, unavailable, or images lack confirmed support.
   useSteps(payload,media,alias) { return agentEnabled() && !this.agentUnavailable && (!media.length || this.transport.supportsImages?.(alias) === true) && typeof this.transport.agentTurn === 'function'; }
-  grantProfile() { return 'design'; }
+  grantProfile() { return this.node('#ai-answer-only')?.checked ? 'read-only' : 'design'; }
   stepDone(step,id) { if (id === this.generation) { this.agentSteps.push({text:stepLabel(step),ok:step.ok,code:step.code}); this.update(); } }
   async send() { return sendPanelMessage.call(this); }
   present() { this.update(); }
@@ -171,6 +177,7 @@ export class AIPanel {
   // A duplicate Apply for a key already seen (a second click, a queued repeat) waits for the original outcome and does
   // nothing more: one commit, no stale-proposal or busy error for the harmless repeat.
   async apply(intentKey = this.proposal?.intentKey) {
+    if (this.grantProfile() === 'read-only') throw fail('STALE_PROPOSAL');
     const duplicate = this.intents.replay(intentKey);
     if (duplicate) { await duplicate.catch(() => {}); return; }
     // A key that is neither known nor the current proposal's belongs to something else; it never commits this proposal.
@@ -198,8 +205,10 @@ export class AIPanel {
     const viewing = this.viewing; this.invalidate('Conversation cleared.'); this.observationAccess.reset(); this.sourceWorkspace?.resetConsent(); this.conversation.messages = []; this.node('#ai-prompt').value = ''; this.elementTags?.clear(false); this.referenceFiles?.clear(); if (viewing) await this.restoreUnapplied(); this.share(); this.update();
     this.node('.ai-conversation-scroll').scrollTop = 0;
   }
-  snapshot() { return {open:Boolean(this.open),prompt:this.node('#ai-prompt').value || this.pendingMessage || '',alias:this.node('#ai-model').value,messages:this.conversation.snapshot(),references:this.elementTags?.snapshot() || []}; }
+  snapshot() { return {open:Boolean(this.open),prompt:this.node('#ai-prompt').value || this.pendingMessage || '',alias:this.node('#ai-model').value,answerOnly:this.grantProfile() === 'read-only',messages:this.conversation.snapshot(),references:this.elementTags?.snapshot() || []}; }
   restoreSnapshot(saved) {
+    this.node('#ai-answer-only').checked = saved.answerOnly === true;
+    this.showScopeHint();
     this.observationAccess.reset();
     this.sourceWorkspace?.resetConsent();
     this.conversation.restore(saved.messages || [],this.documentKey()); this.node('#ai-prompt').value = saved.prompt; this.restoreAlias(saved.alias);
@@ -208,13 +217,13 @@ export class AIPanel {
     if (saved.open) this.show(); else { this.share(); this.update(); }
     this.message('Recovered conversation. Old suggestions are expired; send again before Preview or Apply.');
   }
-  static validateSnapshot(saved) { if (saved.open === undefined && !saved.messages) saved.open = false; if (typeof saved.prompt !== 'string' || saved.prompt.length > 4000 || typeof saved.open !== 'boolean') throw fail('INVALID_CHAT_RECOVERY'); if (saved.messages) cleanMessages(saved.messages); AIElementTags.validateSnapshot(saved.references || []); }
+  static validateSnapshot(saved) { if (saved.open === undefined && !saved.messages) saved.open = false; if (typeof saved.prompt !== 'string' || saved.prompt.length > 4000 || typeof saved.open !== 'boolean' || saved.answerOnly !== undefined && typeof saved.answerOnly !== 'boolean') throw fail('INVALID_CHAT_RECOVERY'); if (saved.messages) cleanMessages(saved.messages); AIElementTags.validateSnapshot(saved.references || []); }
   update() {
     document.querySelector('#ai-preview-banner').hidden = !this.viewing;
     document.querySelector('[data-ai-toggle]').setAttribute('aria-expanded',String(Boolean(this.open)));
     this.elementTags?.setBusy(Boolean(this.busy || this.applying || this.restoring)); this.referenceFiles?.setBusy(Boolean(this.busy || this.applying || this.restoring));
     this.updateVersionHistory?.();
-    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,#ai-agent,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
+    for (const node of this.root.querySelectorAll('#ai-prompt,#ai-model,#ai-scope,#ai-agent,#ai-answer-only,[data-ai=models],[data-ai-send],[data-prompt]')) node.disabled = Boolean(this.busy || this.applying || this.restoring || this.referenceFiles?.reading);
     this.referenceFiles?.capabilityChanged(); if (this.referenceFiles?.imageBlocked()) this.node('[data-ai-send]').disabled=true;
     this.sourceWorkspace?.update();
     this.node('[data-ai=cancel]').hidden = !this.busy || Boolean(this.applying); this.node('[data-ai-send]').hidden = Boolean(this.busy);

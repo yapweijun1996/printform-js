@@ -1,4 +1,4 @@
-import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
+import { imageCapability, modelCapabilityFacts, toolCapability } from './model-capabilities.js';
 import { createDemoGatewaySession } from '../document-core/ui/agent-demo-gateway.js';
 import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
@@ -11,8 +11,8 @@ import { CHAT_PROMPT } from './ai-chat-protocol.js';
 
 const assertDispatch = Symbol('assertDemoDispatch');
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
-  let imageModels = new Set(), capabilityFacts=[], discoveryGeneration=0, sessionTurns=0;
-  const resetCapabilities=()=>{imageModels.clear();capabilityFacts=[];return ++discoveryGeneration;};
+  let imageModels = new Set(), toolModels = new Set(), capabilityFacts=[], discoveryGeneration=0, sessionTurns=0;
+  const resetCapabilities=()=>{imageModels.clear();toolModels.clear();capabilityFacts=[];return ++discoveryGeneration;};
   const session = createDemoGatewaySession({now,fetchImpl:async (url,options) => {
     // Recheck after session acquisition/refresh; keep the guard off the wire.
     const {[assertDispatch]:assertCurrent,...init}=options;
@@ -52,6 +52,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     // Completed UI actions drop tokens while retaining the latest model facts.
     clearSession:() => { session.clear(); sessionTurns = 0; },
     supportsImages:alias => imageModels.has(alias),
+    supportsTools:alias => toolModels.has(alias),
     capabilityDiagnostics:()=>structuredClone(capabilityFacts),
     async discover(signal) {
       const generation=resetCapabilities();
@@ -62,6 +63,7 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
       const aliases = [...new Set(advertised.map(model=>model.id))].slice(0,DEMO_CONFIG.maxAliases), models = advertised.filter(model=>aliases.includes(model.id));
       if (!aliases.length) throw fail('DEMO_MODEL_UNAVAILABLE');
       imageModels = new Set(aliases.filter(alias=>models.filter(model=>model.id===alias).every(imageCapability)));
+      toolModels = new Set(aliases.filter(alias=>models.filter(model=>model.id===alias).every(toolCapability)));
       capabilityFacts=models.map(model=>({alias:model.id,facts:modelCapabilityFacts(model)}));
       return aliases;
     },
