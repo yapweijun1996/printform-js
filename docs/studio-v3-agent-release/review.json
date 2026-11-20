@@ -7,6 +7,60 @@
  "dispositions": [
   {
    "entries": {
+    "printform.agent.get_capabilities": "6cb94f44afb5ac1042d213b7cda9fd251d246340c5a960629a1ed48c9643cafd",
+    "printform.agent.read_skill": "9af4cf251fd39b3453b179f5d3c9a7b149bc548e89658054940247376a98819a",
+    "printform.agent.get_context": "e7dbe4f37ea05ec803f604076a6977d0d8b158b1df8632d8abfd185f4108b70f",
+    "printform.agent.apply_operations": "6c3c4f0be966af85559a3a70e1bd91778611f801d9de46d52d9d8e54234aca1f",
+    "printform.agent.inspect_draft": "4f9eb3d1c7a3c0c8cdfdcedd9c845af5a96f310ac8f95c30c837c9e9d502eb0b",
+    "printform.agent.observe_context": "7d2ec02da514d0b8bca9998e48e02385a8367facf3f036d98a402f7b8d9adca4",
+    "printform.agent.validate_scenarios": "4e1bbfc05451f1d264a8bf247516849ec4873d0f75ac98eefda8e473ed6edb4f",
+    "printform.agent.undo_step": "359fce71c606e472ccf52e1816f25fb8b618994dc27a4f16b2ca4510d773c706",
+    "printform.agent.take_notes": "bc6437e2427e8fac88d7e71f283e68db2eb3683e570b26512a16bd09697ff577",
+    "printform.agent.finish": "fa42db1422f608f4c918b3ce6931ba89219db66942a50ef03ec4368ae3df30f1",
+    "printform.agent.finish_answer": "a75c1abb28835dafad317c3781ceb9eba75e8bcb8accc32697d34d9a9bcb8dff",
+    "printform.agent.report_blocked": "d9adb72bf6c54e4258d1d416cfeffb8be09b8849bde45a64ed24bc255315548a",
+    "printform.knowledge.form-authoring": "cfa50e75a80beaa9ee90a773a4122abbdbf4cc6ea4ffbb9a6647e4e90d4f77ad"
+   },
+   "disposition": "updated",
+   "justification": "Source lifecycle checks require a positive owned close receipt before reporting reconciliation.",
+   "evidence": [
+    "studio-v3/source-workspace-run.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.agent.retrieve_page": "ae86490d0485e9a1d115b2b82955020fb79a50b9908a22021becc4902096ed1c"
+   },
+   "disposition": "updated",
+   "justification": "The companion client verifies the owned workspace ID and closed status before accepting its acknowledgement. Source lifecycle checks require a positive owned close receipt before reporting reconciliation.",
+   "evidence": [
+    "studio-v3/source-workspace-client.js",
+    "studio-v3/source-workspace-run.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.agent.workspace_list": "be9e49febe5c5919020b34d06f3e8b5976d4b6aa59e0384e83861482c72dca2b",
+    "printform.agent.workspace_read": "7f403f8f8a4cc38f444d536aaaeb10d1805eb4fd383b3cf777be2995659e57d9",
+    "printform.agent.workspace_search": "e0cf5397d64da9fc56debefbdbf217975da4442935f188c61e7821ed53bce675",
+    "printform.agent.workspace_write": "4e67a0972d63156a496b3c46b15c03427ff9fe162b2ffe9c48041ddab40dbb07",
+    "printform.agent.workspace_patch": "62394a2d07720f2a99cde1750db5fa15a88d19bf875aad0d849c6268bd701d35",
+    "printform.agent.workspace_run": "2b550694db4897b73cbab259de4ba845d5470cddc040640863958ff08992bfcb",
+    "printform.agent.workspace_diff": "238cc17f72f862e621aad1ebc451aeb8526a3077a67c93555d2496682146d7e7",
+    "printform.agent.workspace_artifacts": "1a45abf3de0662d639c0aa747e205af65d1e5d57c607bbb6900b01dcc98f2a47",
+    "printform.agent.import_artifact": "6198f2795392cde798844def6903303bb795527bcff346f0c2b2aca66d61af25",
+    "printform.knowledge.source-workspace": "1d6b41304af982a08b2c2a2d6501c248a839da5b64c68d9f75a627144ed673fb"
+   },
+   "disposition": "updated",
+   "justification": "The companion client verifies the owned workspace ID and closed status before accepting its acknowledgement. Source lifecycle checks require a positive owned close receipt before reporting reconciliation. Native transport controls assert current cleanup identity in addition to permission admission.",
+   "evidence": [
+    "studio-v3/source-workspace-client.js",
+    "studio-v3/source-workspace-run.js",
+    "tests/studio-v3-source-network-permission.test.js"
+   ]
+  },
+  {
+   "entries": {
     "printform.knowledge.product-workflows": "01af46dfd8eaef12d72a4edf5c6af4012413022f4051e5c7961f44e96307c0a3"
    },
    "disposition": "updated",
