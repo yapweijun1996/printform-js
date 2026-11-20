@@ -144,14 +144,25 @@ export function verifyUpstream({profile,inventory,checked,profileValidation=[],n
     if (!result?.evaluation || result.errors.length || !signed(evidence,item.value.signature,profile.collectorPublicKey)) errors.push('request envelope lacks independent signature/register custody');
     const bodies=Array.isArray(evidence.providerBodies)?evidence.providerBodies:[];
     if (!bodies.length) errors.push('request envelope has no dispatched request custody');
+    const receipts=new Map();
+    for (const response of Array.isArray(evidence.providerResponses)?evidence.providerResponses:[]) {
+      if (typeof response?.requestDigest!=='string' || typeof response.body!=='string') {
+        errors.push('malformed captured response custody');continue;
+      }
+      if (!receipts.has(response.requestDigest)) receipts.set(response.requestDigest,{items:[],next:0});
+      receipts.get(response.requestDigest).items.push(response);
+    }
     for (const [index,body] of bodies.entries()) {
       if (!body || typeof body.body!=='string' || typeof body.digest!=='string') {
         errors.push('malformed dispatched request custody');continue;
       }
-      const response=Array.isArray(evidence.providerResponses)?evidence.providerResponses.find(response=>response?.requestDigest===body.digest && typeof response.body==='string'):null;
+      // Repeated request bytes can have different responses. Each raw receipt is consumed once.
+      const group=receipts.get(body.digest);
+      const response=group ? group.items[group.next++] : null;
       const key=`${digest(evidence)}|${index}`;
       expected.set(key,{evidence,body,response});
     }
+    if ([...receipts.values()].some(group=>group.next<group.items.length)) errors.push('captured response has no corresponding request occurrence');
   }
   summary.requests=expected.size;
   const seen=new Set(),requestIds=new Set();

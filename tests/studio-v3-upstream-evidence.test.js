@@ -150,6 +150,39 @@ describe('fixed upstream signed source and per-request custody consumer',()=>{
     expect(text).not.toContain('BEGIN PUBLIC KEY');
   });
 
+  it.each([
+    ['missing response',false],
+    ['separate response with identical bytes',true],
+    ['separate response with different bytes',true],
+    ['different response attributed to the wrong occurrence',false]
+  ])('checks repeated raw request bodies with %s', (scenario,verified)=>{
+    const input=setup(({evidence,dispatches})=>{
+      const request=evidence.providerBodies[0], first=evidence.providerResponses[0];
+      const responseBody=scenario==='separate response with identical bytes'
+        ? first.body : JSON.stringify({status:'completed',output:[],id:'synthetic-retry-response'});
+      const response={requestDigest:request.digest,body:responseBody,digest:digest(responseBody)};
+      evidence.providerBodies.push({...request});
+      if (scenario!=='missing response') evidence.providerResponses.push(response);
+      const responseDigest=verified?response.digest:first.digest;
+      dispatches.push({...dispatches[0],requestIndex:2,requestId:'synthetic-owner-retry',responseDigest});
+      const evidenceDigest=digest(evidence);
+      for (const dispatch of dispatches) dispatch.evidenceDigest=evidenceDigest;
+    });
+    const report=input.report(),upstream=report.prerequisites.find(item=>item.id==='fixed-upstream');
+    expect(report.evidence.results[0].evaluation.outcome).toBe('Pass');
+    expect(upstream.verification).toMatchObject({verified,productionQualified:false,requests:3});
+    if (!verified) expect(upstream.verification.errors).toContain('request/response/run custody mismatch');
+  });
+
+  it('rejects an extra response without a matching request occurrence',()=>{
+    const input=setup(({evidence,dispatches})=>{
+      evidence.providerResponses.push({...evidence.providerResponses[0]});
+      const evidenceDigest=digest(evidence);
+      for (const dispatch of dispatches) dispatch.evidenceDigest=evidenceDigest;
+    });
+    expect(input.result()).toMatchObject({verified:false,errors:['captured response has no corresponding request occurrence']});
+  });
+
   it('rejects source byte tampering even if envelope itself remains authentic',()=>{
     const input=setup();fs.writeFileSync(path.join(input.dir,'route-snapshot.json'),'{}');
     expect(input.result().verified).toBe(false);

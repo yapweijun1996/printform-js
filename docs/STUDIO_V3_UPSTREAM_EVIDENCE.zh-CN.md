@@ -87,7 +87,7 @@ node scripts/studio-v3-g8.mjs preflight PROFILE_JSON [EVIDENCE_INDEX_JSON]
 
 - `evidenceDigest`：`digest(envelope.evidence)`；`requestIndex`：providerBodies 的零基下标。
 - `runId`：该实际执行 run；`requestId`：服务方唯一且不重复的请求 ID。
-- `requestDigest`：匹配该 provider body 的摘要及其实际 body bytes；`responseDigest`：匹配对应 `providerResponses` 的实际 response body 摘要。
+- `requestDigest`：匹配该 provider body 的摘要及其实际 body bytes；`responseDigest`：匹配对应 `providerResponses` 的实际 response body 摘要。相同请求摘要多次出现时，按原始捕获顺序一一配对。每次请求需要单独的响应记录，即使响应字节相同。缺失、多余或错配的响应记录都会被拒绝。
 - `dispatchedAt`：位于对应执行 `startedAt..endedAt`、owner 有效期及当前时间之前。
 - `snapshotDigest`：`digest(snapshot)`；`route/alias/provider/model/modelVersion/snapshotId`：逐项与固定 snapshot 完全一致；`fallbackUsed` 必须是 false。
 
