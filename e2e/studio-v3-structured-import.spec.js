@@ -23,15 +23,15 @@ async function assertPrintedValues(page,values) {
   await action(page,'preview').click();
   await expect(page.locator('#database-workbench')).toBeHidden();
   await expect(page.locator('#preview-frame')).toBeVisible();
-  // Match the existing business-form checks: inspect the current live main-world DOM, not an auxiliary locator world across srcdoc navigation.
-  const element = await page.locator('#preview-frame').elementHandle();
-  try {
-    const frame = await element.contentFrame();
-    if (!frame) throw new Error('The rendered preview iframe is detached.');
-    await frame.waitForLoadState('load',{timeout:12000});
-    const actual = await frame.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.querySelector(`[data-v3-id="${id}"]`)?.textContent.replace(/\s+/g,' ').trim() ?? null])),Object.keys(values));
-    expect(actual).toEqual(values);
-  } finally { await element.dispose(); }
+  // Inspect the actual rendered pages sent by the visible preview. Firefox may
+  // lose Playwright's frame execution context when the preview recreates srcdoc.
+  await expect.poll(()=>page.evaluate(ids=>{
+    const sheets = (window.importedFormPages ?? []).map(({html})=>new DOMParser().parseFromString(html,'text/html'));
+    return Object.fromEntries(ids.map(id=> {
+      const value = sheets.map(sheet=>sheet.querySelector(`[data-v3-id="${id}"]`)).find(Boolean);
+      return [id,value?.textContent.replace(/\s+/g,' ').trim() ?? null];
+    }));
+  },Object.keys(values))).toEqual(values);
   await page.locator('#show-database').click();
   await expect(page.locator('#database-workbench')).toBeVisible();
 }
@@ -47,6 +47,15 @@ async function stored(page) {
 }
 test.setTimeout(90000);
 test.beforeEach(async({page})=> {
+  await page.addInitScript(()=>{
+    if (window !== window.top) return;
+    window.addEventListener('message',event=>{
+      if (event.source === document.querySelector('#preview-frame')?.contentWindow &&
+          event.data?.source === 'printform-studio-v3-preview' && event.data.type === 'rendered') {
+        window.importedFormPages = event.data.payload.pages;
+      }
+    });
+  });
   page.on('dialog',dialog=>dialog.accept()); await page.goto('/studio-v3/'); await ready(page);
   await page.locator('[data-mode="data"]').click();
 });
