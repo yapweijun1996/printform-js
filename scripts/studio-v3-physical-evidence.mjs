@@ -16,6 +16,9 @@ function shape(value,keys,code) {
   if (!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).length!==keys.length || keys.some(key=>!Object.hasOwn(value,key))) fail(code);
 }
 const sameFile = (left,right) => left.dev===right.dev && left.ino===right.ino;
+function requireSingleLink(stat) {
+  if (stat.isFile() && stat.nlink!==1) fail('ARTIFACT_HARDLINK');
+}
 function pathSnapshot(base,file) {
   const relative=path.relative(base,file);
   if (!relative || relative==='..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) fail('ARTIFACT_PATH_ESCAPE');
@@ -32,6 +35,7 @@ function pathSnapshot(base,file) {
     return stat;
   });
   contained();
+  requireSingleLink(stats.at(-1));
   return stats;
 }
 function requireSnapshot(base,file,expected,opened) {
@@ -47,11 +51,13 @@ function readRegular(file,maxBytes=LIMIT,base=path.dirname(file)) {
     if (!stat.isFile() || stat.size<1 || stat.size>maxBytes) fail('ARTIFACT_SIZE_OR_TYPE');
     // Check descriptor identity and the whole path again before consuming bytes.
     if (!sameFile(expected.at(-1),stat)) fail('ARTIFACT_PATH_CHANGED');
+    requireSingleLink(stat);
     requireSnapshot(base,file,expected,stat);
     const bytes = Buffer.allocUnsafe(stat.size+1);
     let count=0,read;
     while (count<bytes.length && (read=fs.readSync(fd,bytes,count,bytes.length-count,null))>0) count+=read;
     const after=fs.fstatSync(fd);
+    requireSingleLink(after);
     if (count!==stat.size || after.size!==stat.size || after.mtimeMs!==stat.mtimeMs || after.ctimeMs!==stat.ctimeMs) fail('ARTIFACT_CHANGED_DURING_READ');
     requireSnapshot(base,file,expected,after);
     return bytes.subarray(0,count);

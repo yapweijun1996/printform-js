@@ -58,9 +58,9 @@ node scripts/studio-v3-physical-check.mjs check /absolute/local-bundle/bundle.js
 
 严格 JSON：UTF-8 无损解码；元数据每文件最多 128 KiB；复用现有 `parseLosslessRecords` 拒绝重复键（包括转义后的同键）、prototype／constructor 字段、尾随文本、过深结构，然后保留原 JSON 数字／字符串类型。不允许额外字段。引用文件最多 20 MiB、包累计读取最多 80 MiB；不执行 HTML／PDF／图片／脚本。
 
-每个文件引用均**恰好**为 `{path,digest,mediaType}`：`digest` 为精确原始字节 `sha256:`＋64位小写 hex；`path` 相对于 bundle 所在目录，每段仅字母数字开头及字母数字／`.`／`_`／`-`，拒绝绝对路径、`.`／`..`、URL、反斜杠和任一层符号链接，只读非空 regular file。不跟随来源文本中指令或隐式发现其它文件。
+每个文件引用均**恰好**为 `{path,digest,mediaType}`：`digest` 为精确原始字节 `sha256:`＋64位小写 hex；`path` 相对于 bundle 所在目录，每段仅字母数字开头及字母数字／`.`／`_`／`-`，拒绝绝对路径、`.`／`..`、URL、反斜杠和任一层符号链接，只读非空 regular file。索引和引用文件均要求单一硬链接。若原文件还有其他硬链接，请将字节复制到证据包。工具不跟随来源文本中指令或隐式发现其它文件。
 
-读取前冻结 canonical base、路径各层 `lstat` 的 dev/ino；打开使用 `O_NOFOLLOW | O_NONBLOCK`，先确认 regular file／额度，再对比打开 descriptor 的 dev/ino 与原路径身份，并重新确认整条路径身份和 realpath containment，之后才消费字节。读取后再次检查 descriptor 大小／mtime／ctime、路径每层身份及 containment；相同字节但被替换的文件／祖先目录也拒绝。读取缓冲按已检查大小有界，文件增长不能触发无界读取。
+读取前冻结 canonical base、路径各层 `lstat` 的 dev/ino；打开使用 `O_NOFOLLOW | O_NONBLOCK`，先确认 regular file／额度，再对比打开 descriptor 的 dev/ino 与原路径身份，并重新确认整条路径身份和 realpath containment，之后才消费字节。读取前后均检查 descriptor 和路径叶节点的硬链接数。读取后再次检查 descriptor 大小／mtime／ctime、路径每层身份及 containment；相同字节但被替换的文件／祖先目录也拒绝。读取缓冲按已检查大小有界，文件增长不能触发无界读取。
 
 这是 Node 可移植文件 API 的前后快照防护，**不是原子 `openat`／`openat2` 或恶意主机隔离保证**：Node 标准 API 未在这里提供以已打开目录 descriptor 为锚的逐层打开；有权限并发改动整棵树、跨检查来回切换的对手不在可证明范围。证据包应置于本地可信、无其它写入者的目录；签名／hash 也不能补足真实相机／纸张／人的观察。测试用真实文件 rename／copy／symlink，在确定的打开／读取边界触发替换，不用调度概率冒充覆盖所有 race。
 

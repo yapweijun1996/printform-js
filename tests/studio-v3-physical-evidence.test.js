@@ -68,6 +68,53 @@ describe('physical evidence consumer boundaries',()=> {
     const f=fixture(); fs.symlinkSync(os.tmpdir(),path.join(f.root,'linked')); f.bundle.source.path='linked/source.json';
     expect(f.check().errors).toContain('ARTIFACT_SYMLINK');
   });
+  it.each(['bundle.json','a.txt'])('rejects an outside-bundle hardlink for %s before reading it',filename=> {
+    const f=fixture(),index=f.save(),target=path.join(fs.realpathSync(f.root),filename);
+    const outside=fs.mkdtempSync(path.join(os.tmpdir(),'printform-physical-external-')); roots.push(outside);
+    const alias=path.join(outside,filename),open=fs.openSync,read=fs.readSync;
+    fs.linkSync(target,alias);
+    let targetFd,targetReads=0;
+    vi.spyOn(fs,'openSync').mockImplementation((name,...args)=> {
+      const fd=open(name,...args);
+      if (name===target) targetFd=fd;
+      return fd;
+    });
+    vi.spyOn(fs,'readSync').mockImplementation((fd,...args)=> {
+      if (fd===targetFd) targetReads++;
+      return read(fd,...args);
+    });
+    const result=inspectPhysicalEvidence(index,inventory);
+    expect(result).toMatchObject({status:'invalid',physicalGate:'missing',certified:false,errors:['ARTIFACT_HARDLINK']});
+    expect(targetReads).toBe(0);
+    fs.unlinkSync(target);
+    fs.copyFileSync(alias,target);
+    expect(inspectPhysicalEvidence(index,inventory)).toMatchObject({status:'supplied-for-independent-review',certified:false});
+  });
+  it.each(['open','read'])('rejects a hardlink added during %s',phase=> {
+    const f=fixture(),index=f.save(),target=path.join(fs.realpathSync(f.root),'a.txt');
+    const outside=fs.mkdtempSync(path.join(os.tmpdir(),'printform-physical-external-')); roots.push(outside);
+    const alias=path.join(outside,'a.txt'),open=fs.openSync,read=fs.readSync;
+    let targetFd,linked=false,targetReads=0;
+    vi.spyOn(fs,'openSync').mockImplementation((name,...args)=> {
+      const fd=open(name,...args);
+      if (name===target) {
+        targetFd=fd;
+        if (phase==='open') { fs.linkSync(target,alias); linked=true; }
+      }
+      return fd;
+    });
+    vi.spyOn(fs,'readSync').mockImplementation((fd,...args)=> {
+      const count=read(fd,...args);
+      if (fd===targetFd) {
+        targetReads++;
+        if (phase==='read' && !linked) { fs.linkSync(target,alias); linked=true; }
+      }
+      return count;
+    });
+    expect(inspectPhysicalEvidence(index,inventory)).toMatchObject({status:'invalid',physicalGate:'missing',certified:false,errors:['ARTIFACT_HARDLINK']});
+    expect(linked).toBe(true);
+    if (phase==='open') expect(targetReads).toBe(0);
+  });
   it.each(['file','ancestor'])('rejects %s replacement between lstat and open before reading replacement bytes',mode=> {
     const f=fixture(),foreign=fixture(),base=fs.realpathSync(f.root),other=fs.realpathSync(foreign.root);
     fs.mkdirSync(path.join(base,'nested'));
