@@ -1,4 +1,4 @@
-import {describe,it,expect,beforeAll,afterAll} from 'vitest';
+import {describe,it,expect,beforeAll,afterAll,vi} from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -42,6 +42,14 @@ describe('Studio v3 baseline recording (KNO-05)', () => {
     await reject({[`/studio-v3/releases/${REL}/agent/agent-manifest.json`]:{...manifest(),entries:[{id:'x',hash:'short'}]}},'Invalid published agent baseline');
     await reject({'/studio-v3/agent-index/dependency-index.json':{release:'d'.repeat(40)}},'retry after the deployment settles');
     expect(() => readReleaseState(fs.mkdtempSync(path.join(temp,'empty-')))).toThrow('record-studio-v3-agent-baseline');
+  });
+  it('checks the expected commit before fetching a complete but older release', async () => {
+    const fetcher = vi.fn(site(routes()));
+    await expect(fetchPublishedBaseline({site:SITE,fetcher,expectedRelease:'1234567'})).rejects.toThrow('full lowercase commit SHA');
+    expect(fetcher).not.toHaveBeenCalled();
+    await expect(fetchPublishedBaseline({site:SITE,fetcher,expectedRelease:'d'.repeat(40)})).rejects.toThrow('does not match expected release');
+    expect(fetcher).toHaveBeenCalledExactlyOnceWith(`${SITE}/studio-v3/`,expect.objectContaining({cache:'no-store'}));
+    await expect(fetchPublishedBaseline({site:SITE,fetcher,expectedRelease:REL})).resolves.toMatchObject({release:REL});
   });
 });
 

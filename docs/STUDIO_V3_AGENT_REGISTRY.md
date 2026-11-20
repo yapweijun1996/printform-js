@@ -113,7 +113,7 @@ The first baseline was the live release `11cab7b`, which predated the dependency
 Runbook:
 
 1. Changing agent code, guides, contracts or their evaluations: run `node scripts/draft-studio-v3-agent-review.mjs`, which prints skeleton dispositions bound to the current digests with causes and impacts. Decide `updated` or `no-impact`, add a justification and evidence, and put them in `review.json` in the same PR.
-2. After a successful Pages deployment: run `node scripts/record-studio-v3-agent-baseline.mjs` and commit the result. It reads the release named by the live page, its manifest and, when present, the dependency index, and fails closed on any mismatch, including a deployment in flight. It writes nothing on failure and resets the dispositions to the new baseline. The live site only switches after a successful deployment, so a failed deployment cannot advance the baseline.
+2. After a successful Pages deployment, run `node scripts/record-studio-v3-agent-baseline.mjs --expect-release COMMIT_SHA` and commit the result. Use the completed run's full commit SHA. The recorder checks the live page, manifest and dependency index. A stale CDN response, partial deployment or mismatched release leaves the recorded baseline untouched. A verified release resets the review dispositions.
 3. Never edit digests by hand to silence the gate; regenerate the draft instead.
 
 ## Version binding and offline operation

@@ -1,15 +1,17 @@
 // Records the last successful publication as the release-review baseline (KNO-05).
 // The live GitHub Pages site only switches after a deployment succeeds, so a failed deployment cannot advance it.
 // Run after a successful deploy, then commit docs/studio-v3-agent-release/:
-//   node scripts/record-studio-v3-agent-baseline.mjs [--site https://<owner>.github.io/<repo>]
+//   node scripts/record-studio-v3-agent-baseline.mjs --expect-release COMMIT_SHA [--site URL]
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { capabilityChanges } from './generate-studio-v3-agent.mjs';
 import { RELEASE_DIR } from './studio-v3-agent-review.mjs';
 
 export const DEFAULT_SITE = 'https://yapweijun1996.github.io/printform-js';
 const RELEASE = /<meta name="printform-assets" content="\.\/releases\/([a-f0-9]{40})\/">/;
+const COMMIT_SHA = /^[a-f0-9]{40}$/;
 
 async function getText(fetcher,url,{optional = false} = {}) {
   const response = await fetcher(url,{cache:'no-store',signal:AbortSignal.timeout(20000)});
@@ -19,10 +21,14 @@ async function getText(fetcher,url,{optional = false} = {}) {
 }
 
 // Fetches and validates everything first; returns the files to write. Throws (writing nothing) on any inconsistency.
-export async function fetchPublishedBaseline({site = DEFAULT_SITE,fetcher = globalThis.fetch} = {}) {
+export async function fetchPublishedBaseline({site = DEFAULT_SITE,fetcher = globalThis.fetch,expectedRelease} = {}) {
+  if (expectedRelease !== undefined && !COMMIT_SHA.test(expectedRelease)) throw new Error('Expected release must be a full lowercase commit SHA.');
   const page = await getText(fetcher,`${site}/studio-v3/`);
   const release = RELEASE.exec(page)?.[1];
   if (!release) throw new Error('The live Studio v3 page does not name an immutable release.');
+  if (expectedRelease !== undefined && release !== expectedRelease) {
+    throw new Error(`Live Studio v3 release ${release} does not match expected release ${expectedRelease}.`);
+  }
   const manifest = JSON.parse(await getText(fetcher,`${site}/studio-v3/releases/${release}/agent/agent-manifest.json`));
   if (manifest.release !== release) throw new Error(`Live manifest release ${manifest.release} does not match page release ${release}.`);
   capabilityChanges(manifest,manifest); // validates the published shape
@@ -39,13 +45,14 @@ export function writeBaseline({manifest,index,review},root = process.cwd()) {
   for (const [name,value] of Object.entries(files)) {
     const target = path.join(dir,name);
     if (value === null) { fs.rmSync(target,{force:true}); continue; }
-    fs.writeFileSync(`${target}.tmp`,`${JSON.stringify(value,null,1)}\n`); fs.renameSync(`${target}.tmp`,target);
+    const indent = name === 'baseline-index.json' ? 0 : 1;
+    fs.writeFileSync(`${target}.tmp`,`${JSON.stringify(value,null,indent)}\n`); fs.renameSync(`${target}.tmp`,target);
   }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), site = args.includes('--site') ? args[args.indexOf('--site') + 1] : DEFAULT_SITE;
-  const result = await fetchPublishedBaseline({site});
+  const {values} = parseArgs({options:{site:{type:'string'},'expect-release':{type:'string'}}});
+  const result = await fetchPublishedBaseline({site:values.site,expectedRelease:values['expect-release']});
   writeBaseline(result);
   console.log(`Recorded Studio v3 agent baseline ${result.release.slice(0,12)} (${result.manifest.entries.length} entries${result.index ? ', with dependency index' : ', no dependency index'}). Dispositions were reset.`);
 }
