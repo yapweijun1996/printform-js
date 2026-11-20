@@ -1,66 +1,8 @@
 {
  "version": 1,
  "baseline": {
-  "release": "8e0a3d8e6c30157a2eb1782b4a6415bb96d0c0e3",
-  "packageHash": "b6ad57eea8078d942fe00a23d2e5c9f2e65174e0cf6088c88fafaf0a4ba003aa"
+  "release": "7cc40c07a7a895e21b571c162d3aad3075919a44",
+  "packageHash": "5b242061f97ea61ee68bf14415f70505404194367f934063583df922df48b86f"
  },
- "dispositions": [
-  {
-   "entries": {
-    "printform.agent.get_capabilities": "854b179b1369491696a4e561e3e1ae6168db8839e9cae13217c51b6cac0e0b1b",
-    "printform.agent.read_skill": "4c33e345f16ec665f9a12fa882045433b175809ee12aca0d1711bf21f2afb765",
-    "printform.agent.get_context": "0e3a6a1b5df9ad877b9766004b3c28ececa22525b14ac622381544602f29250d",
-    "printform.agent.apply_operations": "efe9456151c548ee2fffdb2ea11877e66b9d15c5c78acd5200e8556ce94154ce",
-    "printform.agent.inspect_draft": "63f2bebdd9730c0b9369c7cd5b65f4ff836cfb7ea3b2e8f43de53918cb0169ad",
-    "printform.agent.observe_context": "940cbe6ce8ebe1e4eda7ea4397c35d82d321758a04bd1756069e541cfcf2f254",
-    "printform.agent.retrieve_page": "e568837b64ee5705c0aa89449a4c642005b496d9f3bdf4ec26ce649bce5951b4",
-    "printform.agent.validate_scenarios": "b3071a0fa7dbb64a3e3b6348faf44ad29583923c6706216e51f6fecc6300d564",
-    "printform.agent.undo_step": "4aed448def38133f5c2b972a20859e6913cf20e7bfcd3e79034ec67c2bc5c2f6",
-    "printform.agent.take_notes": "bddb0331856d340afe35d9bb248e564b94bc518639accb5e3197440aecd39f32",
-    "printform.agent.finish": "c8fa42f1c009d3327eda1cc2faad168a25ac71cb273150c90f534549b8343547",
-    "printform.agent.finish_answer": "84350d3762abc8a81636e7dc5a7c469bf65b1d02cd44ebf7f8f894196d821078",
-    "printform.agent.report_blocked": "b3efb4d0dce4d39c68f4f33614e13a706a8c82e6cd45bb469e850d5a67ec07ed",
-    "printform.agent.workspace_list": "01c7bec07c472b6daace4e864f6481440e8ab7689202d1c0e11f5a46e31853c3",
-    "printform.agent.workspace_read": "c44332be21b5634804984945552aed7e2645a5390acd2947b3641b31b75672a6",
-    "printform.agent.workspace_search": "0d3e6c60f24b9760ad90a5395ed15fcd42eca749fa98c214c0c72aa1d34dc67a",
-    "printform.agent.workspace_write": "577c0c1cbcc1b6aa20ef1ff49d15a93734697cd278049c77215e561960d06aba",
-    "printform.agent.workspace_patch": "d8b60152f3827ce19fcf2badf3f5febad93bda359e8b62cd7e4f812afc3022de",
-    "printform.agent.workspace_run": "61c290ae1b48afa48b591484dd8aada97ee0010eb05cf3beb58d5837376b7ffe",
-    "printform.agent.workspace_diff": "1ea46846ef43f2fb4fa32c1c72ee9a14e2468a1ed4aa05d840d6119e7eebfb63",
-    "printform.agent.workspace_artifacts": "4d152e5953b7a93215f9f5795e9ac570a0b8dcc35a9505c732a569d1806f3c76",
-    "printform.agent.import_artifact": "a3639ef9828b6b981150d3aef5fed4c01da5278682d0cc74297937f93e42d778",
-    "printform.authoring.set_element_style": "0703901146462aa942a201cff37c5cfbd787f162366ada2bc9781d5c538b5346",
-    "printform.authoring.set_style": "8c4cc2de225ed6ac8e67d672178862067f6fb52d36134436b7b5cafd516a181e",
-    "printform.authoring.set_table_style": "bca133a1dace239e2766109c442c2646d90a8af161a71aa565f4be57c98e5299",
-    "printform.authoring.set_field": "5aaee316d280ad7ae8696a44c509f477e4cdc1057e6ed0626735ca8a74e425dc",
-    "printform.authoring.add_field": "da42b9012b4bc77f65fbe8f32c11f78a3b0eeb347905acb0818ecf7bf2c93b00",
-    "printform.authoring.remove_field": "123b4c72d3708f175b4af3f2d9a42549fb4380ec197aa6089a0439e9d704a55e",
-    "printform.authoring.reorder_fields": "07e3a155ec407bf132f14541c5c727f449c87c6f47a9fddcab3a7d4a519efc5f",
-    "printform.authoring.set_section": "49198e169a1f405ebdca83215e05d892bc6c86b491e4d889626c273b5331fde8",
-    "printform.authoring.reorder_sections": "57a88a328b26274460e6fa0a1e39ed69d565489454427ccbae8d7d6bbe7b424e",
-    "printform.authoring.set_page": "70798262271147d73eb2260c40b5d237b50d1d0baaacfeb76e0d36b4bdcf9cb9",
-    "printform.authoring.set_logo": "2282953158b9a0d8be127260b5d562981be04ac769a3cc49a352927ac215c7cc",
-    "printform.authoring.set_collection": "fde88c800830ddbb52a7ccec872e40838f8b926b61c1e0a4bb38752f63f3d3df",
-    "printform.authoring.set_heading": "084ff9786a40d72852df3ffd2caf82a315acb3c05f0e5ea6051e4997cdd62334",
-    "printform.knowledge.form-authoring": "fa6bc8201799a7b6a21fc7586708ee0578e20901e39e17605d6b3d8e4d8afbb0",
-    "printform.knowledge.source-workspace": "9343a8e003733515a98c099d477fe3d19db0bdaa2c125e9cc9560612662a8dfe"
-   },
-   "disposition": "updated",
-   "justification": "The import parser retains its existing default depth, node and byte limits. G8 explicitly selects a bounded deeper parse for real provider tool catalogs and checks unambiguous JSON, observed route and frozen model alias before counting verified evidence.",
-   "evidence": [
-    "studio-v3/structured-import-parser.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.knowledge.general-print-authoring": "0365e731b7444a3721e6a0d249512157fc5f20eb3cb67c90022f0faed6a5e8bc"
-   },
-   "disposition": "updated",
-   "justification": "The native title edit retains a staged CSV mapping only for the same current import and revision. It clears the prior preview, preserves stale import rejection and requires fresh explicit Preview and Apply. The import parser retains its existing default depth, node and byte limits. G8 explicitly selects a bounded deeper parse for real provider tool catalogs and checks unambiguous JSON, observed route and frozen model alias before counting verified evidence.",
-   "evidence": [
-    "studio-v3/controller.js",
-    "studio-v3/structured-import-parser.js"
-   ]
-  }
- ]
+ "dispositions": []
 }
