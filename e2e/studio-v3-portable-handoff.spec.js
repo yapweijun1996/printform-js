@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { clickHeaderAction } from './header-action.js';
@@ -93,6 +94,42 @@ async function checkPdf(bytes,expected) {
   } finally { await loading.destroy(); }
 }
 
+async function launchOfflineWebKit(browserType,info) {
+  const args = ['--user','--map-current-user','--net'];
+  if (process.platform !== 'linux' || spawnSync('unshare',[...args,'--','true'],{stdio:'ignore',timeout:2000}).status !== 0) {
+    info.annotations.push({type:'native-file-control',description:'Linux WebKit needs an available unprivileged network namespace for the offline file check.'});
+    return null;
+  }
+  // WebKit's browser offline mode also rejects native file navigation. Isolate the
+  // whole browser at the kernel boundary while leaving its file support enabled.
+  const executablePath = info.outputPath('webkit-network-namespace');
+  await writeFile(executablePath,`#!/bin/sh\nexec unshare ${args.join(' ')} -- "$PRINTFORM_E2E_WEBKIT_BINARY" "$@"\n`,{mode:0o700});
+  return browserType.launch({executablePath,env:{...process.env,PRINTFORM_E2E_WEBKIT_BINARY:browserType.executablePath()}});
+}
+
+async function checkNativeFile(browser,kind,html,baseline,saved,revised,studioUrl) {
+  const context = await browser.newContext({offline:kind !== 'webkit'});
+  try {
+    await context.addInitScript(observeNativePaper);
+    const filePage = await context.newPage(), outbound = [];
+    filePage.on('request',request=> { if (/^(?:http|ws)s?:/.test(request.url())) outbound.push(request.url()); });
+    const fileUrl = pathToFileURL(html.path).href;
+    await checkStandalone(filePage,fileUrl,baseline,saved,revised);
+    expect(filePage.url()).toBe(fileUrl);
+    expect(await readFile(html.path)).toEqual(html.buffer);
+    expect(outbound).toEqual([]);
+    if (kind === 'chromium') {
+      const pdf = await filePage.pdf({preferCSSPageSize:true,printBackground:true});
+      await checkPdf(pdf,baseline);
+    } else if (kind === 'webkit') {
+      // The normal fixture reached this same Studio server. The file context must
+      // fail its real browser connection to it without request routing or stubs.
+      const canary = await context.newPage();
+      await expect(canary.goto(studioUrl,{waitUntil:'commit',timeout:5000})).rejects.toThrow(/could not connect|network is unreachable|connection refused/i);
+    }
+  } finally { await context.close(); }
+}
+
 test('preserves A4 preset, reviewed metadata, exact source rows and Undo through native portable handoff',async({page,browser,browserName},info)=>{
   test.setTimeout(120000);
   const source = demoStarterRecords('SalesInvoice').find(record=>record.data.demo.scenario === 'campus');
@@ -163,21 +200,10 @@ test('preserves A4 preset, reviewed metadata, exact source rows and Undo through
     expect(unexpected).toEqual([]);
   } finally { await isolated.close(); }
 
-  // The bundled Linux WebKit reports an internal error on offline file navigation.
-  if (browserName !== 'webkit') {
-    const offline = await browser.newContext({offline:true});
-    try {
-      await offline.addInitScript(observeNativePaper);
-      const filePage = await offline.newPage(), outbound = [];
-      filePage.on('request',request=> { if (/^https?:/.test(request.url())) outbound.push(request.url()); });
-      // Preserve the original downloaded bytes for the native file-origin test.
-      await checkStandalone(filePage,pathToFileURL(html.path).href,baseline,saved,revised);
-      expect(outbound).toEqual([]);
-      if (browserName === 'chromium') {
-        const pdf = await filePage.pdf({preferCSSPageSize:true,printBackground:true});
-        await checkPdf(pdf,baseline);
-      }
-    } finally { await offline.close(); }
+  const offlineBrowser = browserName === 'webkit' ? await launchOfflineWebKit(browser.browserType(),info) : browser;
+  if (offlineBrowser) {
+    try { await checkNativeFile(offlineBrowser,browserName,html,baseline,saved,revised,page.url()); }
+    finally { if (offlineBrowser !== browser) await offlineBrowser.close(); }
   }
 
   await clickHeaderAction(page,'undo');
