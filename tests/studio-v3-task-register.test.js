@@ -193,4 +193,16 @@ describe('Studio v3 CA-09 task register', () => {
   it('parses quoted CSV cells with commas, quotes and CRLF', () => {
     expect(parseCsv('a,b\r\n"x, ""y""",z\r\n').rows).toEqual([{a:'x, "y"',b:'z'}]);
   });
+
+  it('preserves multiline quoted values and deliberate empty cells without a final newline', () => {
+    expect(parseCsv('a,b\r\n"x\r\ny",""').rows).toEqual([{a:'x\r\ny',b:''}]);
+  });
+  it.each([
+    ['a,b\nx,y,z','record 2 must have 2 columns (found 3)'],
+    ['a,b\nx','record 2 must have 2 columns (found 1)'],
+    ['a,b\n""','record 2 must have 2 columns (found 1)'],
+    ['a,b\n"x,y','record 2 has an unterminated quoted field']
+  ])('rejects malformed CSV record width or unfinished quoting', (source,reason) => {
+    expect(()=>parseCsv(source,'test.csv')).toThrow(`test.csv: ${reason}`);
+  });
 });

@@ -91,6 +91,20 @@ describe('G8 CLI explicit corpus/register scope',()=>{
     expect(creation.stderr).toContain('T-qa-07: frozen register row missing from corpus');
   });
 
+  it('rejects undeclared columns in a selected scoring register before creating a profile',()=>{
+    const pair=isolatedPair(), attempts=path.join(pair.register,'attempts.csv');
+    const historical=fs.readFileSync('docs/studio-v3-task-register/attempts.csv','utf8').split('\n');
+    fs.writeFileSync(attempts,`${historical[0]}\n${historical[1]},UNDECLARED_CELL\n`);
+    const validation=run('validate',...pair.flags);
+    expect(validation.status).toBe(1);
+    expect(validation.stdout).toBe('');
+    expect(validation.stderr).toContain('attempts.csv: record 2 must have 18 columns (found 19)');
+    const creation=run('profile','unused',...pair.flags);
+    expect(creation.status).toBe(1);
+    expect(creation.stdout).toBe('');
+    expect(creation.stderr).toContain('attempts.csv: record 2 must have 18 columns (found 19)');
+  });
+
   it('threads the selected pair into profile creation, input, evidence evaluation and preflight',()=>{
     const pair=isolatedPair();
     const identity=jsonFile(pair.root,'identity.json',profile);

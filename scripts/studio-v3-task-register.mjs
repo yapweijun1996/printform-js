@@ -18,7 +18,7 @@ const EXECUTION_FIELDS = ['source_commit','runner_image','provider_route','model
 const EXECUTION_DIGESTS = ['app_digest','knowledge_digest','budgets_digest'];
 const PROFILE_IDENTITY = [...EXECUTION_FIELDS,...EXECUTION_DIGESTS];
 
-export function parseCsv(text) {
+export function parseCsv(text,label = 'CSV') {
   const rows = []; let row = [], cell = '', quoted = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
@@ -28,13 +28,16 @@ export function parseCsv(text) {
     else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
     else if (c !== '\r') cell += c;
   }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
+  if (quoted) throw new Error(`${label}: record ${rows.length+1} has an unterminated quoted field`);
+  if (text.length && !text.endsWith('\n')) { row.push(cell); rows.push(row); }
   const [header = [],...body] = rows;
-  return {header,rows:body.map(values => Object.fromEntries(header.map((name,i) => [name,values[i] ?? ''])))};
+  const mismatch = body.findIndex(values => values.length !== header.length);
+  if (mismatch !== -1) throw new Error(`${label}: record ${mismatch+2} must have ${header.length} columns (found ${body[mismatch].length})`);
+  return {header,rows:body.map(values => Object.fromEntries(header.map((name,i) => [name,values[i]])))};
 }
 
 export function readRegister(dir = 'docs/studio-v3-task-register') {
-  const load = name => parseCsv(fs.readFileSync(`${dir}/${name}`,'utf8'));
+  const load = name => parseCsv(fs.readFileSync(`${dir}/${name}`,'utf8'),name);
   return {tasks:load('tasks.csv'),attempts:load('attempts.csv')};
 }
 
