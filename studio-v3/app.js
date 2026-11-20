@@ -234,7 +234,7 @@ document.addEventListener('click', e => {
     const name = control.dataset.action;
     if (name === 'cancel-draft') { drafts.discard(control.closest('[data-form]')); return; }
     const perform = () => ['validate-all','rerender','new','cancel-new','open','preview','next','previous','properties','binding','go-data','go-style'].includes(name) ? action(name).catch(e=>status(e.message)) : name === 'review-drafts' ? undefined : queueEdit(() => action(name));
-    if (['properties','binding','go-data','go-style','save','export','share','save-share','export-share','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
+    if (['properties','binding','go-data','go-style','save','export','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
   }
 });
 document.addEventListener('submit', e => {

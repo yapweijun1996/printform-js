@@ -86,3 +86,18 @@ it.each(['revision', 'document', 'layout', 'validation'])('discards stale prepar
   expect(download).toHaveBeenCalledExactlyOnceWith('<title>Current export</title>', expect.stringMatching(/\.html$/), 'text/html');
   expect(current.installStatus).toHaveBeenLastCalledWith(expect.stringContaining('Standalone HTML download requested'));
 });
+
+
+it('discards a prepared share HTML when the committed paper changes before dispatch', async () => {
+  const fixture = setup();
+  let finish;
+  exportProject.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+  const sharing = fixture.run('export-share');
+  fixture.state.report = {};
+  finish({html:'<title>Stale redacted share</title>'});
+  await expect(sharing).rejects.toThrow('form changed');
+  expect(download).not.toHaveBeenCalled();
+  expect(fixture.dialog.close).not.toHaveBeenCalled();
+  expect(fixture.installStatus).not.toHaveBeenCalled();
+  expect(fixture.state.dirty).toBe(true);
+});
