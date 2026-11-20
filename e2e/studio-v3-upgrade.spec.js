@@ -23,7 +23,18 @@ async function appBuild(page,revision) {
     navigator.serviceWorker.controller?.postMessage({type:'VERSION'},[channel.port2]);
   }))).toBe(revision);
 }
-async function open(page,url) { await keepStructureOpen(page); await page.goto(url); await ready(page); await controlled(page); }
+async function open(page,url) {
+  await keepStructureOpen(page);
+  await page.addInitScript(()=>window.addEventListener('message',event=> {
+    if (event.source !== document.querySelector('#preview-frame')?.contentWindow ||
+        event.data?.source !== 'printform-studio-v3-preview' || event.data.type !== 'rendered') return;
+    const markup = event.data.payload.pages[0]?.html;
+    const paper = new DOMParser().parseFromString(markup || '','text/html');
+    window.upgradeItemHeader = paper.querySelectorAll('.prowheader_processed th')[1]?.textContent;
+  }));
+  await page.goto(url); await ready(page); await controlled(page);
+}
+const itemHeader = page=>expect.poll(()=>page.evaluate(()=>window.upgradeItemHeader));
 async function showUpdate(page) { if (page.viewportSize().width<=680 && !await page.locator('#mobile-actions').isVisible()) await page.locator('#mobile-more').click(); }
 async function offer(page) {
   const button = page.locator('#update-button'), dialog = page.locator('#update-dialog');
@@ -66,10 +77,11 @@ for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mo
       await expect(page.locator('#revision')).toHaveText(revision); await expect(page.locator('#zoom')).toHaveValue('0.75');
       await expect(page.locator('#draft-state')).toContainText('1 unapplied');
       await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Synthetic unapplied heading');
+      await itemHeader(page).toBe('Synthetic saved heading');
       expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
       await page.screenshot({path:info.outputPath(`upgrade-${name}.png`)});
       await page.locator('[data-action=undo]').click(); await page.locator('[data-draft-choice=discard]').click(); await ready(page);
-      await expect(page.frameLocator('#preview-frame').locator('.prowheader_processed').first().locator('th').nth(1)).toHaveText('Item code');
+      await itemHeader(page).toBe('Item code');
       // The other tab holds no unsaved work, so it updates by itself once the new build is active.
       await version(other,NEXT); await expect(other.locator('#revision')).toHaveText('r0');
       await appBuild(other,NEXT);
@@ -171,7 +183,7 @@ test('rollback to a previous verified shell preserves committed edits and an una
     await expect(page.locator('#revision')).toHaveText(revision);
     await expect(label).toHaveValue('Unapplied item code');
     await expect(page.locator('#draft-state')).toContainText('1 unapplied');
-    await expect(page.frameLocator('#preview-frame').locator('.prowheader_processed').first().locator('th').nth(1)).toHaveText('Saved item code');
+    await itemHeader(page).toBe('Saved item code');
     expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
   } finally { await server.close(); }
 });

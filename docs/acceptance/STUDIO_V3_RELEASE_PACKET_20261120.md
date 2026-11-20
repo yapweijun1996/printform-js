@@ -45,4 +45,12 @@ PRINTFORM_ROLLBACK_NEXT=/path/to/481e12e/site-dist \
 npx playwright test e2e/studio-v3-upgrade.spec.js -g 'rollback to a previous' --workers=1 --retries=0
 ```
 
+### Transition across companion identities
+
+The next drill used `481e12e` and `6e9fd0efaffabdca36ec55b579fc02cdc45e5b37`, with companion source hashes `b6a89aa87b2f8ae3f17adc436fed6e47ef22c7862599bc3a76b5c509b69ef23b` and `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b` respectively. Fresh builds matched each release's public app, worker, manifest and dependency-index fingerprints. Each worker's 25 shell entries were independently verified. The newer app SHA-256 is `10ad205b48da9c9fa502d32b0ff702eacebf6c87033699d9c6fd9cbb6c1f8146` and its worker SHA-256 is `e78b7f5977688afc4556ac5b21970e41641e675c855e5a055ded2fa75d4c95e8`.
+
+The same three browsers passed both the desktop offline upgrade and the reverse rollback, 6/6 in one serial run with zero retries. The upgrade checks Stay, offline Keep, reconnect, restored draft and revision, exact committed header before Undo, rendered header after Undo, zoom, unchanged IndexedDB and automatic activation in the second clean tab. The initial five-pass run stopped at a direct Firefox iframe read after Undo, with Export already enabled. Both paths now assert the header in the native rendered page reported by the existing preview bridge. The original timeout and failing trace are preserved. This drill served public shell bytes at a loopback origin. It did not roll back the public site or switch an active source workspace between companion images.
+
+Use the same Playwright command with the `481e12e` and `6e9fd0e` roots and select `rollback to a previous|two real builds: desktop` to reproduce both paths.
+
 For a supported deployment rollback, record the current and target artifact identities and the runner compatibility before republishing the previously verified bundle. Keep the existing service-worker and recovery workflow in place. If an unsaved-work dialog appears, choose Keep to preserve the draft, or Stay to defer the switch. Verify the active revision, data and pending edits after reload. Use the existing recovery backup path if automatic restoration reports incompatibility. Browser storage deletion is not part of the drill.
