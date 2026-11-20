@@ -44,7 +44,7 @@
     <button data-ai-toggle data-icon="sparkles" aria-expanded="false" aria-controls="ai-panel">AI editor</button>
     <button data-action="preview" data-icon="eye" aria-pressed="false">Preview</button>
   </nav>
-  <div id="local-new-form-origin" hidden><button type="button" data-new-form-return>Return to original form</button><span data-new-form-return-status role="status"></span></div>
+  <div id="local-new-form-origin" hidden><button type="button" data-new-form-return>Return to original form</button><button type="button" class="primary" data-new-form-adopt hidden>Adopt this form</button><span data-new-form-return-status role="status"></span></div>
   <main class="studio-grid">
     <aside id="left-panel" class="side-panel" aria-label="Template structure"></aside>
     <section class="paper-workspace" aria-label="Paper preview">
@@ -101,7 +101,7 @@
     <p>Your original form and its edits will stay in this tab. The new tab starts with fictional data.</p>
     <div class="new-form-paper" tabindex="0" aria-label="Scrollable new form preview"><iframe title="New form paper preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe></div>
     <p data-new-form-status role="status"></p>
-    <div class="draft-dialog-actions"><button type="button" data-new-form-cancel autofocus>Cancel</button><a class="primary" data-new-form-apply target="_blank" rel="noopener noreferrer" hidden>Apply &amp; open in new tab</a></div>
+    <div class="draft-dialog-actions"><button type="button" data-new-form-cancel autofocus>Cancel</button><a class="primary" data-new-form-apply target="_blank" rel="noopener noreferrer" hidden>Apply &amp; open in new tab</a><a data-new-form-refine target="_blank" rel="noopener noreferrer" hidden>Refine in draft tab</a></div>
   </dialog>
   <dialog id="fictional-note-dialog" aria-labelledby="fictional-note-heading">
     <h2 id="fictional-note-heading">Review fictional note</h2>

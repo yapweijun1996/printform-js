@@ -1,6 +1,7 @@
 import { newProject } from './model.js';
 import { PaperPreview } from './preview.js';
 import { inspectProject } from './validation.js';
+import { setupNewFormDraft } from './new-form-draft.js';
 import { datasetTitleFor } from './database-model.js';
 
 const STARTERS = Object.freeze({blank:'Blank form',invoice:'Invoice',purchase:'Purchase order',delivery:'Delivery note'});
@@ -18,7 +19,9 @@ export function readNewFormOpening(hash, build) {
   if (!params.has('new-form')) return null;
   const kind = params.get('new-form'), id = params.get('document');
   if (!Object.hasOwn(STARTERS,kind) || !DOCUMENT_ID.test(id) || params.get('build') !== build) return {blocked:true};
-  return {kind,id};
+  const mode = params.get('mode');
+  if (mode !== null && mode !== 'draft') return {blocked:true};
+  return mode === 'draft' ? {kind,id,draft:true} : {kind,id};
 }
 
 function createStarter(kind, id) {
@@ -28,13 +31,15 @@ function createStarter(kind, id) {
   return project;
 }
 
-export function setupNewFormWorkspace({getBus,pending,root=document,host=window}) {
+export function setupNewFormWorkspace({getBus,pending,adopt,root=document,host=window}) {
   const dialog = root.querySelector('#local-new-form-dialog'), apply = dialog.querySelector('[data-new-form-apply]');
+  const refine = dialog.querySelector('[data-new-form-refine]');
   const prompt = dialog.querySelector('[data-new-form-status]'), frame = dialog.querySelector('iframe');
   const build = root.querySelector('meta[name=printform-source-revision]').content;
   const stored = host.history.state?.studioNewForm;
   const prior = Object.hasOwn(STARTERS,stored?.kind) && DOCUMENT_ID.test(stored?.id) ? stored : null;
-  const token = readNewFormOpening(host.location.hash,build), opening = prior || token;
+  const token = readNewFormOpening(host.location.hash,build);
+  let opening = prior || token;
   // Consume the launch fragment once. Only the fictional recipe lives in the
   // browser history entry so reload/update recovery stays scoped to this tab.
   if (token && !opening.blocked) {
@@ -43,8 +48,18 @@ export function setupNewFormWorkspace({getBus,pending,root=document,host=window}
   const origin = root.querySelector('#local-new-form-origin'), notice = origin.querySelector('[data-new-form-return-status]');
   const back = origin.querySelector('[data-new-form-return]');
   let prepared, renderer;
+  const seed = opening && !opening.blocked ? createStarter(opening.kind,opening.id) : null;
+  const draft = setupNewFormDraft({root,host,current:()=>opening,verify:project=> {
+    if (!seed || project.manifest.documentId !== seed.manifest.documentId || project.manifest.localImport ||
+        project.studioV3Session?.source?.kind !== 'builtin-demo' || project.studioV3Session?.database ||
+        project.manifest.studioV3.assets?.length || JSON.stringify(project.sampleData) !== JSON.stringify(seed.sampleData) ||
+        JSON.stringify(project.schema) !== JSON.stringify(seed.schema)) throw new Error('This draft requires its original fictional starter data and has no imported assets.');
+  },adopt:async ({accept,...context})=> {
+    await adopt({...context,accept:()=>{ opening = accept(); draft.sync(); }});
+  }});
 
   if (opening) origin.hidden = false;
+  draft.sync();
   back.addEventListener('click',()=> {
     if (!opening?.blocked && pending()) {
       notice.textContent = 'Save or resolve unapplied work before closing, or switch browser tabs to keep both forms.';
@@ -58,28 +73,30 @@ export function setupNewFormWorkspace({getBus,pending,root=document,host=window}
   dialog.addEventListener('close',()=> {
     prepared = null;
     renderer?.cancel();
-    apply.hidden = true;
+    apply.hidden = true; refine.hidden = true;
     frame.srcdoc = '';
   });
-  apply.addEventListener('click',event=> {
+  const launch = event=> {
     const context = getBus();
     if (!prepared?.accepted || context !== prepared.bus || context.revision !== prepared.revision) {
       event.preventDefault();
-      apply.hidden = true;
+      apply.hidden = true; refine.hidden = true;
       prompt.textContent = 'The original form changed. Cancel and prepare a fresh preview.';
       return;
     }
     dialog.close();
-  });
+  };
+  apply.addEventListener('click',launch); refine.addEventListener('click',launch);
 
   async function prepare(command) {
+    if (draft.active()) throw new Error('Adopt this draft first, or start another from your original Studio tab.');
     if (dialog.open) return;
     const bus = getBus(), project = createStarter(command.kind);
     const ticket = {bus,revision:bus.revision,accepted:false};
     prepared = ticket;
     dialog.querySelector('h2').textContent = `Preview new ${STARTERS[command.kind].toLowerCase()}`;
     prompt.textContent = 'Checking the fictional starter…';
-    apply.hidden = true;
+    apply.hidden = true; refine.hidden = true;
     dialog.showModal();
     renderer ||= new PaperPreview(frame,()=> {},()=> {});
     const report = await renderer.render(project);
@@ -92,14 +109,22 @@ export function setupNewFormWorkspace({getBus,pending,root=document,host=window}
     const url = new URL(host.location.href);
     url.hash = new URLSearchParams({'new-form':command.kind,document:project.manifest.documentId,build}).toString();
     apply.href = url.href;
+    url.hash += '&mode=draft'; refine.href = url.href;
     ticket.accepted = true;
     const {logicalPages,rows} = quality.metrics;
     prompt.textContent = `Preview passed · ${rows} printed rows · ${logicalPages} page(s).`;
-    apply.hidden = false;
+    apply.hidden = false; refine.hidden = false;
   }
 
-  return {prepare,
-    initial:opening && !opening.blocked ? ()=>({project:createStarter(opening.kind,opening.id),reference:null}) : null,
+  return {prepare, privateDraft:draft.active, blockedAction:draft.blockedAction, assertFictional:draft.verify,
+    async start({initialize,defaultProject,install,restore,mobile}) {
+      if (opening?.blocked) return;
+      if (!draft.active()) await initialize();
+      const next = seed ? {project:structuredClone(seed),reference:null} : defaultProject();
+      install(next.project,next.reference,'builtin-demo');
+      if (!draft.active()) await restore();
+      mobile();
+    },
     recoveryKey:opening && !opening.blocked ? `printform-studio-v3:new-form-recovery:${opening.id}` : undefined,
     blocked:opening?.blocked === true,
     revealBlocked() {

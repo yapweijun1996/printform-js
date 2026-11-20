@@ -22,7 +22,7 @@ export class AISourceWorkspace {
   }
   resetConsent() { this.consent.checked = false; }
   async pair() {
-    if (this.pairing || this.panel.busy || this.closing || this.cleanupFailed || this.connection?.available) return;
+    if (this.panel.privateDraft?.() || this.pairing || this.panel.busy || this.closing || this.cleanupFailed || this.connection?.available) return;
     this.pairing = true; this.status.textContent = 'Pairing with the locally started companion…'; this.update();
     try {
       this.connection = await pairSourceRunner(this.code.value.trim()); this.resetConsent();
@@ -31,7 +31,7 @@ export class AISourceWorkspace {
     finally { this.code.value = ''; this.pairing = false; this.panel.update(); }
   }
   consume() {
-    if (this.panel.grantProfile() === 'read-only') { this.resetConsent(); return undefined; }
+    if (this.panel.privateDraft?.() || this.panel.grantProfile() === 'read-only') { this.resetConsent(); return undefined; }
     if (!this.consent.checked) return undefined;
     this.resetConsent();
     if (this.closing || this.cleanupFailed || !agentEnabled() || this.panel.agentUnavailable) throw sourceFailure('ENVIRONMENT_UNSUPPORTED');

@@ -240,3 +240,7 @@ body:has(#local-new-form-origin:not([hidden])) { grid-template-rows:auto auto au
 :is(#local-new-form-dialog a,#local-new-form-dialog button,#fictional-note-dialog button) { display:inline-flex; align-items:center; min-height:44px; padding:6px 12px; border-radius:var(--radius); }
 #fictional-note-dialog textarea { display:block; width:100%; margin:4px 0 12px; font-size:16px; }
 #local-new-form-dialog a { text-decoration:none; }
+
+[data-private-new-form] :is([data-action=new],[data-action=open],[data-action=save],[data-action=share],[data-action=print],[data-action=export],[data-mode=data],[data-action=go-data],[data-sample],[data-ai=attach],.ai-sharing,.ai-source-setup) { display:none; }
+#local-new-form-dialog [data-new-form-refine] { border:1px solid var(--line); }
+#local-new-form-dialog [data-new-form-refine]:hover { background:var(--blue-soft); }

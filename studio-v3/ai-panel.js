@@ -19,8 +19,8 @@ import { AISourceWorkspace } from './ai-source-workspace.js';
 import { COMMIT_POLICY_HELP } from './agent-commit-policy.js';
 
 export class AIPanel {
-  constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,capturePixels,restore,commit,undo,sync,prepareNewForm,transport=createDemoTransport()}) {
-    Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,capturePixels,restore,commit,undo,sync,prepareNewForm,transport});
+  constructor({bus,selection=()=> 'items',facts=()=>[],elementTags,guard,preview,capturePixels,restore,commit,undo,sync,prepareNewForm,privateDraft=()=>false,assertFictionalDraft,transport=createDemoTransport()}) {
+    Object.assign(this,{getBus:bus,getSelection:selection,getFacts:facts,elementTags,guard,renderPreview:preview,capturePixels,restore,commit,undo,sync,prepareNewForm,privateDraft,assertFictionalDraft,transport});
     this.root = document.querySelector('#ai-panel'); this.viewing = false; this.agentSteps = []; this.agentUnavailable = false; this.modelChosen = false; this.proposal = null; this.generation = 0; this.epoch = 0; this.intents = createIntentLedger(); this.conversation = new Conversation();
     this.node('[data-ai-commit-help]').textContent = COMMIT_POLICY_HELP;
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
@@ -182,7 +182,7 @@ export class AIPanel {
   }
   // The same Apply path as the button (intent ledger, stale checks, restore on failure), reached without a click.
   async autoApply(proposal) {
-    if (this.proposal !== proposal || proposal.sourceBound || proposal.workspace || !this.checked || this.busy || this.applying) return;
+    if (this.privateDraft() || this.proposal !== proposal || proposal.sourceBound || proposal.workspace || !this.checked || this.busy || this.applying) return;
     await this.guard(()=>this.apply(proposal.intentKey)).catch(error=>this.error(error));
   }
   // A duplicate Apply for a key already seen (a second click, a queued repeat) waits for the original outcome and does

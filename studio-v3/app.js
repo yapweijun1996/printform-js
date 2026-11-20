@@ -28,6 +28,8 @@ import { paperMillimeters } from './paper-settings.js';
 import { setupMobileShell } from './mobile-shell.js';
 import { setupNewFormWorkspace } from './new-form-workspace.js';
 import { setupFictionalNoteReview } from './fictional-note-review.js';
+import { adoptPrivateDraft } from './new-form-draft.js';
+import { setupWorkspaceShortcuts } from './workspace-shortcuts.js';
 const $ = selector => document.querySelector(selector); setupDemoTemplatePicker();
 const state = {mode:'design',selected:'items',tab:'properties',sample:'erp',report:null,matrix:{},dirty:false,dataDraft:null,running:false,runId:0,collapsed:{},search:'',jsonError:'',fileReads:0};
 let bus, displayed, zoom = 1, pageIndex = 0, editQueue = Promise.resolve();
@@ -74,8 +76,11 @@ const paper = new PaperPreview($('#preview-frame'), (report,view) => {
 });
 const canvas = new CanvasControls({mode:()=>state.mode,resize:resizePaper,guard:work => drafts.guard(work),report:status,context:()=>bus,upload:(file,target)=> {const context = bus; ++state.fileReads; return queueEdit(async()=> {const design = await importRasterAsset(context.project,file,target); if (bus !== context) throw new Error('The document changed. Upload the image again.'); await mutate(designOperations(bus.project,design),'embedded image');}).finally(()=>--state.fileReads);}});
 const elementTags = new AIElementTags({bus:()=>bus,selection:()=>state.selected,guard:work=>drafts.guard(work),report:status,onChange:()=>ai.contextChanged(true),open:()=> {canvas.close(false); ai.show();},highlight:id=>canvas.highlightElement(paper,id || state.selected),select:id=> {state.selected = id; state.mode = 'design'; renderPanels(); goPage(canvas.elementPage(paper,id)); canvas.highlightElement(paper,id); if (innerWidth <= 900) ai.suspend();}});
-const newForms = setupNewFormWorkspace({getBus:()=>bus,pending:()=>updateWork.pending()});
-const ai = new AIPanel({prepareNewForm:newForms.prepare,bus:()=>bus,selection:()=>state.selected,elementTags,facts:()=>paper.factsFor(bus.project),guard:work=>drafts.guard(work),sync:syncControls,
+const newForms = setupNewFormWorkspace({getBus:()=>bus,pending:()=>updateWork.pending(),adopt:options=>adoptPrivateDraft(options,{
+  getBus:()=>bus,state,drafts,ai,settle:()=>editQueue,ready:()=>inspectProject(bus.project,state.report).ready,
+  initialize:()=>database.init(),sync:()=> {renderPanels();syncControls();setupUpdates(updateWork);}
+})});
+const ai = new AIPanel({prepareNewForm:newForms.prepare,privateDraft:newForms.privateDraft,assertFictionalDraft:newForms.assertFictional,bus:()=>bus,selection:()=>state.selected,elementTags,facts:()=>paper.factsFor(bus.project),guard:work=>drafts.guard(work),sync:syncControls,
   capturePixels:(project,region,signal)=>paper.pixels(project,region,signal),
   preview:async project=> { stopRun(); state.mode = 'design'; renderPanels(); return render(project); },restore:()=>render(),
   commit:(proposal,generation)=>queueEdit(async()=> { ai.assertCurrent(proposal,generation); const context = bus; await editProject(context,designOperations(context.project,proposal.design),'AI layout suggestion'); const revision = context.revision; if (bus === context) await changed(); return {bus:context,revision}; },false),
@@ -170,6 +175,7 @@ async function switchSample(id) {
 }
 const validateAll = createValidateAll({state,project:() => bus.project,render:project => render(project),stopRun,cancelPaper:() => paper.cancel(),invalidateAI:() => ai.invalidate(),renderPanels:() => renderPanels(),syncControls:() => syncControls()});
 async function action(name) {
+  if (newForms.blockedAction(name)) return;
   if (name === 'undo' || name === 'redo') { if (!database.guardDraft()) return; await bus.navigateHistory(name,bus.revision); state.dataDraft = null; await changed(); }
   else if (name === 'new') { $('#new-warning').textContent = state.dirty || database.draft || state.dataDraft !== null ? 'Starting another form discards unsaved form, table and JSON edits. Save first to keep them.' : 'Choose a complete starter or a blank form.'; $('#new-dialog').showModal(); }
   else if (name === 'cancel-new') $('#new-dialog').close();
@@ -284,17 +290,9 @@ $('#paper-scroll').addEventListener('scroll',()=> {
   if (current >= 0 && current !== pageIndex) goPage(current,false);
 });
 window.addEventListener('beforeunload', e => { if (!newForms.blocked && !updateWork.leaving() && updateWork.pending()) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('keydown', e => {
-  if (newForms.blocked || !(e.metaKey || e.ctrlKey) || e.altKey || e.isComposing) return;
-  if (e.key.toLowerCase() === 's') { e.preventDefault(); drafts.guard(() => queueEdit(() => action('save'))).catch(error=>status(error.message)); }
-  if (e.key.toLowerCase() === 'z' && !e.target.closest('input,textarea')) { e.preventDefault(); drafts.guard(() => queueEdit(() => action(e.shiftKey ? 'redo' : 'undo'))).catch(error=>status(error.message)); }
-});
-if (!newForms.blocked) {
-  await database.init();
-  const initial = newForms.initial?.() || database.starting(newProject()); install(initial.project,initial.reference,'builtin-demo');
-  await updateWork.restore(); setupUpdates(updateWork); setupMobileShell();
-  setupFictionalNoteReview({getBus:()=>bus,state,database,drafts,ai,queueEdit,changed,status,isPrivateDraft:()=>newForms.privateDraft});
-}
-// Keep startup controls inactive until local dataset loading can no longer replace the document.
+setupWorkspaceShortcuts({getBus:()=>bus,action,drafts,queueEdit,status,blockedAction:newForms.blockedAction});
+await newForms.start({initialize:()=>database.init(),defaultProject:()=>database.starting(newProject()),install,mobile:setupMobileShell,
+  restore:async()=> {await updateWork.restore();setupUpdates(updateWork);}});
+setupFictionalNoteReview({getBus:()=>bus,state,database,drafts,ai,queueEdit,changed,status,isPrivateDraft:newForms.privateDraft});
 document.body.inert = false; document.body.setAttribute('aria-busy','false');
 if (newForms.blocked) newForms.revealBlocked();

@@ -25,7 +25,7 @@ export class AIReferenceFiles {
     this.render();
   }
   async add(files) {
-    if(this.locked || !files.length)return; this.choosing=false; this.root.hidden=false; this.root.open=true;
+    if(this.panel.privateDraft?.() || this.locked || !files.length)return; this.choosing=false; this.root.hidden=false; this.root.open=true;
     let added=false; this.feedback=false;this.controller?.abort(); const controller=new AbortController();this.controller=controller; const key=this.panel.documentKey();this.reading=true;this.cancel.hidden=false;delete this.root.dataset.error;this.panel.update();
     this.summary.textContent='Reading references…';this.notice.textContent='Reading references locally…';this.root.scrollIntoView?.({block:'nearest',inline:'nearest'});
     try {
@@ -39,7 +39,7 @@ export class AIReferenceFiles {
     // attached; the button stays for a retry.
     if(added && this.hasImages() && !this.locked && !this.capabilityChanged())await this.checkImageSupport();
   }
-  pick() { if(this.locked)return; this.choosing=true;this.render();this.root.open=true;this.root.scrollIntoView?.({block:'nearest',inline:'nearest'});this.input.click(); }
+  pick() { if(this.panel.privateDraft?.() || this.locked)return; this.choosing=true;this.render();this.root.open=true;this.root.scrollIntoView?.({block:'nearest',inline:'nearest'});this.input.click(); }
   changed() { ++this.version;this.panel.contextChanged(true);this.render(); }
   projection() { return referenceProjection(this.files); }
   hasImages(){return this.files.some(file=>file.kind==='image' || file.processing==='visual');}

@@ -12,8 +12,9 @@ const runSteps = panel=>panel.agentSteps?.length ? {steps:panel.agentSteps.slice
 // Same conversation/proposal lifecycle; extraction keeps AIPanel below300 lines.
 export async function sendPanelMessage() {
   if (this.busy || this.applying || this.restoring || this.sourceWorkspace?.closing || this.sourceWorkspace?.cleanupFailed) return;
+  const privateDraft = this.privateDraft?.() === true;
   let payload, request;
-  try { this.referenceFiles?.assertReady(); payload = this.payload(); request = this.request(); } catch (error) { this.error(error); this.message(error.message); return; }
+  try { if (privateDraft) this.assertFictionalDraft(this.getBus().project); this.referenceFiles?.assertReady(); payload = this.payload(); request = this.request(); } catch (error) { this.error(error); this.message(error.message); return; }
   if (!payload.request) { this.message('Write a request or a comment on a referenced element before Send.'); return; }
   let alias = this.node('#ai-model').value;
   const baseProfile = this.grantProfile(payload), answerOnly = baseProfile === 'read-only';
@@ -22,7 +23,7 @@ export async function sendPanelMessage() {
   const bus = this.getBus(), revision = bus.revision, project = structuredClone(bus.project), baseDesign = JSON.stringify(project.manifest.studioV3), baseData = JSON.stringify(project.sampleData), epoch = this.epoch, selection = this.getSelection(), scope = JSON.stringify(this.scope()), references = JSON.stringify(payload.references), attachmentVersion = this.referenceFiles?.version, media = this.referenceFiles?.projection().media || [];
   const assertContext = ()=> {
     signal.throwIfAborted();
-    if (id !== this.generation) throw fail('STALE_PROPOSAL');
+    if (id !== this.generation || privateDraft !== (this.privateDraft?.() === true)) throw fail('STALE_PROPOSAL');
     assertProposalCurrent(this.getBus(),{bus,revision,baseDesign});
     if (attachmentVersion !== this.referenceFiles?.version || baseData !== JSON.stringify(bus.project.sampleData) || epoch !== this.epoch || selection !== this.getSelection() || scope !== JSON.stringify(this.scope()) || references !== JSON.stringify(this.elementTags?.payload() || [])) throw fail('STALE_PROPOSAL');
     validateElementReferences(bus.project,payload.references,bus.revision);
@@ -33,9 +34,10 @@ export async function sendPanelMessage() {
   this.pendingMessage = payload.request; this.conversation.add('user',[payload.request,...payload.references.filter(r=>r.comment).map(r=>`${r.id}: ${r.comment}`)].join('\n'),'answer',{documentKey:this.documentKey()}); this.node('#ai-prompt').value = ''; this.share(); this.update();
   try {
     const runId = crypto.randomUUID(), readObservationHost = ()=>this.observationAccess.state(runId);
-    if (answerOnly) this.sourceWorkspace?.resetConsent();
+    if (answerOnly || privateDraft) this.sourceWorkspace?.resetConsent();
     else workspace = this.sourceWorkspace?.consume();
     const sourceBound = Boolean(workspace) || [workspace?.profile,baseProfile].some(profile=>profile?.startsWith('coding'));
+    if (privateDraft) this.observationAccess.reset();
     const observationAuthorization = await this.observationAccess.consume(runId); assertContext(); signal.throwIfAborted();
     if (this.viewing) { await this.restore(); this.viewing = false; }
     assertContext();
@@ -79,7 +81,7 @@ export async function sendPanelMessage() {
     if (result.kind === 'proposal') this.proposal = {...result,bus,revision,baseDesign,epoch,selection,scope,cardId:card.id,intentKey:newIntentKey(),sourceBound};
     if (result.kind === 'answer' && this.viewing) return;
     // Layout/static-content edits (see ai-auto-apply-policy.js) are previewed at any width and applied once the checks pass.
-    const direct = result.kind === 'proposal' && result.inspection?.ready && !sourceBound && autoApplicable(result,{workspace});
+    const direct = result.kind === 'proposal' && result.inspection?.ready && !privateDraft && !sourceBound && autoApplicable(result,{workspace});
     const auto = result.kind === 'proposal' && (direct || innerWidth > 900), next = direct ? 'Applying to the form…' : auto && result.inspection?.ready ? 'Review the paper preview, then Apply.' : 'Preview before Apply.';
     const details = `${alias} · ${result.kind === 'answer' ? '' : `r${revision} · ${result.mode === 'steps' ? `${result.turns} steps` : `${result.iterations} inspection round(s)`} · `}Tokens: ${result.usage?.total ?? 'unavailable'}`;
     this.message(`${result.kind === 'answer' ? 'Answer ready; form unchanged.' : `${result.inspection?.ready ? 'Local checks passed.' : 'Local checks blocked.'} ${next}`} (${details})`,{redundant:result.kind === 'answer' || Boolean(result.inspection?.ready)});
