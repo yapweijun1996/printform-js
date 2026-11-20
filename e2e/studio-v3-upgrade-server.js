@@ -39,6 +39,6 @@ export async function upgradeServer() {
     response.end(fs.readFileSync(file));
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  return {url:`http://127.0.0.1:${server.address().port}/studio-v3/`,publish:({broken = false}={})=> { current = NEXT; fail = broken; },
+  return {url:`http://127.0.0.1:${server.address().port}/studio-v3/`,publish:({broken = false,revision = NEXT}={})=> { current = revision; fail = broken; },
     close:async()=> { server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); fs.rmSync(temp,{recursive:true,force:true}); }};
 }

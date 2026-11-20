@@ -130,3 +130,33 @@ test('with unsaved work the approval dialog opens by itself; Stay keeps the tab 
     await expect(page.locator('#ai-prompt')).toHaveValue('Fictional draft only');
   } finally { await server.close(); }
 });
+
+test('rollback to a previous verified shell preserves committed edits and an unapplied draft',async({page})=> {
+  const server = await upgradeServer();
+  try {
+    server.publish();
+    await open(page,server.url);
+    await version(page,NEXT);
+    await page.locator('#left-panel [data-select=items-sku]').click();
+    const label = page.getByLabel('Label',{exact:true});
+    await label.fill('Saved item code');
+    await page.getByRole('button',{name:'Apply field',exact:true}).click();
+    await ready(page);
+    await label.fill('Unapplied item code');
+    const revision = await page.locator('#revision').textContent();
+
+    server.publish({revision:OLD});
+    await clickHeaderAction(page,'update');
+    await expect(page.locator('#update-dialog')).toBeVisible({timeout:30000});
+    await version(page,NEXT);
+    await page.locator('[data-update-choice=keep]').click();
+    await version(page,OLD);
+    await ready(page);
+    expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(OLD);
+    await expect(page.locator('#revision')).toHaveText(revision);
+    await expect(label).toHaveValue('Unapplied item code');
+    await expect(page.locator('#draft-state')).toContainText('1 unapplied');
+    await expect(page.frameLocator('#preview-frame').locator('.prowheader_processed').first().locator('th').nth(1)).toHaveText('Saved item code');
+    expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
+  } finally { await server.close(); }
+});
