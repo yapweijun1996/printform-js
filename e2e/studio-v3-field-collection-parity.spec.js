@@ -98,6 +98,17 @@ test('primary collection editing renders the same supplied rows after manual Pi 
   const alternate = 'Alternate delivery line for collection test';
   project.sampleData.lines[0].description = alternate;
   await gateway(page,toolChain([{type:'set_collection',value:'/lines'}]));
+  // Read the actual rendered page from the preview bridge. Firefox can lose
+  // Playwright's direct iframe execution context when the preview is replaced.
+  await page.addInitScript(()=>{
+    window.addEventListener('message',event=>{
+      if (event.source !== document.querySelector('#preview-frame')?.contentWindow ||
+          event.data?.source !== 'printform-studio-v3-preview' || event.data.type !== 'rendered') return;
+      const preview = document.createElement('template');
+      preview.innerHTML = event.data.payload.pages[0]?.html || '';
+      window.__collectionFirstPrintedRow = preview.content.querySelector('[data-v3-id=items-description]')?.textContent;
+    });
+  });
   await load(page,compileProject(project,design));
   const before = normalized((await save(page,info,'before.json')).project);
   await showStructure(page);
@@ -106,14 +117,15 @@ test('primary collection editing renders the same supplied rows after manual Pi 
   await page.getByLabel('Pick a collection',{exact:true}).selectOption('/lines');
   await page.getByRole('button',{name:'Apply collection',exact:true}).click();
   await revision(page,1); await ready(page);
-  const printed = frame(page).locator('[data-v3-id=items-description]').first();
-  await expect(printed).toHaveText(alternate);
+  const printed = () => page.evaluate(()=>window.__collectionFirstPrintedRow);
+  await expect.poll(printed).toBe(alternate);
   const ui = (await save(page,info,'ui.json')).project;
   expect(normalized(ui)).toEqual({...before,manifest:{...before.manifest,studioV3:{...before.manifest.studioV3,collection:'/lines'}}});
   const report = (await diagnostics(page,ui)).diagnostics;
   expect(report.ready).toBe(true);
   await page.locator('[data-action=undo]').click();
   await revision(page,2); await ready(page);
+  await expect.poll(printed).toBe(project.sampleData.items[0].description);
   expect(normalized((await save(page,info,'undone.json')).project)).toEqual(before);
 
   await ask(page,'Use the /lines collection for the primary items table.');
@@ -124,10 +136,11 @@ test('primary collection editing renders the same supplied rows after manual Pi 
   expect(normalized((await save(page,info,'before-approval.json')).project)).toEqual(before);
   await page.locator('[data-ai=apply]').click();
   await expectApplied(page,3); await ready(page);
-  await expect(printed).toHaveText(alternate);
+  await expect.poll(printed).toBe(alternate);
   const pi = (await save(page,info,'pi.json')).project;
   expect(normalized(pi)).toEqual(normalized(ui));
   expect((await diagnostics(page,pi)).diagnostics).toEqual(report);
   await page.locator('[data-ai=undo]').click(); await revision(page,4); await ready(page);
+  await expect.poll(printed).toBe(project.sampleData.items[0].description);
   expect(normalized((await save(page,info,'ai-undone.json')).project)).toEqual(before);
 });
