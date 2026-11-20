@@ -172,7 +172,12 @@ async function action(name) {
   else if (name === 'cancel-new') $('#new-dialog').close();
   else if (name === 'open') { if (!(state.dirty || database.draft || state.dataDraft !== null) || confirm('Open another file and discard unsaved form, table and JSON edits? Saved datasets are retained.')) $('#open-file').click(); }
   else if (await projectFileAction(name,{bus,state,installStatus:status,syncControls,getBus:()=>bus})) return;
-  else if (name === 'print') { if (inspectProject(bus.project,state.report).ready && !state.running && !ai.viewing) paper.send('print'); }
+  else if (name === 'print') {
+    if (inspectProject(bus.project,state.report).ready && !state.running && !ai.viewing) {
+      paper.send('print');
+      status('Print requested. Follow the browser print dialog.');
+    }
+  }
   else if (name === 'preview') { document.body.classList.toggle('preview-only'); $('[data-action=preview]').setAttribute('aria-pressed',document.body.classList.contains('preview-only')); database.render(); resizePaper(); }
   else if (name === 'previous' || name === 'next') goPage(pageIndex + (name === 'next' ? 1 : -1));
   else if (name === 'go-data') { state.mode = 'data'; renderPanels(); }
