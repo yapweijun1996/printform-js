@@ -128,6 +128,19 @@ describe('update approval', () => {
     work.failed();
   });
 
+  it('protects an open fictional note review without creating an update backup', async () => {
+    const review = document.body.appendChild(document.createElement('dialog'));
+    review.id = 'fictional-note-dialog';
+    review.open = true;
+    const work = createUpdateWork(deps());
+    expect(work.pending()).toBe(true);
+    await expect(work.prepare()).rejects.toThrow('Apply or cancel the fictional note review');
+    expect(document.querySelector('#update-dialog').showModal).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(RECOVERY_KEY)).toBeNull();
+    review.open = false;
+    expect(work.pending()).toBe(false);
+  });
+
   it.each([
     ['a dirty template', {state: {dirty: true, dataDraft: null, fileReads: 0}}],
     ['a data draft', {state: {dirty: false, dataDraft: '{}', fileReads: 0}}],

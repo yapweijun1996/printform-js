@@ -27,6 +27,7 @@ import { scenarioCandidate } from './scenario-matrix.js';
 import { paperMillimeters } from './paper-settings.js';
 import { setupMobileShell } from './mobile-shell.js';
 import { setupNewFormWorkspace } from './new-form-workspace.js';
+import { setupFictionalNoteReview } from './fictional-note-review.js';
 const $ = selector => document.querySelector(selector); setupDemoTemplatePicker();
 const state = {mode:'design',selected:'items',tab:'properties',sample:'erp',report:null,matrix:{},dirty:false,dataDraft:null,running:false,runId:0,collapsed:{},search:'',jsonError:'',fileReads:0};
 let bus, displayed, zoom = 1, pageIndex = 0, editQueue = Promise.resolve();
@@ -174,11 +175,9 @@ async function action(name) {
   else if (name === 'cancel-new') $('#new-dialog').close();
   else if (name === 'open') $('#open-file').click();
   else if (await projectFileAction(name,{bus,state,installStatus:status,syncControls,getBus:()=>bus})) return;
-  else if (name === 'print') {
-    if (inspectProject(bus.project,state.report).ready && !state.running && !ai.viewing) {
-      paper.send('print');
-      status('Print requested. Follow the browser print dialog.');
-    }
+  else if (name === 'print' && inspectProject(bus.project,state.report).ready && !state.running && !ai.viewing) {
+    paper.send('print');
+    status('Print requested. Follow the browser print dialog.');
   }
   else if (name === 'preview') { document.body.classList.toggle('preview-only'); $('[data-action=preview]').setAttribute('aria-pressed',document.body.classList.contains('preview-only')); database.render(); resizePaper(); }
   else if (name === 'previous' || name === 'next') goPage(pageIndex + (name === 'next' ? 1 : -1));
@@ -294,6 +293,7 @@ if (!newForms.blocked) {
   await database.init();
   const initial = newForms.initial?.() || database.starting(newProject()); install(initial.project,initial.reference,'builtin-demo');
   await updateWork.restore(); setupUpdates(updateWork); setupMobileShell();
+  setupFictionalNoteReview({getBus:()=>bus,state,database,drafts,ai,queueEdit,changed,status,isPrivateDraft:()=>newForms.privateDraft});
 }
 // Keep startup controls inactive until local dataset loading can no longer replace the document.
 document.body.inert = false; document.body.setAttribute('aria-busy','false');

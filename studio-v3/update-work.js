@@ -44,7 +44,8 @@ export function decodeRecovery(text) {
 }
 export function createUpdateWork({getBus,state,database,drafts,ai,install,renderPanels,syncControls,render,settle,recoveryKey=RECOVERY_KEY}) {
   let recoveryFailed = false, updating = false;
-  const pending = () => recoveryFailed || state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size || ai.busy || ai.proposal || document.querySelector('#ai-prompt').value || document.querySelector('#document-name').value !== getBus()?.project.manifest.title;
+  const noteReviewOpen = () => document.querySelector('#fictional-note-dialog')?.open;
+  const pending = () => recoveryFailed || state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size || ai.busy || ai.proposal || noteReviewOpen() || document.querySelector('#ai-prompt').value || document.querySelector('#document-name').value !== getBus()?.project.manifest.title;
   function capture() {
     const bus = getBus(), draft = database.draft;
     return {version:1,project:projectRecord(bus.project),history:{cursor:bus.history.cursor,entries:bus.history.entries.map(entry=>({...entry,project:projectRecord(entry.project)}))},
@@ -93,7 +94,10 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
   async function prepare() {
     await settle();
     if (recoveryFailed) throw new Error('Protect the retained recovery backup: download it if needed, then explicitly discard that backup to enable Update.');
-    const checkBusy = ()=> { if (state.fileReads || database.busy || database.pending || drafts.applying.size || ai.applying) throw new Error('A file read, edit or database save is active. Wait, then retry.'); };
+    const checkBusy = ()=> {
+      if (noteReviewOpen()) throw new Error('Apply or cancel the fictional note review before updating.');
+      if (state.fileReads || database.busy || database.pending || drafts.applying.size || ai.applying) throw new Error('A file read, edit or database save is active. Wait, then retry.');
+    };
     checkBusy();
     if (!database.store.persistent) throw new Error('Database storage is tab-only. Export your datasets before leaving; update is blocked to protect them.');
     // pending() is the single source of truth for unsaved work. Without any, there is nothing to keep or lose,

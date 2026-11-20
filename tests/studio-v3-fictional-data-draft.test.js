@@ -6,6 +6,7 @@ import { createBus, designOperations, editProject, replaceData } from '../studio
 import { dataSource } from '../studio-v3/data-provenance.js';
 import { compileProject, designOf, newProject } from '../studio-v3/model.js';
 import { reviewFictionalDataDraft, revokeFictionalDataDraft, stageFictionalDataDraft } from '../studio-v3/fictional-data-draft.js';
+import { setupFictionalNoteReview } from '../studio-v3/fictional-note-review.js';
 import { bindingValidation } from '../studio-v3/validation.js';
 
 const replacement = 'Reviewed fictional note · 虚构备注';
@@ -80,6 +81,15 @@ describe('private fictional data draft',()=> {
     design.footer[0].format = 'number';
     const bus = createBus(compileProject(project,design));
     expect(()=>stage(bus)).toThrow('DATA_DRAFT_FIELD_DENIED');
+  });
+
+  it('requires the plain-text note to be visible in its paper preview',()=> {
+    const project = newProject(), design = designOf(project);
+    design.blocks.footer.enabled = false;
+    expect(()=>stage(createBus(compileProject(project,design)))).toThrow('DATA_DRAFT_FIELD_DENIED');
+    design.blocks.footer.enabled = true;
+    design.footer[0].pointer = '/preparedBy';
+    expect(()=>stage(createBus(compileProject(project,design)))).toThrow('DATA_DRAFT_FIELD_DENIED');
   });
 
   it('runs source schema and binding validation on the candidate independently of the explicit command',()=> {
@@ -180,5 +190,25 @@ describe('private fictional data draft',()=> {
       operations:[{type:'set_style',patch:{color:'#102030'}}],
       sampleData:candidate.sampleData
     }),bus.project)).toThrow('UNSAFE_PROPOSAL');
+  });
+
+  it('requires adoption even when the private starter draft has the exact fictional sample',()=> {
+    const bus = createBus(newProject()), root = document.createElement('div');
+    root.innerHTML = `<button data-review-fictional-note>Review</button><dialog id="fictional-note-dialog">
+      <textarea id="fictional-note-value"></textarea><div class="new-form-paper"><iframe></iframe></div>
+      <p data-note-status></p><button data-note-preview></button><button data-note-apply></button><button data-note-cancel></button>
+    </dialog>`;
+    const review = root.querySelector('dialog');
+    review.showModal = ()=>{ review.open = true; };
+    let privateDraft = true, notice;
+    setupFictionalNoteReview({root,getBus:()=>bus,state:{dataDraft:null},database:{},
+      drafts:{drafts:new Map(),applying:new Set()},ai:{},status:text=>{notice=text;},isPrivateDraft:()=>privateDraft});
+    root.querySelector('[data-review-fictional-note]').click();
+    expect(review.open).toBe(false);
+    expect(notice).toContain('Finish current edits');
+    privateDraft = false;
+    root.querySelector('[data-review-fictional-note]').click();
+    expect(review.open).toBe(true);
+    expect(root.querySelector('textarea').value).toBe(bus.project.sampleData.notes);
   });
 });

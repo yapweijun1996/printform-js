@@ -103,6 +103,15 @@
     <p data-new-form-status role="status"></p>
     <div class="draft-dialog-actions"><button type="button" data-new-form-cancel autofocus>Cancel</button><a class="primary" data-new-form-apply target="_blank" rel="noopener noreferrer" hidden>Apply &amp; open in new tab</a></div>
   </dialog>
+  <dialog id="fictional-note-dialog" aria-labelledby="fictional-note-heading">
+    <h2 id="fictional-note-heading">Review fictional note</h2>
+    <p>Preview a change to <code>/notes</code>. Apply updates this form only. Saved datasets remain unchanged.</p>
+    <label for="fictional-note-value">Replacement note</label>
+    <textarea id="fictional-note-value" maxlength="10000" rows="3" autofocus></textarea>
+    <div class="new-form-paper" tabindex="0" aria-label="Scrollable note preview" hidden><iframe title="Fictional note paper preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe></div>
+    <p data-note-status role="status"></p>
+    <div class="draft-dialog-actions"><button type="button" data-note-cancel>Cancel</button><button type="button" data-note-preview>Preview note</button><button type="button" class="primary" data-note-apply disabled>Apply to form</button></div>
+  </dialog>
   <dialog id="draft-dialog" aria-labelledby="draft-heading"><h2 id="draft-heading">Unapplied edits</h2><p>These edits have not changed the print form. Apply commits them to the form; Discard restores current values; Stay keeps editing. Database saves and template-file saves remain explicit.</p><ul id="draft-list"></ul><div class="draft-dialog-actions"><button data-draft-choice="apply" class="primary">Apply</button><button data-draft-choice="discard">Discard</button><button data-draft-choice="stay" autofocus>Stay</button></div></dialog>
   <dialog id="share-dialog" aria-labelledby="share-heading">
     <h2 id="share-heading">Export a share copy · review remaining data</h2>

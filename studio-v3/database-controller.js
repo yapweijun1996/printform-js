@@ -8,6 +8,7 @@ import { editImportReview, importReviewAction, reviewImportFile } from './struct
 import { validateImportReceipt } from './structured-import-receipt.js';
 import { assertLegacyDataset } from './database-compatibility.js';
 import { bindingValidation } from './validation.js';
+import { canStageFictionalNote } from './fictional-data-draft.js';
 
 const referenceFor = record => ({id:record.id,title:record.title,type:record.type,revision:record.revision,origin:record.origin || 'local-demo'});
 function withRecordContract(project,record) {
@@ -23,6 +24,7 @@ export class DemoDatabase {
   }
   get project() { return this.callbacks.project(); }
   get state() { return this.callbacks.state(); }
+  get canReviewFictionalNote() { return canStageFictionalNote(this.callbacks.context()); }
   async init() {
     this.store = await createDatabase(); this.source = createLocalDatasetSource(this.store); await this.refresh();
     for (const type of ['invoice','purchase','delivery']) this.selected[type] = await this.store.selected(type);

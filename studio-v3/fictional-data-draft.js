@@ -2,6 +2,7 @@ import { jsonEqual } from '../document-core/core/json.js';
 import { protectedBindings } from './agent-binding-invariants.js';
 import { DATA_TYPES, validateDataset } from './database-model.js';
 import { dataSource } from './data-provenance.js';
+import { fieldKind } from './design-authoring.js';
 import { sampleData } from './model.js';
 import { bindingValidation } from './validation.js';
 
@@ -29,6 +30,24 @@ function assertFictionalSource(project,dataPolicy) {
   if (!jsonEqual(starter,current) || !jsonEqual(starter,session.erpData)) reject('DATA_DRAFT_SOURCE_DENIED');
 }
 
+function assertNoteTarget(project,pointer) {
+  const design = project.manifest.studioV3, field = design.footer.find(item=>item.id === 'notes');
+  if (pointer !== NOTE_POINTER || !Object.hasOwn(project.sampleData,'notes') || !design.blocks.footer.enabled ||
+      !field || fieldKind(field) !== 'bound' || field.pointer !== pointer ||
+      protectedBindings(design).some(binding=>binding.pointer === pointer)) reject('DATA_DRAFT_FIELD_DENIED');
+}
+
+export function canStageFictionalNote(bus) {
+  if (!bus?.active) return false;
+  try {
+    assertFictionalSource(bus.project,bus.dataPolicy);
+    assertNoteTarget(bus.project,NOTE_POINTER);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Host-only staging. No caller gains provider disclosure or persistence rights
 // by holding a ticket. The host must obtain a fresh explicit confirmation for
 // the selected field and value before calling this function.
@@ -39,9 +58,7 @@ export function stageFictionalDataDraft(bus,{confirmed,documentId,revision,point
       !Number.isSafeInteger(revision) || revision < 0 || bus.revision !== revision ||
       project?.manifest?.documentId !== documentId) reject('DATA_DRAFT_STALE');
   assertFictionalSource(project,bus.dataPolicy);
-  const design = project.manifest.studioV3;
-  if (pointer !== NOTE_POINTER || !Object.hasOwn(project.sampleData,'notes') ||
-      protectedBindings(design).some(binding=>binding.pointer === pointer)) reject('DATA_DRAFT_FIELD_DENIED');
+  assertNoteTarget(project,pointer);
   const previous = project.sampleData.notes;
   if (typeof previous !== 'string' || typeof value !== 'string' || value.length > MAX_NOTE_LENGTH) reject('DATA_DRAFT_VALUE_INVALID');
   if (value === previous) reject('DATA_DRAFT_NO_CHANGES');
