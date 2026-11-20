@@ -116,3 +116,11 @@ A signature-only PNG passed Studio's portable asset checks at `7937c71`. Upload 
 The browser regression checks that a damaged upload leaves the ready form, source and Undo state intact. A valid retry renders the original file and has its own Undo entry. A newer pick for the same target supersedes a held decode. A successfully decoded image also leaves the replacement document intact after the user starts a new form. [Browser regression](../../e2e/studio-v3-raster-upload.spec.js)
 
 The final upload fixture passed nine executions across Chromium, Firefox and WebKit. The existing logo parity case passed each engine. A repeated parallel run timed out in the existing Firefox parity case while reading CSS through the opaque preview frame. A single-worker Firefox run passed with the same build and test. The site build, all 129 packaged agent contracts and 57 related unit cases passed.
+
+### Updates with saved history or a locally opened form
+
+Two browser probes on `2e23cae` triggered automatic updates that replaced a saved form with Undo history and a clean form opened from a local file. Both tabs returned to the default invoice and acquired a different document ID. Update approval now also covers a tab with Undo or Redo and a clean locally opened form with the existing imported source and no saved dataset reference. An untouched starter or a form starting from a saved dataset can still update automatically.
+
+The saved-history regression downloads the real editable file, verifies the absence of a recovery backup before approval and after Stay, then uses Keep. The recovered tab retains its document identity, exact rendered paper and source, and both Undo and Redo. A separate local Open regression preserves the original revision-zero identity, imported provenance, schema, source rows and rendered paper through the same choices. Both use the existing session recovery backup after explicit Keep and verify that it is cleared after recovery. [Saved history regression](../../e2e/studio-v3-upgrade.spec.js) [Locally opened form regression](../../e2e/studio-v3-upgrade-opened-file.spec.js)
+
+Chromium, Firefox and WebKit passed both recovery cases and the untouched starter's automatic update. The 74 focused unit cases include clean boot with an imported saved dataset reference. The site build and all 129 packaged agent contracts passed.

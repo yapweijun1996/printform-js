@@ -102,12 +102,15 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     };
     checkBusy();
     if (!database.store.persistent) throw new Error('Database storage is tab-only. Export your datasets before leaving; update is blocked to protect them.');
-    // pending() is the single source of truth for unsaved work. Without any, there is nothing to keep or lose,
-    // so no approval is asked; with some, the one update dialog asks.
+    // A template download clears the unsaved flag, while its edit history still lives in this tab.
+    const current = getBus(), unsaved = pending(), session = current?.project.studioV3Session;
+    const hasHistory = current?.history?.canUndo || current?.history?.canRedo;
+    const openedFile = session?.source?.kind === 'imported-data' && session.database === null;
     let choice = 'discard';
-    if (pending()) {
+    if (unsaved || hasHistory || openedFile) {
       const dialog = document.querySelector('#update-dialog');
-      dialog.querySelector('[data-update-summary]').textContent = 'This tab has unsaved work. Keep preserves the template, history, field/data drafts, original import file (including unmapped values), mappings and AI input/conversation locally for this tab’s reload. Old previews/proposals expire; no source is uploaded.';
+      const reason = unsaved ? 'This tab has unsaved work.' : hasHistory ? 'This tab has an open form with edit history.' : 'This tab has a form opened from a local file.';
+      dialog.querySelector('[data-update-summary]').textContent = `${reason} Keep preserves the template, history, field/data drafts, original import file (including unmapped values), mappings and AI input/conversation locally for this tab’s reload. Old previews and proposals expire.`;
       dialog.returnValue = 'stay';
       choice = await new Promise(resolve=> { dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true}); dialog.showModal(); });
     }

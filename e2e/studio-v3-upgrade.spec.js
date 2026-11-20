@@ -1,5 +1,6 @@
 import {clickHeaderAction} from './header-action.js';
 import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
 import {AGENT_KEY} from '../studio-v3/agent-preference.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
 import {exactRollback,upgradeServer,OLD,NEXT} from './studio-v3-upgrade-server.js';
@@ -28,9 +29,9 @@ async function open(page,url) {
   await page.addInitScript(()=>window.addEventListener('message',event=> {
     if (event.source !== document.querySelector('#preview-frame')?.contentWindow ||
         event.data?.source !== 'printform-studio-v3-preview' || event.data.type !== 'rendered') return;
-    const markup = event.data.payload.pages[0]?.html;
-    const paper = new DOMParser().parseFromString(markup || '','text/html');
-    window.upgradeItemHeader = paper.querySelectorAll('.prowheader_processed th')[1]?.textContent;
+    const sheets = event.data.payload.pages.map(({html})=>new DOMParser().parseFromString(html,'text/html'));
+    window.upgradeItemHeader = sheets[0]?.querySelectorAll('.prowheader_processed th')[1]?.textContent;
+    window.upgradePaperText = sheets.map(sheet=>sheet.body.textContent.trim());
   }));
   await page.goto(url); await ready(page); await controlled(page);
 }
@@ -139,6 +140,77 @@ test('without unsaved work a verified new build updates by itself: no click, no 
     await appBuild(page,NEXT);
     expect(shown).toHaveLength(0);
     expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
+  } finally { await server.close(); }
+});
+
+test('a saved form keeps its identity, Undo and Redo only after explicit Keep',async({page})=> {
+  const server = await upgradeServer();
+  try {
+    await open(page,server.url);
+    const name = page.locator('#document-name');
+    const original = await name.inputValue();
+    const undo = page.locator('[data-action=undo]'), redo = page.locator('[data-action=redo]');
+    const backup = ()=>page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'));
+    const project = ()=>page.locator('#preview-frame').evaluate(frame=> {
+      const html = new DOMParser().parseFromString(frame.srcdoc,'text/html');
+      const read = id=>JSON.parse(html.getElementById(id).textContent);
+      const manifest = read('pf-manifest');
+      return {id:manifest.documentId,title:manifest.title,design:manifest.studioV3,data:read('pf-sample-data'),schema:read('pf-schema')};
+    });
+    const initial = await project();
+    const printed = ()=>page.evaluate(()=>window.upgradePaperText);
+    const initialPaper = await printed();
+    expect(initialPaper.length).toBeGreaterThan(0);
+    for (const [text,revision] of [['First saved form',1],['Redo form',2]]) {
+      await name.fill(text);
+      await name.press('Tab');
+      await expect(page.locator('#revision')).toContainText(`r${revision}`);
+      await ready(page);
+    }
+    await undo.click();
+    await expect(name).toHaveValue('First saved form');
+    await ready(page);
+    const download = page.waitForEvent('download');
+    await clickHeaderAction(page,'save');
+    const saved = JSON.parse(await readFile(await (await download).path(),'utf8')).project;
+    expect(saved).toMatchObject({revision:3,manifest:{documentId:initial.id,title:'First saved form',studioV3:initial.design},sampleData:initial.data,schema:initial.schema});
+    await expect(page.locator('#revision')).toHaveText('r3');
+    await expect(undo).toBeEnabled();
+    await expect(redo).toBeEnabled();
+    server.publish();
+    await clickHeaderAction(page,'update');
+    await expect(page.locator('#update-dialog')).toBeVisible({timeout:30000});
+    await expect(page.locator('[data-update-summary]')).toContainText('open form with edit history');
+    await version(page,OLD);
+    expect(await backup()).toBeNull();
+    await page.locator('[data-update-choice=stay]').click();
+    await version(page,OLD);
+    expect(await project()).toEqual({...initial,title:'First saved form'});
+    await expect.poll(printed).toEqual(initialPaper);
+    await expect(undo).toBeEnabled();
+    await expect(redo).toBeEnabled();
+    expect(await backup()).toBeNull();
+
+    await choose(page,'keep');
+    await version(page,NEXT);
+    await ready(page);
+    await appBuild(page,NEXT);
+    await expect(page.locator('#revision')).toHaveText('r3');
+    expect(await project()).toEqual({...initial,title:'First saved form'});
+    await expect.poll(printed).toEqual(initialPaper);
+    await expect(undo).toBeEnabled();
+    await expect(redo).toBeEnabled();
+    expect(await backup()).toBeNull();
+    for (const [action,text,revision] of [[redo,'Redo form',4],[undo,'First saved form',5],[undo,original,6]]) {
+      await action.click();
+      await expect(name).toHaveValue(text);
+      await expect(page.locator('#revision')).toContainText(`r${revision}`);
+      await ready(page);
+      expect(await project()).toEqual({...initial,title:text});
+      await expect.poll(printed).toEqual(initialPaper);
+    }
+    await expect(undo).toBeDisabled();
+    await expect(redo).toBeEnabled();
   } finally { await server.close(); }
 });
 

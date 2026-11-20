@@ -58,7 +58,7 @@ export function setupUpdates(work,{sw = navigator.serviceWorker,reload = ()=>loc
     candidate = value && value.build !== current ? {worker,...value} : null;
     button.textContent = candidate ? `Update to ${candidate.build.slice(0,12)}` : 'Check for updates';
     button.dataset.target = candidate?.build || '';
-    if (candidate) { message('New build ready. Updating automatically unless there is unsaved work to approve first.'); void auto(); }
+    if (candidate) { message('New build ready. Studio checks this tab before reloading.'); void auto(); }
   }
   function watch() {
     const worker = registration.installing; if (!worker) return;

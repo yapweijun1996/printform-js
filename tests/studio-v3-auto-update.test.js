@@ -119,8 +119,14 @@ describe('update approval', () => {
     install() {}, renderPanels() {}, syncControls() {}, render: async () => {}, settle: async () => {}, ...over
   });
 
-  it('shows no dialog and proceeds when nothing is unsaved', async () => {
-    const dialog = document.querySelector('#update-dialog'), work = createUpdateWork(deps());
+  it.each([
+    ['legacy session',undefined],
+    ['untouched fictional starter',{source:{kind:'builtin-demo'},database:null}],
+    ['saved imported dataset',{source:{kind:'imported-data'},database:{id:'local-dataset'}}]
+  ])('proceeds without a dialog for a clean %s with no edit history', async (_label,session) => {
+    const dialog = document.querySelector('#update-dialog');
+    const getBus = ()=>({project:{manifest:{title:'Title'},studioV3Session:session}});
+    const work = createUpdateWork(deps({getBus}));
     expect(work.pending()).toBe(false);
     expect(await work.prepare()).toBe(true);
     expect(dialog.showModal).not.toHaveBeenCalled();
