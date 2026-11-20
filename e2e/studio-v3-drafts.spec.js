@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { keepStructureOpen } from './studio-v3-structure.js';
+import { newProject } from '../studio-v3/model.js';
+import { saveProject } from '../studio-v3/file-io.js';
 const frame = page => page.frameLocator('#preview-frame');
 const label = page => page.getByLabel('Label',{exact:true});
 const choice = (page,value) => page.locator(`[data-draft-choice=${value}]`).click();
@@ -32,9 +34,9 @@ test('P0 Item code label → Qty: Stay retains focus, Apply commits and Discard 
   await page.screenshot({path:info.outputPath('P0-applied-label.png')});
 });
 
-test('workspace, Open, New and Escape retain unapplied values until an explicit choice', async ({page}) => {
+test('workspace, New and Escape retain unapplied values until an explicit choice', async ({page}) => {
   await page.locator('#left-panel [data-select=items-sku]').click(); await label(page).fill('Kept draft');
-  for (const target of ['[data-mode=data]','[data-action=open]','[data-action=new]','#right-panel [data-action=remove-field]','[data-action=print]']) {
+  for (const target of ['[data-mode=data]','[data-action=new]','#right-panel [data-action=remove-field]','[data-action=print]']) {
     await page.locator(target).click(); await expect(page.locator('#draft-dialog')).toBeVisible();
     await page.keyboard.press('Escape'); await expect(page.locator('#draft-dialog')).toBeHidden();
     await expect(label(page)).toHaveValue('Kept draft'); await expect(label(page)).toBeFocused();
@@ -55,4 +57,43 @@ test('invalid JSON preserves input and blocks both commit and guarded transition
   await expect(page.locator('#data-json')).toHaveValue(invalid); await expect(page.locator('#revision')).toHaveText(revision);
   await page.locator('[data-mode=design]').click(); await choice(page,'discard');
   await expect(page.locator('[data-mode=design]')).toHaveAttribute('aria-current','page');
+});
+
+test('Open keeps current drafts after a bad file or a declined replacement and opens a valid retry', async ({ page }) => {
+  page.removeAllListeners('dialog');
+  const confirmations = [];
+  let replace = false;
+  page.on('dialog', async dialog => {
+    confirmations.push(dialog.message());
+    if (replace) await dialog.accept();
+    else await dialog.dismiss();
+  });
+  await page.locator('#left-panel [data-select=items-sku]').click();
+  await label(page).fill('Kept after Open');
+  const chooseFile = async buffer => {
+    const chooser = page.waitForEvent('filechooser');
+    await page.locator('[data-action=open]').click();
+    await (await chooser).setFiles({ name: 'replacement.printform.json', mimeType: 'application/json', buffer });
+  };
+
+  await chooseFile(Buffer.from('{invalid'));
+  await expect(page.locator('#status')).toContainText(/JSON|syntax/i);
+  await expect(label(page)).toHaveValue('Kept after Open');
+  await expect(page.locator('#draft-state')).toContainText('1 unapplied');
+  expect(confirmations).toHaveLength(0);
+
+  const replacement = newProject('purchase');
+  const valid = Buffer.from(saveProject(replacement));
+  await chooseFile(valid);
+  await expect(page.locator('#status')).toHaveText('Open canceled. Your work is retained.');
+  await expect(label(page)).toHaveValue('Kept after Open');
+  await expect(page.locator('#draft-state')).toContainText('1 unapplied');
+  expect(confirmations).toHaveLength(1);
+
+  replace = true;
+  await chooseFile(valid);
+  await ready(page);
+  await expect(page.locator('#document-name')).toHaveValue(replacement.manifest.title);
+  await expect(page.locator('#draft-state')).toHaveText('No unapplied edits');
+  expect(confirmations).toHaveLength(2);
 });

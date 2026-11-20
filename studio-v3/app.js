@@ -170,7 +170,7 @@ async function action(name) {
   if (name === 'undo' || name === 'redo') { if (!database.guardDraft()) return; await bus.navigateHistory(name,bus.revision); state.dataDraft = null; await changed(); }
   else if (name === 'new') { $('#new-warning').textContent = state.dirty || database.draft || state.dataDraft !== null ? 'Starting another form discards unsaved form, table and JSON edits. Save first to keep them.' : 'Choose a complete starter or a blank form.'; $('#new-dialog').showModal(); }
   else if (name === 'cancel-new') $('#new-dialog').close();
-  else if (name === 'open') { if (!(state.dirty || database.draft || state.dataDraft !== null) || confirm('Open another file and discard unsaved form, table and JSON edits? Saved datasets are retained.')) $('#open-file').click(); }
+  else if (name === 'open') $('#open-file').click();
   else if (await projectFileAction(name,{bus,state,installStatus:status,syncControls,getBus:()=>bus})) return;
   else if (name === 'print') {
     if (inspectProject(bus.project,state.report).ready && !state.running && !ai.viewing) {
@@ -226,7 +226,7 @@ document.addEventListener('click', e => {
     const name = control.dataset.action;
     if (name === 'cancel-draft') { drafts.discard(control.closest('[data-form]')); return; }
     const perform = () => ['validate-all','rerender','new','cancel-new','open','preview','next','previous','properties','binding','go-data','go-style'].includes(name) ? action(name).catch(e=>status(e.message)) : name === 'review-drafts' ? undefined : queueEdit(() => action(name));
-    if (['new','open','properties','binding','go-data','go-style','save','export','share','save-share','export-share','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
+    if (['new','properties','binding','go-data','go-style','save','export','share','save-share','export-share','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
   }
 });
 document.addEventListener('submit', e => {
@@ -272,6 +272,8 @@ document.addEventListener('change', e => {
   if (e.target.id === 'database-choice') { const id = e.target.value; e.target.value = bus.project.studioV3Session.database?.id || ''; drafts.guard(() => queueDatabase('choose',{id})).catch(e=>status(e.message)); }
 });
 setupWorkspaceFileReads({getBus:()=>bus,state,database,queueDatabase,queueEdit,install,readProject,status,
+  confirmProjectReplacement:()=> !(state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size) ||
+    confirm('Open the selected form and discard unsaved form, table and JSON edits? Saved datasets are retained.'),
   draftState:()=>JSON.stringify([...drafts.drafts].filter(([,draft])=>draft.kind !== 'data').map(([key,draft])=>[key,draft.values]))});
 $('#document-name').addEventListener('change', e => { const title = e.target.value.trim(); if (title) queueEdit(() => mutate([{type:'set_manifest_value',path:'/title',value:title}],'template name')); });
 $('#zoom').onchange = () => { persistZoom($('#zoom')); resizePaper(); }; window.addEventListener('resize',resizePaper);

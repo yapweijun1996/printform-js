@@ -30,7 +30,7 @@ export function createFileReadGuard(snapshot) {
   };
 }
 
-export function setupWorkspaceFileReads({getBus,state,database,queueDatabase,queueEdit,install,readProject,status,draftState=()=>'',root=document}) {
+export function setupWorkspaceFileReads({getBus,state,database,queueDatabase,queueEdit,install,readProject,status,confirmProjectReplacement=()=>true,draftState=()=>'',root=document}) {
   const guard = createFileReadGuard(()=>({
     bus:getBus(),project:getBus()?.project,review:database.importReview,preview:database.importReview?.preview,
     mappings:JSON.stringify(database.importReview?.mappings),source:database.importReview?.sourcePointer,
@@ -49,6 +49,7 @@ export function setupWorkspaceFileReads({getBus,state,database,queueDatabase,que
         await queueEdit(()=> {
           guard.assertCurrent(ticket);
           if (database.busy || database.pending) throw new Error('A database action is active. Open the file again.');
+          if (!confirmProjectReplacement()) { status('Open canceled. Your work is retained.'); return; }
           install(project); status('Opened editable v3 form. Data is an unsaved draft; Save as new retains existing database records.');
         },false);
       } else await queueDatabase('import-file',{source,filename:file.name,assertCurrent:()=>guard.assertCurrent(ticket),isCurrent:()=>guard.current(ticket)});

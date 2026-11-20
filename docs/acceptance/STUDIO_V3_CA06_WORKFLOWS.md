@@ -24,3 +24,9 @@ This review maps the eight [G5 acceptance cases](../STUDIO_V3_CODING_AGENT_ACCEP
 - Runtime and site builds passed. The packaged agent check passed all 129 contract examples.
 - File actions, export privacy, file workflows, document round-trip and scenario matrix passed 38 Vitest cases. The initial revision-race fixture attempted to write a read-only bus property. The corrected test advances revision through the real edit operation and verifies rejection and retry.
 - Chromium passed the file actions browser case, including editable JSON content, standalone HTML bytes and print-request dispatch from the preview. The fixture intercepts the native print call.
+
+## Open and import regression
+
+Open used to resolve the form-draft dialog before choosing or reading a file. A user could discard a draft and then select an invalid file or cancel the picker. The host now asks for replacement approval only after parsing a valid project and rechecking the current read ticket. Invalid input and a declined replacement preserve the current draft.
+
+Vitest passed 52 cases across file workflows, import safety, structured import and scenario matrix. Chromium passed five selected draft and import cases, including the native file chooser with malformed input, a declined valid replacement and an approved retry. Nested JSON malformed replacement, cancellation and invalid UTF-8 cases also passed. The site build passed with the corrected Open flow.
