@@ -31,6 +31,10 @@ Open used to resolve the form-draft dialog before choosing or reading a file. A 
 
 Vitest passed 52 cases across file workflows, import safety, structured import and scenario matrix. Chromium passed five selected draft and import cases, including the native file chooser with malformed input, a declined valid replacement and an approved retry. Nested JSON malformed replacement, cancellation and invalid UTF-8 cases also passed. The site build passed with the corrected Open flow.
 
+### Review a replacement from New
+
+The host opens the template chooser without changing drafts. Cancel or Escape leaves current inputs and a reviewed CSV untouched. Choosing a starter prepares it before asking for a decision. Stay retains the source, mapping, paper and revision. Apply commits the edits to the current document and returns there for Save. Discard opens the chosen replacement. The browser cases verify an inspector draft and a mapped CSV, including the original document identity and Undo after Apply. The separate local `/new` command retains its independent-document workflow. [Browser regressions](../../e2e/studio-v3-drafts.spec.js)
+
 ## Scenario and navigation verification
 
 - The Chromium scenario-matrix browser case passed. It drove the real Validate panel and agent tool through all six cases, compared page/issue results and checked the unchanged revision. The provider response was scripted.

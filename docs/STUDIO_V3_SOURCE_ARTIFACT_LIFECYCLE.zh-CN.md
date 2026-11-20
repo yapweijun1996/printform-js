@@ -80,5 +80,6 @@
 - 私有候选阶段live r0保持；显式host commit场景才到r1，标题及188.5×244.2mm生效，data/schema原样。此烟测没有运行原生AIPanel UI或模型；AIPanel Preview／Apply幂等与门禁由17项消费者回归覆盖，不能混称为公开模型任务成功。源码工作区、连接、server及浏览器均已确认关闭，managed容器／卷检查仍为0。
 - 第一轮在任何workspace创建前报`IMAGE_UNAVAILABLE`，失败文件保留。后续全环境／受限环境的独立只读检查均读到相同tag及digest，未改Docker上下文／产品；首因未证实，不捏造修复。恢复后的真实链路在独立目录留证。
 - 脱敏进程／制品／纸面结果见[实际证据](acceptance/STUDIO_V3_SOURCE_ARTIFACT_20261019.json)。本地首次全量3504通过／1失败／9跳过来自未先刷新workflow生成物；既有生成器刷新后，12项发现／知识回归、127契约／39审查及运行包／站点构建通过。源码镜像断言与残留源码文本断言已移除，不重新钉住文案；首轮5项新夹具变量错误亦保留。
+- `e7bfdc3` 的 Chromium 与封存 Docker companion 复验覆盖真实写入、恢复原始树摘要、测试和构建退出 0、有效产物回执，以及随后拒绝导入。表单保持 r0，无候选进入人工 Apply。配套正例仍从真实构建进入独立预览和人工 Apply。 [浏览器回归](../e2e/studio-v3-source-artifact.spec.mjs)
 
 上述均不新增正式G8 attempt，不关闭固定upstream、DPA、完整G6/G8/G9或实体资格。

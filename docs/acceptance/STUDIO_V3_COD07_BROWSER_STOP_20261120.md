@@ -10,7 +10,14 @@
 ```sh
 PF_CODING_BROWSER_INTEGRATION=1 \
   PF_CODING_IMAGE=printform-coding-runner:early-cancel-probe \
-  npx playwright test e2e/studio-v3-source-artifact.spec.mjs --project=chromium --workers=1
+  PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/printform-coding-browser-report.json \
+  npx playwright test e2e/studio-v3-source-artifact.spec.mjs --project=chromium --workers=1 --reporter=list,json
 ```
 
 Stop 用例将一次点击至确认和界面通知的时间作为测试附件。COD-07 的正式门槛仍采用 100 项独立 `/cancel` 测量。集成候选的 p95 为 1,036.47 毫秒，超过 1 秒门槛。 [浏览器用例](../../e2e/studio-v3-source-artifact.spec.mjs) · [候选对照样本](STUDIO_V3_COD07_CLOSE_PHASE_20261120.md)
+
+## 创建与关闭的独立传输记录
+
+在 `7cc40c0` 首轮，测试在读取创建工作区的响应时失败，尚未点击 Stop。相同的 Chromium CDP 错误在一个无导航的本地 HTTP 对照中复现：先收到 200 响应头，随后中止正文读取。原失败未保留请求终态与服务端完成状态，无法确认其原因。`7cc40c0` 独立重跑的 Stop 从测试发起点击到收到回执为 2,457 毫秒。
+
+`e7bfdc3` 的新增诊断只记录路径模板、方法、状态和单调时间，测试失败时也保存附件。全部三项真实 Chromium/Docker 用例通过。记录到创建请求完成于 7,215 毫秒，关闭请求完成于 4,310 毫秒，测试发起点击到收到 200 关闭回执为 4,373 毫秒。Chromium 随后确认两条请求正文均完整，关联容器和卷均清除。这是单次关闭观测。 [脱敏记录逻辑](../../e2e/studio-v3-source-artifact.spec.mjs)
