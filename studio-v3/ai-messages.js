@@ -43,7 +43,8 @@ export const AI_MESSAGES = {
   INTENT_CONFLICT:'This suggestion changed after it was prepared. Send a new request. Nothing changed.',
   INTENT_KEY_INVALID:'This suggestion cannot be applied. Send a new request. Nothing changed.',
   AI_TIMEOUT:'The AI service is slow and the request timed out. Use Edit & resend to try again. Nothing changed.',
-  AI_RUN_FAILED:'Pi could not complete a validated answer or proposal. Nothing changed.'
+  AI_RUN_FAILED:'Pi could not complete a validated answer or proposal. Nothing changed.',
+  WORKSPACE_PAIRING_REVOKE_UNCONFIRMED:'The paired companion did not match this Studio release. Revocation of the temporary pairing is unconfirmed. Restart the local companion from this exact Studio release before pairing again. Ordinary form editing remains available.'
 };
 export const errorMessage = error=> {
   if (error.name === 'AbortError') return 'Cancelled. Live form unchanged.';

@@ -141,3 +141,68 @@ it('refuses new wire effects if the connection begins revocation while awaiting 
   await revoking;
   expect(connection.available).toBe(false);
 });
+
+const oldRunnerSourceHash = 'e'.repeat(64);
+function pairingFixture({healthHash = runnerSourceHash,pairedHash = runnerSourceHash,revoke} = {}) {
+  const wire = [];
+  const transport = vi.fn(async (url,options)=> {
+    const path = new URL(url).pathname;
+    wire.push({path,...options});
+    if (path === '/health') return json({runnerSourceHash:healthHash});
+    if (path === '/v1/pair') return json({protocol:'printform-coding-v1',profile:'local-docker-node24-source-json-v1',
+      token:'fictional-source-token-for-permission-test',expiresAt:Date.now()+60_000,runnerSourceHash:pairedHash,responseBytes:1_048_576});
+    if (path === '/v1/revoke') return revoke ? revoke() : json({revoked:true,workspacesClosed:true});
+    throw new Error('Unexpected workspace request');
+  });
+  return {wire,transport,expectedRunnerSourceHash:runnerSourceHash};
+}
+
+it('stops the exact-release health check and pair request when permission is denied',async()=> {
+  permission(async ()=> ({state:'denied'}));
+  const {wire,...options} = pairingFixture();
+  await expect(pairSourceRunner(code,options)).rejects.toMatchObject({code:'WORKSPACE_LOCAL_NETWORK_DENIED'});
+  expect(wire).toEqual([]);
+});
+
+it('checks the installed runner without sending the code or receiving a token on mismatch',async()=> {
+  permission(async ()=> ({state:'granted'}));
+  const {wire,...options} = pairingFixture({healthHash:oldRunnerSourceHash});
+  await expect(pairSourceRunner(code,options)).rejects.toMatchObject({code:'WORKSPACE_RUNTIME_MISMATCH'});
+  expect(wire).toEqual([expect.objectContaining({path:'/health',method:'GET',credentials:'omit',redirect:'error'})]);
+  expect(wire[0]).not.toHaveProperty('body');
+  expect(wire[0]).not.toHaveProperty('headers');
+});
+
+it('uses one deadline and checks permission again before posting the one-use code',async()=> {
+  const query = permission(async ()=> ({state:'granted'}));
+  const {wire,...options} = pairingFixture();
+  const connection = await pairSourceRunner(code,options);
+  expect(connection.available).toBe(true);
+  expect(wire.map(({path,method})=>[method,path])).toEqual([['GET','/health'],['POST','/v1/pair']]);
+  expect(wire[0].signal).toBe(wire[1].signal);
+  expect(query).toHaveBeenCalledTimes(2);
+  query.mockResolvedValueOnce({state:'granted'}).mockResolvedValueOnce({state:'denied'});
+  await expect(pairSourceRunner(code,options)).rejects.toMatchObject({code:'WORKSPACE_LOCAL_NETWORK_DENIED'});
+  expect(wire.slice(2).map(({path})=>path)).toEqual(['/health']);
+});
+
+it.each([oldRunnerSourceHash,'invalid-hash'])('revokes a provisional pairing when the POST identity changes to %s',async pairedHash=> {
+  const query = permission(async ()=> ({state:'granted'}));
+  const {wire,...options} = pairingFixture({pairedHash});
+  await expect(pairSourceRunner(code,options)).rejects.toMatchObject({code:'WORKSPACE_RUNTIME_MISMATCH'});
+  expect(wire.map(({path,method})=>[method,path])).toEqual([['GET','/health'],['POST','/v1/pair'],['POST','/v1/revoke']]);
+  expect(wire[2].headers.Authorization).toBe('Bearer fictional-source-token-for-permission-test');
+  expect(query).toHaveBeenCalledTimes(2);
+});
+
+it.each([false,true])('reports an unconfirmed temporary pairing when revocation has transport failure %s',async transportFailure=> {
+  permission(async ()=> ({state:'granted'}));
+  const {wire,...options} = pairingFixture({pairedHash:oldRunnerSourceHash,revoke:async()=> {
+    if (transportFailure) throw new TypeError('Connection dropped');
+    return json({revoked:false,workspacesClosed:false});
+  }});
+  const pending = await pairSourceRunner(code,options).catch(error=>error);
+  expect(pending).toMatchObject({code:'WORKSPACE_PAIRING_REVOKE_UNCONFIRMED'});
+  expect(errorMessage(pending)).toMatch(/temporary pairing is unconfirmed.*Ordinary form editing remains available/);
+  expect(wire.map(({path})=>path)).toEqual(['/health','/v1/pair','/v1/revoke']);
+});

@@ -5,6 +5,7 @@ export const SOURCE_PROTOCOL = 'printform-coding-v1';
 // 64,000 raw output bytes may expand sixfold in JSON; metadata stays bounded.
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const identifier = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
+const runnerHash = /^[a-f0-9]{64}$/;
 const unavailable = () => fail('WORKSPACE_UNAVAILABLE');
 const rejected = code => Object.assign(fail(code),{admissionRejected:true});
 
@@ -70,7 +71,7 @@ class SourceConnection {
   #revoke;
   #dead = false;
   constructor(base,transport,paired) {
-    if (paired.protocol !== SOURCE_PROTOCOL || paired.profile !== 'local-docker-node24-source-json-v1' || !/^[a-f0-9]{64}$/.test(paired.runnerSourceHash || '') || paired.responseBytes !== MAX_RESPONSE_BYTES ||
+    if (paired.protocol !== SOURCE_PROTOCOL || paired.profile !== 'local-docker-node24-source-json-v1' || paired.responseBytes !== MAX_RESPONSE_BYTES ||
       typeof paired.token !== 'string' || paired.token.length < 24 || paired.token.length > 256 || !Number.isFinite(paired.expiresAt) || paired.expiresAt <= Date.now()) throw unavailable();
     this.base = base; this.#fetch = transport; this.#token = paired.token;
     this.expiresAt = paired.expiresAt; this.profile = paired.profile; this.runnerSourceHash = paired.runnerSourceHash;
@@ -120,15 +121,34 @@ class SourceConnection {
   }
 }
 
-export async function pairSourceRunner(code,{baseURL = SOURCE_RUNNER_URL,transport = globalThis.fetch.bind(globalThis),signal} = {}) {
-  const base = runnerUrl(baseURL);
-  if (typeof code !== 'string' || !/^[a-zA-Z0-9_-]{16,128}$/.test(code)) throw fail('WORKSPACE_PAIRING_INVALID');
-  const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000);
+async function pairingRequest(url,transport,stop,signal,body) {
   checkAdmission(await readLoopbackPermission(stop),stop,signal);
   let response;
   try {
-    response = await transport(`${base}/v1/pair`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code}),
+    const payload = body === undefined ? {method:'GET'} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
+    response = await transport(url,{...payload,
       signal:stop,credentials:'omit',cache:'no-store',redirect:'error',referrerPolicy:'no-referrer'});
   } catch { if (signal?.aborted) throw signal.reason; throw unavailable(); }
-  return new SourceConnection(base,transport,await responseJson(response));
+  return responseJson(response);
+}
+
+export async function pairSourceRunner(code,{baseURL = SOURCE_RUNNER_URL,transport = globalThis.fetch.bind(globalThis),signal,expectedRunnerSourceHash} = {}) {
+  const base = runnerUrl(baseURL);
+  if (typeof code !== 'string' || !/^[a-zA-Z0-9_-]{16,128}$/.test(code)) throw fail('WORKSPACE_PAIRING_INVALID');
+  const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000);
+  if (expectedRunnerSourceHash !== undefined) {
+    if (typeof expectedRunnerSourceHash !== 'string' || !runnerHash.test(expectedRunnerSourceHash)) throw fail('WORKSPACE_RUNTIME_MISMATCH');
+    const health = await pairingRequest(`${base}/health`,transport,stop,signal);
+    if (health.runnerSourceHash !== expectedRunnerSourceHash) throw fail('WORKSPACE_RUNTIME_MISMATCH');
+  }
+  const connection = new SourceConnection(base,transport,await pairingRequest(`${base}/v1/pair`,transport,stop,signal,{code}));
+  if (expectedRunnerSourceHash !== undefined && connection.runnerSourceHash !== expectedRunnerSourceHash) {
+    // The runtime changed after the health check. Revoke the provisional pairing
+    // without returning it to the UI or creating any source workspace.
+    const receipt = await connection.revoke().catch(()=>null);
+    if (receipt?.revoked !== true || receipt?.workspacesClosed !== true) throw fail('WORKSPACE_PAIRING_REVOKE_UNCONFIRMED');
+    throw fail('WORKSPACE_RUNTIME_MISMATCH');
+  }
+  if (typeof connection.runnerSourceHash !== 'string' || !runnerHash.test(connection.runnerSourceHash)) throw unavailable();
+  return connection;
 }

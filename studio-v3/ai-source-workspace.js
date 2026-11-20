@@ -3,6 +3,7 @@ import { authorizeSourceWorkspace } from './source-workspace-run.js';
 import { sourceFailure } from './source-workspace-errors.js';
 import { agentEnabled } from './agent-preference.js';
 import { errorMessage } from './ai-messages.js';
+import { AGENT_BUILD_IDENTITY } from './agent-release.js';
 
 export class AISourceWorkspace {
   constructor(panel) {
@@ -23,9 +24,10 @@ export class AISourceWorkspace {
   resetConsent() { this.consent.checked = false; }
   async pair() {
     if (this.panel.privateDraft?.() || this.pairing || this.panel.busy || this.closing || this.cleanupFailed || this.connection?.available) return;
-    this.pairing = true; this.status.textContent = 'Pairing with the locally started companion…'; this.update();
+    this.pairing = true; this.resetConsent();
+    this.status.textContent = 'Pairing with the locally started companion…'; this.update();
     try {
-      this.connection = await pairSourceRunner(this.code.value.trim()); this.resetConsent();
+      this.connection = await pairSourceRunner(this.code.value.trim(),{expectedRunnerSourceHash:AGENT_BUILD_IDENTITY?.sourceRunnerHash});
       this.status.textContent = 'Paired locally. Source access remains off until one-request fictional-source permission is checked.';
     } catch (error) { this.status.textContent = errorMessage(error); }
     finally { this.code.value = ''; this.pairing = false; this.panel.update(); }
