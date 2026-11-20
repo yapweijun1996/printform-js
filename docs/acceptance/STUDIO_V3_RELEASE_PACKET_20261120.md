@@ -66,4 +66,17 @@ Fresh builds from `f7326df94f531dd6a6dad087f9944190abea7ebd` and `d2412e889fabb0
 | `f7326df` | `60d3d678db989248b8d5f075f881069c573375a8ef569c9ed51f1542ebecfa35` | `57840030caf177aee55427521d179e8a19862cec4a3d96d8853e7cb0a28099b1` |
 | `d2412e8` | `debeebea937b998b2c3bbfe28286cd04164584535242c9dfb4b0abb3fbbe85ee` | `a06f50d4a11f3adeb4e97af438effcd577feb69d35cd1b275298db0ef844ead8` |
 
+### Verify archived roots against observed fingerprints
+
+Before serving a prebuilt rollback pair, check both archived or reproducibly rebuilt `site-dist` roots against separately retained observations of those releases. GitHub Pages can stop serving older immutable URLs after deployment. Keep the roots and fingerprint records available locally. Use full releases and do not compute the expected fingerprints from the same roots being checked.
+
+```sh
+jq -s 'def pins: {release,appSHA256,workerSHA256,manifestSHA256,dependencyIndexSHA256};
+  {schema:"studio-v3-rollback-pins-v1",old:(.[0]|pins),next:(.[1]|pins)}' \
+  /path/to/observed-old.json /path/to/observed-next.json > /path/to/rollback-pins.json
+node scripts/studio-v3-verify-release-pair.mjs OLD_SITE_DIST NEXT_SITE_DIST /path/to/rollback-pins.json
+```
+
+The offline verifier checks the separately pinned app, worker, Agent manifest and dependency-index SHA-256 values, confirms both release identities and checks every worker shell file. The verifier checked both archived `f7326df` and `d2412e8` roots against previously captured public fingerprints. It matched all 25 shell and six Agent files per root. The prebuilt rollback then passed Chromium, Firefox and WebKit with the local coherence check enabled. It also reports whether companion source hashes match. A mismatch leaves the actual companion build and rollout plan to be verified separately. The command does not deploy, switch companions or establish operational rollback approval. The Playwright drill checks local shell coherence before serving archived roots even when run without the independent pins. Use the pinned command first to establish a public-artifact match.
+
 For a supported deployment rollback, record the current and target artifact identities and the runner compatibility before republishing the previously verified bundle. Keep the existing service-worker and recovery workflow in place. If an unsaved-work dialog appears, choose Keep to preserve the draft, or Stay to defer the switch. Verify the active revision, data and pending edits after reload. Use the existing recovery backup path if automatic restoration reports incompatibility. Browser storage deletion is not part of the drill.

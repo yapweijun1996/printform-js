@@ -6,15 +6,13 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const compile = promisify(execFile);
 import { finalizeStudioV3Pwa } from '../scripts/studio-v3-pwa.mjs';
+import { verifyStudioV3Release } from '../scripts/studio-v3-release-verification.mjs';
 
 const rollbackRoots = [process.env.PRINTFORM_ROLLBACK_OLD,process.env.PRINTFORM_ROLLBACK_NEXT];
 export const exactRollback = rollbackRoots.some(Boolean);
 function artifactRevision(root) {
   if (!root) throw new Error('Set both exact rollback artifact roots.');
-  const page = fs.readFileSync(path.join(root,'studio-v3/index.html'),'utf8');
-  const revision = /<meta name="printform-source-revision" content="([a-f0-9]{40})">/.exec(page)?.[1];
-  if (!revision) throw new Error(`Studio v3 release metadata missing in ${root}`);
-  return revision;
+  return verifyStudioV3Release(root).release;
 }
 export const OLD = exactRollback ? artifactRevision(rollbackRoots[0]) : 'a'.repeat(40);
 export const NEXT = exactRollback ? artifactRevision(rollbackRoots[1]) : 'b'.repeat(40);
