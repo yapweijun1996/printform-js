@@ -104,7 +104,11 @@ for (const [viewport,kind] of [[{width:1440,height:900},'invoice'],[{width:390,h
     await clickHeaderAction(fork,'save'); await download;
     await expect(fork.locator('#revision')).toHaveText('r1');
     const closed = fork.waitForEvent('close');
-    await back.click(); await closed;
+    const activation = back.click().catch(error=> {
+      // Firefox can close the tab before Playwright acknowledges the click.
+      if (!fork.isClosed()) throw error;
+    });
+    await Promise.all([closed,activation]);
 
     await expect(page.locator('#revision')).toContainText('r1');
     await expect(page.locator('#document-name')).toHaveValue('Original revised order');
