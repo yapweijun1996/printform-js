@@ -80,3 +80,11 @@ On `da4fc42` with the test-only instrument, the first Firefox attempt confirmed 
 | WebKit 26.5 | Pass (29.7s) | Pass (26.5s) |
 
 Chromium and Firefox ran in 2.6 minutes. WebKit ran in 1.0 minute after two attempts stopped before the case bodies. The host library preflight first reported six missing libraries. The extracted user-space library directory resolved five, and `ldd` confirmed the remaining GLES library could resolve its dependencies. The successful run used that library directory and the documented Playwright host preflight override. All runs used official Playwright 1.62.0 browsers, one worker, no retries, and the existing assertion and case timeouts. The two affected test dependency digests were refreshed in the isolated build review. This focused 6/6 result leaves the historical complete-matrix outcomes intact. The complete matrix and the browser's underlying frame-context behavior remain unqualified.
+
+## 2026-11-20 full current Firefox rerun
+
+The eight original spec files now contain 27 current cases. Firefox 153 first passed 26/27 on `481e12e`; the stripe restoration test stopped at a direct iframe CSS read after the UI was ready. After that case began sampling computed styles in the native render event, the second run also passed 26/27. Stripe restoration passed, and the independent header color case stopped at a direct iframe read after clearing the header overrides. Both failed runs retained their original 90-second case deadline and traces.
+
+Using the same read-only sampler for both confirmed cases, the full 27-case inventory passed in 198.3 seconds with one worker, zero retries and no skips. The test verified every row or cell color and the header on every printed page. It also retained body colors, Undo, reopen, the original style on reset and the pre-Apply checks. The tests sample their current real iframe generation. This evidence covers the eight historical spec files at their current inventory.
+
+The Chromium and WebKit rerun passed six targeted typography and table cases. An earlier 9/10 run returned HTTP 404 for the immutable agent manifest in one WebKit case while another command replaced the local served build. The stable-site rerun reproduced the relevant user actions and passed that case.

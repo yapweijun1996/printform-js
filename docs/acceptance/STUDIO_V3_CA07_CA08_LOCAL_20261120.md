@@ -31,6 +31,8 @@ docker build --tag printform-coding-runner:local coding-runner
 PF_CODING_BROWSER_INTEGRATION=1 npx playwright test e2e/studio-v3-source-artifact.spec.mjs --project=chromium --workers=1
 ```
 
+新的 runner 源码哈希 `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b` 与封存镜像 `sha256:76badd727406b763e562556ba9cf53b1eb642dd9657674904ef7a20fa20b1537` 再次完成上述 Chromium 浏览器用例，1/1 通过、用时 32.1 秒。该轮覆盖同一合成请求下的实际源码操作、独立产物校验、纸面预览和人工 Apply。
+
 ## 完整验收仍需的证据
 
 - [本地负载复验](STUDIO_V3_G6_LOAD_20261120.md)完成 100 次运行状态和取消采样。运行状态和独立进程退出达标，最终 HTTP 停止回执超出 p95 目标。还需验证剩余资源边界及当前已发布 HTTPS Studio 与本地 companion 的浏览器配对、撤销和网络权限。这里完成的是有界 Linux/amd64 和 Chromium 的验证。
