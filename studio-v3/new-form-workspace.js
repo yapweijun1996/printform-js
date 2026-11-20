@@ -1,31 +1,36 @@
 import { newProject } from './model.js';
+import { A4_PRESETS } from './a4-presets.js';
+import { newDemoProject } from './demo-templates.js';
 import { PaperPreview } from './preview.js';
 import { inspectProject } from './validation.js';
 import { setupNewFormDraft } from './new-form-draft.js';
 import { datasetTitleFor } from './database-model.js';
 
 const STARTERS = Object.freeze({blank:'Blank form',invoice:'Invoice',purchase:'Purchase order',delivery:'Delivery note'});
-const USAGE = 'Local commands: /new blank, /new invoice, /new purchase, or /new delivery.';
+const PRESETS = new Map(A4_PRESETS.map(preset=>[preset.id,preset]));
+const starterLabel = kind => Object.hasOwn(STARTERS,kind) ? STARTERS[kind] : PRESETS.get(kind)?.label;
+const USAGE = `Local commands include /new blank, /new invoice, /new purchase and /new delivery. For a business A4 starter, use /new followed by one of ${A4_PRESETS.map(preset=>preset.id).join(', ')}.`;
 const DOCUMENT_ID = /^v3-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export function readNewFormCommand(text) {
   const words = text.trim().toLowerCase().split(/\s+/);
   if (words[0] !== '/new') return null;
-  return words.length === 2 && Object.hasOwn(STARTERS,words[1]) ? {kind:words[1]} : {error:USAGE};
+  return words.length === 2 && starterLabel(words[1]) ? {kind:words[1]} : {error:USAGE};
 }
 
 export function readNewFormOpening(hash, build) {
   const params = new URLSearchParams(hash.slice(1));
   if (!params.has('new-form')) return null;
   const kind = params.get('new-form'), id = params.get('document');
-  if (!Object.hasOwn(STARTERS,kind) || !DOCUMENT_ID.test(id) || params.get('build') !== build) return {blocked:true};
+  if (!starterLabel(kind) || !DOCUMENT_ID.test(id) || params.get('build') !== build) return {blocked:true};
   const mode = params.get('mode');
   if (mode !== null && mode !== 'draft') return {blocked:true};
   return mode === 'draft' ? {kind,id,draft:true} : {kind,id};
 }
 
 function createStarter(kind, id) {
-  const project = newProject(kind === 'blank' ? 'invoice' : kind,kind === 'blank');
+  const preset = PRESETS.get(kind);
+  const project = preset ? newDemoProject(preset.documentKind) : newProject(kind === 'blank' ? 'invoice' : kind,kind === 'blank');
   if (id) project.manifest.documentId = id;
   project.manifest.sampleDataTitle = datasetTitleFor(project);
   return project;
@@ -37,7 +42,7 @@ export function setupNewFormWorkspace({getBus,pending,adopt,root=document,host=w
   const prompt = dialog.querySelector('[data-new-form-status]'), frame = dialog.querySelector('iframe');
   const build = root.querySelector('meta[name=printform-source-revision]').content;
   const stored = host.history.state?.studioNewForm;
-  const prior = Object.hasOwn(STARTERS,stored?.kind) && DOCUMENT_ID.test(stored?.id) ? stored : null;
+  const prior = starterLabel(stored?.kind) && DOCUMENT_ID.test(stored?.id) ? stored : null;
   const token = readNewFormOpening(host.location.hash,build);
   let opening = prior || token;
   // Consume the launch fragment once. Only the fictional recipe lives in the
@@ -94,7 +99,7 @@ export function setupNewFormWorkspace({getBus,pending,adopt,root=document,host=w
     const bus = getBus(), project = createStarter(command.kind);
     const ticket = {bus,revision:bus.revision,accepted:false};
     prepared = ticket;
-    dialog.querySelector('h2').textContent = `Preview new ${STARTERS[command.kind].toLowerCase()}`;
+    dialog.querySelector('h2').textContent = `Preview new ${starterLabel(command.kind).toLowerCase()}`;
     prompt.textContent = 'Checking the fictional starter…';
     apply.hidden = true; refine.hidden = true;
     dialog.showModal();

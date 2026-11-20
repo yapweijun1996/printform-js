@@ -1,5 +1,7 @@
 import {test,expect} from './studio-v3-test.js';
 import {newProject} from '../studio-v3/model.js';
+import {newDemoProject} from '../studio-v3/demo-templates.js';
+import {A4_PRESETS} from '../studio-v3/a4-presets.js';
 import {saveProject} from '../studio-v3/file-io.js';
 import {clickHeaderAction} from './header-action.js';
 
@@ -25,7 +27,11 @@ function record(project) {
   }};
 }
 
-for (const [viewport,kind] of [[{width:1440,height:900},'invoice'],[{width:390,height:844},'blank']]) {
+for (const [viewport,kind] of [
+  [{width:1440,height:900},'invoice'],
+  [{width:390,height:844},'blank'],
+  [{width:1440,height:900},'invoice-ledger']
+]) {
   test(`local ${kind} preview opens an independent fictional document at ${viewport.width}px`,async({page,context},info)=>{
     await page.setViewportSize(viewport);
     const gateway = [];
@@ -58,7 +64,7 @@ for (const [viewport,kind] of [[{width:1440,height:900},'invoice'],[{width:390,h
     if (await closeProperty.isVisible()) await closeProperty.click();
     await page.locator('[data-ai-toggle]').click();
 
-    await send(page,'/new invoice and copy my saved data');
+    await send(page,`/new ${kind} and copy my saved data`);
     await expect(page.locator('[data-ai-status]')).toContainText('Local commands');
     await expect(preview(page)).toBeHidden();
     expect(context.pages()).toHaveLength(1);
@@ -76,7 +82,8 @@ for (const [viewport,kind] of [[{width:1440,height:900},'invoice'],[{width:390,h
     await expect(apply).toBeVisible({timeout:30000});
     await page.screenshot({path:info.outputPath(`fork-preview-${viewport.width}.png`)});
     const candidate = await renderedSource(preview(page).locator('iframe'));
-    const expected = newProject('invoice',kind === 'blank');
+    const expected = kind === 'invoice-ledger' ? newDemoProject('SalesInvoice') : newProject('invoice',kind === 'blank');
+    expect(candidate.manifest.title).toBe(expected.manifest.title);
     expect(candidate.manifest.documentId).not.toBe(original.manifest.documentId);
     expect(candidate.manifest.studioV3).toEqual(expected.manifest.studioV3);
     expect(candidate.schema).toEqual(expected.schema);
@@ -119,6 +126,70 @@ for (const [viewport,kind] of [[{width:1440,height:900},'invoice'],[{width:390,h
     expect(gateway).toEqual([]);
   });
 }
+
+test('all A4 starter commands preview the exact built-in fictional preset locally',async({page,context})=>{
+  const gateway = [];
+  await context.route('https://gpt.yapweijun1996.com/**',route=>{gateway.push(route.request().url());return route.abort();});
+  await page.goto('/studio-v3/'); await ready(page);
+  await page.locator('[data-ai-toggle]').click();
+  const dialog = preview(page);
+  for (const {id,documentKind} of A4_PRESETS) await test.step(id,async()=>{
+    await send(page,`/new ${id}`);
+    await expect(dialog.getByRole('link',{name:'Apply & open in new tab'})).toBeVisible({timeout:30000});
+    const candidate = await renderedSource(dialog.locator('iframe'));
+    const expected = newDemoProject(documentKind);
+    expect(candidate.manifest.studioV3.layoutPreset).toBe(id);
+    expect(candidate.manifest.studioV3).toEqual(expected.manifest.studioV3);
+    expect(candidate.sampleData).toEqual(expected.sampleData);
+    expect(candidate.schema).toEqual(expected.schema);
+    await dialog.getByRole('button',{name:'Cancel'}).click();
+    await expect(dialog).toBeHidden();
+  });
+  expect(context.pages()).toHaveLength(1);
+  expect(gateway).toEqual([]);
+});
+
+test('A4 draft requires scenario review before adopting its exact independent preset',async({page,context})=>{
+  const gateway = [];
+  await context.route('https://gpt.yapweijun1996.com/**',route=>{gateway.push(route.request().url());return route.abort();});
+  await page.goto('/studio-v3/'); await ready(page);
+  const original = await renderedSource(page.locator('#preview-frame'));
+  await page.locator('[data-ai-toggle]').click();
+  await send(page,'/new procurement-order');
+  await expect(preview(page).getByRole('heading')).toHaveText('Preview new procurement order');
+  const refine = preview(page).getByRole('link',{name:'Refine in draft tab'});
+  await expect(refine).toBeVisible({timeout:30000});
+  const candidate = await renderedSource(preview(page).locator('iframe'));
+  const expected = newDemoProject('PurchaseOrder');
+  expect(candidate.manifest.title).toBe(expected.manifest.title);
+  expect(candidate.manifest.studioV3).toEqual(expected.manifest.studioV3);
+  expect(candidate.sampleData).toEqual(expected.sampleData);
+  expect(candidate.schema).toEqual(expected.schema);
+  expect(candidate.manifest.documentId).not.toBe(original.manifest.documentId);
+  const popup = context.waitForEvent('page');
+  await refine.click();
+  const draft = await popup;
+  const adopt = draft.getByRole('button',{name:'Adopt this form'});
+  const exportAction = draft.locator('[data-action=export]');
+  const notice = draft.locator('[data-new-form-return-status]');
+  await expect(draft.locator('#status')).toContainText('current layout passed');
+  await expect(exportAction).toBeHidden();
+  expect(await renderedSource(draft.locator('#preview-frame'))).toEqual(candidate);
+  await adopt.click();
+  await expect(notice).toContainText('Run all synthetic samples successfully');
+  await draft.locator('[data-mode=validate]').click();
+  await draft.getByRole('button',{name:'Run all synthetic samples',exact:true}).click();
+  await expect(draft.locator('#right-panel').getByText(/pages? · passed/)).toHaveCount(6,{timeout:60000});
+  await expect(draft.locator('#status')).toContainText(`${candidate.sampleData.items.length} rows`);
+  await adopt.click();
+  await expect(notice).toContainText('Adopted.');
+  await ready(draft);
+  expect(await renderedSource(draft.locator('#preview-frame'))).toEqual(candidate);
+  await expect(draft.locator('#revision')).toHaveText('r0');
+  await expect(page.locator('#revision')).toHaveText('r0');
+  expect(await renderedSource(page.locator('#preview-frame'))).toEqual(original);
+  expect(gateway).toEqual([]);
+});
 
 test('a fork recipe for an obsolete build opens only local return guidance',async({page,context})=>{
   const requests = [];

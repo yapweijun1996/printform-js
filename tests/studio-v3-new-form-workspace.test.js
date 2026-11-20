@@ -1,5 +1,6 @@
 import {describe,expect,it,vi} from 'vitest';
 import {readNewFormCommand,readNewFormOpening} from '../studio-v3/new-form-workspace.js';
+import {A4_PRESETS} from '../studio-v3/a4-presets.js';
 import {adoptPrivateDraft} from '../studio-v3/new-form-draft.js';
 
 const ID = 'v3-767f7389-09bc-4510-95fb-7f8a4bcc1828';
@@ -10,7 +11,12 @@ describe('new form local host control',()=>{
     expect(readNewFormCommand(` /NEW    ${kind}\n`)).toEqual({kind});
     expect(readNewFormOpening(link(kind),'test-build')).toEqual({kind,id:ID});
   });
-  it.each(['/new','/new company/secret','/new invoice and use customer data','/new constructor','/new __proto__'])(
+  it.each(A4_PRESETS.map(({id})=>id))('accepts the local A4 preset %s in both launch modes',kind=>{
+    expect(readNewFormCommand(` /NEW ${kind.toUpperCase()} `)).toEqual({kind});
+    expect(readNewFormOpening(link(kind),'test-build')).toEqual({kind,id:ID});
+    expect(readNewFormOpening(link(kind)+'&mode=draft','test-build')).toEqual({kind,id:ID,draft:true});
+  });
+  it.each(['/new','/new company/secret','/new invoice and use customer data','/new constructor','/new __proto__','/new supplied-facts','/new invoice-ledger source.json'])(
     'handles an unsupported local command without marking it as a provider request: %s',request=>{
       expect(readNewFormCommand(request)).toEqual({error:expect.stringContaining('/new blank')});
     });
@@ -18,7 +24,7 @@ describe('new form local host control',()=>{
     expect(readNewFormCommand('Start a purchase order')).toBeNull();
     expect(readNewFormOpening('#section','test-build')).toBeNull();
     expect(readNewFormOpening(link()+'&mode=draft','test-build')).toEqual({kind:'blank',id:ID,draft:true});
-    for (const hash of [link('unknown'),link('blank','v3-bad'),link('blank',ID,'older-build'),link()+'&mode=adopted']) {
+    for (const hash of [link('unknown'),link('supplied-facts'),link('blank','v3-bad'),link('blank',ID,'older-build'),link()+'&mode=adopted']) {
       expect(readNewFormOpening(hash,'test-build')).toEqual({blocked:true});
     }
   });
