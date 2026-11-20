@@ -31,6 +31,14 @@ npx playwright test e2e/studio-v3-observation e2e/studio-v3-pixel-observation \
   e2e/studio-v3-semantic-observation e2e/studio-v3-visual-capability --workers=1 --retries=0
 ```
 
+## Exact `9d6f992` replay
+
+The same scripted matrix ran against the independently verified `9d6f992` build with one worker and zero retries. Chromium and WebKit passed 14/14 each. Firefox passed 13/14. The first OBS-05 comparison on Firefox recorded the third provider turn, including the actual pixel receipt, then stalled when the test's direct Playwright iframe lookup could not read the recreated preview. The initial run ended with 41 passes and one failure. Its failure trace and screenshot were retained.
+
+The focused replacement sampler reads the native sandboxed renderer at its real render event. Its existing independent oracle still evaluates all five defects and their recoveries, pairs the actual PNG bytes to the latest receipt and checks rejection of old and foreign receipts. With the same app, worker and manifest bytes, OBS-05 passed in Chromium, Firefox and WebKit, and nine oracle unit checks passed. These two runs cover all 42 case conditions. The full matrix was not repeated with the replacement sampler. [Browser comparison](../../e2e/studio-v3-observation-comparison.spec.js)
+
+The separate read-only checks confirmed 60 G8 tasks and 20 holdouts. The historic profile still counted 3 recorded, 0 verified and 177 missing slots, with a `null` Wilson interval. The frozen Pass ceiling remained 144 against a required 162. The checked release manifest differed on all four historical release identity fields. Upstream ownership and governance proofs remain missing. The physical inventory could not confirm an attached printer or scanner because CUPS and USB inventory were unavailable. No model call, qualification attempt, print or scan was made.
+
 ## Draft G4 human review procedure
 
 This procedure is preparation for the existing [G4/G8 gates](../STUDIO_V3_CODING_AGENT_ACCEPTANCE.md). It has no reviewer ratings or approved human rubric. Keep the existing [fictional deterministic comparison](STUDIO_V3_CA05_OBS05.md) and historical observations intact.

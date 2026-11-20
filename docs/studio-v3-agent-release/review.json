@@ -4,5 +4,17 @@
   "release": "9d6f992c6e276c7ab6c795c809cfeb121c5c18db",
   "packageHash": "00957c1d9692b24854556f207d0ead36e8ae0eb016932287ebb87486b821a6a5"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.agent.finish_answer": "824145793b7f20d93fac3bd7bea336dfb2ee72a8590349dfb0f30c0ecba2408e"
+   },
+   "disposition": "updated",
+   "justification": "The independent OBS-05 fixture observes actual rendered geometry through the native iframe's render event, avoiding a stale Playwright execution context. The comparison still runs all five defects, checks exact wire pixels, and rejects both stale and foreign receipts. The geometry sampler can run in the native preview without a passed traversal root. Its page, coordinate and text comparison rules remain the same.",
+   "evidence": [
+    "e2e/studio-v3-observation-comparison.spec.js",
+    "tests/support/observation-comparison.js"
+   ]
+  }
+ ]
 }
