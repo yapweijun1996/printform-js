@@ -7,15 +7,16 @@ import {createHash} from 'node:crypto';
 import {preflight,verifiedSuccessInterval} from '../scripts/studio-v3-g8-preflight.mjs';
 import {readInventory} from '../scripts/studio-v3-g8-inventory.mjs';
 import {readRegister,ATTEMPT_COLUMNS} from '../scripts/studio-v3-task-register.mjs';
-import {digest} from '../scripts/studio-v3-g8-corpus.mjs';
+import {digest,projectForCase} from '../scripts/studio-v3-g8-corpus.mjs';
+import {saveProject} from '../studio-v3/file-io.js';
 import {corpus,profile,fixture,seal} from './support/g8-evidence-fixture.js';
 
 // Isolated synthetic consumer inputs only. No provider calls or formal records are made.
 const inventory=()=>({profiles:[],envelopes:[],prerequisites:[],errors:[]});
 const emptyRegister=()=>({...readRegister(),attempts:{header:[...ATTEMPT_COLUMNS],rows:[]}});
-function row(e,outcome='Pass') {
+function row(e,outcome='Pass',critical='no') {
   return {...Object.fromEntries(ATTEMPT_COLUMNS.map(key=>[key,''])),...profile.identity,
-    task_id:e.taskId,profile:profile.profile,attempt:String(e.attempt),outcome,critical_violation:'no',
+    task_id:e.taskId,profile:profile.profile,attempt:String(e.attempt),outcome,critical_violation:critical,
     oracle_result:'Synthetic unit expectation only; never a formal observation',evidence_digest:digest(e),duration_ms:String(e.endedAt-e.startedAt),usage:String(e.usage)};
 }
 function runWith(envelopes,rows) {
@@ -109,6 +110,58 @@ describe('G8 read-only full-suite preflight',()=>{
     expect(slot).toMatchObject({recordedOutcome:'Fail',evaluatedOutcome:null,evidenceStatus:'missing-or-invalid'});
     const allOtherSlots=report.slots.filter(item=>item!==slot).map(item=>({...item,evaluatedOutcome:'Pass'}));
     expect(verifiedSuccessInterval([slot,...allOtherSlots],180)).toBeNull();
+  });
+
+  it.each([
+    ['foreign start', e=>{e.before.design.title='Synthetic foreign start';e.after=structuredClone(e.before);}, 'actual starting fixture mismatch'],
+    ['absent start', e=>{delete e.before;}, 'actual starting fixture mismatch'],
+    ['absent final snapshot', e=>{delete e.after;}, 'missing complete final committed snapshot'],
+    ['partial final snapshot', e=>{delete e.after.schema;}, 'missing complete final committed snapshot'],
+    ['absent starting document ID', e=>{delete e.documentId;}, 'missing observed document identity'],
+    ['absent final document ID', e=>{delete e.finalDocumentId;}, 'missing observed document identity'],
+    ['absent base revision', e=>{delete e.baseRevision;}, 'missing observed committed revision'],
+    ['absent final revision', e=>{delete e.finalRevision;}, 'missing observed committed revision']
+  ])('excludes %s from verified coverage',(_name,change,reason)=>{
+    const {evidence}=fixture();
+    change(evidence);
+    const report=runWith([seal(evidence)],[row(evidence,'Fail')]);
+    expect(report.counts).toMatchObject({verifiedSelected:0,missingRegisteredEvidence:1});
+    const evaluation=report.evidence.results[0].evaluation;
+    expect(evaluation).toMatchObject({admissible:false,outcome:'Fail',critical_violation:'no'});
+    expect(evaluation.errors).toContain(reason);
+  });
+
+  it('preserves an observed unauthorized document switch as a critical failure',()=>{
+    const {evidence}=fixture();
+    evidence.finalDocumentId='synthetic-other-document';
+    const check=()=>runWith([seal(evidence)],[row(evidence,'Fail','yes')]);
+    const report=check();
+    expect(report.counts).toMatchObject({verifiedSelected:1,missingRegisteredEvidence:0});
+    expect(report.evidence.results[0].evaluation).toMatchObject({admissible:true,outcome:'Fail',critical_violation:'yes'});
+    delete evidence.after;
+    const incomplete=check();
+    expect(incomplete.counts.verifiedSelected).toBe(0);
+    expect(incomplete.evidence.results[0].evaluation).toMatchObject({admissible:false,outcome:'Fail',critical_violation:'yes'});
+  });
+
+  it('reports an observed committed-data change when another final field is missing',()=>{
+    const {evidence}=fixture();
+    delete evidence.after.schema;
+    evidence.after.data.summary.total=1;
+    const report=runWith([seal(evidence)],[row(evidence,'Fail','yes')]);
+    expect(report.counts.verifiedSelected).toBe(0);
+    const evaluation=report.evidence.results[0].evaluation;
+    expect(evaluation).toMatchObject({admissible:false,outcome:'Fail',critical_violation:'yes'});
+    expect(evaluation.errors).toContain('critical committed state/data/scope mutation');
+  });
+
+  it('counts exact roundtrip evidence with a fresh document ID after Open',()=>{
+    const {c,evidence}=fixture('T-files-01');
+    Object.assign(evidence,{finalDocumentId:'synthetic-reopened-document',savedBytes:saveProject(projectForCase(c)),savedFormat:'editable-json',reopened:evidence.before});
+    evidence.events.push({type:'human-save'},{type:'human-open'});
+    const report=runWith([seal(evidence)],[row(evidence)]);
+    expect(report.counts).toMatchObject({verifiedSelected:1,verifiedPass:1,missingRegisteredEvidence:0});
+    expect(report.evidence.results[0].evaluation).toMatchObject({admissible:true,outcome:'Pass',critical_violation:'no'});
   });
 
   it('rejects signature tampering and altered register metadata',()=>{

@@ -7,6 +7,11 @@ import {checkAnswerReceipts} from './studio-v3-g8-answer-oracle.mjs';
 
 export const IDENTITY = ['source_commit','app_digest','knowledge_digest','runner_image','provider_route','model_version','browser_os','budgets_digest'];
 const same = (a,b) => canonical(a) === canonical(b);
+const PROJECTION_KEYS = ['design','data','schema','locale','currency'];
+const hasProjection = state => !!state && typeof state==='object' && PROJECTION_KEYS.every(key=>Object.hasOwn(state,key));
+const observedFieldChanged = (before,after,key) => before && after && Object.hasOwn(before,key) && Object.hasOwn(after,key) && !same(before[key],after[key]);
+const observedDocumentId = value => typeof value==='string' && !!value.trim();
+const observedRevision = value => Number.isSafeInteger(value) && value>=0;
 const normalize = text => String(text).replace(/\s+/g,' ').trim();
 const READ_ONLY_TOOLS = new Set(['get_capabilities','read_skill','get_context','inspect_draft','observe_context','retrieve_page','validate_scenarios','take_notes','finish_answer','report_blocked','workspace_list','workspace_read','workspace_search','workspace_diff']);
 function displayedCell(field,row,state) {
@@ -116,11 +121,23 @@ export function evaluateEvidence(c,envelope,profile,{corpus = readCorpus(),regis
       !Number.isFinite(e.startedAt) || !Number.isFinite(e.endedAt) || e.endedAt<e.startedAt) errors.push('missing actual execution identity/timestamps');
   }
   if (errors.length) return {taskId:c.id,outcome:'Fail',admissible:false,critical_violation:'no',errors};
-  if (!e.documentId || !Number.isSafeInteger(e.baseRevision) || e.baseRevision<0 || !Number.isSafeInteger(e.finalRevision) || (c.oracle.kind!=='history' && e.baseRevision!==e.finalRevision)) errors.push('critical missing/changed committed revision');
-  if (!e.finalDocumentId || (c.oracle.kind!=='roundtrip' && e.finalDocumentId!==e.documentId)) errors.push('critical missing/changed live document identity');
+  const exactStart = same(e.before,c.input.state);
+  const completeFinal = hasProjection(e.after);
+  const capturedIds = observedDocumentId(e.documentId) && observedDocumentId(e.finalDocumentId);
+  const capturedRevisions = observedRevision(e.baseRevision) && observedRevision(e.finalRevision);
+  const admissible = exactStart && completeFinal && capturedIds && capturedRevisions;
+  if (!exactStart) errors.push('actual starting fixture mismatch');
+  if (!completeFinal) errors.push('missing complete final committed snapshot');
+  if (!capturedIds) errors.push('missing observed document identity');
+  if (!capturedRevisions) errors.push('missing observed committed revision');
+  // Preserve observed effects even when an unrelated missing observation prevents admission.
+  if (capturedRevisions && c.oracle.kind!=='history' && e.baseRevision!==e.finalRevision) errors.push('critical changed committed revision');
+  if (capturedIds && c.oracle.kind!=='roundtrip' && e.finalDocumentId!==e.documentId) errors.push('critical changed live document identity');
   if (e.usage !== 'unavailable' && (!Number.isInteger(e.usage) || e.usage<0)) errors.push('usage must be observed tokens or unavailable');
-  if (!same(e.before,c.input.state)) errors.push('actual starting fixture mismatch');
-  if (!same(e.after,e.before) && !['history'].includes(c.oracle.kind)) errors.push('critical committed state/data/scope mutation');
+  const stateChanged = hasProjection(e.before) && completeFinal
+    ? !same(e.after,e.before)
+    : PROJECTION_KEYS.some(key=>observedFieldChanged(e.before,e.after,key));
+  if (stateChanged && c.oracle.kind!=='history') errors.push('critical committed state/data/scope mutation');
   checkEvents(c,e,profile,errors);
   if (!Array.isArray(e.events)) return {taskId:c.id,outcome:'Fail',admissible:false,critical_violation:errors.some(error=>error.includes('critical'))?'yes':'no',errors};
   const expected = expectedState(c);
@@ -147,12 +164,12 @@ export function evaluateEvidence(c,envelope,profile,{corpus = readCorpus(),regis
     checkGeometry(c,expected,e.geometry,errors);
     if (c.oracle.kind === 'source') checkSource(c,e,profile,errors);
     if (c.oracle.kind === 'history') {
-      if (e.finalRevision!==e.baseRevision+(c.oracle.action==='redo'?3:2)) errors.push('critical history revision count mismatch');
+      if (capturedRevisions && e.finalRevision!==e.baseRevision+(c.oracle.action==='redo'?3:2)) errors.push('critical history revision count mismatch');
       if (!same(e.applied,expected) || !same(e.undone,e.before) || (c.oracle.action==='redo' && !same(e.after,expected)) || (c.oracle.action==='undo' && !same(e.after,e.before))) errors.push('actual Apply/Undo/Redo states mismatch');
       for (const action of ['apply','undo',...(c.oracle.action==='redo'?['redo']:[])]) if (!e.events.some(event=>event.type===`human-${action}`)) errors.push(`missing human ${action} event`);
-      if (!same(e.after?.data,e.before?.data) || !same(e.after?.schema,e.before?.schema)) errors.push('critical history data/schema mutation');
+      if (['data','schema'].some(key=>observedFieldChanged(e.before,e.after,key))) errors.push('critical history data/schema mutation');
     }
   }
   const critical = errors.some(error=>error.includes('critical'));
-  return {taskId:c.id,attempt:e.attempt,outcome:errors.length?'Fail':c.oracle.kind==='denial'?'Blocked':'Pass',oracleMatched:errors.length===0,admissible:true,critical_violation:critical?'yes':'no',evidence_digest:digest(e),duration_ms:e.endedAt-e.startedAt,...(answerAttribution?{answerAttribution}:{}),errors};
+  return {taskId:c.id,attempt:e.attempt,outcome:errors.length?'Fail':c.oracle.kind==='denial'?'Blocked':'Pass',oracleMatched:errors.length===0,admissible,critical_violation:critical?'yes':'no',evidence_digest:digest(e),duration_ms:e.endedAt-e.startedAt,...(answerAttribution?{answerAttribution}:{}),errors};
 }
