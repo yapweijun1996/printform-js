@@ -23,7 +23,7 @@
 
 - The 100-row bilingual repair preserved exact row indices, IDs, descriptions and amounts, reduced page count and kept repeated headers and footers. Chromium, Firefox and WebKit passed the six-scenario, private-preview, Apply and Undo case.
 - The rendered structured-import bridge kept the nested-ID assertion effective across all three browser engines after a Firefox frame timeout. The full six-case Chromium structured-import suite also passed.
-- A low-load run exercised the complete Studio-to-Docker path with an independent artifact digest and manual Apply. Workspace startup returned in 6.285 and 9.148 seconds under the existing 15-second deadline. The prior high-load failure stays recorded. The [runner acceptance record](STUDIO_V3_CA07_CA08_LOCAL_20261120.md) includes the opt-in replay command.
+- A low-load run exercised the complete Studio-to-Docker path with an independent artifact digest and manual Apply. Workspace startup returned in 6.285 and 9.148 seconds under the existing 15-second deadline. The merged branch passed the same opt-in Chromium/Docker case again in 29.1 seconds. The prior high-load failure stays recorded. The [runner acceptance record](STUDIO_V3_CA07_CA08_LOCAL_20261120.md) includes the opt-in replay command.
 
 ## Verification boundaries
 
