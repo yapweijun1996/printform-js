@@ -33,7 +33,7 @@ Vitest passed 52 cases across file workflows, import safety, structured import a
 
 ### Review a replacement from New
 
-The host opens the template chooser without changing drafts. Cancel or Escape leaves current inputs and a reviewed CSV untouched. Choosing a starter prepares it before asking for a decision. Stay retains the source, mapping, paper and revision. Apply commits the edits to the current document and returns there for Save. Discard opens the chosen replacement. The browser cases verify an inspector draft and a mapped CSV, including the original document identity and Undo after Apply. The separate local `/new` command retains its independent-document workflow. [Browser regressions](../../e2e/studio-v3-drafts.spec.js)
+The host opens the template chooser without changing drafts. Cancel or Escape leaves current inputs and a reviewed CSV untouched. Choosing a starter prepares it before asking for a decision. Stay retains the source, mapping, paper and revision. Apply commits the edits to the current document and returns there for Save. Discard opens the chosen replacement. The browser cases verify an inspector draft and a mapped CSV, including the original document identity and Undo after Apply. Chromium, Firefox and WebKit passed 12 focused cases in the isolated build. The separate local `/new` command retains its independent-document workflow. [Browser regressions](../../e2e/studio-v3-drafts.spec.js)
 
 ## Scenario and navigation verification
 
