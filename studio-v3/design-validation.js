@@ -4,7 +4,7 @@ import { validatePageSettings } from './paper-settings.js';
 import { A4_PRESET_IDS } from './a4-presets.js';
 import { validateTableStyle } from './table-style.js';
 import { validateFieldStyle } from './element-style.js';
-import { validateAdditionalTables } from './additional-tables.js';
+import { validateAdditionalTables, validateTableCollection } from './additional-tables.js';
 import { validateGlobalStyle } from './global-style.js';
 import { validateHeading } from './heading-text.js';
 import { validateFieldProperties } from './field-properties.js';
@@ -91,7 +91,7 @@ export function validateDesign(d) {
     fields.forEach(f => validateField(f,id,assets,ids));
   });
   validateAdditionalTables(d,validateField,assets,ids);
-  if (!validPointer(d.collection)) fail('Collection must be an absolute JSON pointer such as /items.');
+  validateTableCollection(d.collection);
   if (d.columns.reduce((sum,c) => sum+c.width,0) > 100.01) fail('Column widths must total 100% or less.');
   if (d.sectionOrder !== undefined) validateSectionOrder(d.sectionOrder);
   if (d.repeatHeader && sectionOrder(d)[0] !== 'header') fail('A repeating document header must be the first section.');

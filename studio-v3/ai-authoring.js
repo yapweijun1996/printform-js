@@ -16,7 +16,8 @@ import { pageGeometryChange } from './page-geometry.js';
 import { elementStyleChange } from './element-style.js';
 import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
-import { fieldRows, tableOf, tableDefinitions, isTable } from './additional-tables.js';
+import { fieldRows, tableOf, tableDefinitions, isTable, setTableCollection } from './additional-tables.js';
+import { addField, removeField, reorderFields } from './field-collection.js';
 import { CURRENCY_CODES } from './currency-catalog.js';
 import { fieldBindingChange } from './field-binding.js';
 
@@ -31,10 +32,6 @@ const object = (value,keys) => {
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const display = value => value === undefined ? '(unset)' : typeof value === 'object' ? JSON.stringify(value) : value;
 const fieldList = fieldRows;
-function reorder(list,order,ids) {
-  if (!Array.isArray(order) || order.length !== list.length || new Set(order).size !== list.length || order.some(id=>!ids.includes(id))) unsafe();
-  return order.map(id=>list[ids.indexOf(id)]);
-}
 export { AUTHORING_TYPES } from './agent-operation-schemas.js';
 import { AUTHORING_TYPES } from './agent-operation-schemas.js';
 import { financialField, protectedBindings, assertProtectedBindings } from './agent-binding-invariants.js';
@@ -84,25 +81,22 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
     } else if (op.type === 'add_field') {
       object(op,['type','section','field']); object(op.field,['id',...fieldKeys]);
       if (!BLOCKS.includes(op.section)) unsafe();
-      const list = fieldList(design,op.section), f = structuredClone(op.field);
-      assertFieldWidth(op.section,f.kind,f.width);
-      if (list.some(item=>item.id === f.id)) unsafe();
-      if (!Object.hasOwn(f,'format')) f.format = '';
-      if (!Object.hasOwn(f,'label')) f.label = '';
-      if (!Object.hasOwn(f,'pointer')) f.pointer = '';
-      if (!f.pointer && (['currency','number','percent'].includes(f.format) || /(?:^|-)(amount|total|subtotal|tax|rate|price|balance|discount)(?:-|$)/i.test(f.id))) unsafe();
-      if (op.section === 'items' && !Object.hasOwn(f,'width')) unsafe();
-      list.push(f); record(`${op.section}-${f.id}`,'add_field',null,`${op.section}-${f.id}`);
+      const {field} = op;
+      assertFieldWidth(op.section,field.kind,field.width);
+      if (!field.pointer && (['currency','number','percent'].includes(field.format) || /(?:^|-)(amount|total|subtotal|tax|rate|price|balance|discount)(?:-|$)/i.test(field.id))) unsafe();
+      if (op.section === 'items' && !Object.hasOwn(field,'width')) unsafe();
+      const f = addField(design,op.section,field);
+      record(`${op.section}-${f.id}`,'add_field',null,`${op.section}-${f.id}`);
       for (const [key,value] of Object.entries(f)) record(`${op.section}-${f.id}`,key,undefined,value);
     } else if (op.type === 'remove_field') {
       object(op,['type','target']); if (typeof op.target !== 'string' || op.target.startsWith('label-')) unsafe(); const selected = selectionField(design,op.target); if (!selected) unsafe();
-      for (const [key,value] of Object.entries(selected.field)) record(op.target,key,value,undefined);
-      fieldList(design,selected.block).splice(selected.index,1); record(op.target,'remove_field',op.target,null);
+      const removed = removeField(design,selected.block,selected.index);
+      for (const [key,value] of Object.entries(removed)) record(op.target,key,value,undefined);
+      record(op.target,'remove_field',op.target,null);
     } else if (op.type === 'reorder_fields') {
       object(op,['type','section','order']); if (!BLOCKS.includes(op.section)) unsafe();
       const list = fieldList(design,op.section), ids = list.map(f=>`${op.section}-${f.id}`);
-      const next = reorder(list,op.order,ids); record(op.section,'field_order',ids,op.order);
-      if (op.section === 'items') design.columns = next; else design[op.section] = next;
+      reorderFields(design,op.section,op.order); record(op.section,'field_order',ids,op.order);
     } else if (op.type === 'set_section') {
       object(op,['type','target','patch']); const change = sectionPropertiesChange(design,op.target,op.patch);
       for (const {target,property,before,after} of change.changes) record(target,property,before,after);
@@ -121,7 +115,8 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       for (const {target,property,before,after} of change.changes) record(target,property,before,after);
       design.logo = change.design.logo;
     } else if (op.type === 'set_collection') {
-      object(op,['type','value']); record('items','collection',design.collection,op.value); design.collection = op.value;
+      object(op,['type','value']); record('items','collection',design.collection,op.value);
+      try { setTableCollection(design,'items',op.value); } catch { unsafe(); }
     } else if (op.type === 'set_heading') {
       object(op,['type','value']); const change = headingTextChange(design,op.value);
       for (const {target,property,before,after} of change.changes) record(target,property,before,after);

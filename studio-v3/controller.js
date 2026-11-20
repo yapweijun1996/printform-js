@@ -17,7 +17,8 @@ import { pageGeometryChange } from './page-geometry.js';
 import { assertProjectSchema, assertCollectionBinding, validateSourceSchema } from './dataset-schema.js';
 import { pageFromForm } from './paper-controls.js';
 import { validateImportReceipt } from './structured-import-receipt.js';
-import { tableDefinitions, tableOf, fieldRows, isTable } from './additional-tables.js';
+import { tableDefinitions, tableOf, fieldRows, isTable, setTableCollection } from './additional-tables.js';
+import { addField, removeField, reorderFields } from './field-collection.js';
 import { editAdditionalTable } from './additional-table-controls.js';
 import { isSupportedCurrency, projectCurrencyIssue, suppliedPrimaryCurrency } from './currency-catalog.js';
 import { validateBarcode } from '../document-core/core/barcode.js';
@@ -145,7 +146,7 @@ export function formDesign(project, selected, form, kind) {
     fieldRows(d,selection.block)[selection.index] = fieldBindingChange(f,patch,{relative:isTable(d,selection.block),rememberedPointer}).field;
   } else if (kind === 'collection') {
     const table = tableOf(d,selected);
-    if (table && table.id !== 'items') table.collection = text('collection'); else d.collection = text('collection');
+    setTableCollection(d,table?.id || 'items',text('collection'));
   } else if (kind === 'additional-table') {
     d = editAdditionalTable(d,selected,values);
   } else if (kind === 'block') {
@@ -201,12 +202,18 @@ export function alterFields(project, selected, action) {
       list.forEach(c => { c.width = Math.round(c.width * .9 * 100) / 100; });
       f.width = 10;
     }
-    list.push(f); if (d.blocks[block]) d.blocks[block].enabled = true; else tableOf(d,block).enabled = true; nextSelection = `${block}-${id}`;
+    addField(d,block,f);
+    if (d.blocks[block]) d.blocks[block].enabled = true; else tableOf(d,block).enabled = true;
+    nextSelection = `${block}-${id}`;
   } else if (selection) {
-    if (action === 'remove-field') { list.splice(selection.index,1); nextSelection = block; }
+    if (action === 'remove-field') { removeField(d,block,selection.index); nextSelection = block; }
     else {
       const target = selection.index + (action === 'move-up' ? -1 : 1);
-      if (target >= 0 && target < list.length) [list[selection.index],list[target]] = [list[target],list[selection.index]];
+      if (target >= 0 && target < list.length) {
+        const order = list.map(field=>`${block}-${field.id}`);
+        [order[selection.index],order[target]] = [order[target],order[selection.index]];
+        reorderFields(d,block,order);
+      }
     }
   }
   return {design:d,selected:nextSelection};

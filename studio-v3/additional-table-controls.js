@@ -1,5 +1,5 @@
 import { designOf } from './model.js';
-import { tableOf, MAX_ADDITIONAL_TABLES } from './additional-tables.js';
+import { tableOf, setTableCollection, MAX_ADDITIONAL_TABLES } from './additional-tables.js';
 import { projectDescriptor, declaredCollectionFields } from './dataset-schema.js';
 import { validateDesign } from './design-validation.js';
 import { validPointer } from './design-authoring.js';
@@ -44,7 +44,7 @@ export function editAdditionalTable(design,id,values) {
   const table = tableOf(design,id);
   if (!table || id === 'items') throw new Error('Select an additional source table.');
   table.label = String(values.get('label') || '');
-  table.collection = String(values.get('collection') || '');
+  setTableCollection(design,id,String(values.get('collection') || ''));
   for (const key of ['enabled','repeatHeader','breakBefore']) table[key] = values.has(key);
   return design;
 }
