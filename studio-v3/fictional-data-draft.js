@@ -18,7 +18,8 @@ function assertFictionalSource(project,dataPolicy) {
   const {manifest,sampleData:current,studioV3Session:session} = project;
   const type = manifest.studioV3?.type;
   const source = dataSource('builtin-demo');
-  if ((dataPolicy?.classification !== undefined && dataPolicy.classification !== 'synthetic') ||
+  if (dataPolicy?.allowProviderDocumentContext === true ||
+      (dataPolicy?.classification !== undefined && dataPolicy.classification !== 'synthetic') ||
       !DATA_TYPES.includes(type) || manifest.datasetSchema != null || manifest.localImport != null ||
       session?.sample !== 'erp' || session.database !== null ||
       !jsonEqual(session.source,source) || !jsonEqual(session.erpSource,source)) {
@@ -66,7 +67,9 @@ export function stageFictionalDataDraft(bus,{confirmed,documentId,revision,point
   const baseline = structuredClone(project);
   const candidate = structuredClone(baseline);
   candidate.sampleData = validateDataset({...candidate.sampleData,notes:value});
-  candidate.studioV3Session.erpData = structuredClone(candidate.sampleData);
+  // Human-entered text may be private even when the original data was fictional.
+  const source = dataSource('imported-data','Manual note edit');
+  Object.assign(candidate.studioV3Session,{erpData:structuredClone(candidate.sampleData),source,erpSource:source});
   if (!bindingValidation(candidate).valid) reject('DATA_DRAFT_VALIDATION_FAILED');
   const ticket = Object.freeze({kind:'fictional-data-draft'});
   drafts.set(ticket,{bus,revision,baseline,policy:structuredClone(bus.dataPolicy),candidate});

@@ -29,6 +29,8 @@ describe('private fictional data draft',()=> {
     const value = `${replacement} <img src="data:,not-an-image"/>`;
     expected.sampleData.notes = value;
     expected.studioV3Session.erpData.notes = value;
+    expected.studioV3Session.source = dataSource('imported-data','Manual note edit');
+    expected.studioV3Session.erpSource = dataSource('imported-data','Manual note edit');
     const ticket = stage(bus,{value});
     expect(Object.isFrozen(ticket)).toBe(true);
     expect(JSON.stringify(ticket)).toBe('{"kind":"fictional-data-draft"}');
@@ -141,6 +143,16 @@ describe('private fictional data draft',()=> {
     delete bus.dataPolicy.classification;
     await replaceData(bus,bus.project.sampleData,'45');
     expect(()=>stage(bus)).toThrow('DATA_DRAFT_SOURCE_DENIED');
+  });
+
+  it('denies private human input while the host permits sending document values to the provider',()=> {
+    const bus = createBus(newProject());
+    Object.assign(bus.dataPolicy,{classification:'synthetic',allowProviderDocumentContext:true});
+    expect(()=>stage(bus)).toThrow('DATA_DRAFT_SOURCE_DENIED');
+    bus.dataPolicy.allowProviderDocumentContext = false;
+    const candidate = reviewFictionalDataDraft(bus,stage(bus));
+    expect(candidate.studioV3Session.source.kind).toBe('imported-data');
+    expect(bus.dataPolicy.allowProviderDocumentContext).toBe(false);
   });
 
   it('binds tickets to the exact host bus, supports revocation and rejects copied or reconstructed tickets',()=> {

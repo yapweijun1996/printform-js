@@ -112,6 +112,7 @@ test('fictional note previews, applies once and undoes without writing a dataset
   expect(applied.manifest.studioV3).toEqual(baseline.manifest.studioV3);
   expect(applied.schema).toEqual(baseline.schema);
   expect(applied.data).toEqual({...baseline.data,notes:change});
+  await expect(fork.locator('#data-source')).toContainText('Imported data · Manual note edit');
   await expect(openReview(fork)).toHaveCount(0);
   expect(await savedRecords(fork)).toEqual(records);
 
@@ -120,6 +121,7 @@ test('fictional note previews, applies once and undoes without writing a dataset
   await ready(fork);
   await expectPrinted(fork,false,baseline.data.notes);
   expect((await activeSource(fork)).data).toEqual(baseline.data);
+  await expect(fork.locator('#data-source')).toContainText('Built-in demo');
   await expect(openReview(fork)).toBeVisible();
   expect(await savedRecords(fork)).toEqual(records);
 
