@@ -136,3 +136,108 @@ test('fictional note previews, applies once and undoes without writing a dataset
   expect(await activeSource(page)).toEqual(original);
   expect(provider).toEqual([]);
 });
+
+test('an opt-in AI choice receives only fictional enums and still requires local Preview and Apply',async({page,context})=>{
+  const wire = [];
+  let release;
+  const waiting = new Promise(resolve=>{release=resolve;});
+  await context.route('https://gpt.yapweijun1996.com/**',async route=>{
+    const url = new URL(route.request().url());
+    if (url.pathname === '/demo/session') {
+      await route.fulfill({status:201,json:{token:'dmo_synthetic123456',expires_in:900}});
+      return;
+    }
+    if (!url.pathname.endsWith('/responses')) {
+      await route.abort();
+      return;
+    }
+    wire.push(route.request().postDataJSON());
+    const turn = wire.length;
+    if (turn === 2) await waiting;
+    const text = turn === 1 ? '{"noteId":"delivery-review","value":"UNREVIEWED_PROVIDER_TEXT"}' : '{"noteId":"delivery-review"}';
+    try { await route.fulfill({json:{status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}]}}); }
+    catch (error) { if (turn !== 2) throw error; }
+  });
+  try {
+    await page.goto('/studio-v3/'); await ready(page);
+    const records = await savedRecords(page);
+    await page.locator('[data-ai-toggle]').click();
+    await page.locator('#ai-prompt').fill('/new delivery');
+    await page.getByRole('button',{name:'Send message',exact:true}).click();
+    const create = page.getByRole('link',{name:'Apply & open in new tab'});
+    await expect(create).toBeVisible({timeout:30000});
+    const opened = context.waitForEvent('page');
+    await create.click();
+    const fork = await opened;
+    await ready(fork);
+    await fork.locator('[data-mode=data]').click();
+    const baseline = await activeSource(fork);
+    await openReview(fork).click();
+    const dialog = fork.getByRole('dialog',{name:'Review fictional note'});
+    const note = dialog.getByRole('textbox',{name:'Replacement note'});
+    const suggest = dialog.getByRole('button',{name:'Suggest a fictional note with AI'});
+    const preview = dialog.getByRole('button',{name:'Preview note'});
+    const apply = dialog.getByRole('button',{name:'Apply to form'});
+    await note.fill('PRIVATE_MANUALLY_TYPED_NOTE');
+    await expect(suggest).toHaveAccessibleDescription(/Sends only the fictional form type and predefined note IDs/);
+    expect(wire).toEqual([]);
+
+    await suggest.click();
+    await expect(dialog.getByRole('status')).toHaveText('No fictional suggestion was accepted. Keep editing or try again.');
+    await expect(note).toHaveValue('PRIVATE_MANUALLY_TYPED_NOTE');
+    await expect(apply).toBeDisabled();
+    await expect(fork.locator('#revision')).toHaveText('r0');
+
+    await suggest.click();
+    await expect.poll(()=>wire.length).toBe(2);
+    await expect(suggest).toBeDisabled();
+    await suggest.dispatchEvent('click');
+    await note.fill('Human edit supersedes the held result');
+    release();
+    await expect(suggest).toBeEnabled();
+    await expect(note).toHaveValue('Human edit supersedes the held result');
+    await expect(apply).toBeDisabled();
+    expect(wire).toHaveLength(2);
+
+    await suggest.click();
+    const expected = 'Please review the fictional delivery details before using this sample.';
+    await expect(dialog.getByRole('status')).toHaveText('Fictional suggestion ready. Preview the note before applying.');
+    await expect(note).toHaveValue(expected);
+    await expect(apply).toBeDisabled();
+    await expect(fork.locator('#revision')).toHaveText('r0');
+    expect(await activeSource(fork)).toEqual(baseline);
+    expect(wire).toHaveLength(3);
+    for (const body of wire) {
+      expect(Object.keys(body).sort()).toEqual(['input','model','stream']);
+      expect(body.stream).toBe(false);
+      expect(body.input.map(message=>message.role)).toEqual(['system','user']);
+      expect(body.input.every(message=>message.content.length === 1 && message.content[0].type === 'input_text')).toBe(true);
+      expect(JSON.parse(body.input[1].content[0].text)).toEqual({formType:'delivery',noteIds:['delivery-reference','delivery-review']});
+      expect(JSON.stringify(body)).not.toContain('PRIVATE_MANUALLY_TYPED_NOTE');
+      expect(JSON.stringify(body)).not.toContain(baseline.data.company.name);
+      expect(JSON.stringify(body)).not.toContain(baseline.manifest.documentId);
+    }
+
+    await preview.click();
+    await expect(apply).toBeEnabled({timeout:30000});
+    await expect(dialog.locator('iframe')).toHaveAttribute('srcdoc',/Please review the fictional delivery details/);
+    await expect(fork.locator('#revision')).toHaveText('r0');
+    await apply.click();
+    await expect(dialog).toBeHidden();
+    await expect(fork.locator('#revision')).toHaveText(/^r1\b/);
+    await ready(fork);
+    const applied = await activeSource(fork);
+    expect(applied.data).toEqual({...baseline.data,notes:expected});
+    expect(applied.schema).toEqual(baseline.schema);
+    expect(applied.manifest.studioV3).toEqual(baseline.manifest.studioV3);
+    await expect(fork.locator('#data-source')).toContainText('Imported data · Manual note edit');
+    expect(await savedRecords(fork)).toEqual(records);
+    await fork.getByRole('button',{name:'Undo',exact:true}).click();
+    await expect(fork.locator('#revision')).toHaveText(/^r2\b/);
+    await ready(fork);
+    expect((await activeSource(fork)).data).toEqual(baseline.data);
+    await expect(fork.locator('#data-source')).toContainText('Built-in demo');
+    expect(await savedRecords(fork)).toEqual(records);
+    expect(wire).toHaveLength(3);
+  } finally { release(); }
+});

@@ -8,6 +8,7 @@ import { assertImageParts, buildResponsesBody, responsesResult, responsesUsage }
 import { agentBody, agentOutput, usesImages } from './agent-wire.js';
 import { fail } from './ai-edits.js';
 import { CHAT_PROMPT } from './ai-chat-protocol.js';
+import { FICTIONAL_NOTE_PROMPT, fictionalNoteRequest, readFictionalNoteChoice } from './fictional-note-suggestions.js';
 
 const assertDispatch = Symbol('assertDemoDispatch');
 export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now} = {}) {
@@ -54,6 +55,17 @@ export function createDemoTransport({fetchImpl = (...args) => fetch(...args),now
     supportsImages:alias => imageModels.has(alias),
     supportsTools:alias => toolModels.has(alias),
     capabilityDiagnostics:()=>structuredClone(capabilityFacts),
+    async suggestFictionalNote(formType,signal,assertCurrent) {
+      const request = fictionalNoteRequest(formType);
+      signal.throwIfAborted();
+      assertCurrent();
+      const body = buildResponsesBody({alias:DEMO_CONFIG.defaultAlias,system:FICTIONAL_NOTE_PROMPT,request});
+      const response = await json('responses',{method:'POST',signal,headers:{'content-type':'application/json'},body,
+        [assertDispatch]:assertCurrent},DEMO_CONFIG.modelTimeoutMs);
+      signal.throwIfAborted();
+      assertCurrent();
+      return readFictionalNoteChoice(formType,responsesResult(response).text);
+    },
     async discover(signal) {
       const generation=resetCapabilities();
       const payload = await json('models',{method:'GET',signal},DEMO_CONFIG.discoverTimeoutMs,createProgress());

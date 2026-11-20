@@ -108,6 +108,8 @@
     <p>Preview a change to <code>/notes</code>. Apply updates this form only. Saved datasets remain unchanged.</p>
     <label for="fictional-note-value">Replacement note</label>
     <textarea id="fictional-note-value" maxlength="10000" rows="3" autofocus></textarea>
+    <button type="button" data-note-suggest aria-describedby="fictional-note-privacy">Suggest a fictional note with AI</button>
+    <p id="fictional-note-privacy" class="hint">Sends only the fictional form type and predefined note IDs to the Demo model. Your form data and typed note stay in this tab.</p>
     <div class="new-form-paper" tabindex="0" aria-label="Scrollable note preview" hidden><iframe title="Fictional note paper preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe></div>
     <p data-note-status role="status"></p>
     <div class="draft-dialog-actions"><button type="button" data-note-cancel>Cancel</button><button type="button" data-note-preview>Preview note</button><button type="button" class="primary" data-note-apply disabled>Apply to form</button></div>

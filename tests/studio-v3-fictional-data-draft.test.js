@@ -208,7 +208,7 @@ describe('private fictional data draft',()=> {
     const bus = createBus(newProject()), root = document.createElement('div');
     root.innerHTML = `<button data-review-fictional-note>Review</button><dialog id="fictional-note-dialog">
       <textarea id="fictional-note-value"></textarea><div class="new-form-paper"><iframe></iframe></div>
-      <p data-note-status></p><button data-note-preview></button><button data-note-apply></button><button data-note-cancel></button>
+      <p data-note-status></p><button data-note-suggest></button><button data-note-preview></button><button data-note-apply></button><button data-note-cancel></button>
     </dialog>`;
     const review = root.querySelector('dialog');
     review.showModal = ()=>{ review.open = true; };
