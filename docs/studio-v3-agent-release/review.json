@@ -1,41 +1,8 @@
 {
  "version": 1,
  "baseline": {
-  "release": "bf0dc5f39185fe085906c914fa7cf125cff644ca",
-  "packageHash": "44bb2146f5543b438e6ba82f7696b6074cdc3148dbbef4542ac1e1737f7f782c"
+  "release": "2e23cae1c6f70ffa93ed9dcf83d98b24ffa1eb4b",
+  "packageHash": "10efc2fc5302adcea2731f39e60582fb20500d398bf285025cd97fe5258c76a6"
  },
- "dispositions": [
-  {
-   "entries": {
-    "printform.agent.retrieve_page": "811678b127fd32b934087824443976d2bc94830cf6b4784635f1ffa63382454a"
-   },
-   "disposition": "updated",
-   "justification": "Studio clears its pairing and cleanup block only after the connection confirms revocation and owned workspace closure. Require an explicit owned-workspace revocation receipt. On a lost or invalid response, replay only the same revocation intent and keep source, observation and artifact effects unavailable.",
-   "evidence": [
-    "studio-v3/ai-source-workspace.js",
-    "studio-v3/source-workspace-client.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.workspace_list": "bc203deb41ade2acfd0862eaaac4ac2281ea87d32b037ca9b70cd503d2ec180e",
-    "printform.agent.workspace_read": "96c880deb7099c4e067ccb77a620e13f08515b97f620143c805d905be315afad",
-    "printform.agent.workspace_search": "1529dfee81ba4540aed547e637dc3f7d95d549eab385220108e90e90b14554f4",
-    "printform.agent.workspace_write": "d6a664e4f4d8927eb1d8f903cc1319bf72d99ccb6f8077473fa437a2a130483b",
-    "printform.agent.workspace_patch": "80a9ce53434361b15a1242bbb35de2e68224df3e44e941a030f96f98ba862817",
-    "printform.agent.workspace_run": "7cd178824484cd5b33432f3fedd8f054fe494bbba05e9bd31219c7a0a0fa97b4",
-    "printform.agent.workspace_diff": "0a1fdb63ac0c93f052af297e44e94508a5eb1fbb0eb9fb1143eb0069cec90ceb",
-    "printform.agent.workspace_artifacts": "2f1ed2b387bddf14644c3bb5f7275d201981edaee949600f3b12a0001ca195e9",
-    "printform.agent.import_artifact": "63ff7f9b577bc007ef7b801c4c84ba9b6adc37c7d202f30c7187a4e6a1c3f066",
-    "printform.knowledge.source-workspace": "55ed2a514159482f51f4890571a3296f40394abc9fa5600ea8ec2f9ab6b877d6"
-   },
-   "disposition": "updated",
-   "justification": "Studio clears its pairing and cleanup block only after the connection confirms revocation and owned workspace closure. Require an explicit owned-workspace revocation receipt. On a lost or invalid response, replay only the same revocation intent and keep source, observation and artifact effects unavailable. The authorization regression proves no new admissions after revocation starts, verifies loss or incomplete receipt recovery, and confirms both attempts use identical intent and body.",
-   "evidence": [
-    "studio-v3/ai-source-workspace.js",
-    "studio-v3/source-workspace-client.js",
-    "tests/studio-v3-source-network-permission.test.js"
-   ]
-  }
- ]
+ "dispositions": []
 }
