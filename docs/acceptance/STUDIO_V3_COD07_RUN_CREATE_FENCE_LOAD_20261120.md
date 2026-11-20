@@ -16,6 +16,12 @@ p95 取最近秩。最终回执有 3 项超过 1 秒。100 项全部取得 HTTP 
 
 本地实机的受控延迟对照单独验证过该镜像。夹具在分发唯一的有属主 run create 之前让调用实际超时，约 30,102 毫秒。首次 Close 返回 503 `PROCESS_STATE_UNKNOWN` 并保留原工作区 anchor 和卷。把先前捕获的创建请求提交给同一 Docker 后，实查新容器仍处于 `created`，PID 0，无启动调用。第二次 Close 按核实后的不可变 ID 删除容器，返回 HTTP 200。此控制覆盖仍在运行的 broker 保留创建记录的行为，实际 daemon 或 broker 崩溃重启后的状态恢复仍待验证。
 
+同一封存镜像在负载测试之后串行执行 9 项 runner Docker 用例和 1 项实际 TTL 用例，10/10 通过。测试耗时 297.64 秒，Vitest 总耗时 298.79 秒。覆盖实际失败测试、修复、构建与制品绑定、属主隔离、终止、精确 BOM、回执体积、撤销及空闲/配对自动清理。
+
+独立的提前 Stop 夹具同时通过。夹具已创建 run 容器并暂缓传回成功结果，Stop 之后才交付该结果。回执 `started:false`，版本为 0，树摘要保持原值，实际调用只有 create、inspect 和 rm。随后普通命令真实启动并退出 0，通过封存 anchor 快照核对修改后的文件摘要并推进至版本 1。关闭后该工作区及托管资源清单均为零。上述夹具延迟仅用于确定性分支验证。
+
+本机输出保存在 `/workspace/scratch/pf-g6-fence-full.9lWasb/`。Docker/TTL 套件日志 SHA-256 为 `b594ee9e6b888ba5e5e6a73abee24d7af8aedc267570c870b34157e228fd3fa3`，提前 Stop 脱敏日志为 `c30044169997e5cf9e9b9ad0f56285113c09facc3eb2a7c39b7aae3ba59aca23`。
+
 ## 复现
 
 在独立原型提交安装仓库依赖，输出使用新文件名。
@@ -24,6 +30,7 @@ p95 取最近秩。最终回执有 3 项超过 1 秒。100 项全部取得 HTTP 
 npx playwright install chromium --only-shell
 docker build --tag printform-coding-runner:run-create-fence-probe coding-runner
 PF_CODING_IMAGE=printform-coding-runner:run-create-fence-probe node scripts/studio-v3-coding-load.mjs fence-load-evidence.jsonl 50
+PF_CODING_INTEGRATION=1 PF_CODING_IMAGE=printform-coding-runner:run-create-fence-probe npx vitest run coding-runner/docker.integration.test.mjs tests/coding-runner-retention.integration.test.mjs --maxWorkers=1 --no-file-parallelism --bail=1
 ```
 
 两次原型满限额测试的源码绑定和原始数据各自保留。此前发布相关 runner 的最终回执 p95 8,137.53 毫秒仍有效。浏览器 Stop 点击时延和发布版 COD-07 保持开放。 [先前并行原型满负载复验](STUDIO_V3_COD07_OVERLAP_LOAD_20261120.md) · [既有负载证据](STUDIO_V3_G6_LOAD_20261120.md)
