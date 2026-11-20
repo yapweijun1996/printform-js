@@ -50,4 +50,6 @@ Open More settings and select **Answer only (requires Work in steps)** to inspec
 
 The focused unit suite passed 42 cases. A [Chromium browser suite](../../e2e/studio-v3-answer-only.spec.js) passed six scripted-gateway cases. It covers a forced write tool rejected by the actual model wire path, unchanged saved project content, source consent isolation, zero inference when Work in steps is off or capability metadata is missing or contradictory, and no fallback when a tool turn is refused or ignored. The local site build and all 129 packaged agent contract examples passed with the tested release review.
 
+The forced-write and missing-tool-capability cases also passed Firefox and WebKit on the final build. WebKit initially failed Playwright host preflight. The retry used the installed shared libraries with the same browser binary and passed both cases. I inspected Chromium screenshots at 1440 and 390 px and verified the checked control and its read-only hint.
+
 Live-model and deployment-profile qualification remain open. Dataset writes still require a separate host grant and review flow.
