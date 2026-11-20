@@ -1,66 +1,8 @@
 {
  "version": 1,
  "baseline": {
-  "release": "7cc40c07a7a895e21b571c162d3aad3075919a44",
-  "packageHash": "5b242061f97ea61ee68bf14415f70505404194367f934063583df922df48b86f"
+  "release": "e4992655a8aac95ebcb4489d1ea9d3356095b6b3",
+  "packageHash": "a09d046e012b45993ec73c0d2bc74d060fe156863e92ff9d0fe75424a4af0f2b"
  },
- "dispositions": [
-  {
-   "entries": {
-    "printform.agent.get_capabilities": "68f60328d401245e99021fc4f36110f5b7bd54ac7f47565ebfcfd6432e923166",
-    "printform.agent.read_skill": "f05e477c757fff7ce5096e625b95767f80348b306e28a3064d7fbdd9c62c380d",
-    "printform.agent.get_context": "b8018ece0200381506424723634463bcb3aa5c8661d3e227ee0c81b3214e1213",
-    "printform.agent.apply_operations": "58980b0541cdff921075ae6799b43a08ee03927a773e3b0ed78dd6173d88153c",
-    "printform.agent.inspect_draft": "47f1df3c340a3be852c09fa109b9d7e740182ac8eefaf5551300e86af353ad9f",
-    "printform.agent.observe_context": "9b176cd0394f3395032b7080d398c87f024fb3548e50f95db57d616b4a03e3c5",
-    "printform.agent.retrieve_page": "dac6d16a2c699b294dfca62c712de10a3d116ee614e28e19de9f3b2d822d86b8",
-    "printform.agent.validate_scenarios": "ff0ded43a98f11250d0eff086123a48ca5c5fcfb386cb29ed6c48a1659e1e998",
-    "printform.agent.undo_step": "b0c8fbe0c293469a27306cd81034c6016a731f98d40822d554f72fe196667192",
-    "printform.agent.take_notes": "be2a939f9697c67bd2befcfdd35bc4320c783455db5ac35b3d7ed75b0ecc4e8a",
-    "printform.agent.finish": "6a09cdfb2f01219701cd01f6cb2827e7f752e7eec9eadd86f5e187ee614a7b6a",
-    "printform.agent.finish_answer": "d62b2c3d4bfce06bc4b206e19ae8bc047d1db76b722e357ffa2c798edbe6f042",
-    "printform.agent.report_blocked": "f84f03772b3f7d568acc3c7a456872b940cbbb865a4437a871681ae037dd1414",
-    "printform.knowledge.form-authoring": "5c7bccb216ca2313838133c9b3ab10cbdecb1f5d35a905001e6834086de5d165"
-   },
-   "disposition": "updated",
-   "justification": "The workflow guide explains current tree content requirements and links the real browser companion test. Artifact import checks the current source content difference from the starting workspace. Reverted changes, permission-only changes and artifact-only writes cannot qualify.",
-   "evidence": [
-    "studio-v3/agent-source-guide.js",
-    "studio-v3/source-workspace-run.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.workspace_list": "d7bf4eede9822f4d1afa04d635eca531347822c16ddb92733511501541728a78",
-    "printform.agent.workspace_read": "b9aab7f943feeab39d270c4669891bb980bca4a807af502dda82d14f14000f15",
-    "printform.agent.workspace_search": "9a798d348634e930efd4de2b486a64b8f49383d0a0a0da8fcc79fd1b6593004a",
-    "printform.agent.workspace_write": "5183af64c8947fb27e9b34804f175e817ce2261727ce75e3eda448fbdb45f395",
-    "printform.agent.workspace_patch": "74b2c196311fc22d32b0ccaa8cc913178ba1f693442cfae81d35588eccf83366",
-    "printform.agent.workspace_run": "d32cdef8c6dbdf0666237efbeb0d2316dfac7c39257b82fde9ac23dc44d7e9e1",
-    "printform.agent.workspace_diff": "4b2ee91d0677e74ceb208c797a4dba0a65ad99a514447b63beb9330258330736",
-    "printform.agent.workspace_artifacts": "63f1ceb11278f52a3d9726e8be7ef6b9aea2fa4858c327dbff38033174f20ed7",
-    "printform.agent.import_artifact": "507b5842513012cf269198b4dfd365224e4783b8b9228868e7a7b5b55be5ad73",
-    "printform.knowledge.source-workspace": "b6215d0bcec7b028cc89ded167ba18cc0961efa293031ec0df0d16eeba5a7e4e"
-   },
-   "disposition": "updated",
-   "justification": "The opt-in browser scenario verifies the real sealed build after restoring source and records a credential-free Stop transport diagnostic on success or failure. The workflow guide explains current tree content requirements and links the real browser companion test. Artifact import checks the current source content difference from the starting workspace. Reverted changes, permission-only changes and artifact-only writes cannot qualify. The focused consumer regression uses the real artifact exporter and verifies that reverted source can leave a successful build and valid artifact without a private draft handoff.",
-   "evidence": [
-    "e2e/studio-v3-source-artifact.spec.mjs",
-    "studio-v3/agent-source-guide.js",
-    "studio-v3/source-workspace-run.js",
-    "tests/studio-v3-source-artifact-consumer.test.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.knowledge.product-workflows": "45ba06589988b119b2282f68e1720b14667309cbb448ca01db302f455493893e",
-    "printform.knowledge.general-print-authoring": "af4dc392746133d2d5f57cf8760eb03e8faa74021f0f840dafd72529166617e8"
-   },
-   "disposition": "updated",
-   "justification": "The workflow guide explains current tree content requirements and links the real browser companion test.",
-   "evidence": [
-    "studio-v3/agent-source-guide.js"
-   ]
-  }
- ]
+ "dispositions": []
 }
