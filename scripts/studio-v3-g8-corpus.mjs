@@ -32,6 +32,9 @@ export function validateCorpus(corpus = readCorpus(), register = readRegister())
     if (!['answer','candidate','source','denial','roundtrip','history'].includes(c.oracle?.kind)) errors.push(`${c.id}: unsupported oracle`);
     if (!c.oracle || !Object.keys(c.oracle).some(key => key !== 'kind')) errors.push(`${c.id}: missing semantic oracle`);
   }
+  for (const task of register.tasks.rows) {
+    if (task.status === 'frozen' && !ids.has(task.id)) errors.push(`${task.id}: frozen register row missing from corpus`);
+  }
   return errors;
 }
 export function projectForCase(c) {

@@ -78,6 +78,19 @@ describe('G8 CLI explicit corpus/register scope',()=>{
     }
   });
 
+  it('rejects a paired register with additional frozen tasks before issuing a profile',()=>{
+    const pair=isolatedPair(), tasks=path.join(pair.register,'tasks.csv');
+    const row=fs.readFileSync(tasks,'utf8').split('\n').find(line=>line.startsWith('"T-qa-06"'));
+    fs.appendFileSync(tasks,row.replace('"T-qa-06"','"T-qa-07"')+'\n');
+    const validation=run('validate',...pair.flags);
+    expect(validation.status).toBe(1);
+    expect(JSON.parse(validation.stdout).errors).toContain('T-qa-07: frozen register row missing from corpus');
+    const creation=run('profile','unused',...pair.flags);
+    expect(creation.status).toBe(1);
+    expect(creation.stdout).toBe('');
+    expect(creation.stderr).toContain('T-qa-07: frozen register row missing from corpus');
+  });
+
   it('threads the selected pair into profile creation, input, evidence evaluation and preflight',()=>{
     const pair=isolatedPair();
     const identity=jsonFile(pair.root,'identity.json',profile);

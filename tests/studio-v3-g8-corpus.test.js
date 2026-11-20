@@ -16,6 +16,16 @@ describe('G8 frozen corpus and independent evidence consumer',()=> {
     expect(corpus.filter(c=>c.essential)).toHaveLength(6);
     expect(readRegister().attempts.rows.some(a=>a.profile==='synthetic-unit-only')).toBe(false);
   });
+  it('rejects extra frozen register entries while preserving draft and retired rows',()=> {
+    const register=readRegister(), original=register.tasks.rows.find(row=>row.id==='T-qa-06');
+    const extra={...original,id:'T-qa-07',status:'draft'};
+    register.tasks.rows.push(extra);
+    expect(validateCorpus(corpus,register)).toEqual([]);
+    extra.status='retired';
+    expect(validateCorpus(corpus,register)).toEqual([]);
+    extra.status='frozen';
+    expect(validateCorpus(corpus,register)).toEqual(['T-qa-07: frozen register row missing from corpus']);
+  });
   it('materializes an editable cheap read-only essential with exactly its frozen state',()=> {
     const c=corpus.find(c=>c.id==='T-qa-01');
     expect(stateOf(projectForCase(c))).toEqual(c.input.state);

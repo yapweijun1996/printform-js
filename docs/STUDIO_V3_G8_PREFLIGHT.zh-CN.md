@@ -65,7 +65,7 @@ node scripts/studio-v3-g8.mjs validate --corpus /path/to/new/corpus --register /
 node scripts/studio-v3-g8.mjs preflight /path/to/new/profile.json --corpus /path/to/new/corpus --register /path/to/new/register
 ```
 
-必须同时且各提供一个目录。语料目录包含按家族分开的 JSON，登记目录包含 `tasks.csv` 和 `attempts.csv`。路径缺失、读取失败或 case／input／oracle 摘要不匹配会按现有语料规则报错。显式选定新语料后，旧档案的语料摘要不匹配时会在读取证据前拒绝。留出输入仍需原有的 `--qualification` 参数。目录参数不授权运行模型、写入尝试或变更现有门槛。
+必须同时且各提供一个目录。语料目录包含按家族分开的 JSON，登记目录包含 `tasks.csv` 和 `attempts.csv`。路径缺失、读取失败或 case／input／oracle 摘要不匹配会报错。冻结登记行必须与语料双向对应，草案及退役条目可留在登记表。显式选定新语料后，旧档案的语料摘要不匹配时会在读取证据前拒绝。留出输入仍需原有的 `--qualification` 参数。目录参数不授权运行模型、写入尝试或变更现有门槛。
 
 ## 当前完整资格前置条件
 
