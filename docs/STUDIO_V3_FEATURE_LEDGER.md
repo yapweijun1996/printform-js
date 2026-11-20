@@ -11,10 +11,10 @@ Dispositions: `agent-callable` (eligible; may still lack a service/adapter), `hu
 | Measure | Rows |
 | --- | --- |
 | Ledger rows | 89 |
-| agent-callable | 49 |
+| agent-callable | 47 |
 | human-mediated | 31 |
-| intentionally-unavailable | 9 |
-| Eligible gaps (missing or limited agent paths) | 23 |
+| intentionally-unavailable | 11 |
+| Eligible gaps (missing or limited agent paths) | 21 |
 
 Origins:66 historical rows,13 reconciliation rows,5 bounded source-workspace rows and5 General capability rows. All rows remain proposed. New blank/starter and primary currency choice are now explicitly human-mediated, not callable tools. Source pairing and disclosure are human-mediated; source tools retain their separate explicit local Node/JSON grant.
 
@@ -23,6 +23,8 @@ Origins:66 historical rows,13 reconciliation rows,5 bounded source-workspace row
 `project.rename`, `draft.review`, `project.replace-guard`, `history.shortcuts`, `issue.locate`, `preview.rerender`, `data.rows-page`, `data.draft-apply`, `ai.model-discovery`, `ai.preview-banner`, `ai.clear-conversation`, `update.choice`, `workspace.layout-toggles` (all under the `printform.` prefix).
 
 Decision recorded: the `validate-all` action is the existing `printform.validation.matrix` row, so it is not duplicated. `rename` and `data.rows-page` / `data.draft-apply` stay as separate rows for stable, individually testable IDs even though they overlap broader rows.
+
+The issue locator and data row pager are view controls. They keep their stable ledger IDs and appear as intentionally unavailable to the model. [Browser evidence](../e2e/studio-v3-workspace-navigation.spec.js) exercises the real controls and checks that the form revision and undo state stay unchanged.
 
 The agent reads this ledger at runtime through the generated `studio-v3/agent-workflows.js` and the `product-workflows` guide. After editing the CSV, run `node scripts/generate-studio-v3-workflows.mjs`. Catalog/text equality is not consumer behavior coverage; use the relevant workflow and browser checks.
 
@@ -38,7 +40,7 @@ The agent reads this ledger at runtime through the generated `studio-v3/agent-wo
 
 ## Eligible gaps by domain
 
-Data10, Project2, Observation4, Authoring4, References3 account for23 eligible gaps. CA-07 adds separately scoped source file/process/artifact workflows below; this inventory is not acceptance of parallel Studio workflows, hosted execution, arbitrary dependencies or G8/G9 qualification.
+Data 9, Project 2, Observation 3, Authoring 4 and References 3 account for 21 eligible gaps. CA-07 adds separately scoped source file/process/artifact workflows below; this inventory is not acceptance of parallel Studio workflows, hosted execution, arbitrary dependencies or G8/G9 qualification.
 
 ## UI entry mapping
 

@@ -1,4 +1,3 @@
-import { COMMIT_POLICY_SHORT } from './agent-commit-policy.js';
 // Generated from docs/STUDIO_V3_FEATURE_LEDGER.csv by scripts/generate-studio-v3-workflows.mjs. Do not edit by hand.
 // [ledger id, workflow, status, human path or reason] for every workflow the agent cannot perform today.
 export const LEDGER_WORKFLOWS = Object.freeze([
@@ -12,7 +11,7 @@ export const LEDGER_WORKFLOWS = Object.freeze([
   ["printform.project.export-html","Export validated standalone HTML","human-mediated","Export button"],
   ["printform.project.print","Native browser print","human-mediated","Print button"],
   ["printform.project.history","Committed form Undo/Redo","human-mediated","Undo / Redo"],
-  ["printform.proposal.review-apply","Preview, Apply and Undo proposal","human-mediated",COMMIT_POLICY_SHORT],
+  ["printform.proposal.review-apply","Preview, Apply and Undo proposal","human-mediated","Preview then Apply"],
   ["printform.data.json-edit","Edit active JSON form data","not-yet-callable","Eligible; the Studio UI has this service but no agent adapter yet"],
   ["printform.data.sample-switch","Switch synthetic validation samples and restore source","not-yet-callable","Eligible; the Studio UI has this service but no agent adapter yet"],
   ["printform.dataset.list","List compatible saved datasets","not-yet-callable","Eligible; the Studio UI has this service but no agent adapter yet"],
@@ -40,9 +39,9 @@ export const LEDGER_WORKFLOWS = Object.freeze([
   ["printform.draft.review","Unapplied-edit dialog Apply/Discard/Stay","human-mediated","User-owned file, download, persistence or review step"],
   ["printform.project.replace-guard","New/Open discard confirmation","human-mediated","User-owned file, download, persistence or review step"],
   ["printform.history.shortcuts","Ctrl/Cmd+S and Ctrl/Cmd+Z","intentionally-unavailable","Host mechanism or view preference; not a model capability"],
-  ["printform.issue.locate","Jump from quality issue to element","not-yet-callable","Reversible edit through existing CommandBus; no agent adapter yet"],
+  ["printform.issue.locate","Jump from quality issue to element","intentionally-unavailable","Validate > select the issue"],
   ["printform.preview.rerender","Force re-render","human-mediated","User-owned file, download, persistence or review step"],
-  ["printform.data.rows-page","Page table rows","not-yet-callable","Reversible edit through existing CommandBus; no agent adapter yet"],
+  ["printform.data.rows-page","Page table rows","intentionally-unavailable","Data > Items > Previous or Next"],
   ["printform.data.draft-apply","Apply table draft to active data","not-yet-callable","Reversible edit through existing CommandBus; no agent adapter yet"],
   ["printform.ai.model-discovery","Discover models, choose alias, steps toggle","human-mediated","User-owned file, download, persistence or review step"],
   ["printform.ai.preview-banner","Return to or discard unapplied AI preview","human-mediated","User-owned file, download, persistence or review step"],

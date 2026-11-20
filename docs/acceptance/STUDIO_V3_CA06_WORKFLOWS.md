@@ -30,3 +30,10 @@ This review maps the eight [G5 acceptance cases](../STUDIO_V3_CODING_AGENT_ACCEP
 Open used to resolve the form-draft dialog before choosing or reading a file. A user could discard a draft and then select an invalid file or cancel the picker. The host now asks for replacement approval only after parsing a valid project and rechecking the current read ticket. Invalid input and a declined replacement preserve the current draft.
 
 Vitest passed 52 cases across file workflows, import safety, structured import and scenario matrix. Chromium passed five selected draft and import cases, including the native file chooser with malformed input, a declined valid replacement and an approved retry. Nested JSON malformed replacement, cancellation and invalid UTF-8 cases also passed. The site build passed with the corrected Open flow.
+
+## Scenario and navigation verification
+
+- The Chromium scenario-matrix browser case passed. It drove the real Validate panel and agent tool through all six cases, compared page/issue results and checked the unchanged revision. The provider response was scripted.
+- The three native invoice, purchase order and delivery note pagination tests passed in Chromium. Each covered 0/1/45/100/500 rows and the long bilingual data, including exact printed row indices in order, document headers, table headers on pages with rows, page footers and longer pagination for bilingual content. A new real-model repair is still required for qualification.
+- Two Chromium workspace cases used the real row pager and the real quality issue locator. The visible row range and inspector selection changed while the form revision and undo state stayed unchanged. The feature ledger records these as workspace navigation and retains their stable IDs.
+- Ledger/register/discovery and knowledge synchronization Vitest tests passed 15 cases. The regenerated navigation guide changes 26 transitive release digests. These require combined review before publishing.
