@@ -40,7 +40,7 @@ const files = Array.from({length:LIMITS.files},(_,index)=>({
 }));
 const fixture = {files:files.length,directories:files.length,bytes:files.reduce((sum,file)=>sum+file.content.length,0)};
 assert.deepEqual(fixture,{files:128,directories:128,bytes:4194304});
-const command = `node -e "process.stdout.write('x'.repeat(${LIMITS.outputBytes}));setTimeout(()=>{},40000)"`;
+const command = `node -e "process.stdout.write('x'.repeat(${LIMITS.outputBytes-1})+String.fromCharCode(10));setTimeout(()=>{},40000)"`;
 const releaseIdentity = {release:'g6-load-synthetic',contractHash:'fixture',knowledgeHash:'fixture',packageHash:'fixture'};
 
 let browser, originHarness, companion, identity, token;
@@ -65,11 +65,13 @@ async function actualRunning(id) {
     const found=stdout.trim();
     if (found) {
       knownContainers.add(found);
-      return found;
+      // Wait for this fixed fixture's full output before timing status or Stop.
+      const {stdout:emitted} = await runDocker('docker',['container','logs',found]);
+      if (Buffer.byteLength(emitted) === LIMITS.outputBytes) return found;
     }
     await delay(80);
   }
-  throw Error('actual command container did not enter running state');
+  throw Error('actual running container did not emit the full fixture output');
 }
 async function stopSample(workspace,index) {
   const next = await api(lease(workspace)+'/calls',{operation:'run',expectedRevision:workspace.revision,args:{command,cwd:''}});
@@ -93,6 +95,8 @@ async function stopSample(workspace,index) {
   assert.equal(stop.result.body.processesRemoved,true);
   assert.equal(receipt.status,200);
   assert.equal(receipt.body.error?.code,'CANCELLED');
+  assert.equal(sample.stdoutBytes,LIMITS.outputBytes);
+  assert(Number.isFinite(sample.processGoneMs) && sample.processGoneMs >= 0,'missing or invalid independent Docker die timing');
   assert(sample.containerGone);
   assert(sample.activeTreePreserved);
   workspace.revision=receipt.body.afterRevision;
@@ -158,7 +162,7 @@ try {
   }
   const processTimes = samples.map(sample=>sample.processGoneMs).filter(Number.isFinite);
   const summary = {
-    kind:'summary',completed:samples.length,expected:roundCount*2,
+    kind:'summary',completed:samples.length,expected:roundCount*2,measurementComplete:!process.exitCode && samples.length===roundCount*2,
     statusP95Ms:p95(samples.map(sample=>sample.statusMs)),
     completedStatusP95Ms:p95(samples.map(sample=>sample.completedStatusMs)),
     stopP95Ms:p95(samples.map(sample=>sample.stopMs)),
