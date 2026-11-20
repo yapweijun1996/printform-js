@@ -2,12 +2,27 @@ import {clickHeaderAction} from './header-action.js';
 import {test,expect} from '@playwright/test';
 import {AGENT_KEY} from '../studio-v3/agent-preference.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
-import {upgradeServer,OLD,NEXT} from './studio-v3-upgrade-server.js';
+import {exactRollback,upgradeServer,OLD,NEXT} from './studio-v3-upgrade-server.js';
 // These specs run a fake gateway that only knows single-step replies, so working in steps starts switched off.
 test.beforeEach(async({page})=> { await page.addInitScript(key=> { try { localStorage.setItem(key,'off'); } catch { /* storage may be blocked */ } },AGENT_KEY); });
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const version = (page,value)=>expect(page.locator('#app-version')).toHaveText(`v3 · ${value.slice(0,12)}`);
 async function controlled(page) { await page.waitForFunction(()=>Boolean(navigator.serviceWorker?.controller)); }
+async function appBuild(page,revision) {
+  if (!exactRollback) {
+    expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(revision);
+    return;
+  }
+  await expect(page.locator('meta[name=printform-source-revision]')).toHaveAttribute('content',revision);
+  await expect(page.locator(`script[src="releases/${revision}/app.js"]`)).toHaveCount(1);
+  await controlled(page);
+  await expect.poll(()=>page.evaluate(()=>new Promise(resolve=>{
+    const channel = new MessageChannel();
+    const timeout = setTimeout(()=>{channel.port1.close(); resolve(null);},1000);
+    channel.port1.onmessage = event=>{clearTimeout(timeout); channel.port1.close(); resolve(event.data?.build);};
+    navigator.serviceWorker.controller?.postMessage({type:'VERSION'},[channel.port2]);
+  }))).toBe(revision);
+}
 async function open(page,url) { await keepStructureOpen(page); await page.goto(url); await ready(page); await controlled(page); }
 async function showUpdate(page) { if (page.viewportSize().width<=680 && !await page.locator('#mobile-actions').isVisible()) await page.locator('#mobile-more').click(); }
 async function offer(page) {
@@ -47,7 +62,7 @@ for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mo
       await expect(page.locator('#update-status')).toContainText('Reconnect');
       await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Synthetic unapplied heading');
       await context.setOffline(false); await choose(page,'keep'); await ready(page); await version(page,NEXT);
-      expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(NEXT);
+      await appBuild(page,NEXT);
       await expect(page.locator('#revision')).toHaveText(revision); await expect(page.locator('#zoom')).toHaveValue('0.75');
       await expect(page.locator('#draft-state')).toContainText('1 unapplied');
       await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Synthetic unapplied heading');
@@ -57,7 +72,7 @@ for (const [name,width,height] of [['desktop',1440,900],['tablet',768,1024],['mo
       await expect(page.frameLocator('#preview-frame').locator('.prowheader_processed').first().locator('th').nth(1)).toHaveText('Item code');
       // The other tab holds no unsaved work, so it updates by itself once the new build is active.
       await version(other,NEXT); await expect(other.locator('#revision')).toHaveText('r0');
-      expect(await other.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(NEXT);
+      await appBuild(other,NEXT);
       await expect(other.locator('#update-dialog')).toBeHidden();
       const after = await page.evaluate(async()=> {
         const db=await new Promise(resolve=> { const r=indexedDB.open('printform-studio-v3-demo-db');r.onsuccess=()=>resolve(r.result); });
@@ -109,7 +124,7 @@ test('without unsaved work a verified new build updates by itself: no click, no 
     await page.evaluate(()=>new MutationObserver(()=>{ if(document.querySelector('#update-dialog').open)globalThis.seen(); }).observe(document.querySelector('#update-dialog'),{attributes:true}));
     server.publish(); await clickHeaderAction(page,'update');   // only asks the browser to look; it never chooses Update
     await version(page,NEXT); await ready(page);
-    expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(NEXT);
+    await appBuild(page,NEXT);
     expect(shown).toHaveLength(0);
     expect(await page.evaluate(()=>sessionStorage.getItem('printform-studio-v3:update-recovery'))).toBeNull();
   } finally { await server.close(); }
@@ -152,7 +167,7 @@ test('rollback to a previous verified shell preserves committed edits and an una
     await page.locator('[data-update-choice=keep]').click();
     await version(page,OLD);
     await ready(page);
-    expect(await page.evaluate(()=>globalThis.__upgradeFixtureBuild)).toBe(OLD);
+    await appBuild(page,OLD);
     await expect(page.locator('#revision')).toHaveText(revision);
     await expect(label).toHaveValue('Unapplied item code');
     await expect(page.locator('#draft-state')).toContainText('1 unapplied');

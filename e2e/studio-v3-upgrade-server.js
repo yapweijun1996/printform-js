@@ -7,10 +7,22 @@ import { promisify } from 'node:util';
 const compile = promisify(execFile);
 import { finalizeStudioV3Pwa } from '../scripts/studio-v3-pwa.mjs';
 
-export const OLD = 'a'.repeat(40), NEXT = 'b'.repeat(40);
+const rollbackRoots = [process.env.PRINTFORM_ROLLBACK_OLD,process.env.PRINTFORM_ROLLBACK_NEXT];
+export const exactRollback = rollbackRoots.some(Boolean);
+function artifactRevision(root) {
+  if (!root) throw new Error('Set both exact rollback artifact roots.');
+  const page = fs.readFileSync(path.join(root,'studio-v3/index.html'),'utf8');
+  const revision = /<meta name="printform-source-revision" content="([a-f0-9]{40})">/.exec(page)?.[1];
+  if (!revision) throw new Error(`Studio v3 release metadata missing in ${root}`);
+  return revision;
+}
+export const OLD = exactRollback ? artifactRevision(rollbackRoots[0]) : 'a'.repeat(40);
+export const NEXT = exactRollback ? artifactRevision(rollbackRoots[1]) : 'b'.repeat(40);
+if (OLD === NEXT) throw new Error('Use two different Studio v3 releases for the rollback drill.');
 export async function upgradeServer() {
-  const temp = fs.mkdtempSync(path.join(os.tmpdir(),'printform-upgrade-'));
-  for (const revision of [OLD,NEXT]) {
+  const temp = exactRollback ? null : fs.mkdtempSync(path.join(os.tmpdir(),'printform-upgrade-'));
+  const roots = new Map([OLD,NEXT].map((revision,index)=>[revision,path.resolve(rollbackRoots[index] || path.join(temp ?? '',revision))]));
+  if (temp) for (const revision of [OLD,NEXT]) {
     const root = path.join(temp,revision); fs.mkdirSync(root,{recursive:true});
     fs.cpSync('site-dist/studio-v3',path.join(root,'studio-v3'),{recursive:true});
     fs.cpSync('site-dist/dist',path.join(root,'dist'),{recursive:true});
@@ -30,8 +42,9 @@ export async function upgradeServer() {
   const types = {'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
   const server = http.createServer((request,response)=> {
     const url = new URL(request.url,'http://localhost');
-    let file = path.resolve(temp,current,`.${decodeURIComponent(url.pathname)}`);
-    if (!file.startsWith(path.join(temp,current)+path.sep)) { response.writeHead(404); response.end(); return; }
+    const root = roots.get(current);
+    let file = path.resolve(root,`.${decodeURIComponent(url.pathname)}`);
+    if (!file.startsWith(root+path.sep)) { response.writeHead(404); response.end(); return; }
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file,'index.html');
     if (fail && file.includes(`/releases/${NEXT}/styles.css`)) { response.writeHead(200,{'Content-Type':'text/css'}); response.end('/* partial deployment */'); return; }
     if (!fs.existsSync(file)) { response.writeHead(404); response.end(); return; }
@@ -40,5 +53,5 @@ export async function upgradeServer() {
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   return {url:`http://127.0.0.1:${server.address().port}/studio-v3/`,publish:({broken = false,revision = NEXT}={})=> { current = revision; fail = broken; },
-    close:async()=> { server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); fs.rmSync(temp,{recursive:true,force:true}); }};
+    close:async()=> { server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); if (temp) fs.rmSync(temp,{recursive:true,force:true}); }};
 }
