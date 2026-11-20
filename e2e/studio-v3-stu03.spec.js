@@ -90,8 +90,9 @@ test('G5 STU-03 diagnoses without writes, reviews a two-table binding correction
   await page.goto('/studio-v3/');
   await ready(page);
   await page.locator('#open-file').setInputFiles({name:'two-supplied-tables.printform.json',mimeType:'application/json',buffer:Buffer.from(saveProject(project))});
-  await expect(paper(page).locator('[data-v3-id=header-title]')).toHaveText(project.manifest.studioV3.title);
+  await expect(page.locator('#document-name')).toHaveValue(project.manifest.title);
   await ready(page);
+  await expect(paper(page).locator('[data-v3-id=header-title]')).toHaveText(project.manifest.studioV3.title);
   const saved = (await save(page,info,'source.printform.json')).project;
   const baseline = normalized(saved);
   expect(saved.sampleData).toEqual(project.sampleData);
