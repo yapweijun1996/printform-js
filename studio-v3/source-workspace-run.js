@@ -23,7 +23,7 @@ class SourceWorkspaceRun {
   #binding;
   #artifacts = new Map();
   #commands = new Map();
-  #edited = new Set();
+  #sourceChanges = new Map();
   #imported = null;
   constructor(connection,readOnly) {
     this.#connection = connection;
@@ -69,7 +69,12 @@ class SourceWorkspaceRun {
     this.#revision = receipt.afterRevision; this.#digest = receipt.afterDigest;
     if (receipt.afterDigest !== digest) { this.#artifacts.clear(); this.#imported = null; }
     for (const change of receipt.changes) {
-      if ((change.beforeType === 'file' || change.afterType === 'file') && typeof change.path === 'string' && !change.path.startsWith('artifacts/')) this.#edited.add(change.path);
+      const {path,beforeType,afterType,beforeDigest,afterDigest} = change;
+      if (typeof path !== 'string' || path.startsWith('artifacts/')) continue;
+      const original = this.#sourceChanges.has(path) ? this.#sourceChanges.get(path) : beforeType === 'file' ? beforeDigest : null;
+      const current = afterType === 'file' ? afterDigest : null;
+      if (original === current) this.#sourceChanges.delete(path);
+      else this.#sourceChanges.set(path,original);
     }
     if (operation === 'run') this.#commands.set(receipt.callId,{callId:receipt.callId,command:args.command,exitCode:receipt.exitCode,signal:receipt.signal ?? null,
       beforeDigest:receipt.beforeDigest,afterDigest:receipt.afterDigest,sourceRevision:receipt.afterRevision,changes:receipt.changes});
@@ -90,7 +95,7 @@ class SourceWorkspaceRun {
   async importArtifact(artifactId,signal) {
     if (this.profile !== 'coding') throw fail('GRANT_DENIED');
     const stored = this.#artifacts.get(artifactId);
-    if (!stored || ![...this.#edited].some(path=>path !== stored.args.path)) throw fail('ARTIFACT_REJECTED');
+    if (!stored || ![...this.#sourceChanges.keys()].some(path=>path !== stored.args.path)) throw fail('ARTIFACT_REJECTED');
     // Re-fetch under the current server tree/receipt. A cached ID cannot bless a later write.
     const receipt = await this.action('artifacts',stored.args,signal), artifact = receipt.result;
     const parsed = await verifySourceArtifact(artifact,{...this.#binding,workspaceId:this.#id,sourceRevision:this.#revision,treeDigest:this.#digest,imageDigest:this.#image,buildCallId:stored.args.callId});

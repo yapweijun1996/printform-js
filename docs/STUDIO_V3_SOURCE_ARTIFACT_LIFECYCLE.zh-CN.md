@@ -25,7 +25,7 @@
 2. `verifySourceArtifact()`校验媒体类型、64000原始UTF8 bytes、原文SHA256、全部custody字段及恰好四个release身份字段。BOM参与bytes/hash，仅解析视图移除开头BOM。
 3. **先复用`parseLosslessRecords()`做有界严格预检，再用`JSON.parse()`保留native类型。** 所有层级重复键（含Unicode转义解码后的同键、相同重复值）、`__proto__/prototype/constructor`、非法JSON、尾随文本及过深/过多节点均拒绝，统一映射为`ARTIFACT_REJECTED`。不修改共享parser，不把number词形字符串直接当操作数字，不放松权限。
 4. native解析后仍只接受`format/version/summary/operations`；version必须number `1`，summary非空且≤500字符，operations为1..24项。严格预检不是业务验证。
-5. `import_artifact`要求真正的coding授权、已登记制品，以及制品路径之外确有源码编辑。它重新获取当前制品，重做所有校验，并核对opaque ID与先前digest；缓存ID不批准后续写入。
+5. `import_artifact`要求真正的coding授权、已登记制品，以及当前构建树中至少有一个制品路径之外的源码文件仍与起始内容不同。改回原文件、只改文件权限或只生成制品均不能满足这项检查。它重新获取当前制品，重做所有校验，并核对opaque ID与先前digest；缓存ID不批准后续写入。
 6. `agent-source-handlers.js`调用原有`draft.apply(summary,operations)`。同一个typed authoring/parser、numeric范围、selected scope及受保护金融绑定不变；不接收任意HTML、脚本或数据篡改。失败不产生draft step。
 7. 导入成功会清除此前inspection/pixel/observation状态，并把source evidence绑定当前draft version；它只修改私有候选，不写CommandBus或live project。
 8. `finish`先`confirmImported()`重新获取/校验制品，再要求同一draft版本的最新inspection且ready。导入不是免检通行证；其他直接draft改动/undo会清掉source evidence，不能沿用旧检查。

@@ -25,7 +25,7 @@ const entry = (path,content) => ({path,content,type:'file',mode:420,bytes:Buffer
 const tree = entries => ({entries,treeDigest:treeDigest(entries)});
 // Receipt fixtures isolate the host consumer, not Docker execution. Artifact export, hashing,
 // typed authoring, scope/binding validation, inspection gates and human commit are real consumers.
-async function consumer(project,operations,{scope={mode:'whole'},content=contentOf(operations)}={}) {
+async function consumer(project,operations,{scope={mode:'whole'},content=contentOf(operations),restoreSource=false}={}) {
   const signal = new AbortController().signal, draft = createDraft(project,{scope}), outcome = {};
   const initial = entry('src/form.mjs','public fictional starter\n');
   const server = {id:expected.workspaceId,revision:0,tree:tree([initial]),calls:new Map(),context:null};
@@ -49,7 +49,9 @@ async function consumer(project,operations,{scope={mode:'whole'},content=content
   const workspace = authorizeSourceWorkspace(connection,{fictionalSource:true});
   await workspace.open({identity:{...identity,sourceRunnerHash},project,baseRevision:0,runId:expected.runId},signal);
   // The producer receipt below is synthetic, never evidence that a process actually ran.
-  await workspace.action('write',{path:'src/form.mjs',expectedDigest:initial.digest,content:'public fictional source edit\n'},signal);
+  const edited = 'public fictional source edit\n';
+  await workspace.action('write',{path:'src/form.mjs',expectedDigest:initial.digest,content:edited},signal);
+  if (restoreSource) await workspace.action('write',{path:'src/form.mjs',expectedDigest:sha(edited),content:initial.content},signal);
   const build = await workspace.action('run',{command:'node build.mjs',cwd:''},signal);
   const descriptor = await workspace.artifact({callId:build.callId,path:'artifacts/form.json'},signal);
   let report = {status:'ready',validation:{errors:[],warnings:[]}};
@@ -103,6 +105,16 @@ describe('strict operation artifact bytes and native typed consumers',()=> {
       await expect(run.import()).rejects.toMatchObject({code});
       expect(run.draft.version).toBe(0); expect(run.draft.project).toEqual(before); expect(run.outcome.proposal).toBeUndefined();
       expect(project).toEqual(before); expect(run.reads()).toBe(2);
+    } finally { await run.workspace.close(); }
+  });
+  it('rejects a produced artifact after the only source edit has been restored',async()=> {
+    const project=newProject(), before=structuredClone(project);
+    const run=await consumer(project,heading,{restoreSource:true});
+    try {
+      expect(run.descriptor.contentDigest).toBe(sha(contentOf(heading)));
+      await expect(run.import()).rejects.toMatchObject({code:'ARTIFACT_REJECTED'});
+      expect(run.draft.version).toBe(0); expect(run.draft.project).toEqual(before);
+      expect(run.outcome.proposal).toBeUndefined();
     } finally { await run.workspace.close(); }
   });
   it('re-fetches a source import, checks its exact candidate, and commits only at explicit human Apply',async()=> {
