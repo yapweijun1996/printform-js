@@ -7,7 +7,6 @@ import {saveProject} from '../studio-v3/file-io.js';
 test.use({workInSteps:true});
 test.setTimeout(90000);
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled();
-const target = 'header-number';
 const pointer = '/document/reference';
 const code = '0123456789012';
 const text = 'Support <literal> & 茶';
@@ -20,7 +19,7 @@ const edits = {
   barcode: {patch:{kind:'barcode',pointer,barcode:options,text:'',format:''},prompt:'Render the existing /document/reference string as EAN13 with module width 3 and height 51. Keep the printed text.'}
 };
 
-async function editInspector(page,mode) {
+async function editInspector(page,mode,target) {
   const structure = page.locator('[data-layout=structure]').first();
   if (await structure.getAttribute('aria-expanded') !== 'true') await structure.click();
   await page.locator(`#left-panel [data-select="${target}"]`).click();
@@ -46,7 +45,7 @@ async function editInspector(page,mode) {
   await ready(page);
 }
 
-async function checkPreview(page,mode) {
+async function checkPreview(page,mode,target) {
   const value = page.frameLocator('#preview-frame').locator(`[data-v3-id="${target}"]`).first();
   if (mode === 'image') {
     await expect(value).toHaveCSS('width','65.25px');
@@ -61,6 +60,7 @@ async function checkPreview(page,mode) {
 
 for (const [mode,{patch,prompt}] of Object.entries(edits)) {
   test(`field ${mode} Inspector and Pi render equivalent candidates and preserve Undo`,async({page},info)=> {
+    const target = mode === 'barcode' ? 'footer-notes' : 'header-number';
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await gateway(page,[['apply_operations',{summary:'Change the selected field',operations:[{type:'set_field',target,patch}]}],['inspect_draft'],['finish',{summary:'Change the selected field'}]]);
@@ -74,8 +74,8 @@ for (const [mode,{patch,prompt}] of Object.entries(edits)) {
     await expect(page.locator('#status')).toContainText('Opened editable');
     await ready(page);
     const before = normalized((await save(page,info,'before.json')).project);
-    await editInspector(page,mode);
-    await checkPreview(page,mode);
+    await editInspector(page,mode,target);
+    await checkPreview(page,mode,target);
     const ui = (await save(page,info,'ui.json')).project;
     const uiReport = (await diagnostics(page,ui)).diagnostics;
     expect(uiReport.ready).toBe(true);
@@ -93,7 +93,7 @@ for (const [mode,{patch,prompt}] of Object.entries(edits)) {
     await page.locator('[data-ai=apply]').click();
     await expectApplied(page,3);
     await ready(page);
-    await checkPreview(page,mode);
+    await checkPreview(page,mode,target);
     const pi = (await save(page,info,'pi.json')).project;
     expect(normalized(pi)).toEqual(normalized(ui));
     expect((await diagnostics(page,pi)).diagnostics).toEqual(uiReport);
