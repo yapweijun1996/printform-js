@@ -268,7 +268,7 @@ document.addEventListener('input', e => {
       const header = group.querySelector('.tree-section-header').textContent.toLowerCase(), blockMatch = header.includes(query);
       let matched = blockMatch;
       for (const field of group.querySelectorAll('.tree-fields [data-select]')) { const visible = !query || blockMatch || field.textContent.toLowerCase().includes(query); field.hidden = !visible; matched ||= visible; }
-      group.hidden = !matched; group.querySelector('.tree-fields').hidden = !query && (state.collapsed[group.dataset.treeGroup] || !designOf(bus.project).blocks[group.dataset.treeGroup].enabled);
+      group.hidden = !matched; group.querySelector('.tree-fields').hidden = !query && (state.collapsed[group.dataset.treeGroup] || group.classList.contains('tree-disabled'));
     }
     return;
   }
