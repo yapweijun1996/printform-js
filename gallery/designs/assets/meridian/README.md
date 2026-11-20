@@ -1,6 +1,6 @@
 # Meridian Enterprise Purchase Order (PF-064)
 
-Original fictional demonstration. No real order, contact identity, bank account or tax registration is represented. All code, clauses, dummy data and original monogram are MIT licensed under the repository LICENSE. Code128 reuses `studio-v2/core/barcode.js` and the pinned MIT JsBarcode 3.12.1 distribution; their provenance is embedded in the generated HTML.
+Original fictional demonstration. No real order, contact identity, bank account or tax registration is represented. All code, clauses, dummy data and original monogram are MIT licensed under the repository LICENSE. Code128 reuses `document-core/core/barcode.js` and the pinned MIT JsBarcode 3.12.1 distribution; their provenance is embedded in the generated HTML.
 
 ## Authoring
 

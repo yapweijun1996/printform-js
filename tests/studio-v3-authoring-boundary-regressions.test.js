@@ -4,7 +4,7 @@ import { newProject,designOf,compileProject,selectionField } from '../studio-v3/
 import { createBus,editProject,designOperations,importRasterAsset,formDesign } from '../studio-v3/controller.js';
 import { alterTables } from '../studio-v3/additional-table-controls.js';
 import { tableDefinitions } from '../studio-v3/additional-tables.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { readProject,saveProject } from '../studio-v3/file-io.js';
 import { createDraft } from '../studio-v3/agent-draft.js';
 import { businessDemoInput } from '../studio-v3/business-document-demos.js';

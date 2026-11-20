@@ -13,7 +13,7 @@ describe('homepage navigation', () => {
     expect(doc.querySelector('main h1')).not.toBeNull();
     expect(doc.querySelectorAll('main h1')).toHaveLength(1);
     const routes = ['gallery/index.html', 'demo001.html', 'demo002.html',
-      'studio/index.html', 'studio-v2/', 'studio-v3/', 'README.md',
+      'studio-v3/', 'README.md',
       'docs/configuration.html', 'docs/USAGE_GUIDE.md'];
     for (const route of routes) expect(doc.querySelector(`a[href="${route}"]`), route).not.toBeNull();
     const details = doc.querySelector('details');

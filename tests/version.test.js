@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import api from "../src/printform.js";
 import { PRINTFORM_VERSION } from "../src/version.js";
-import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION, STUDIO_VERSION } from "../studio-v2/core/constants.js";
+import { AGENT_CONTRACT_VERSION, PROTOCOL_VERSION, STUDIO_VERSION } from "../document-core/core/constants.js";
 
 const SEMVER = /^\d+\.\d+\.\d+$/;
 

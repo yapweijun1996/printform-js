@@ -1,6 +1,6 @@
 # TASK.md — 任务板
 
-> Studio v3 is an independent structured-authoring Pilot. Current scope, architecture and acceptance: [docs/STUDIO_V3.md](docs/STUDIO_V3.md). Its checks do not close v2 release gates.
+> Studio v3 is the active structured-authoring Pilot. Current scope, architecture and acceptance: [docs/STUDIO_V3.md](docs/STUDIO_V3.md). The Studio v2 release ledger below records historical work on the retired editor.
 
 ## Gallery SVG / Studio AI layout (2026-11-17)
 

@@ -4,7 +4,7 @@ import { DemoDatabase } from '../studio-v3/database-controller.js';
 import { createDatabase } from '../studio-v3/database-store.js';
 import { databaseView } from '../studio-v3/database-view.js';
 import { readProject, saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { generalImportProject } from './fixtures/structured-import-general.js';
 
 const rows = 'code,quantity,uom\n00009,-001.250,kg\n00007,0002.500,box\n';

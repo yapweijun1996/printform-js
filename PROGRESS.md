@@ -1,5 +1,7 @@
 # PROGRESS.md — Studio v2 derived progress
 
+> Historical Studio v2 progress. The active Studio v3 backlog is tracked in [TASK.md](TASK.md#studio-v3-complete-coding-agent-program-2026-10-09).
+
 > Read-only projection reviewed 2026-09-11. [TASK.md](TASK.md) owns the numbers; this file must never award gate credit.
 
 ## Dashboard

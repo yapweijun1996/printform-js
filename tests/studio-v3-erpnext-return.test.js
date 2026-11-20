@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { adaptErpNextReturn, createErpNextReturnProject } from '../studio-v3/erpnext-return-adapter.js';
 import { fictionalErpNextReturn, erpnextCases } from './fixtures/erpnext-return.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 
 const open = input => readProject(saveProject(createErpNextReturnProject(input)));
 const bind = project => {

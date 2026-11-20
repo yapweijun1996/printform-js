@@ -2,9 +2,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { JSDOM } from "jsdom";
-import { validateProject } from "../studio-v2/core/acceptance.js";
-import { canonicalProjectContent, parseProjectHtml } from "../studio-v2/core/project-model.js";
-import { sha256 } from "../studio-v2/core/json.js";
+import { validateProject } from "../document-core/core/acceptance.js";
+import { canonicalProjectContent, parseProjectHtml } from "../document-core/core/project-model.js";
+import { sha256 } from "../document-core/core/json.js";
 
 const filename = process.argv[2];
 if (!filename) {

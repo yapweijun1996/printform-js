@@ -3,12 +3,12 @@ import { newProject,designOf,compileProject } from '../studio-v3/model.js';
 import { formDesign,createBus,designOperations,editProject,alterFields } from '../studio-v3/controller.js';
 import { rightView } from '../studio-v3/workspace-views.js';
 import { readProject,saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { bindingValidation } from '../studio-v3/validation.js';
 import { applyAuthoring } from '../studio-v3/ai-authoring.js';
 import { semanticObservation } from '../studio-v3/observation-context.js';
 import { elementMetadata,validateElementReferences } from '../studio-v3/ai-element-tags.js';
-import { inspectTemplate } from '../studio-v2/core/template-inspection.js';
+import { inspectTemplate } from '../document-core/core/template-inspection.js';
 
 function supplied() {
   const project=newProject(); project.sampleData.identifiers={code:'00012345-AB',ean:'0123456789012'};

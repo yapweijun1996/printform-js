@@ -30,19 +30,12 @@
     "pretest:e2e:chromium": "npm run build:site",
     "test:e2e:chromium": "npm run e2e:install:chromium && playwright test --project=chromium",
     "validate:v2": "node scripts/validate-printform-v2.mjs",
-    "sync:agrun": "node scripts/sync-agrun.mjs",
-    "build:agrun": "node scripts/build-agrun.mjs",
-    "check:agrun": "node scripts/sync-agrun.mjs",
-    "check:agrun:upstream": "node scripts/sync-agrun.mjs --check-upstream",
     "doctor": "node scripts/doctor.mjs",
-    "studio:transaction-server": "node scripts/transaction-server.mjs",
     "studio:coding-runner": "node scripts/coding-runner.mjs",
-    "studio:mcp": "node mcp/server.mjs",
-    "studio:agent-browser": "node scripts/launch-studio-agent-browser.mjs",
     "docs": "node scripts/generate-config-docs.js",
-    "verify": "npm run check:agrun && npm run test:e2e -- --workers=1 && npm run verify:samples",
-    "verify:quick": "npm run check:agrun && npm run test:e2e:chromium && npm run verify:samples",
-    "verify:samples": "node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/sales-invoice-v2.html && node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/purchase-order-red-v2.html && node scripts/validate-printform-v2.mjs site-dist/studio-v2/samples/progress-claim-northpeak-v2.html"
+    "verify": "npm run test:e2e -- --workers=1 && npm run verify:samples",
+    "verify:quick": "npm run test:e2e:chromium && npm run verify:samples",
+    "verify:samples": "node scripts/validate-printform-v2.mjs site-dist/studio-v3/samples/invoice.html && node scripts/validate-printform-v2.mjs site-dist/studio-v3/samples/purchase.html && node scripts/validate-printform-v2.mjs site-dist/studio-v3/samples/delivery.html"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.0",

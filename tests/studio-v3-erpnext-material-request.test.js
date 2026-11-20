@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { adaptErpNextMaterialRequest, createErpNextMaterialRequestProject } from '../studio-v3/erpnext-material-request-adapter.js';
 import { fictionalErpNextMaterialRequest } from './fixtures/erpnext-material-request.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { designOf, compileProject } from '../studio-v3/model.js';
 
 function bind(project) {

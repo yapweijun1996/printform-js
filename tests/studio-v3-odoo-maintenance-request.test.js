@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { adaptOdooMaintenanceRequest, createOdooMaintenanceRequestProject } from '../studio-v3/odoo-maintenance-request-adapter.js';
 import { fictionalOdooMaintenanceRequest } from './fixtures/odoo-maintenance-request.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { designOf, compileProject } from '../studio-v3/model.js';
 
 function changeSnapshot(input, change) {

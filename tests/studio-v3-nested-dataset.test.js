@@ -1,5 +1,5 @@
 import { describe,it,expect,vi } from 'vitest';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { nestedDatasetFixture } from './fixtures/nested-dataset.js';
 import { createLocalDatasetSource } from '../studio-v3/data-source-adapter.js';
 import { createBus,editProject,designOperations,replaceData } from '../studio-v3/controller.js';

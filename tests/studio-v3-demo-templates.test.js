@@ -5,7 +5,7 @@ import {validateDesign} from '../studio-v3/design-validation.js';
 import {validateDataset,datasetMatchesProject} from '../studio-v3/database-model.js';
 import {createBus,replaceData} from '../studio-v3/controller.js';
 import {saveProject,readProject} from '../studio-v3/file-io.js';
-import {resolvePointer} from '../studio-v2/core/json.js';
+import {resolvePointer} from '../document-core/core/json.js';
 describe('business demo templates',()=>{
  for(const entry of getDemoCatalog({includePending:false}))it(`${entry.label}: explicit bindings and portable round trip`,()=>{
   const project=newDemoProject(entry.documentKind),design=project.manifest.studioV3;

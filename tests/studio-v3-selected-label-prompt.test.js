@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {newProject} from '../studio-v3/model.js';
 import {chatRequest,parseChatReply,scopeAuthoringTargets} from '../studio-v3/ai-chat-protocol.js';
-import {bindTemplate} from '../studio-v2/core/binding.js';
+import {bindTemplate} from '../document-core/core/binding.js';
 const request='Only make the Ship to label 12pt bold.';
 const project=newProject();
 const scope={mode:'selected',id:'label-customer-ship'};

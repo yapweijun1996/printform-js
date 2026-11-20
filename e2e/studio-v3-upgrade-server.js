@@ -14,7 +14,6 @@ export async function upgradeServer() {
     const root = path.join(temp,revision); fs.mkdirSync(root,{recursive:true});
     fs.cpSync('site-dist/studio-v3',path.join(root,'studio-v3'),{recursive:true});
     fs.cpSync('site-dist/dist',path.join(root,'dist'),{recursive:true});
-    fs.mkdirSync(path.join(root,'studio-v2')); fs.copyFileSync('studio-v2/icon.svg',path.join(root,'studio-v2/icon.svg'));
     fs.copyFileSync('studio-v3/index.html',path.join(root,'studio-v3/index.html'));
     fs.copyFileSync('studio-v3/sw.js',path.join(root,'studio-v3/sw.js'));
     // Compile each fixture against its own generated knowledge identity, as a real release does.

@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {parseLosslessRecords} from '../studio-v3/structured-import-parser.js';
-import {pointerTokens} from '../studio-v2/core/json.js';
-import {validateBarcode} from '../studio-v2/core/barcode.js';
+import {pointerTokens} from '../document-core/core/json.js';
+import {validateBarcode} from '../document-core/core/barcode.js';
 
 const LIMIT = 20*1024*1024;
 const fail = code => { throw Object.assign(new Error(code),{code}); };

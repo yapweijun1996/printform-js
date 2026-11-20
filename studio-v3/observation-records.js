@@ -1,4 +1,4 @@
-import { stableStringify, sha256 } from '../studio-v2/core/json.js';
+import { stableStringify, sha256 } from '../document-core/core/json.js';
 import { fail } from './ai-edits.js';
 
 // This slice admits numeric diagnostics only. Value and pixel authorization belong to their later projections.

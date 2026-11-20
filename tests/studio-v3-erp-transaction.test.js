@@ -4,7 +4,7 @@ import { createErpTransactionProject } from '../studio-v3/erp-transaction-projec
 import { fictionalTransaction, fictionalSupplierRefund, fictionalOdooDebit, fictionalStockCredit, transactionMoney as m } from './fixtures/erp-transaction.js';
 import { designOf } from '../studio-v3/model.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 
 const reopened = input => readProject(saveProject(createErpTransactionProject(input)));
 const bind = project => {

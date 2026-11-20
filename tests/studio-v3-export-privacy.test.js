@@ -3,7 +3,7 @@ import { createBus, replaceData } from '../studio-v3/controller.js';
 import { createImportReview, previewImport } from '../studio-v3/structured-import-model.js';
 import { importReceipt } from '../studio-v3/structured-import-receipt.js';
 import { exportProject, projectForSharing, readProject, saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { generalImportProject } from './fixtures/structured-import-general.js';
 
 const source='code,quantity,uom,private\n00007,-001.250,kg,PRIVATE_UNMAPPED_CANARY_8391\n';

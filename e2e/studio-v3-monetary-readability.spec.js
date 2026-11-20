@@ -4,7 +4,7 @@ test('financial acceptance rejects wrapped, clipped and overlapping tokens witho
   await page.goto('/studio-v3/');
   await page.setContent('<html lang="en"><head><title>Synthetic financial readability</title></head><body><div class="printform_page" style="width:700px"><div class="field" style="width:240px;display:flex;justify-content:space-between"><span data-v3-role="label">Long legitimate<br>label</span><span data-pf-format="currency">RM 12,150.00</span></div></div></body></html>');
   const codes=()=>page.evaluate(async()=> {
-    const {inspectRenderedDocument}=await import('/studio-v2/core/acceptance.js');
+    const {inspectRenderedDocument}=await import('/document-core/core/acceptance.js');
     return inspectRenderedDocument(document,{}).errors.map(e=>e.code);
   });
   expect(await codes()).not.toContain('MONETARY_TOKEN_UNREADABLE');

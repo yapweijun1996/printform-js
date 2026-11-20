@@ -5,8 +5,8 @@ import { generateAgentPackage } from './generate-studio-v3-agent.mjs';
 import { checkAgentConformance } from './studio-v3-agent-conformance.mjs';
 import { readReleaseState, assertReleaseReview } from './studio-v3-agent-review.mjs';
 import { newProject } from '../studio-v3/model.js';
-import { validateProject } from '../studio-v2/core/acceptance.js';
-import { serializeStandalone } from '../studio-v2/core/project-model.js';
+import { validateProject } from '../document-core/core/acceptance.js';
+import { serializeStandalone } from '../document-core/core/project-model.js';
 
 export async function buildStudioV3App({root,output,revision=process.env.GITHUB_SHA || 'local'}) {
   await checkAgentConformance(); // Broken examples or undeclared results/errors stop the build before publication.

@@ -1,7 +1,7 @@
-import { validateData, validateSchemaProfile } from '../studio-v2/core/schema.js';
-import { resolvePointer, encodePointerToken } from '../studio-v2/core/json.js';
+import { validateData, validateSchemaProfile } from '../document-core/core/schema.js';
+import { resolvePointer, encodePointerToken } from '../document-core/core/json.js';
 import { assertBoundedJson } from './json-safety.js';
-import { validateBarcode } from '../studio-v2/core/barcode.js';
+import { validateBarcode } from '../document-core/core/barcode.js';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const identity = value => typeof value === 'string' && value.length > 0 && value.length <= 120;

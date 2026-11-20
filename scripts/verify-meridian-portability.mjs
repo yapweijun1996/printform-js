@@ -19,7 +19,7 @@ try {
   await fs.mkdir(isolated);
   for(const name of ['package.json','package-lock.json','vite.config.js','LICENSE','src',
     'scripts/build-meridian.mjs','gallery/designs/assets/meridian',
-    'studio-v2/core/barcode.js','studio-v2/vendor/jsbarcode-3.12.1.js']) {
+    'document-core/core/barcode.js','document-core/vendor/jsbarcode-3.12.1.js']) {
     const destination=path.join(isolated,name);
     await fs.mkdir(path.dirname(destination),{recursive:true});
     await fs.cp(path.join(root,name),destination,{recursive:true});

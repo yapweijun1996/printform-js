@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { adaptGlobe3ProgressClaim } from '../studio-v3/globe3-progress-claim-adapter.js';
 import { createGlobe3CertifiedClaimProject } from '../studio-v3/globe3-claim-project.js';
 import { normalizeErpSettlement } from '../studio-v3/erp-settlement-adapter.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { fictionalHistoricalPcar, fictionalRepeatedCcar, fictionalSplitSettlement } from './fixtures/erp-business-acceptance.js';
 
 function bind(project) {

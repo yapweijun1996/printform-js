@@ -6,7 +6,7 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {JSDOM} from 'jsdom';
 import {chromium,firefox,webkit} from '@playwright/test';
-import {createStandaloneHtml} from '../studio-v2/core/exporter.js';
+import {createStandaloneHtml} from '../document-core/core/exporter.js';
 import {printInvestigationFixtures} from './studio-v3-long-table-label-fixtures.mjs';
 import {inspectPrintDom,assertPrintDom,decodePrintPixels,inspectPrintPdf} from './studio-v3-long-table-label-inspection.mjs';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adaptGlobe3CertifiedClaim } from '../studio-v3/globe3-claim-adapter.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { globe3ClaimInput, mainAmounts, mainLabels, summaryKeys } from './fixtures/globe3-certified-claim.js';
 
 const adapt = input => adaptGlobe3CertifiedClaim(input || globe3ClaimInput());

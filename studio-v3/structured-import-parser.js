@@ -1,5 +1,5 @@
 import { assertJsonBytes, assertJsonStructure, unsafeJsonKey } from './json-safety.js';
-import { encodePointerToken as encodeKey } from '../studio-v2/core/json.js';
+import { encodePointerToken as encodeKey } from '../document-core/core/json.js';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(message); };

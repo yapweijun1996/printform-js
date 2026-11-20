@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {barcodeOptions,validateBarcode,encodeBarcode,renderBarcode} from '../studio-v2/core/barcode.js';
+import {barcodeOptions,validateBarcode,encodeBarcode,renderBarcode} from '../document-core/core/barcode.js';
 import {decodeBarcodeSvg,decodeBarcodeRow} from './support/barcode-decode.js';
 
 describe('offline string-preserving barcode encoding',()=> {

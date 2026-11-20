@@ -16,11 +16,9 @@ export function finalizeStudioV3Pwa(output, revision = process.env.GITHUB_SHA ||
   fs.cpSync(agent,path.resolve(target,'agent'),{recursive:true});
   if (fs.existsSync(path.resolve(root,'chunks'))) fs.cpSync(path.resolve(root,'chunks'),path.resolve(target,'chunks'),{recursive:true});
   for (const name of ['printform.js','printform-document.js']) fs.copyFileSync(path.resolve(output,'dist',name),path.resolve(target,name));
-  fs.copyFileSync(path.resolve(output,'studio-v2/icon.svg'),path.resolve(root,'icon.svg'));
   const index = path.resolve(root,'index.html');
   const html = fs.readFileSync(index,'utf8').replaceAll('__PRINTFORM_V3_REVISION__',revision)
-    .replace('__PRINTFORM_V3_ASSETS__',`./${release}/`)
-    .replace('../studio-v2/icon.svg','./icon.svg');
+    .replace('__PRINTFORM_V3_ASSETS__',`./${release}/`);
   fs.writeFileSync(index,html.replace(/(href|src)="(app\.js|tokens\.css|styles\.css|ai-panel\.css|update\.css|mobile\.css)"/g,`$1="${release}/$2"`));
   const files = ['index.html','manifest.webmanifest','icon.svg'];
   const walk = dir => {

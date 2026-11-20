@@ -165,7 +165,7 @@ Current documentation verification should check links, source references, task/g
 
 | 面向 | 真实依据 | 恢复资格工作的前置条件 |
 | --- | --- | --- |
-| 服务边界 | [Demo session](../studio-v2/ui/agent-demo-gateway.js)固定 `gpt.yapweijun1996.com`、`github-pages`，内存 token、最多 15 分钟、一次 401 刷新；[v3 config](../studio-v3/ai-gateway-config.js)复用该端点。网关实现不在本仓库 | 服务所有者提供生产服务主体、tenant/project、合同适用范围、端点和批准 Origin 的脱敏证明；短 token TTL 不是服务端内容删除证明 |
+| 服务边界 | [Demo session](../document-core/ui/agent-demo-gateway.js)固定 `gpt.yapweijun1996.com`、`github-pages`，内存 token、最多 15 分钟、一次 401 刷新；[v3 config](../studio-v3/ai-gateway-config.js)复用该端点。网关实现不在本仓库 | 服务所有者提供生产服务主体、tenant/project、合同适用范围、端点和批准 Origin 的脱敏证明；短 token TTL 不是服务端内容删除证明 |
 | 训练/保留/地区 | 已读本地公开 KB skill 快照 `ai-governance:sensitive-data-provider-gate`：具体 route 不明时机密资料 fail closed。快照无本 Demo 的 DPA 或生效配置 | 取得覆盖 Studio→网关→所有 upstream/分包商的有效合同/适用性记录：训练与改进用途、输入/输出/图片/日志/备份保留及删除、存储与推理地区/跨境、分包与变更通知、访问审计及事件联络；非个人商业机密还须明确保密义务 |
 | 固定模型 | [alias validator](../studio-v3/ai-gateway-config.js)只接受 `demo-*`；[discover/dispatch](../studio-v3/ai-demo-transport.js)过滤其他 ID；[wire](../studio-v3/agent-wire.js)只发 `model:alias`；[Pi provider](../studio-v3/agent-provider.js)也把 alias 记成模型 | 当前 UI 不能直接选择厂商 snapshot 或证明 alias 的底层版本。服务所有者须提供固定 upstream/provider/snapshot、route 配置版本、无未知 fallback、变更策略和逐请求可核对的脱敏 dispatch 证明；不能只重命名 alias/响应 `model` |
 | 模态证明 | [capability facts](../studio-v3/model-capabilities.js)只承认显式 `responses`/`multimodal` 布尔值，不提取 upstream 身份；图像发出前另有授权/新鲜度检查 | models 元数据只证明宣告能力；固定生产 route 仍须单独通过真实 tool/image/replay/usage/cancel wire 验收，不能借 Demo 的通过记录 |

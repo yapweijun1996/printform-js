@@ -1,4 +1,4 @@
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { resolvePointer } from '../document-core/core/json.js';
 import { escape } from './template.js';
 import { collectionFields, projectDescriptor } from './dataset-schema.js';
 import { fieldKind } from './design-authoring.js';

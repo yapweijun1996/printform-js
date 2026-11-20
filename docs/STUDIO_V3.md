@@ -1,9 +1,8 @@
 # Studio v3 — general-purpose print forms
 
-Studio v3 0.2.0 is a separate **Production Pilot** at `/studio-v3/`, for general print
-forms rather than one ERP product. Start a blank form or reuse a transaction example;
-ERPNext is an optional adapter, not a prerequisite. The v2 editor and its release gates
-remain at `/studio-v2/`. See [current AI readiness and no-code usage](STUDIO_V3_GENERAL_AI_READINESS.zh-CN.md).
+Studio v3 is the PrintForm workbench at `/studio-v3/`. Start a blank form or reuse a
+transaction example for general print forms. ERPNext integration is optional. The
+workbench remains a **Production Pilot**. See [current AI readiness and no-code usage](STUDIO_V3_GENERAL_AI_READINESS.zh-CN.md).
 
 Complete coding-agent target: [architecture](STUDIO_V3_CODING_AGENT_PLAN.md), [contracts](STUDIO_V3_CODING_AGENT_CONTRACTS.md), [acceptance](STUDIO_V3_CODING_AGENT_ACCEPTANCE.md). The optional [real local Node/JSON source profile](STUDIO_V3_CODING_RUNNER.zh-CN.md) is now implemented in the same Pi Harness; broader parity and full G6/G8/G9 qualification remain open. [General business forms](GENERAL_BUSINESS_FORMS.zh-CN.md) include statements, stock movements and payroll snapshots without ERPNext.
 
@@ -53,7 +52,7 @@ The current-page indicator follows navigation and scrolling. The UI uses English
 supports bilingual text and the existing five print locales.
 
 ### Mobile paper-first shell (Batch 25)
-- At up to 680px, the header keeps Undo, Redo and Print beside a More actions disclosure. More contains the original New/Open/Save/export/share controls, Preview, update/recovery controls, source label, version and Studio v2 link; IDs and handlers are not cloned.
+- At up to 680px, the header keeps Undo, Redo and Print beside a More actions disclosure. More contains the original New/Open/Save/export/share controls, Preview, update/recovery controls, source label and version; IDs and handlers are not cloned.
 - The workspace is one row with a 16px template input, mode icons and a compact pending-edits badge. AI editor becomes a 56px floating button, hidden while the panel is open. Preview lives in More to avoid crowding this row.
 - The paper toolbar stays one row and scrolls internally on narrow screens; zoom uses the select instead of separate increment buttons. Page thumbnails start collapsed on mobile and their choice lasts only for the current tab session. Desktop controls return to their original locations when the viewport widens.
 - Footer shows only the ellipsized live status. Mobile rules are isolated in `mobile.css`, included in immutable release assets and service-worker hashing.

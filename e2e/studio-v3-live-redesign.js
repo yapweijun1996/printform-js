@@ -4,7 +4,7 @@ export async function publicDemoPlanner(context) {
   const page = await context.newPage();
   await page.goto('https://yapweijun1996.github.io/printform-js/studio-v3/');
   await page.evaluate(async()=> {
-    const gateway = await import('/printform-js/studio-v2/ui/agent-demo-gateway.js');
+    const gateway = await import('/printform-js/document-core/ui/agent-demo-gateway.js');
     globalThis.printformRegressionSession = gateway.createDemoGatewaySession();
     globalThis.printformRegressionEndpoint = gateway.DEMO_GATEWAY_ENDPOINT;
   });

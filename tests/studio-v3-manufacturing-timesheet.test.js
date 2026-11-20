@@ -4,7 +4,7 @@ import { BUSINESS_DEMO_TEMPLATES, businessDemoInput } from '../studio-v3/busines
 import { createBusinessDocumentProject } from '../studio-v3/business-document-project.js';
 import { newDemoProject, setupDemoTemplatePicker } from '../studio-v3/demo-templates.js';
 import { readProject, saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { designOf } from '../studio-v3/model.js';
 import { parseChatReply } from '../studio-v3/ai-chat-protocol.js';
 import { createDraft } from '../studio-v3/agent-draft.js';

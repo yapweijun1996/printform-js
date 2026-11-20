@@ -4,7 +4,7 @@ import { demoStarterRecords } from '../studio-v3/demo-catalog.js';
 import { designOf } from '../studio-v3/model.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
 import { bindingValidation } from '../studio-v3/validation.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { globe3ClaimInput } from './fixtures/globe3-certified-claim.js';
 
 function bind(project) {

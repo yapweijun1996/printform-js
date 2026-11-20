@@ -1,5 +1,5 @@
-import { createStandaloneHtml } from '../studio-v2/core/exporter.js';
-import { assertTrustedContent } from '../studio-v2/core/content-security.js';
+import { createStandaloneHtml } from '../document-core/core/exporter.js';
+import { assertTrustedContent } from '../document-core/core/content-security.js';
 import { bindingValidation, validatePaperReport } from './validation.js';
 import { runtimeSources } from './runtime-assets.js';
 import { measureTypography, validateTypography } from './ai-typography.js';

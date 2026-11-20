@@ -7,15 +7,14 @@ test('restores language preference and translates the rendered homepage', async 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await page.getByRole('button', { name: '中文', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.locator('.studio-cards a')).toHaveCount(1);
   await expect(page.locator('a[href="studio-v3/"]')).toContainText('通用表单试点');
-  await expect(page.locator('a[href="studio-v2/"]')).toContainText('尚未达到生产就绪');
   await page.reload();
   await expect(page.getByRole('button', { name: '中文', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveTitle(/可打印的商务表单/);
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('a[href="studio-v2/"]')).toContainText('Not production ready');
 });
 
 test('stays usable when browser storage access is denied', async ({ page }) => {
@@ -46,6 +45,12 @@ test('loads the captured invoice and publishes every local destination', async (
     const response = await request.get(`/${path}`);
     expect(response.status(), path).toBe(200);
   }
+  for (const retired of ['/studio/', '/studio-v2/']) {
+    expect((await request.get(retired)).status(), retired).toBe(404);
+  }
+  const retirementWorker = await request.get('/studio-v2/sw.js');
+  expect(retirementWorker.ok()).toBe(true);
+  expect(await retirementWorker.text()).toContain('self.registration.unregister()');
 });
 test('reflows expanded homepage headings at 320px with 200% root text in both languages', async ({ page }) => {
   await page.goto('/');

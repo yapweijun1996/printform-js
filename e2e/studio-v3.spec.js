@@ -205,7 +205,7 @@ test('desktop/tablet editing, mobile preview, keyboard focus and back navigation
   await expect(page.locator('#new-dialog')).toBeVisible();
   await page.keyboard.press('Escape'); await expect(page.locator('#new-dialog')).toBeHidden();
   await expect(page.locator('[data-action=new]')).toBeFocused();
-  await page.goto('/studio-v2/'); await page.goBack(); await ready(page);
+  await page.goto('/'); await page.goBack(); await ready(page);
   await expect(page.locator('[data-action=export]')).toBeEnabled();
 });
 

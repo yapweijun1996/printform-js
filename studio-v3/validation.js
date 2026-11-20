@@ -1,5 +1,5 @@
-import { validateProject } from '../studio-v2/core/acceptance.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { validateProject } from '../document-core/core/acceptance.js';
+import { resolvePointer } from '../document-core/core/json.js';
 import { BLOCKS, designOf } from './model.js';
 
 export { validPointer } from './design-authoring.js';
@@ -8,7 +8,7 @@ import { validateDesign } from './design-validation.js';
 import { assertProjectSchema, assertCollectionBinding } from './dataset-schema.js';
 import { printerStatus } from './paper-settings.js';
 import { tableDefinitions } from './additional-tables.js';
-import { validateBarcode } from '../studio-v2/core/barcode.js';
+import { validateBarcode } from '../document-core/core/barcode.js';
 import { projectCurrencyIssue } from './currency-catalog.js';
 
 export function bindingValidation(project) {

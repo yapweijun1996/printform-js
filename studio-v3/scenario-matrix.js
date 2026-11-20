@@ -1,7 +1,7 @@
 import { designOf, sampleData } from './model.js';
 import { demoDataForKind } from './demo-catalog.js';
 import { compactA5Record } from './compact-a5-demo.js';
-import { createScenario } from '../studio-v2/core/sample-scenarios.js';
+import { createScenario } from '../document-core/core/sample-scenarios.js';
 import { inspectProject } from './validation.js';
 import { safeRunDiagnostics } from './ai-inspection.js';
 import { fail } from './ai-edits.js';

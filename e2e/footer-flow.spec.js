@@ -29,7 +29,7 @@ async function render(page, fixture, overrides = {}) {
     const output = window.PrintForm.format(form, { ...defaults, papersizeWidth: fixture.width, papersizeHeight: fixture.height, ...overrides });
     const rows = Array.from(output.querySelectorAll(".prowitem_processed,.ptac-rowitem_processed"));
     const pages = Array.from(output.querySelectorAll(".printform_page"));
-    const { analyzeRowIntegrity } = await import("/studio-v2/core/row-integrity.js");
+    const { analyzeRowIntegrity } = await import("/document-core/core/row-integrity.js");
     const integrity = analyzeRowIntegrity(Array.from(output.querySelectorAll(".prowitem_processed")), { expectedRowCount: sourceRows.length, ...(repeated ? { expectedRowsByRepeat: { supplied: fixture.records.length } } : {}) });
     return {
       sourceMoney, money: money(output), sourceText, text: rows.map(node => node.textContent).join(""), sourceSignature,
@@ -165,9 +165,9 @@ for (const supplied of ["(1,234.5600)", "123.450 kg"]) {
     await host(page);
     const result = await page.evaluate(async supplied => {
       const { newProject, designOf, compileProject } = await import("/studio-v3/model.js");
-      const { bindTemplate } = await import("/studio-v2/core/binding.js");
-      const { inspectMonetaryTokens } = await import("/studio-v2/core/monetary-inspection.js");
-      const { inspectRenderedDocument } = await import("/studio-v2/core/acceptance.js");
+      const { bindTemplate } = await import("/document-core/core/binding.js");
+      const { inspectMonetaryTokens } = await import("/document-core/core/monetary-inspection.js");
+      const { inspectRenderedDocument } = await import("/document-core/core/acceptance.js");
       const project = newProject(), design = designOf(project);
       design.columns = design.columns.filter(field => ["description", "amount"].includes(field.id))
         .map(field => ({ ...field, width: 50, format: "" }));

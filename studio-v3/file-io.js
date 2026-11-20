@@ -1,5 +1,5 @@
-import { parseProjectHtml, createEmptyProject } from '../studio-v2/core/project-model.js';
-import { createStandaloneHtml } from '../studio-v2/core/exporter.js';
+import { parseProjectHtml, createEmptyProject } from '../document-core/core/project-model.js';
+import { createStandaloneHtml } from '../document-core/core/exporter.js';
 import { compileProject } from './model.js';
 import { datasetName } from './database-model.js';
 import { inspectProject } from './validation.js';
@@ -8,8 +8,8 @@ import { assertBoundedJson, assertJsonBytes, assertJsonStructure, JSON_PROJECT_L
 import { validateImportReceipt } from './structured-import-receipt.js';
 import { isSupportedCurrency } from './currency-catalog.js';
 import { tableDefinitions } from './additional-tables.js';
-import { validateBarcode } from '../studio-v2/core/barcode.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { validateBarcode } from '../document-core/core/barcode.js';
+import { resolvePointer } from '../document-core/core/json.js';
 
 import { assertProjectSchema, assertCollectionBinding } from './dataset-schema.js';
 export { validateDesign } from './design-validation.js';
@@ -45,7 +45,7 @@ export function readProject(source, name = '') {
     imported = data.project;
   }
   const design = imported.manifest?.studioV3;
-  if (!design) throw new Error('This is a legacy HTML template. Edit it in Studio v2, or start with a v3 template.');
+  if (!design) throw new Error('This is a legacy HTML template. Start with a Studio v3 template.');
   validateDesign(design);
   const manifest = imported.manifest;
   if (typeof manifest.title !== 'string' || manifest.title.length > 100 || !['en-MY','zh-CN','ms-MY','ja-JP','vi-VN'].includes(manifest.locale) || !isSupportedCurrency(manifest.currency)) throw new Error('Invalid template name, locale or currency.');

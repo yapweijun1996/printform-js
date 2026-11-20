@@ -6,7 +6,7 @@ import { createAgentTools } from '../studio-v3/agent-tools.js';
 import { createGrant, EFFECT_PROFILES } from '../studio-v3/agent-effects.js';
 import { verifySourceArtifact } from '../studio-v3/source-workspace-artifact.js';
 import { authorizeSourceWorkspace } from '../studio-v3/source-workspace-run.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { DEMO_CONFIG } from '../studio-v3/ai-gateway-config.js';
 
 const digest = value => createHash('sha256').update(value).digest('hex');

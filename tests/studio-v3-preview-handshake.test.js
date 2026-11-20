@@ -4,7 +4,7 @@ import {createBus} from '../studio-v3/controller.js';
 import {PREVIEW_TIMING} from '../studio-v3/preview-launch.js';
 
 vi.mock('../studio-v3/runtime-assets.js',()=>({runtimeSources:async()=>({})}));
-vi.mock('../studio-v2/core/exporter.js',()=>({createStandaloneHtml:async()=>({html:'<html><body></body></html>'})}));
+vi.mock('../document-core/core/exporter.js',()=>({createStandaloneHtml:async()=>({html:'<html><body></body></html>'})}));
 const {PaperPreview}=await import('../studio-v3/preview.js');
 
 const SOURCE='printform-studio-v3-preview';

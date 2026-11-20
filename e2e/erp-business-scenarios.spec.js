@@ -11,11 +11,11 @@ async function renderClaim(page,{scenario='default',retention,monetaryOnly=false
   await page.goto('/erp-business-fixture.html');
   await page.waitForFunction(()=>window.__printFormProcessed===true && window.__printFormProcessing===false);
   return page.evaluate(async({scenario,retention,monetaryOnly})=> {
-    const {createProgressClaimProject}=await import('/studio-v2/samples/progress-claim.js');
-    const {createProjectScenario}=await import('/studio-v2/core/sample-scenarios.js');
-    const {bindTemplate}=await import('/studio-v2/core/binding.js');
-    const {inspectRenderedDocument}=await import('/studio-v2/core/acceptance.js');
-    const {inspectMonetaryTokens}=await import('/studio-v2/core/monetary-inspection.js');
+    const {createProgressClaimProject}=await import('/document-core/samples/progress-claim.js');
+    const {createProjectScenario}=await import('/document-core/core/sample-scenarios.js');
+    const {bindTemplate}=await import('/document-core/core/binding.js');
+    const {inspectRenderedDocument}=await import('/document-core/core/acceptance.js');
+    const {inspectMonetaryTokens}=await import('/document-core/core/monetary-inspection.js');
     const project=createProgressClaimProject();
     document.documentElement.lang=project.manifest.locale;
     document.title=project.manifest.title;

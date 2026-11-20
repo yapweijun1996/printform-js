@@ -85,7 +85,7 @@ A deprecated entry stays callable with `status:'deprecated'` and an active `repl
 
 ## Knowledge synchronization and release review (CA-02, G2)
 
-`scripts/studio-v3-agent-impact.mjs` follows every static and literal dynamic relative import from each entry's declared sources, so an entry's hash covers its contract, the full import closure (including shared `studio-v2/core` renderer and validator modules) and the contents of its evaluations. Hashes normalize CRLF, so a Windows checkout gives the CI identity. A non-literal dynamic import cannot be tracked and fails the build. The runtime part of `packageHash` uses the same closure instead of a hand-kept list.
+`scripts/studio-v3-agent-impact.mjs` follows every static and literal dynamic relative import from each entry's declared sources, so an entry's hash covers its contract, the full import closure (including shared `document-core/core` renderer and validator modules) and the contents of its evaluations. Hashes normalize CRLF, so a Windows checkout gives the CI identity. A non-literal dynamic import cannot be tracked and fails the build. The runtime part of `packageHash` uses the same closure instead of a hand-kept list.
 
 The generator writes `studio-v3/agent-index/dependency-index.json` (file hashes plus each entry's files, evaluations and guides). It sits outside the release folder, so the offline shell does not cache it. Given a baseline manifest and index, every change in `capability-changes.json` lists `causes` (changed files it depends on) and `impacts` (dependent guides and evaluations). Without a known predecessor every entry is `added` and `causes` is `null`.
 

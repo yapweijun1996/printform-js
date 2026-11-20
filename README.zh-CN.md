@@ -22,19 +22,8 @@
 
 ### 🎨 PrintForm Studio —— 可视化调试工具
 
-[Studio v3](studio-v3/) 面向通用打印表单，无代码用户可使用设计、绑定、验证和AI；新增[对账/库存/工资样张](docs/GENERAL_BUSINESS_FORMS.zh-CN.md)及可选[真实隔离源码profile](docs/STUDIO_V3_CODING_RUNNER.zh-CN.md)。ERPNext仅可选；状态仍为Production Pilot，[证据及未通过生产门禁](docs/STUDIO_V3_GENERAL_AI_READINESS.zh-CN.md)。v2保留。
+[Studio v3](studio-v3/) 面向通用打印表单，无代码用户可使用设计、绑定、验证和AI；新增[对账/库存/工资样张](docs/GENERAL_BUSINESS_FORMS.zh-CN.md)及可选[真实隔离源码profile](docs/STUDIO_V3_CODING_RUNNER.zh-CN.md)。ERPNext仅可选；状态仍为Production Pilot，[证据及未通过生产门禁](docs/STUDIO_V3_GENERAL_AI_READINESS.zh-CN.md)。
 
-Studio v2 当前是面向 ERP 工程师的 **Production Pilot**，不是无代码自由画布。请打开 [studio-v2/index.html](studio-v2/index.html)：它以单一 `.html` 为事实来源，提供声明式 JSON Pointer 数据绑定、内嵌 runtime、质量门、WebMCP 渐进增强和离线 PWA。工程师下载后仍可阅读和手改 HTML。
-
-Start with the [Studio v2 index](docs/STUDIO_V2_INDEX.zh-CN.md), [protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) and [Agent setup](studio-v2/AGENT_SETUP.md). Versions remain runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0. E14 UI and change cards exist; the current worktree has shared scope/apply/data-policy enforcement and closed Agent projections, while composed release acceptance remains Partial. The [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) records current evidence and pending requirements. No Production Ready release is declared.
-
-原有 [studio/index.html](studio/index.html) 继续作为冻结的 v1 调试工具，不自动迁移旧模板：
-
-- **配置游乐场**:实时调整全部 `data-*` 配置项,支持 A/B 两套配置并排对比
-- **结构编辑**:点击预览里的任一区块直接编辑、复制、删除,拖动滑杆模拟不同行数下的分页效果
-- **数据绑定**:模板里写 `{{field}}` / `{{#items}}...{{/items}}` 占位符,导出的包让任何后端一行代码 `PrintFormTemplate.render(data)` 完成数据注入 + 分页
-
-v1 详细设计见 [docs/STUDIO_DESIGN.zh-CN.md](docs/STUDIO_DESIGN.zh-CN.md)；旧式 ERP/后端集成见 [docs/ERP_INTEGRATION.zh-CN.md](docs/ERP_INTEGRATION.zh-CN.md)。
 
 ## 核心逻辑图解 (Logic Diagram)
 

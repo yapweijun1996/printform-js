@@ -26,10 +26,10 @@ async function renderFixture(page, fixture, overrides = {}) {
       fillPageHeightAfterFooter: false, showPhysicalPageNumber: true, repeatFooterPagenum: true, ...overrides
     });
     const rows = Array.from(output.querySelectorAll(".prowitem_processed,.ptac-rowitem_processed,.paddt-rowitem_processed"));
-    const { analyzeRowIntegrity } = await import("/studio-v2/core/row-integrity.js");
+    const { analyzeRowIntegrity } = await import("/document-core/core/row-integrity.js");
     const expectedRows = fixture.expectedRows || 1;
     const identity = analyzeRowIntegrity(rows, { expectedRowCount: expectedRows, expectedRowsByRepeat: { maintenance: expectedRows } });
-    const { inspectRenderedDocument } = await import("/studio-v2/core/acceptance.js");
+    const { inspectRenderedDocument } = await import("/document-core/core/acceptance.js");
     const acceptance = inspectRenderedDocument(document, {}, { expectedRowCount: expectedRows, expectedRowsByRepeat: { maintenance: expectedRows } });
     const cells = Object.fromEntries(Object.keys(original).map(key => [key, rows.map(row => row.querySelector(`[data-fixture-cell="${key}"]`)?.textContent || "").join("")]));
     const rowRects = rows.map(row => {
@@ -139,7 +139,7 @@ test("reserved author continuation metadata cannot conceal a duplicate source ro
     form.innerHTML = [0, 1].map(index => `<div class="prowitem" data-pf-row-repeat="forged" data-pf-row-index="0" data-pf-source-row="forged" data-pf-fragment-index="${index}" data-pf-fragment-count="2">MYR 10.00</div>`).join("");
     document.body.append(form);
     const output = window.PrintForm.format(form, { insertDummyRowItemWhileFormatTable: false });
-    const { analyzeRowIntegrity } = await import("/studio-v2/core/row-integrity.js");
+    const { analyzeRowIntegrity } = await import("/document-core/core/row-integrity.js");
     const rows = Array.from(output.querySelectorAll(".prowitem_processed"));
     const report = analyzeRowIntegrity(rows, { expectedRowCount: 1, expectedRowsByRepeat: { forged: 1 } });
     return { reserved: rows.some(row => row.hasAttribute("data-pf-fragment-index")), rows: report.renderedRows, errors: report.errors.map(error => error.code), text: rows.map(row => row.textContent) };

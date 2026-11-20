@@ -1,4 +1,4 @@
-import { validateData } from '../studio-v2/core/schema.js';
+import { validateData } from '../document-core/core/schema.js';
 import { claimPrecision } from './globe3-claim-money.js';
 
 export function pcarFail(code, path, message) {

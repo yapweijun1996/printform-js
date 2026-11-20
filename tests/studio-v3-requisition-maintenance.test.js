@@ -4,7 +4,7 @@ import { createBusinessDocumentProject } from '../studio-v3/business-document-pr
 import { businessDemoInput } from '../studio-v3/business-document-demos.js';
 import { newDemoProject, setupDemoTemplatePicker } from '../studio-v3/demo-templates.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { compileProject, designOf } from '../studio-v3/model.js';
 
 const kinds = { PurchaseRequisition: 'requisition', MaintenanceWorkOrder: 'maintenance' };

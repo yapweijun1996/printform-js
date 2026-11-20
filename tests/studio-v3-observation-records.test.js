@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {createHash} from 'node:crypto';
 import {createObservationRecords,DIAGNOSTIC_POLICY} from '../studio-v3/observation-records.js';
-import {stableStringify} from '../studio-v2/core/json.js';
+import {stableStringify} from '../document-core/core/json.js';
 import {newProject} from '../studio-v3/model.js';
 
 const hash = value => createHash('sha256').update(stableStringify(value,0)).digest('hex');

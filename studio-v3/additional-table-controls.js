@@ -3,7 +3,7 @@ import { tableOf, MAX_ADDITIONAL_TABLES } from './additional-tables.js';
 import { projectDescriptor, declaredCollectionFields } from './dataset-schema.js';
 import { validateDesign } from './design-validation.js';
 import { validPointer } from './design-authoring.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { resolvePointer } from '../document-core/core/json.js';
 
 function usableFields(project,collection) {
   if (!validPointer(collection.pointer)) return [];

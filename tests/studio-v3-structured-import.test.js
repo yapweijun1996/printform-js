@@ -6,7 +6,7 @@ import { createDatabase } from '../studio-v3/database-store.js';
 import { createLocalDatasetSource } from '../studio-v3/data-source-adapter.js';
 import { exportDataset, importDataset } from '../studio-v3/database-model.js';
 import { readProject, saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { parseCSV, parseLosslessRecords, parseStructuredImport } from '../studio-v3/structured-import-parser.js';
 import { createImportReview, previewImport, importTargets } from '../studio-v3/structured-import-model.js';
 import { convertImportValue } from '../studio-v3/structured-import-values.js';

@@ -3,7 +3,7 @@ import { businessDemoInput } from '../studio-v3/business-document-demos.js';
 import { normalizeBusinessDocument } from '../studio-v3/business-document-adapter.js';
 import { createBusinessDocumentProject } from '../studio-v3/business-document-project.js';
 import { saveProject, readProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { designOf } from '../studio-v3/model.js';
 import { createDraft } from '../studio-v3/agent-draft.js';
 

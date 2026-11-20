@@ -147,7 +147,6 @@ body.hide-thumbnails #thumbnails { padding:0; border:0; visibility:hidden; }
 #status { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .status-hint { margin-left:auto; white-space:nowrap; color:var(--muted); }
 #status { flex:1; min-width:0; }
-.status-bar a { white-space:nowrap; }
 dialog { width:min(560px,90vw); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); padding:24px; }
 dialog::backdrop { background:#14233d88; }
 .template-options { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }

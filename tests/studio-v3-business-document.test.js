@@ -5,7 +5,7 @@ import { businessDemoInput } from '../studio-v3/business-document-demos.js';
 import { newDemoProject } from '../studio-v3/demo-templates.js';
 import { designOf } from '../studio-v3/model.js';
 import { readProject, saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { parseChatReply } from '../studio-v3/ai-chat-protocol.js';
 import { createBus, designOperations, editProject } from '../studio-v3/controller.js';
 

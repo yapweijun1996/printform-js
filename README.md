@@ -19,20 +19,14 @@ Its core function is: **automatically splitting a long HTML container (`.printfo
 
 ### 🎨 PrintForm Studio
 
-Studio v2 is a Production Pilot for ERP engineers. It builds inspectable, self-contained print-form HTML; it is not a no-code freeform canvas.
 
 | I want to... | Read this |
 |--------------|-----------|
 | **Design a general print form without coding** | [Studio v3](studio-v3/): [general business forms](docs/GENERAL_BUSINESS_FORMS.zh-CN.md), browser AI and optional [isolated Node/JSON source profile](docs/STUDIO_V3_CODING_RUNNER.zh-CN.md); [Pilot evidence/limits](docs/STUDIO_V3_GENERAL_AI_READINESS.zh-CN.md). ERPNext is optional; full production qualification remains open |
-| **Build a Pilot single-HTML form** | Open [studio-v2/index.html](studio-v2/index.html) — protocol-based, offline, WebMCP-ready |
-| **Understand v2 status and roadmap** | [Studio v2 documentation index](docs/STUDIO_V2_INDEX.zh-CN.md) (authoritative Chinese) |
 | **Review architecture and task status** | [GOAL.md](GOAL.md) · [DESIGN.md](DESIGN.md) · [SPEC.md](SPEC.md) · [EPIC.md](EPIC.md) · [ROADMAP.md](ROADMAP.md) · [TASK.md](TASK.md) · [PROGRESS.md](PROGRESS.md) · [GOAL_PROMPT.md](GOAL_PROMPT.md) |
-| **Understand the v2 single-HTML contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
-| **Connect Codex or Claude Code** | [Agent setup](studio-v2/AGENT_SETUP.md) |
-| **Maintain the legacy v1 Studio** | [Studio v1 Design Doc](docs/STUDIO_DESIGN.zh-CN.md) (Chinese) |
+| **Understand the single-HTML document contract** | [Studio v2 Protocol](docs/PRINTFORM_V2_PROTOCOL.zh-CN.md) (Chinese) |
 | **Connect an ERP / check transaction and format coverage** | [ERP support](docs/ERP_PRINT_SUPPORT.zh-CN.md) · [PCAR/CCAR](docs/ERP_CLAIM_BUSINESS_CONTRACT.zh-CN.md) · [transactions](docs/ERP_TRANSACTION_BUSINESS_CONTRACT.zh-CN.md) · [ERPNext returns](docs/ERPNEXT_RETURN_ADAPTER.zh-CN.md) · [ERPNext Payment Entry](docs/ERPNEXT_PAYMENT_ENTRY_ADAPTER.zh-CN.md) · [safe import](docs/ERP_PROJECT_IMPORT_SAFETY.zh-CN.md) · [nested schemas](docs/ERP_NESTED_DATASET_SCHEMA.zh-CN.md) · [exact scenarios](docs/ERP_BUSINESS_SCENARIO_CONTRACT.zh-CN.md) · [continuations](docs/ERP_MULTIROW_CONTINUATION.zh-CN.md) · [special paper](docs/ERP_SPECIAL_PAPER_ACCEPTANCE.zh-CN.md) · [additional paper](docs/ERP_ADDITIONAL_PAPER_ACCEPTANCE.zh-CN.md) · [Letter / Legal / drivers](docs/ERP_DRIVER_PAPER_MATRIX.zh-CN.md) · [audit](docs/ERP_PRINT_AUDIT.zh-CN.md) (Chinese) |
 
-Studio v2 is the intended production path and remains **Production Pilot**. It exports a self-contained HTML with declarative bindings, embedded runtimes and validation records. Versions: runtime 1.0.0 / Studio 0.11.0 / Protocol 2.0.0 / Agent Contract 4.0.0. E14's four-layer panel, change cards, mode controls, history and resizable rail exist; the current worktree includes shared scope/apply/data-policy enforcement and closed Agent projections, while composed release acceptance remains incomplete. See the [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md) for current evidence, pending requirements and proposed layout. Production Ready has not been declared. Studio v1 remains frozen and independent.
 
 ### 💻 Development
 

@@ -5,11 +5,11 @@ import {demoStarterRecords} from '../studio-v3/demo-catalog.js';
 import {compileProject,designOf,newProject} from '../studio-v3/model.js';
 import {validateDesign,saveProject,readProject} from '../studio-v3/file-io.js';
 import {bindingValidation} from '../studio-v3/validation.js';
-import {validateProject} from '../studio-v2/core/acceptance.js';
-import {bindTemplate} from '../studio-v2/core/binding.js';
+import {validateProject} from '../document-core/core/acceptance.js';
+import {bindTemplate} from '../document-core/core/binding.js';
 import {applyAuthoring,availableBindings} from '../studio-v3/ai-authoring.js';
 import {createBus,editProject,designOperations} from '../studio-v3/controller.js';
-import {resolvePointer} from '../studio-v2/core/json.js';
+import {resolvePointer} from '../document-core/core/json.js';
 
 const sections=['header','customer','totals','footer'];
 function boundDocument(project) {

@@ -6,7 +6,7 @@ import {runLayoutHarness} from '../studio-v3/ai-harness.js';
 import {safeRunDiagnostics} from '../studio-v3/ai-inspection.js';
 import {Conversation,cleanMessages} from '../studio-v3/ai-conversation.js';
 import {createBus,editProject,designOperations} from '../studio-v3/controller.js';
-import {bindTemplate} from '../studio-v2/core/binding.js';
+import {bindTemplate} from '../document-core/core/binding.js';
 const plan = operations=>JSON.stringify({kind:'proposal',summary:'Author the referenced form elements',operations});
 const label = {type:'set_field',target:'label-customer-ship',patch:{labelStyle:{fontSize:12,bold:true}}};
 const request = project=>chatRequest(project,{request:'Label 12pt bold',scope:{mode:'whole'},typography:[],conversation:[]});

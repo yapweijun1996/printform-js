@@ -3,7 +3,7 @@ export function setupMobileShell() {
   const media = matchMedia('(max-width:680px)'), more = document.querySelector('#mobile-more'), menu = document.querySelector('#mobile-actions');
   const primary = menu.querySelector('[data-mobile-primary]'), footer = menu.querySelector('[data-mobile-footer]');
   const backdrop = document.createElement('div'); backdrop.id = 'mobile-menu-backdrop'; backdrop.hidden = true; backdrop.setAttribute('aria-hidden','true'); menu.before(backdrop);
-  const selectors = ['.header-actions [data-action=new]','.header-actions [data-action=open]','.header-actions [data-action=save]','.header-actions [data-action=export]','.header-actions [data-action=share]','.workspace-bar [data-action=preview]','#update-button','#app-version','#data-source','.status-bar > a','#recovery-download','#recovery-discard','#update-status'];
+  const selectors = ['.header-actions [data-action=new]','.header-actions [data-action=open]','.header-actions [data-action=save]','.header-actions [data-action=export]','.header-actions [data-action=share]','.workspace-bar [data-action=preview]','#update-button','#app-version','#data-source','#recovery-download','#recovery-discard','#update-status'];
   const entries = selectors.map(selector=> { const node = document.querySelector(selector), marker = document.createComment('desktop position'); node.before(marker); return {node,marker}; });
   let mobileThumbs = false, desktopThumbs = !document.body.classList.contains('hide-thumbnails');
   try { mobileThumbs = sessionStorage.getItem('printform-studio-v3:mobile-thumbnails') === '1'; } catch { /* Tab storage may be unavailable. */ }

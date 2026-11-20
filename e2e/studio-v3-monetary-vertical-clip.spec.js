@@ -7,7 +7,7 @@ test('currency vertical clipping is rejected at the value and its wrappers; norm
   const results=[];
   const check=async(name,unreadable)=> {
     const codes=await page.evaluate(async()=> {
-      const {inspectRenderedDocument}=await import('/studio-v2/core/acceptance.js');
+      const {inspectRenderedDocument}=await import('/document-core/core/acceptance.js');
       return inspectRenderedDocument(document,{}).errors.map(e=>e.code);
     });results.push({name,codes});expect(codes.includes('MONETARY_TOKEN_UNREADABLE')).toBe(unreadable);
   };

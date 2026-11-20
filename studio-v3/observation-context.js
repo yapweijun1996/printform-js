@@ -2,7 +2,7 @@ import { BLOCKS } from './model.js';
 import { fieldKind } from './design-authoring.js';
 import { agentPageSettings } from './agent-page-settings.js';
 import { elementMetadata } from './ai-element-tags.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { resolvePointer } from '../document-core/core/json.js';
 import { fail, shareLayout } from './ai-edits.js';
 import { fieldRows, tableOf } from './additional-tables.js';
 

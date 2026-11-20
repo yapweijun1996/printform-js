@@ -4,7 +4,7 @@ import { tableDefinitions } from '../studio-v3/additional-tables.js';
 import { alterTables } from '../studio-v3/additional-table-controls.js';
 import { createBus,editProject,designOperations,formDesign,alterFields } from '../studio-v3/controller.js';
 import { readProject,saveProject } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { bindingValidation } from '../studio-v3/validation.js';
 import { rightView,leftView } from '../studio-v3/workspace-views.js';
 import { shareAuthoring } from '../studio-v3/ai-authoring.js';

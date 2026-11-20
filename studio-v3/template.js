@@ -1,4 +1,4 @@
-import { PRINT_TYPOGRAPHY_CSS, setPrintTypographyBase } from '../studio-v2/core/typography.js';
+import { PRINT_TYPOGRAPHY_CSS, setPrintTypographyBase } from '../document-core/core/typography.js';
 import { validateDesign } from './design-validation.js';
 import { tableBodyCss } from './table-style.js';
 import { a4PresetTheme } from './a4-theme.js';

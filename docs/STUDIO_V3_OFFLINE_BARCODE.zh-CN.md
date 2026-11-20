@@ -34,18 +34,18 @@
 - MIT 原许可证：<https://github.com/lindell/JsBarcode/blob/v3.12.1/MIT-LICENSE.txt>
 - 上游原始 minified 文件 SHA-256：`9c6d079b69a763191e38de8f3d69a252cb2413ea8f35af15478a5a870c7edfa2`。
 
-`studio-v2/vendor/jsbarcode-3.12.1.js` 保留上游 generated distribution，增加隔离导出捕获，完整 MIT 文本放在 `@license` 注释内。
+`document-core/vendor/jsbarcode-3.12.1.js` 保留上游 generated distribution，增加隔离导出捕获，完整 MIT 文本放在 `@license` 注释内。
 包装只隔离库的浏览器导出命名空间；不伪造 document、canvas 或 SVG DOM。
 业务代码只调用 JsBarcode 的 ObjectRenderer 获取二进制 encodings，不调用库的 canvas/SVG renderer。
 最终 SVG 由 `createElementNS` 与 `textContent` 构造；来源字符串不拼入可执行 HTML，不产生 fetch、图片 URL、eval 或动态代码。
 
 ## 运行时与导出链
 
-`studio-v2/core/binding.js` → `barcode-binding.js` → `barcode.js` → 本地 vendor。
+`document-core/core/binding.js` → `barcode-binding.js` → `barcode.js` → 本地 vendor。
 预览与 standalone 都调用相同 `bindTemplate`。
 `src/document-runtime-entry.js` 导入共享 runtime；`scripts/build-document-runtime.mjs` 的现有 Vite IIFE 构建会沿静态 import 打包条码代码。
 无需单独的运行时下载或导出后 CDN。导出器继续内嵌 document runtime，并使用其既有脚本 hash CSP 和 `connect-src 'none'`。
-站点构建复制 `studio-v2`，Studio v3 的构建依赖收集与不可变 shell 沿用既有流程。
+站点构建复制 `document-core`，Studio v3 的构建依赖收集与不可变 shell 沿用既有流程。
 这些构建和实际离线行为必须由主代理执行验证；此子任务没有运行构建或测试。
 
 模板接口：
@@ -64,7 +64,7 @@
 
 ## 核心 API
 
-`studio-v2/core/barcode.js` 导出：
+`document-core/core/barcode.js` 导出：
 
 - `barcodeOptions(options)`：检查并返回完整配置。
 - `validateBarcode(value, options)`：检查原始字符串与配置，成功返回配置，否则抛出带 `code` 的错误。

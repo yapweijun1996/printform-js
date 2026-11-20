@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { designOf, selectionField } from './model.js';
 import { encodeKey } from './database-model.js';
 import { collectionFields, projectDescriptor } from './dataset-schema.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { resolvePointer } from '../document-core/core/json.js';
 
 export function dataTree(project,state) {
   const design = designOf(project), selection = selectionField(design,state.selected);

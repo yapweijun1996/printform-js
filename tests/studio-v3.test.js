@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { newProject, sampleData, compileProject, designOf } from '../studio-v3/model.js';
-import { validateProject } from '../studio-v2/core/acceptance.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { validateProject } from '../document-core/core/acceptance.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { createBus, editProject, replaceData, designOperations, alterFields, formDesign } from '../studio-v3/controller.js';
 import { inspectProject, bindingValidation, validatePaperReport } from '../studio-v3/validation.js';
 import { readProject, saveProject, validateDesign } from '../studio-v3/file-io.js';

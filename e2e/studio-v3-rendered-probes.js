@@ -1,7 +1,7 @@
 import {JSDOM} from 'jsdom';
 import {build} from 'vite';
 import {resolve} from 'node:path';
-import {createStandaloneHtml} from '../studio-v2/core/exporter.js';
+import {createStandaloneHtml} from '../document-core/core/exporter.js';
 
 // Match the Node-side exporter/build fixtures; jsdom only parses templates, never measures paper.
 const parsingWindow = new JSDOM('').window;

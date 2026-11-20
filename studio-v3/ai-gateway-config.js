@@ -1,7 +1,7 @@
 import {
   DEMO_GATEWAY_ORIGIN, DEMO_GATEWAY_PROJECT_ID, DEMO_GATEWAY_ENDPOINT,
   DEMO_SESSION_TTL_SECONDS, DEMO_SESSION_REFRESH_SKEW_MS
-} from '../studio-v2/ui/agent-demo-gateway.js';
+} from '../document-core/ui/agent-demo-gateway.js';
 const MIB = 1024 * 1024;
 // Timing. Each gateway request has its own cap; the single-step Send total is derived from them.
 const DISCOVER_MS = 15_000, MODEL_MS = 60_000, MODEL_REQUESTS = 3, INSPECTION_MS = 10_000;

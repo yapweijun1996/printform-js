@@ -1,5 +1,5 @@
-import { createEmptyProject } from '../studio-v2/core/project-model.js';
-import { createEmptyFormSpec } from '../studio-v2/core/form-spec.js';
+import { createEmptyProject } from '../document-core/core/project-model.js';
+import { createEmptyFormSpec } from '../document-core/core/form-spec.js';
 import { compileTemplate, documentTheme } from './template.js';
 
 export const STUDIO_V3_VERSION = '0.2.0';

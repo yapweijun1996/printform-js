@@ -40,7 +40,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "node scripts/serve-site.mjs",
-    url: "http://127.0.0.1:4174/studio-v2/",
+    url: "http://127.0.0.1:4174/studio-v3/",
     reuseExistingServer: !process.env.CI,
     timeout: 60_000
   }

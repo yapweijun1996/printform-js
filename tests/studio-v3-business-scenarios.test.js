@@ -3,7 +3,7 @@ import {newDemoProject} from '../studio-v3/demo-templates.js';
 import {demoDataForKind} from '../studio-v3/demo-catalog.js';
 import {scenarioCandidate,SCENARIO_IDS} from '../studio-v3/scenario-matrix.js';
 import {bindingValidation} from '../studio-v3/validation.js';
-import {bindTemplate} from '../studio-v2/core/binding.js';
+import {bindTemplate} from '../document-core/core/binding.js';
 
 describe('exact-kind business layout scenarios',()=> {
   for (const kind of ['BankPayment','BankReceipt','ProgressClaim','CertifiedClaim','PCAR','CCAR']) {

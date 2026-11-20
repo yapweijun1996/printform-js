@@ -1,5 +1,7 @@
 # ROADMAP.md — 路线图与低成本维护策略
 
+> The Studio v2 plan below records historical work on the retired editor. See the [Studio v3 backlog](docs/SEQUENTIAL_BACKLOG_2026-11-17.md) for active work.
+
 > Last reviewed: 2026-09-11. E14 visual foundation exists; behavioral correction precedes further UX expansion. Current criteria and evidence: [production plan](docs/STUDIO_V2_PRODUCTION_PLAN.md). Live execution status is derived in [PROGRESS.md](PROGRESS.md) from [TASK.md](TASK.md).
 >
 > Studio v2 的 P0–P3 工程路线（依赖、接口、退出条件）的**权威文档**是 [docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md](docs/STUDIO_V2_ENGINEERING_ROADMAP.zh-CN.md)，本文不复制其内容，只补充：① 全仓库视角的阶段顺序；② 让项目**便宜维护**的专项计划（含改进与 debug 方向）。

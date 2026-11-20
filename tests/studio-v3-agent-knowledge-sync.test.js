@@ -53,7 +53,7 @@ describe('Studio v3 agent knowledge synchronization (G2)', () => {
     expect(change.impacts.evaluations).toContain('tests/studio-v3-ai-authoring.test.js');
   });
   it('KNO-03: a shared renderer or validator change expands to every transitive dependent', () => {
-    const shared = 'studio-v2/core/schema.js', expected = dependents(shared);
+    const shared = 'document-core/core/schema.js', expected = dependents(shared);
     expect(expected.length).toBeGreaterThan(10);
     const result = regenerate(append(shared));
     expect(changedIds(result)).toEqual(expected);

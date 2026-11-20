@@ -134,11 +134,11 @@ describe('v3 atomic offline shell policy',()=> {
 it('build emits an isolated scope, immutable asset URLs and a complete content manifest',()=> {
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'printform-build-test-'));
   try {
-    for(const name of ['studio-v3','studio-v2','dist']) fs.mkdirSync(path.join(temp,name));
+    for(const name of ['studio-v3','dist']) fs.mkdirSync(path.join(temp,name));
     fs.writeFileSync(path.join(temp,'studio-v3/index.html'),fs.readFileSync('studio-v3/index.html'));
     fs.writeFileSync(path.join(temp,'studio-v3/sw.js'),fs.readFileSync('studio-v3/sw.js'));
     fs.copyFileSync('studio-v3/manifest.webmanifest',path.join(temp,'studio-v3/manifest.webmanifest'));
-    fs.writeFileSync(path.join(temp,'studio-v2/icon.svg'),'<svg/>');
+    fs.writeFileSync(path.join(temp,'studio-v3/icon.svg'),'<svg/>');
     for(const name of ['app.js','tokens.css','styles.css','mobile.css','ai-panel.css','update.css'])fs.writeFileSync(path.join(temp,'studio-v3',name),name);
     for(const name of ['printform.js','printform-document.js'])fs.writeFileSync(path.join(temp,'dist',name),name);
     generateAgentPackage({output:temp,revision:'a'.repeat(40)});

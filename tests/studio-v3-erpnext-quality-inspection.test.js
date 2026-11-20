@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { adaptErpNextQualityInspection, createErpNextQualityInspectionProject } from '../studio-v3/erpnext-quality-inspection-adapter.js';
 import { fictionalErpNextQualityInspection, changeQualitySnapshot, qualityInspectionRaw } from './fixtures/erpnext-quality-inspection.js';
 import { saveProject, readProject, projectForSharing } from '../studio-v3/file-io.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { compileProject, designOf } from '../studio-v3/model.js';
 
 const base = 'snapshot.document.readings[1]';

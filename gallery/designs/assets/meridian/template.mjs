@@ -1,5 +1,5 @@
 import {calculate, money} from './model.mjs';
-import {renderBarcode} from '../../../../studio-v2/core/barcode.js';
+import {renderBarcode} from '../../../../document-core/core/barcode.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
 const node = (tag, cls, html = '') => {
   const n = document.createElement(tag); n.className = cls; n.innerHTML = html; return n;

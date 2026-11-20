@@ -3,7 +3,7 @@ import { MAX_AUTHORING_OPERATIONS, AUTHORING_CONTRACT, contractError, assertOper
 import { DEMO_BINDING_PATHS } from './demo-binding-paths.js';
 import { BLOCKS, selectionField, defaultDesign } from './model.js';
 import { validateDesign } from './file-io.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { resolvePointer } from '../document-core/core/json.js';
 import { validPointer } from './design-authoring.js';
 import { tableStyleChange } from './table-style.js';
 import { globalStyleChange } from './global-style.js';

@@ -12,7 +12,7 @@ export async function openPaperScenario(page, context, fixture, mode, info) {
   await page.goto('/erp-paper-fixture.html');
   await page.waitForFunction(() => window.__printFormProcessed === true && window.__printFormProcessing === false);
   const exported = await page.evaluate(async ({ fixture, mode }) => {
-    const { createEmptyProject } = await import('/studio-v2/core/project-model.js');
+    const { createEmptyProject } = await import('/document-core/core/project-model.js');
     const project = createEmptyProject();
     project.manifest.title = `Fictional ${fixture.profile.name}`;
     project.manifest.locale = 'zh-CN';
@@ -27,15 +27,15 @@ export async function openPaperScenario(page, context, fixture, mode, info) {
     };
     project.schema.required = ['rows'];
     if (mode === 'standalone') {
-      const { createStandaloneHtml } = await import('/studio-v2/core/exporter.js');
+      const { createStandaloneHtml } = await import('/document-core/core/exporter.js');
       const { runtimeSources } = await import('/studio-v3/runtime-assets.js');
       const result = await createStandaloneHtml(project, {
         runtimeSources: await runtimeSources(), networkDisabled: true, requireTrusted: true
       });
       return result.html;
     }
-    const { bindTemplate } = await import('/studio-v2/core/binding.js');
-    const { validateProject } = await import('/studio-v2/core/acceptance.js');
+    const { bindTemplate } = await import('/document-core/core/binding.js');
+    const { validateProject } = await import('/document-core/core/acceptance.js');
     const validation = validateProject(project);
     if (!validation.valid) throw new Error(JSON.stringify(validation.errors));
     document.head.querySelectorAll('style,link[rel="stylesheet"]').forEach(node => node.remove());

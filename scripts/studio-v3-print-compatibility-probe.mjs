@@ -8,7 +8,7 @@ import {JSDOM} from 'jsdom';
 import {chromium, firefox, webkit} from '@playwright/test';
 import {getDocument} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {newProject, designOf, compileProject} from '../studio-v3/model.js';
-import {createStandaloneHtml} from '../studio-v2/core/exporter.js';
+import {createStandaloneHtml} from '../document-core/core/exporter.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const digest = bytes => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;

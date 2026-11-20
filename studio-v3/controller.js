@@ -1,5 +1,5 @@
 import { columnWidthChange } from './column-width.js';
-import { CommandBus } from '../studio-v2/core/command-bus.js';
+import { CommandBus } from '../document-core/core/command-bus.js';
 import { compileProject, designOf, selectionField } from './model.js';
 import { validateDesign } from './file-io.js';
 import { datasetName, datasetTitleFor } from './database-model.js';
@@ -19,8 +19,8 @@ import { validateImportReceipt } from './structured-import-receipt.js';
 import { tableDefinitions, tableOf, fieldRows, isTable } from './additional-tables.js';
 import { editAdditionalTable } from './additional-table-controls.js';
 import { isSupportedCurrency, projectCurrencyIssue, suppliedPrimaryCurrency } from './currency-catalog.js';
-import { validateBarcode } from '../studio-v2/core/barcode.js';
-import { resolvePointer } from '../studio-v2/core/json.js';
+import { validateBarcode } from '../document-core/core/barcode.js';
+import { resolvePointer } from '../document-core/core/json.js';
 import { protectedBindings } from './agent-binding-invariants.js';
 
 export function createBus(project, database = null, source = 'builtin-demo') {

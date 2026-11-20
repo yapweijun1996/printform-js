@@ -1,5 +1,5 @@
 import {describe,it,expect,vi} from 'vitest';
-import {bindTemplate} from '../studio-v2/core/binding.js';
+import {bindTemplate} from '../document-core/core/binding.js';
 import {compileProject,designOf,newProject,sampleData} from '../studio-v3/model.js';
 import {readProject,saveProject} from '../studio-v3/file-io.js';
 import {datasetRecord,exportDataset,importDataset,validateDataset} from '../studio-v3/database-model.js';

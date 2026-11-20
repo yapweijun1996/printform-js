@@ -1,5 +1,5 @@
 import { imageCapability, modelCapabilityFacts } from './model-capabilities.js';
-import { createDemoGatewaySession } from '../studio-v2/ui/agent-demo-gateway.js';
+import { createDemoGatewaySession } from '../document-core/ui/agent-demo-gateway.js';
 import { DEMO_CONFIG, isDemoAlias } from './ai-gateway-config.js';
 import { classifyFailure } from './ai-gateway-errors.js';
 import { withTimeout } from './ai-request-timeout.js';

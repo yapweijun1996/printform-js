@@ -8,7 +8,7 @@ import {JSDOM} from 'jsdom';
 import {validatePaperReport,inspectProject} from '../studio-v3/validation.js';
 import {safeRunDiagnostics} from '../studio-v3/ai-inspection.js';
 import {compileProject} from '../studio-v3/model.js';
-import {createEmptyProject} from '../studio-v2/core/project-model.js';
+import {createEmptyProject} from '../document-core/core/project-model.js';
 
 globalThis.DOMParser ??= new JSDOM('').window.DOMParser;
 

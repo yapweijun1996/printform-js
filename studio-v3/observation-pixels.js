@@ -2,7 +2,7 @@ import { pixelDisclosure } from './observation-policy.js';
 import { fail } from './ai-edits.js';
 import { REFERENCE_LIMITS } from './reference-limits.js';
 import { canonicalObservation } from './observation-policy.js';
-import { sha256 } from '../studio-v2/core/json.js';
+import { sha256 } from '../document-core/core/json.js';
 
 function assertPngChunks(bytes) {
   const view = new DataView(bytes.buffer), bad = ()=> { throw fail('OBSERVATION_PIXELS_LIMIT'); };

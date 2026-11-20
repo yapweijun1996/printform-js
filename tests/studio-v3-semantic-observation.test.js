@@ -2,8 +2,8 @@ import {describe,it,expect} from 'vitest';
 import {createHash} from 'node:crypto';
 import {authorizeObservation,assertObservationAuthorization,observationDisclosure,OBSERVATION_AUTHORIZATION_MS} from '../studio-v3/observation-policy.js';
 import {createObservationRecords} from '../studio-v3/observation-records.js';
-import {classifySyntheticDocument,classifyImportedDocument,classifyRealDocument} from '../studio-v2/core/data-policy.js';
-import {stableStringify} from '../studio-v2/core/json.js';
+import {classifySyntheticDocument,classifyImportedDocument,classifyRealDocument} from '../document-core/core/data-policy.js';
+import {stableStringify} from '../document-core/core/json.js';
 
 const hash = value=>createHash('sha256').update(stableStringify(value,0)).digest('hex');
 import {semanticRun} from './support/semantic-observation.js';

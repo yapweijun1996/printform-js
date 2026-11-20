@@ -8,7 +8,7 @@ import { createGrant } from '../studio-v3/agent-effects.js';
 import { designOf,newProject } from '../studio-v3/model.js';
 import { designOperations,editProject } from '../studio-v3/controller.js';
 import { inspectProject } from '../studio-v3/validation.js';
-import { bindTemplate } from '../studio-v2/core/binding.js';
+import { bindTemplate } from '../document-core/core/binding.js';
 import { artifact as exportArtifact } from '../coding-runner/operations.mjs';
 import { LIMITS,sha,treeDigest,changesBetween } from '../coding-runner/policy.mjs';
 import { html,setup } from './support/chat-panel.js';
