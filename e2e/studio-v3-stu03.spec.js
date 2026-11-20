@@ -4,11 +4,13 @@ import {gateway, normalized, save} from './studio-v3-element-style.js';
 import {mountNumericProbeModules} from './studio-v3-rendered-probes.js';
 import {compileProject, designOf, newProject} from '../studio-v3/model.js';
 import {saveProject} from '../studio-v3/file-io.js';
+import {observeNativePreview,readNativePreview} from './studio-v3-native-preview.js';
 
 test.use({workInSteps:true});
 test.setTimeout(120000);
 const ready = page => expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
-const paper = page => page.frameLocator('#preview-frame');
+const paperFields = {titles:'header-title',items:'items-sku',captions:'items-description',quantities:'items-quantity',
+  charges:'table-charges-reference',amounts:'table-charges-amount'};
 const request = 'Use the supplied /lines array and bind each item description to ./caption.';
 const operations = [
   {type:'set_collection',value:'/lines'},
@@ -74,25 +76,28 @@ async function diagnose(page,project) {
   }, {moduleUrl,project,request,operations});
 }
 
+function observePaper(fields) {
+  return Object.fromEntries(Object.entries(fields).map(([name,id])=>[name,
+    [...document.querySelectorAll(`.printform_page [data-v3-id="${id}"]`)].map(node=>node.textContent.replace(/\s+/g,' ').trim())]));
+}
+
 async function verifyPaper(page,{items,captions,quantities}) {
-  await expect(paper(page).locator('[data-v3-id=items-sku]')).toHaveText(items);
-  await expect(paper(page).locator('[data-v3-id=items-description]')).toHaveText(captions);
-  await expect(paper(page).locator('[data-v3-id=items-quantity]')).toHaveText(quantities);
-  await expect(paper(page).locator('[data-v3-id=table-charges-reference]')).toHaveText(['FEE-007','FEE-002']);
-  await expect(paper(page).locator('[data-v3-id=table-charges-amount]')).toHaveText([/13\.75$/, /21\.25$/]);
+  await expect.poll(()=>readNativePreview(page)).toEqual(expect.objectContaining({items,captions,quantities,
+    charges:['FEE-007','FEE-002'],amounts:[expect.stringMatching(/13\.75$/),expect.stringMatching(/21\.25$/)]}));
 }
 
 test('G5 STU-03 diagnoses without writes, reviews a two-table binding correction and restores exact source order on Undo', async ({page},info) => {
   const project = fixture();
   const original = {items:['ITEM-010','ITEM-003'],captions:['Original motor','Original bracket'],quantities:['7','2']};
   const corrected = {items:['LINE-031','LINE-008','LINE-014'],captions:['Supplied sensor','Supplied relay','Supplied cable'],quantities:['11','3','6']};
+  await observeNativePreview(page,observePaper,paperFields);
   await gateway(page,[['apply_operations',{summary:'Use reviewed supplied lines and caption',operations}],['inspect_draft'],['finish',{summary:'Review supplied lines binding'}]]);
   await page.goto('/studio-v3/');
   await ready(page);
   await page.locator('#open-file').setInputFiles({name:'two-supplied-tables.printform.json',mimeType:'application/json',buffer:Buffer.from(saveProject(project))});
   await expect(page.locator('#document-name')).toHaveValue(project.manifest.title);
   await ready(page);
-  await expect(paper(page).locator('[data-v3-id=header-title]')).toHaveText(project.manifest.studioV3.title);
+  await expect.poll(async()=> (await readNativePreview(page))?.titles).toEqual([project.manifest.studioV3.title]);
   const saved = (await save(page,info,'source.printform.json')).project;
   const baseline = normalized(saved);
   expect(saved.sampleData).toEqual(project.sampleData);
