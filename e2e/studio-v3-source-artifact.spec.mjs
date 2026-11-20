@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { createCodingServer } from '../coding-runner/server.mjs';
 import { SOURCE_RUNNER_URL } from '../studio-v3/source-workspace-client.js';
 import { closeSettings, openSharing } from './ai-sharing.js';
@@ -7,20 +9,25 @@ import { expect, test } from './studio-v3-test.js';
 
 const heading = 'FICTIONAL CHILDCARE INVOICE FORM';
 const artifactPath = 'artifacts/form.printform-operations.json';
+const startedMarker = 'Fictional source process started';
+const stopCommand = `node -e "console.log('${startedMarker}');setTimeout(()=>{},60000)"`;
+const docker = promisify(execFile);
 
 test.skip(process.env.PF_CODING_BROWSER_INTEGRATION !== '1', 'requires a sealed local Docker image');
+// Studio uses one fixed loopback port. Preserve independent tests without overlapping companions.
+test.describe.configure({mode:'default'});
 test.use({
   workInSteps:true, viewport:{width:800,height:900}, launchOptions:{chromiumSandbox:true},
   // Pairing screenshots and network traces can contain short-lived credentials.
   trace:'off', screenshot:'off', video:'off'
 });
 
-async function useFictionalProvider(page) {
-  await page.addInitScript(({heading,artifactPath})=> {
+async function useFictionalProvider(page,commandToStop = null) {
+  await page.addInitScript(({heading,artifactPath,commandToStop})=> {
     const native = window.fetch.bind(window);
     const json = (body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
     const receipts = []; window.sourceArtifactReceipts = receipts;
-    const steps = [
+    const steps = commandToStop ? [()=>['workspace_run',{command:commandToStop,cwd:''}]] : [
       ()=>['workspace_read',{path:'src/form.mjs'}],
       read=>['workspace_write',{path:'src/form.mjs',expectedDigest:read.result.digest,content:read.result.content.replace('GENERATED FORM',heading)}],
       ()=>['workspace_run',{command:'node --test test/form.test.mjs',cwd:''}],
@@ -45,7 +52,28 @@ async function useFictionalProvider(page) {
       turn++;
       return body.stream ? new Response(`event: response.completed\ndata: ${JSON.stringify({type:'response.completed',response})}\n\n`,{headers:{'content-type':'text/event-stream'}}) : json(response);
     };
-  },{heading,artifactPath});
+  },{heading,artifactPath,commandToStop});
+}
+
+async function enableFictionalSource(page) {
+  await page.goto('/studio-v3/');
+  await expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30_000});
+  await page.locator('[data-ai-toggle]').click();
+  await page.locator('.ai-settings > summary').click();
+  await page.locator('.ai-source-setup > summary').click();
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),page.getByRole('link',{name:'Open local pairing page'}).click()
+  ]);
+  const code = (await popup.locator('#pair-code').textContent()).trim();
+  await popup.close();
+  // Keep the native input event and user click, without putting the code in Playwright's action log.
+  await page.locator('#ai-source-code').evaluate((input,value)=> { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); },code);
+  await page.locator('[data-source-pair]').click();
+  await expect(page.locator('[data-source-status]')).toContainText('Paired locally');
+  await openSharing(page);
+  await expect(page.locator('#ai-source-enabled')).not.toBeChecked();
+  await page.locator('#ai-source-enabled').check();
+  await closeSettings(page);
 }
 
 test('sealed Docker builds a source artifact for independent inspection and human Apply',async({page,baseURL,browserName},info)=> {
@@ -64,24 +92,7 @@ test('sealed Docker builds a source artifact for independent inspection and huma
   try {
     const identity = await runner.listen();
     await useFictionalProvider(page);
-    await page.goto('/studio-v3/');
-    await expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30_000});
-    await page.locator('[data-ai-toggle]').click();
-    await page.locator('.ai-settings > summary').click();
-    await page.locator('.ai-source-setup > summary').click();
-    const [popup] = await Promise.all([
-      page.waitForEvent('popup'),page.getByRole('link',{name:'Open local pairing page'}).click()
-    ]);
-    const code = (await popup.locator('#pair-code').textContent()).trim();
-    await popup.close();
-    // Keep the native input event and user click, without putting the code in Playwright's action log.
-    await page.locator('#ai-source-code').evaluate((input,value)=> { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); },code);
-    await page.locator('[data-source-pair]').click();
-    await expect(page.locator('[data-source-status]')).toContainText('Paired locally');
-    await openSharing(page);
-    await expect(page.locator('#ai-source-enabled')).not.toBeChecked();
-    await page.locator('#ai-source-enabled').check();
-    await closeSettings(page);
+    await enableFictionalSource(page);
     await page.locator('#ai-prompt').fill(`Use fictional source to set the printed heading to ${heading}. Run the tests and build the artifact.`);
     await page.locator('[data-ai-send]').click();
 
@@ -112,4 +123,55 @@ test('sealed Docker builds a source artifact for independent inspection and huma
     await runner.close();
     await info.attach('local-runner-timings',{contentType:'application/json',body:JSON.stringify(timings)});
   }
+});
+
+test('Stop closes an actually running source workspace without a late form handoff',async({page,baseURL,browserName},info)=> {
+  test.skip(browserName !== 'chromium','the local companion profile is exercised with Chromium');
+  test.setTimeout(150_000);
+  const origin = new URL(baseURL).origin;
+  const runner = createCodingServer({origin,port:Number(new URL(SOURCE_RUNNER_URL).port),image:process.env.PF_CODING_IMAGE || 'printform-coding-runner:local'});
+  let providerRequests = 0;
+  page.on('request',request=> { if (new URL(request.url()).origin === 'https://gpt.yapweijun1996.com') providerRequests++; });
+  try {
+    const identity = await runner.listen();
+    await useFictionalProvider(page,stopCommand);
+    await enableFictionalSource(page);
+    const opened = page.waitForResponse(response=>response.request().method() === 'POST' && response.url() === `${SOURCE_RUNNER_URL}/v1/workspaces`);
+    await page.locator('#ai-prompt').fill('Run the fictional local source process until I choose Stop.');
+    await page.locator('[data-ai-send]').click();
+    const workspace = await (await opened).json();
+    expect(workspace.id).toMatch(/^[a-f0-9-]{36}$/);
+    const ownerFilter = `label=io.printform.coding.workspace=${workspace.id}`;
+    await expect.poll(async()=> {
+      const {stdout} = await docker('docker',['container','ls','--quiet','--no-trunc','--filter',ownerFilter,'--filter','name=pf-run-']);
+      const id = stdout.trim();
+      if (!/^[a-f0-9]{64}$/.test(id)) return false;
+      const logs = await docker('docker',['container','logs',id]);
+      return logs.stdout.includes(startedMarker);
+    },{timeout:35_000}).toBe(true);
+
+    const closed = page.waitForResponse(response=>response.request().method() === 'POST' && response.url() === `${SOURCE_RUNNER_URL}/v1/workspaces/${workspace.id}/close`);
+    const beforeStop = performance.now();
+    await page.getByRole('button',{name:'Stop request'}).click();
+    const response = await closed;
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({id:workspace.id,closed:true});
+    const acknowledged = performance.now();
+    await expect(page.locator('[data-source-status]')).toContainText('Isolated workspace closed');
+    const shown = performance.now();
+    await expect(page.locator('#revision')).toHaveText(/^r0\b/);
+    await expect(page.locator('[data-ai-proposal]')).toBeHidden();
+    await expect(page.locator('#ai-source-enabled')).not.toBeChecked();
+    const [containers,volumes] = await Promise.all([
+      docker('docker',['container','ls','--all','--quiet','--filter',ownerFilter]),
+      docker('docker',['volume','ls','--quiet','--filter',ownerFilter]),
+    ]);
+    expect(containers.stdout.trim()).toBe('');
+    expect(volumes.stdout.trim()).toBe('');
+    expect(providerRequests).toBe(0);
+    await info.attach('browser-stop-timing',{contentType:'application/json',body:JSON.stringify({
+      runnerSourceHash:identity.runnerSourceHash,imageDigest:identity.imageDigest,endpoint:'/close',
+      clickToAcknowledgedMs:Math.round(acknowledged-beforeStop),clickToNoticeMs:Math.round(shown-beforeStop),
+    })});
+  } finally { await runner.close(); }
 });
