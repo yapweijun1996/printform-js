@@ -232,7 +232,10 @@ test('an opt-in AI choice receives only fictional enums and still requires local
 
     await preview.click();
     await expect(apply).toBeEnabled({timeout:30000});
+    await expect(dialog.locator('iframe')).toBeInViewport();
     await expect(dialog.locator('iframe')).toHaveAttribute('srcdoc',/Please review the fictional delivery details/);
+    await preview.click();
+    await expect(apply).toBeEnabled({timeout:30000});
     await expect(fork.locator('#revision')).toHaveText('r0');
     await apply.click();
     await expect(dialog).toBeHidden();

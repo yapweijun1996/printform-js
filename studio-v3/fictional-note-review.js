@@ -26,12 +26,15 @@ export function setupFictionalNoteReview({getBus,state,database,drafts,ai,queueE
     database.busy || database.pending || database.draft || database.importReview ||
     drafts.drafts.size || drafts.applying.size || ai.busy || ai.viewing || ai.proposal);
 
-  function resetPreview() {
+  function resetPreview({keepPaper = false} = {}) {
     revokeFictionalDataDraft(ticket);
     ticket = checked = null;
     renderer?.cancel();
-    frame.srcdoc = '';
-    scroll.hidden = true;
+    if (!keepPaper) {
+      // Navigating an already empty hidden frame can leave the next document without layout.
+      if (frame.srcdoc) frame.srcdoc = '';
+      scroll.hidden = true;
+    }
     apply.disabled = true;
   }
 
@@ -113,7 +116,7 @@ export function setupFictionalNoteReview({getBus,state,database,drafts,ai,queueE
 
   preview.addEventListener('click',async()=> {
     if (suggestion || applying) return;
-    resetPreview();
+    resetPreview({keepPaper:true});
     notice.textContent = '';
     let staged;
     try {

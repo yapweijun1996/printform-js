@@ -18,6 +18,8 @@ The G9 release decision remains open. The retired Studio v2 acceptance ledger is
 
 The homepage now uses the [stable childcare invoice URL](https://yapweijun1996.github.io/printform-js/gallery/designs/preschool-childcare-invoice.html), which returned HTTP 200 in the live recheck. The requested `0805b35fe46a` Gallery release URL returned HTTP 404. The Pages build ships Gallery assets for the current release.
 
+The [later public Pilot recheck](STUDIO_V3_PILOT_RECHECK_20261120.md) identifies `d978139`, audits the published assets and records desktop/mobile preview and actual HTTPS companion pairing. The physical print, inference and maintainer decision gates remain open.
+
 ## Rollback drill
 
 Build the site and run:
