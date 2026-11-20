@@ -1,4 +1,4 @@
-import { newProject, designOf, newDemoProject, setupDemoTemplatePicker } from './demo-templates.js';
+import { newProject, designOf, setupDemoTemplatePicker } from './demo-templates.js';
 import { createBus, editProject, renameTemplate, replaceData, designOperations, formDesign, alterFields } from './controller.js';
 import { icon } from './icons.js';
 import { leftView, rightView } from './views.js';
@@ -28,6 +28,7 @@ import { scenarioCandidate } from './scenario-matrix.js';
 import { paperMillimeters } from './paper-settings.js';
 import { setupMobileShell } from './mobile-shell.js';
 import { setupNewFormWorkspace } from './new-form-workspace.js';
+import { setupNewTemplateDialog } from './new-template-dialog.js';
 import { setupFictionalNoteReview } from './fictional-note-review.js';
 import { adoptPrivateDraft } from './new-form-draft.js';
 import { setupWorkspaceShortcuts } from './workspace-shortcuts.js';
@@ -179,7 +180,7 @@ const validateAll = createValidateAll({state,project:() => bus.project,render:pr
 async function action(name) {
   if (newForms.blockedAction(name)) return;
   if (name === 'undo' || name === 'redo') { if (!database.guardDraft()) return; await bus.navigateHistory(name,bus.revision); state.dataDraft = null; await changed(); }
-  else if (name === 'new') { $('#new-warning').textContent = state.dirty || database.draft || state.dataDraft !== null ? 'Starting another form discards unsaved form, table and JSON edits. Save first to keep them.' : 'Choose a complete starter or a blank form.'; $('#new-dialog').showModal(); }
+  else if (name === 'new') { $('#new-warning').textContent = state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size ? 'Choosing a new form replaces this tab. Cancel to keep working on the current form.' : 'Choose a complete starter or a blank form.'; $('#new-dialog').showModal(); }
   else if (name === 'cancel-new') $('#new-dialog').close();
   else if (name === 'open') $('#open-file').click();
   else if (await projectFileAction(name,{bus,state,installStatus:status,syncControls,getBus:()=>bus})) return;
@@ -225,8 +226,6 @@ document.addEventListener('click', e => {
   if (mode) { drafts.guard(() => { state.mode = mode.dataset.mode; if (state.mode === 'data') database.screen = 'database'; canvas.close(false); renderPanels(); }).catch(e=>status(e.message)); return; }
   const sample = e.target.closest('[data-sample]');
   if (sample) { drafts.guard(() => queueEdit(() => switchSample(sample.dataset.sample))).catch(e=>status(e.message)); return; }
-  const template = e.target.closest('[data-template],[data-demo-template]');
-  if (template && !template.disabled) { $('#new-dialog').close(); const next = database.starting(template.dataset.demoTemplate ? newDemoProject(template.dataset.demoTemplate) : newProject(template.dataset.template === 'blank' ? 'invoice' : template.dataset.template,template.dataset.template === 'blank')); install(next.project,next.reference,'builtin-demo'); return; }
   const issue = e.target.closest('[data-issue]');
   if (issue) { if (issue.dataset.issue) drafts.guard(() => { state.selected = issue.dataset.issue; state.mode = 'design'; renderPanels(); paper.send('select',{id:state.selected}); }).catch(e=>status(e.message)); return; }
   const control = e.target.closest('[data-action]');
@@ -235,7 +234,7 @@ document.addEventListener('click', e => {
     const name = control.dataset.action;
     if (name === 'cancel-draft') { drafts.discard(control.closest('[data-form]')); return; }
     const perform = () => ['validate-all','rerender','new','cancel-new','open','preview','next','previous','properties','binding','go-data','go-style'].includes(name) ? action(name).catch(e=>status(e.message)) : name === 'review-drafts' ? undefined : queueEdit(() => action(name));
-    if (['new','properties','binding','go-data','go-style','save','export','share','save-share','export-share','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
+    if (['properties','binding','go-data','go-style','save','export','share','save-share','export-share','print','undo','redo','validate-all','add-field','remove-field','move-up','move-down','add-table','remove-table','review-drafts'].includes(name)) drafts.guard(perform).catch(e=>status(e.message)); else perform();
   }
 });
 document.addEventListener('submit', e => {
@@ -284,6 +283,7 @@ setupWorkspaceFileReads({getBus:()=>bus,state,database,queueDatabase,queueEdit,i
   confirmProjectReplacement:()=> !(state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size) ||
     confirm('Open the selected form and discard unsaved form, table and JSON edits? Saved datasets are retained.'),
   draftState:()=>JSON.stringify([...drafts.drafts].filter(([,draft])=>draft.kind !== 'data').map(([key,draft])=>[key,draft.values]))});
+setupNewTemplateDialog({getBus:()=>bus,database,drafts,install,status});
 $('#document-name').addEventListener('change', e => { const title = e.target.value.trim(); if (title) queueEdit(async()=> { if (await renameTemplate(bus,title,database)) await changed(); }); });
 $('#zoom').onchange = () => { persistZoom($('#zoom')); resizePaper(); }; window.addEventListener('resize',resizePaper);
 $('#paper-scroll').addEventListener('scroll',()=> {

@@ -28,6 +28,7 @@ export class FormDrafts {
   constructor(callbacks) {
     this.callbacks = callbacks; this.drafts = new Map(); this.baselines = new Map(); this.applying = new Set(); this.guarding = false;
     this.dialog = document.querySelector('#draft-dialog');
+    this.summary = this.dialog.querySelector('p'); this.defaultSummary = this.summary?.textContent;
     this.dialog.addEventListener('click',event=> {
       const choice = event.target.closest('[data-draft-choice]'); if (choice) this.dialog.close(choice.dataset.draftChoice);
     });
@@ -88,7 +89,10 @@ export class FormDrafts {
     document.querySelectorAll('[data-form] input,[data-form] textarea,[data-form] select,[data-form] button').forEach(n=> { n.disabled = true; });
     try { await operation; } finally { this.applying.delete(operation); this.callbacks.render(); if (this.drafts.has(snapshot.key)) this.focus?.focus(); }
   }
-  async ask(includeExternal) {
+  async ask(includeExternal, replacing) {
+    if (this.summary) this.summary.textContent = replacing
+      ? 'Apply commits the edits and returns to the current form so you can save. Discard opens the selected form. Stay keeps the current form and its pending edits.'
+      : this.defaultSummary;
     const list = document.querySelector('#draft-list'); list.replaceChildren();
     for (const draft of this.drafts.values()) {
       const item = document.createElement('li'); item.textContent = `${draft.kind === 'data' ? 'Advanced JSON data' : `${draft.kind} · ${draft.selected || 'template'}`}`; list.append(item);
@@ -98,13 +102,16 @@ export class FormDrafts {
     const result = new Promise(resolve=>this.dialog.addEventListener('close',()=>resolve(this.dialog.returnValue),{once:true}));
     this.dialog.showModal(); return result;
   }
-  async guard(work, includeExternal = true) {
+  async guard(work, includeExternal = true, replacement = null) {
     if (this.guarding) return;
     this.guarding = true;
+    const current = ()=>!replacement || this.callbacks.context() === replacement.context;
     try {
       await Promise.allSettled([...this.applying]);
+      if (!current()) return;
       if (this.drafts.size || includeExternal && this.callbacks.externalPending()) {
-        const choice = await this.ask(includeExternal);
+        const choice = await this.ask(includeExternal,Boolean(replacement));
+        if (!current()) return;
         if (choice === 'stay') { this.focus?.focus(); this.callbacks.stay(); return; }
         if (choice === 'discard') this.discard(null,includeExternal);
         else {
@@ -114,8 +121,10 @@ export class FormDrafts {
           }
           if (includeExternal && this.callbacks.externalPending()) await this.callbacks.applyExternal();
           if (includeExternal && this.callbacks.externalPending()) return;
+          if (replacement) { if (current()) replacement.onApplied(); return; }
         }
       }
+      if (!current()) return;
       // Once the choice is resolved, allow navigation to interrupt long validation.
       this.guarding = false; await work();
     } finally { this.guarding = false; this.paint(); }
