@@ -4,5 +4,27 @@
   "release": "e4992655a8aac95ebcb4489d1ea9d3356095b6b3",
   "packageHash": "a09d046e012b45993ec73c0d2bc74d060fe156863e92ff9d0fe75424a4af0f2b"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.agent.retrieve_page": "056a03b80bd2bb6fa8ec61bedda06fb43de25fd2a469a699c4c4c0329adcc993",
+    "printform.agent.workspace_list": "c8bb1f4a67b5a07fca570d30f0912e3145e2f1f226627c3f8421fd6cd32fab86",
+    "printform.agent.workspace_read": "2eb5036d119c5947acec09f540f5ba03371bb944016f2ff58d7b7a3d79e39e24",
+    "printform.agent.workspace_search": "39e97e2400ce09afd85c97d941ac487667eae46032a67176ce03e7129c0be168",
+    "printform.agent.workspace_write": "b56989cc03c95bc71733cb90dac88dfea75e06e0d1411b5a2f42e1a47276a95c",
+    "printform.agent.workspace_patch": "3f1f88083d476cde67bc4d76d4b27cec107427c7badf15202fe915af2809ee7b",
+    "printform.agent.workspace_run": "7f01de6bd052aa4bd084b5d6f0029a504b1f933af574a0910ee5d14b3731e501",
+    "printform.agent.workspace_diff": "6b5608ab31da690974d6d7ac6db788c6115fbf7606aa7bb398bc6d1935765a3d",
+    "printform.agent.workspace_artifacts": "6b8c600ab5d93c87bc4526600fe3267511141eaed3aae2425c6f06860c67b3f6",
+    "printform.agent.import_artifact": "9d3d2973b97ab26da1c0a4632f626700c6aef58f839e0941331fc43d919ff63f",
+    "printform.knowledge.source-workspace": "870445e063e355cd99aa35c8fa034df893c3491edf3fa32d8d8c697dbe49f05b"
+   },
+   "disposition": "updated",
+   "justification": "The composer now applies the pending or unacknowledged source cleanup gate every time it computes Send state. Local fictional new-form preview stays available without using the model or companion. The companion control continues to hold pairing and source consent after unknown cleanup. The composer owns Send eligibility consistently and the warning identifies model requests as paused.",
+   "evidence": [
+    "studio-v3/ai-panel.js",
+    "studio-v3/ai-source-workspace.js"
+   ]
+  }
+ ]
 }

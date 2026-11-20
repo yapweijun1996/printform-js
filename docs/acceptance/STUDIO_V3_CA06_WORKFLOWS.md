@@ -31,6 +31,10 @@ Open used to resolve the form-draft dialog before choosing or reading a file. A 
 
 Vitest passed 52 cases across file workflows, import safety, structured import and scenario matrix. Chromium passed five selected draft and import cases, including the native file chooser with malformed input, a declined valid replacement and an approved retry. Nested JSON malformed replacement, cancellation and invalid UTF-8 cases also passed. The site build passed with the corrected Open flow.
 
+### Download a Share copy with pending edits
+
+Share copy reads the committed revision and keeps the current form, dirty state, history and staged import. An incomplete CSV mapping no longer forces Apply or Discard before either redacted download. Browser checks inspect the actual editable and standalone bytes for source receipts and pending data. During an unapplied paper preview, editable Share still reads the committed project. HTML Share remains unavailable until the committed paper is restored, and a stale async preparation dispatches no download. Save with source, ordinary export, Print and Undo still use the draft review guard. Chromium, Firefox and WebKit passed all nine focused browser cases. Twenty-two related unit checks passed. [Browser checks](../../e2e/studio-v3-project-file-actions.spec.js) · [Stale preparation test](../../tests/studio-v3-project-file-actions.test.js)
+
 ### Review a replacement from New
 
 The host opens the template chooser without changing drafts. Cancel or Escape leaves current inputs and a reviewed CSV untouched. Choosing a starter prepares it before asking for a decision. Stay retains the source, mapping, paper and revision. Apply commits the edits to the current document and returns there for Save. Discard opens the chosen replacement. The browser cases verify an inspector draft and a mapped CSV, including the original document identity and Undo after Apply. Chromium, Firefox and WebKit passed 12 focused cases in the isolated build. The separate local `/new` command retains its independent-document workflow. [Browser regressions](../../e2e/studio-v3-drafts.spec.js)
