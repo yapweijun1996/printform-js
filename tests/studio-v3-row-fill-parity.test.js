@@ -24,8 +24,10 @@ const normalized = design => ({...structuredClone(design),page:pageSettings(desi
 const candidateShape = project => ({...project,manifest:{...project.manifest,studioV3:normalized(project.manifest.studioV3)}});
 
 describe('shared table row-fill service and real inspector/operation adapters',()=> {
-  it.each(['#000000','#FFFFFF','#12aBcD','#ffff00',null])('row-fill inspector and operation produce equivalent candidates for %j',async value=> {
-    for (const type of ['invoice','purchase','delivery']) for (const kind of ['style','block']) for (const striped of [true,false]) {
+  const parityCases = ['invoice','purchase','delivery'].flatMap(type =>
+    ['#000000','#FFFFFF','#12aBcD','#ffff00',null].map(value => ({type,value})));
+  it.each(parityCases)('row-fill inspector and operation agree for $type with $value',async({type,value})=> {
+    for (const kind of ['style','block']) for (const striped of [true,false]) {
       let project = newProject(type);
       const initial = designOf(project); initial.striped = striped; initial.tableStyle = {rowBackground:'#112233'};
       project = compileProject(project,initial);

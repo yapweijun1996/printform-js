@@ -16,6 +16,8 @@ The G9 release decision remains open. The retired Studio v2 acceptance ledger is
 
 [Pages run 44713918035](https://github.com/yapweijun1996/printform-js/actions/runs/44713918035) completed both build and deploy. A fresh Chromium context at 1440px and 390px followed the public homepage button to the childcare invoice, rendered the form and opened the Studio preview without page errors. The live identity was read from the Studio asset metadata and confirmed against the public agent manifest and dependency index. This is smoke evidence and does not exercise inference, provider retention or physical printing.
 
+The homepage now uses the [stable childcare invoice URL](https://yapweijun1996.github.io/printform-js/gallery/designs/preschool-childcare-invoice.html), which returned HTTP 200 in the live recheck. The requested `0805b35fe46a` Gallery release URL returned HTTP 404. The Pages build ships Gallery assets for the current release.
+
 ## Rollback drill
 
 Build the site and run:
