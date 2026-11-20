@@ -39,6 +39,12 @@ The focused replacement sampler reads the native sandboxed renderer at its real 
 
 The separate read-only checks confirmed 60 G8 tasks and 20 holdouts. The historic profile still counted 3 recorded, 0 verified and 177 missing slots, with a `null` Wilson interval. The frozen Pass ceiling remained 144 against a required 162. The checked release manifest differed on all four historical release identity fields. Upstream ownership and governance proofs remain missing. The physical inventory could not confirm an attached printer or scanner because CUPS and USB inventory were unavailable. No model call, qualification attempt, print or scan was made.
 
+### Complete replay on `97a7d92`
+
+The full corrected matrix passed 42/42 with zero skips, failures, or retries. Chromium 151.0.7922.34, Firefox 153.0 and WebKit 26.5 each passed 14 cases. The single-worker run took 324.072 seconds on Debian 13 x86-64 with Node 24.19.0 and Playwright 1.62.0. Each of the three OBS-05 reports includes the baseline, five injected defects and their five recoveries with native geometry and matching receipts. No report recorded a page error.
+
+The isolated copy matched the independently fetched public index, worker, immutable app, Agent manifest and dependency index. The release verifier matched 25 shell files and six Agent files. The structured report SHA-256 is `3a48b09f15980dcc473fc3b0139dab095ccc68fc3650fc233c7206b94cfd57b4`, and the original Firefox failure on `9d6f992` remains separate. The replay used scripted provider responses and fictional data. Same-profile real-route conformance and two independent blinded human reviews remain open. [Reproduction command](#local-verification) · [Comparison case](../../e2e/studio-v3-observation-comparison.spec.js)
+
 ## Draft G4 human review procedure
 
 This procedure is preparation for the existing [G4/G8 gates](../STUDIO_V3_CODING_AGENT_ACCEPTANCE.md). It has no reviewer ratings or approved human rubric. Keep the existing [fictional deterministic comparison](STUDIO_V3_CA05_OBS05.md) and historical observations intact.
