@@ -26,3 +26,13 @@
 4. 先按完整 ID 和归属复核并非强制删除本次停止容器，再复核和删除本次卷。独立清单确认托管容器与卷均为零。
 
 本轮只有初始化写入文本，随后使用同卷只读观察。结果覆盖原 anchor 停止后通过新挂载访问源文件的逻辑可读性。上节的 Docker 命令日志仍是另一种留存。宿主介质擦除、daemon 重启与自动孤儿清理仍未验收。探针位于本机 `/workspace/scratch/pf-g6-tmpfs-crash-live/`。原始脱敏结果 SHA-256 为 `e927a51ce0e7e3bc9e89179ac44af0103d718a380dc21637b1cbd258f40974b0`。 [实际只读观察 JSON](STUDIO_V3_COD10_TMPFS_REMOUNT_20261120.json)
+
+## 正常退出的启动器对照
+
+在精确 `97a7d92ea74b137c7a8cb5bd49fb1eab5cf07751` 上启动原有 `scripts/coding-runner.mjs --origin <本机测试 Origin>`。启动器自行生成并验证发布 runner `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b` 和封存镜像 `sha256:76badd727406b763e562556ba9cf53b1eb642dd9657674904ef7a20fa20b1537`，按默认端口 4317 监听。 [启动器](../../scripts/coding-runner.mjs)
+
+1. 用真实 Chromium 配对并建立一个虚构的有属主工作区。提交输出固定标记后进行有限等待的 Node 命令。Docker 清单及日志独立确认实际命令在运行，浏览器获得 HTTP 200 的 `running` 回执。核对容器、anchor 和临时卷的归属及封存身份。
+2. 浏览器发出独立的等待回执请求后，仅向该次启动器的子进程 PID 发送 SIGTERM。等待中的请求返回 HTTP 200、`completed`、`CANCELLED`，实际命令退出码为 137，源码树摘要和版本保持一致。Docker 也报告了该命令容器的独立 die 事件。
+3. 启动器退出码为 0。从发信号到启动器退出与浏览器回执均达成为 5,645 毫秒。独立确认 4317 无监听，专属容器和卷清零，测试未直接执行容器或卷删除。
+
+这项证明补充正常 SIGTERM 的启动器出口。异常退出、介质擦除和 COD-07 性能门槛仍各以自身证据为准。本机夹具位于 `/workspace/scratch/pf-g6-sigterm-live/`。原始脱敏结果 SHA-256 为 `e06f67a0916df5097939dcf715b6366be3296376aa55c38046ced58c6c458fe3`。 [SIGTERM 实测 JSON](STUDIO_V3_COD10_LAUNCHER_SIGTERM_20261120.json)
