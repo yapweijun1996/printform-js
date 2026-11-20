@@ -1,5 +1,5 @@
 {
- "contractHash": "0bc26e86367ff71470473d674c9b4143c4fb514655f0221cfd2c30be781706b1",
+ "contractHash": "1c1dbe3a3920132f9772fbaabaaf9923b6d1518eed4683c8eb1327af7dfba4f5",
  "entries": [
   {
    "hash": "3214cb2f2bf8f28758943035c29e12559b647a601d1c259e05fc98dc22c22fa1",
@@ -17,7 +17,7 @@
    "status": "active"
   },
   {
-   "hash": "9d680e7abdab840c01df89dc255c0ce5875d7ae53109178afd697e89fe69023a",
+   "hash": "d5bf7286de56de056bdf245c9d3c7d159a077e55bb18482e56b18125759cbd09",
    "id": "printform.agent.apply_operations",
    "status": "active"
   },
@@ -32,7 +32,7 @@
    "status": "active"
   },
   {
-   "hash": "7c5a45690b0775070f8b33a58607265b1a52f87b17a3cd6b6e579f439948f3f3",
+   "hash": "cea47c8b4b6846b78af5a46af0d4eab66cc728c9e16f8e310c10fa07c0aad085",
    "id": "printform.agent.retrieve_page",
    "status": "active"
   },
@@ -67,52 +67,52 @@
    "status": "active"
   },
   {
-   "hash": "7db89cfe58d61b9cd4faa47c7867155ab72e9f5f693422444bc1879c882c9e99",
+   "hash": "11e05b684fba38501a4ca3c912ae3afc82d1b7277396a587186f0f752c26d1f2",
    "id": "printform.agent.workspace_list",
    "status": "active"
   },
   {
-   "hash": "1351533172e42e59009a1ed2c7f0ee8b34437ebe0dfd81322124d8b1ed42ec91",
+   "hash": "fb8b18b2f287f2afc14602928d37697783c3c2ee614418df949e6a1e013258ba",
    "id": "printform.agent.workspace_read",
    "status": "active"
   },
   {
-   "hash": "b24519ef0406810b4889d63357492ffa3b54e6c2315c736b7f9c58bae6a5b76e",
+   "hash": "1ab209f167a396917d4a24e0b7da48da71bc452bd82bccd7be7488f364377e17",
    "id": "printform.agent.workspace_search",
    "status": "active"
   },
   {
-   "hash": "10fb700328223005cbba55cf916a5bf3f4d8fc973116c563d139602c2a890160",
+   "hash": "0159c096b1d4b642c39b2bd310bc5aa6dba8a3b6320a22b203b20c1c22be674d",
    "id": "printform.agent.workspace_write",
    "status": "active"
   },
   {
-   "hash": "13017c79ba0f34dbed9c2e4b4eb420648ff7c5b819a994277d93d89ec28fc719",
+   "hash": "7dc9f38228822d3ed0c73932b80b45190e332818155cfd9ca530b5c6348bc147",
    "id": "printform.agent.workspace_patch",
    "status": "active"
   },
   {
-   "hash": "6aebaeb58640772f20e970c5ad7902bc03b40b47210ae13f0f0630697326049c",
+   "hash": "b8ba5c6ab295c2651b070dd982bf31c2be31ec5738b01c88c552bfc97531808f",
    "id": "printform.agent.workspace_run",
    "status": "active"
   },
   {
-   "hash": "8ecfb5bb646faf7a66b39ef1cf91618df286edf804e54e84b316fb1173a37e1b",
+   "hash": "03203343c215272ea7c32d6c547f71eb3fa2710aded606ee3693442540dc7b3f",
    "id": "printform.agent.workspace_diff",
    "status": "active"
   },
   {
-   "hash": "e208d2ef1b1fcc2f22ce1d380ef0b9cd74140501f6b933855c6eaaa41d87d355",
+   "hash": "d9d2dada2560157b3d9a4516aaff0d6ad9442f603dc63b7fd5ac1788ee2a9c30",
    "id": "printform.agent.workspace_artifacts",
    "status": "active"
   },
   {
-   "hash": "16b61d867cda74063ce4ea8699b1c3a2dfa5398aebc220c2ec707e4753c728d0",
+   "hash": "55444db211baeacc8b0d6ddcd94964149715398498947ada337ea13352db756a",
    "id": "printform.agent.import_artifact",
    "status": "active"
   },
   {
-   "hash": "408ef059034c103b438598cfcf7600c4a5f8b853b4fea57b13a1c54e50cd07b1",
+   "hash": "130239487645ea2dede1abbb20f3a2d2fa8f55a308c59b58ba00406d371a3384",
    "id": "printform.authoring.set_element_style",
    "status": "active"
   },
@@ -122,7 +122,7 @@
    "status": "active"
   },
   {
-   "hash": "c8b1f557bea5bc62189ab773be323246f1c4848fbbcdec049dcc65e66538ef53",
+   "hash": "12f0728245b17646e4db946b320702cdccf77caf9da718c3143971f6352237b7",
    "id": "printform.authoring.set_table_style",
    "status": "active"
   },
@@ -192,22 +192,22 @@
    "status": "active"
   },
   {
-   "hash": "31aadc00542c835f64ac7e03f8a0e1af0191b4cf8667bdcaf8b0d9714db36bb0",
+   "hash": "12bbb8c64ba4732357deba05a88782fb457a14e2ef96a9dfbc18d68fd57770cb",
    "id": "printform.knowledge.source-workspace",
    "status": "active"
   }
  ],
  "files": {
-  "capabilities.json": "362624cd69fe6877025a43c619c00bdc2770863251d33bfaa4de4d300df6e515",
-  "knowledge-index.json": "017a1a720213b7df83d814aefa658cbd2b9545cd4d5c24cc7972c7f01eb4bdcb",
+  "capabilities.json": "5ad44c57d9e40fede2ec56dd1b6a8b5e3c2e3e3fb815c5e351426ef6614aa3a5",
+  "knowledge-index.json": "4f03bfe9c91f59da94a3eaa5cc59e949fc08fa8f2d9f24786795a77942218985",
   "resources/form-authoring.md": "e9f9eaaba030d7b37a8cc42aa20c61997caf52fee7bc4266a95fcb6775bd0f7b",
   "resources/general-print-authoring.md": "c29ba60f8ff601f5a9f21ef7767d4199d1460700612dbe78e637baa492e92d9c",
   "resources/product-workflows.md": "b331b7e42e1210848dae7fe881b2743c0885e39d5797840e78e9231e3ca7639c",
   "resources/source-workspace.md": "ad331a25c5cc9afef84f382cbf830d4b871f3f26eb3df1f1e65075abe64675a8"
  },
- "knowledgeHash": "a49017f1288257ef3dfef1ac234e7c078af92efee9f8783f85e0f02fc30dab22",
- "packageHash": "b341cd5b6f61fc8ce3f9f10f87e25441cbe73983b6bf1f7c37de7fb45f8b7b97",
- "release": "da4fc4236364d39ffc0db8feba5d109dd809534b",
+ "knowledgeHash": "f7e107e392b307167ea2c28e7c55e88a05b6a9d6837d444230319203e8e86304",
+ "packageHash": "504d21f1c74e148a964b2877922a2594d6ed10b5f5bd6c38ba8f996dadab3b4b",
+ "release": "481e12e78a2e5f3d6a664726cbf52e6043877ce7",
  "sourceRunnerHash": "b6a89aa87b2f8ae3f17adc436fed6e47ef22c7862599bc3a76b5c509b69ef23b",
  "tombstones": [],
  "version": 1
