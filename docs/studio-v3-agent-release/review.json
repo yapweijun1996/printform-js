@@ -4,5 +4,28 @@
   "release": "da4fc4236364d39ffc0db8feba5d109dd809534b",
   "packageHash": "b341cd5b6f61fc8ce3f9f10f87e25441cbe73983b6bf1f7c37de7fb45f8b7b97"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.agent.retrieve_page": "cea47c8b4b6846b78af5a46af0d4eab66cc728c9e16f8e310c10fa07c0aad085",
+    "printform.agent.workspace_list": "11e05b684fba38501a4ca3c912ae3afc82d1b7277396a587186f0f752c26d1f2",
+    "printform.agent.workspace_read": "fb8b18b2f287f2afc14602928d37697783c3c2ee614418df949e6a1e013258ba",
+    "printform.agent.workspace_search": "1ab209f167a396917d4a24e0b7da48da71bc452bd82bccd7be7488f364377e17",
+    "printform.agent.workspace_write": "0159c096b1d4b642c39b2bd310bc5aa6dba8a3b6320a22b203b20c1c22be674d",
+    "printform.agent.workspace_patch": "7dc9f38228822d3ed0c73932b80b45190e332818155cfd9ca530b5c6348bc147",
+    "printform.agent.workspace_run": "b8ba5c6ab295c2651b070dd982bf31c2be31ec5738b01c88c552bfc97531808f",
+    "printform.agent.workspace_diff": "03203343c215272ea7c32d6c547f71eb3fa2710aded606ee3693442540dc7b3f",
+    "printform.agent.workspace_artifacts": "d9d2dada2560157b3d9a4516aaff0d6ad9442f603dc63b7fd5ac1788ee2a9c30",
+    "printform.agent.import_artifact": "55444db211baeacc8b0d6ddcd94964149715398498947ada337ea13352db756a",
+    "printform.knowledge.source-workspace": "12bbb8c64ba4732357deba05a88782fb457a14e2ef96a9dfbc18d68fd57770cb"
+   },
+   "disposition": "updated",
+   "justification": "The shared Demo transport and Studio shell add a host-only request for choosing one predefined fictional note. The request is restricted to built-in form type and allowlisted note identifiers. The host validates the response and still requires local Preview and Apply. The affected observation and source-workspace contracts retain their existing grants and tool behavior.",
+   "evidence": [
+    "studio-v3/ai-demo-transport.js",
+    "studio-v3/fictional-note-suggestions.js",
+    "studio-v3/index.html"
+   ]
+  }
+ ]
 }
