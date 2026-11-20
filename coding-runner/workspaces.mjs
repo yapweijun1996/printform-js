@@ -80,8 +80,14 @@ export class Workspaces {
     try { output = await lease.job.promise; }
     catch (error) { workspace.state = 'quarantined'; receipt.effectUnknown = true; throw error; }
     Object.assign(receipt, output); delete receipt.reason;
-    try { this.reconcile(workspace, receipt, await this.docker.helper(workspace, 'snapshot')); }
-    catch (error) { workspace.state = 'quarantined'; receipt.effectUnknown = true; throw error; }
+    // The broker returns started:false only when cancellation wins before attach
+    // and removal of the created run container succeeds. The leased source tree
+    // was never writable by a process, so its existing exact snapshot is current.
+    const removedBeforeAttach = output.started === false && output.reason === 'CANCELLED' && lease.cancelRequested;
+    if (!removedBeforeAttach) {
+      try { this.reconcile(workspace, receipt, await this.docker.helper(workspace, 'snapshot')); }
+      catch (error) { workspace.state = 'quarantined'; receipt.effectUnknown = true; throw error; }
+    }
     if (lease.cancelRequested || output.reason) throw new RunnerError(output.reason ?? 'CANCELLED', 409);
     if (output.exitCode !== 0) throw new RunnerError('COMMAND_FAILED', 409);
   }
