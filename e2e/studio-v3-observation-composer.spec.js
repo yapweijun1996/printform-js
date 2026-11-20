@@ -19,6 +19,8 @@ for (const viewport of [{width:1280,height:720},{width:1024,height:768},{width:3
     const menu=page.locator('.ai-settings-body');
     const menuBounds=await menu.evaluate(node=>{const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,overflow:getComputedStyle(node).overflowY};});
     expect(menuBounds.top).toBeGreaterThanOrEqual(0);expect(menuBounds.bottom).toBeLessThanOrEqual(viewport.height);
+    const panelBottom=await page.locator('#ai-panel').evaluate(node=>node.getBoundingClientRect().bottom);
+    expect(menuBounds.bottom).toBeLessThanOrEqual(panelBottom);
     expect(menuBounds.left).toBeGreaterThanOrEqual(0);expect(menuBounds.right).toBeLessThanOrEqual(viewport.width);expect(menuBounds.overflow).toBe('auto');
     expect(await permissions.evaluate(node=>node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(48);
     for(const selector of ['#ai-observation-text','#ai-observation-pixels']) {

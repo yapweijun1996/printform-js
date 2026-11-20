@@ -1,5 +1,5 @@
 /* The conversation and expanded context share one scroll surface; the composer stays anchored. */
-#ai-panel { --ai-fs-meta:12px; --ai-fs-small:13px; --ai-fs-body:14px; --ai-fs-title:15px; --ai-fs-heading:17px; font-size:var(--ai-fs-body); font-weight:400; line-height:1.5; grid-column:3; grid-row:1; position:relative; display:flex; flex-direction:column; container-type:inline-size; min-width:0; min-height:0; overflow:hidden; background:var(--surface); border-left:1px solid var(--line); }
+#ai-panel { --ai-fs-meta:12px; --ai-fs-small:13px; --ai-fs-body:14px; --ai-fs-title:15px; --ai-fs-heading:17px; font-size:var(--ai-fs-body); font-weight:400; line-height:1.5; grid-column:3; grid-row:1; position:relative; display:flex; flex-direction:column; container-type:size; min-width:0; min-height:0; overflow:hidden; background:var(--surface); border-left:1px solid var(--line); }
 #ai-panel[hidden] { display:none; }
 /* An inert overlay keeps every panel control available as a drop destination. */
 .ai-drop-overlay { position:absolute; inset:8px; z-index:10; pointer-events:none; display:grid; place-items:center; text-align:center; padding:20px; color:var(--muted); font-weight:600; }
@@ -30,7 +30,8 @@ body.ai-open.preview-only .studio-grid { grid-template-columns:0 minmax(0,1fr) v
 .ai-settings>summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .ai-settings>summary::-webkit-details-marker { display:none; }
 .ai-settings[open]>summary,.ai-header-actions>button:hover { background:var(--subtle); }
-.ai-settings-body { position:absolute; z-index:5; right:0; top:48px; width:min(320px,calc(100vw - 32px)); max-height:calc(100dvh - 160px); overflow:auto; padding:16px; display:grid; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+/* The panel can be shorter than the viewport when the workspace header wraps. */
+.ai-settings-body { position:absolute; z-index:5; right:0; top:48px; width:min(320px,calc(100vw - 32px)); max-height:min(calc(100dvh - 160px),calc(100cqh - 72px)); overflow:auto; padding:16px; display:grid; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
 .ai-settings:not([open])>.ai-settings-body { display:none; }
 .ai-settings-body label { display:grid; gap:6px; }
 .ai-settings-body .ai-agent-toggle { display:flex; align-items:center; gap:8px; }
