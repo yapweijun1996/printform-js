@@ -260,18 +260,17 @@ explicit protected updates; see [PWA lifecycle](STUDIO_V3_PWA.md).
 
 `tests/studio-v3*.test.js` covers canonical model/binding/history/import safety,
 typed dataset limits, independent ERP amounts and source/history behavior.
-`e2e/studio-v3*.spec.js` is part of the existing three-browser CI matrix and
-covers fresh blank-to-export, measured row identity/pagination for all starters,
+The Playwright suite runs locally in Chromium, Firefox and WebKit and covers
+fresh blank-to-export, measured row identity/pagination for all starters,
 long bilingual content, missing-field recovery, hostile strings, tab isolation,
 undo/redo, column changes, interrupted runs, keyboard/dialog focus and responsive
 layouts, draft transitions, IndexedDB persistence, stale concurrent writes,
 quota/transaction rollback, tab-only fallback and non-destructive reset. Required
 viewports are 1366×768, 1440×900, 768×1024, 390×844 and 430×932. Preview and standalone export text, row order, page count and geometry
 are compared; Chromium also writes an A4 PDF. Native printer output remains an
-owner review boundary.
+owner review boundary. Run `npm run test:e2e -- e2e/studio-v3 --workers=1` for the
+local Studio browser suite, then `npm run verify:samples` for standalone sample
+validation. The Pages workflow runs the unit suite and builds the published site.
 
-Aggregate CI also covers existing v2 behavior. Its legacy progress-claim
-long-text fixture has a confirmed pagination overflow and remains blocked;
-its unsigned diagnostic now crosses the public gateway correctly. Positive
-trusted-export evidence uses the passing invoice fixture. This does not close
-the existing v2 Pilot release gates.
+The [task board](../TASK.md) links current Studio v3 verification and retains
+the Studio v2 Pilot ledger as historical evidence for the retired editor.
