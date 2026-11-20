@@ -1,5 +1,7 @@
 # GOAL.md — PrintForm Studio v2
 
+> Historical record for the retired Studio v2. The current Studio v3 scope and open acceptance gates are tracked in [Studio v3](docs/STUDIO_V3.md) and [TASK.md](TASK.md).
+
 > Status: Partial. Reviewed 2026-09-11. This file defines intent and boundaries; it does not own live gate credit.
 
 ## Objective

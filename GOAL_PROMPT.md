@@ -1,5 +1,7 @@
 # GOAL_PROMPT.md — local Studio v2 execution prompt
 
+> Historical execution prompt for the retired Studio v2. The current Studio v3 work is tracked in [TASK.md](TASK.md).
+
 Goal: Complete Studio v2 locally in dependency order and prepare a reviewable release packet.
 
 Before acting, read `AGENTS.md`, `GOAL.md`, `DESIGN.md`, `SPEC.md`, `EPIC.md`, `ROADMAP.md`, `TASK.md`, `PROGRESS.md`, then `docs/STUDIO_V2_INDEX.zh-CN.md`, `docs/STUDIO_V2_AGENT_HANDOFF.md`, `docs/STUDIO_V2_EXECUTION_PLAN.md`, `docs/STUDIO_V2_DEFINITION_OF_DONE.md`, `docs/STUDIO_V2_PRODUCTION_PLAN.md`, `docs/STUDIO_V2_P0_ACCEPTANCE.md`, `docs/STUDIO_V2_PI_HARNESS_MIGRATION.md` and `docs/STUDIO_V2_RELEASE_CHECKLIST.zh-CN.md`.

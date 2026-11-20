@@ -137,10 +137,11 @@ test('keeps a usable English landing page without scripts', async ({ browser }) 
 });
 
 test('resolves homepage assets and navigation beneath the repository subpath', async ({ page }) => {
-  await page.route('**/printform-js/**', route => {
+  await page.route('**/printform-js/**', async route => {
     const url = new URL(route.request().url());
     url.pathname = url.pathname.replace(/^\/printform-js/, '');
-    return route.continue({ url: url.href });
+    const response = await route.fetch({ url: url.href });
+    await route.fulfill({ response });
   });
   await page.goto('/printform-js/');
   await expect(page.getByRole('button', { name: '中文', exact: true })).toBeVisible();

@@ -12,6 +12,8 @@ The read-only upstream and governance commands exited 1. Neither a fixed-upstrea
 
 The independently verified Wilson interval remains `null`. The latest public manifest was downloaded and consumed as a separate evidence input. It reproduced `liveRelease.status=different-release` with all four identity fields mismatching. No old qualification was transferred.
 
+On the later published `d2412e8` identity, read-only indexed preflight again exited 1 with all four frozen identity fields mismatched, 3 recorded slots and no verified interval. A synthetic G8 artifact could previously be scored Pass while Studio would reject it at import. The [regression cases](../../tests/studio-v3-g8-corpus.test.js) rebind the actual bytes, snapshot, build receipt and artifact ID before evaluating duplicate literal keys, duplicate decoded keys and a 64,001-byte artifact. The offline evaluator now rejects those same bytes. Both consumers admit a 64,000-byte UTF-8 BOM case, and the original bytes remain part of the artifact hash. The focused corpus, preflight and Studio artifact consumer suites passed 108 tests. The frozen corpus and historical attempts were preserved. No model calls or qualification attempts were made.
+
 ## Local verification
 
 - Node 24.19.0. The 17 focused G4/G8/G9/physical unit files passed 313 tests before the interval change. The two G8 preflight and register files passed 62 tests after the interval change.

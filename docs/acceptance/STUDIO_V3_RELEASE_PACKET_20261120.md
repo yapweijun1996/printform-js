@@ -16,7 +16,7 @@ The G9 release decision remains open. The retired Studio v2 acceptance ledger is
 
 [Pages run 44713918035](https://github.com/yapweijun1996/printform-js/actions/runs/44713918035) completed both build and deploy. A fresh Chromium context at 1440px and 390px followed the public homepage button to the childcare invoice, rendered the form and opened the Studio preview without page errors. The live identity was read from the Studio asset metadata and confirmed against the public agent manifest and dependency index. This is smoke evidence and does not exercise inference, provider retention or physical printing.
 
-The homepage now uses the [stable childcare invoice URL](https://yapweijun1996.github.io/printform-js/gallery/designs/preschool-childcare-invoice.html), which returned HTTP 200 in the live recheck. The requested `0805b35fe46a` Gallery release URL returned HTTP 404. The Pages build ships Gallery assets for the current release.
+At that checkpoint, the homepage used the [stable childcare invoice URL](https://yapweijun1996.github.io/printform-js/gallery/designs/preschool-childcare-invoice.html) because the requested `0805b35fe46a` Gallery URL returned HTTP 404. The homepage now points to that [requested URL](https://yapweijun1996.github.io/printform-js/gallery/releases/0805b35fe46a/gallery/designs/preschool-childcare-invoice.html), which forwards visitors to the stable invoice. The archive path has a manual link for browsers that suppress automatic refresh. Gallery still ships the immutable assets for each current build.
 
 The [later public Pilot recheck](STUDIO_V3_PILOT_RECHECK_20261120.md) identifies `d978139`, audits the published assets and records desktop/mobile preview and actual HTTPS companion pairing. The physical print, inference and maintainer decision gates remain open.
 
@@ -52,5 +52,14 @@ The next drill used `481e12e` and `6e9fd0efaffabdca36ec55b579fc02cdc45e5b37`, wi
 The same three browsers passed both the desktop offline upgrade and the reverse rollback, 6/6 in one serial run with zero retries. The upgrade checks Stay, offline Keep, reconnect, restored draft and revision, exact committed header before Undo, rendered header after Undo, zoom, unchanged IndexedDB and automatic activation in the second clean tab. The initial five-pass run stopped at a direct Firefox iframe read after Undo, with Export already enabled. Both paths now assert the header in the native rendered page reported by the existing preview bridge. The original timeout and failing trace are preserved. This drill served public shell bytes at a loopback origin. It did not roll back the public site or switch an active source workspace between companion images.
 
 Use the same Playwright command with the `481e12e` and `6e9fd0e` roots and select `rollback to a previous|two real builds: desktop` to reproduce both paths.
+
+### Exact `f7326df` and `d2412e8` drill
+
+Fresh builds from `f7326df94f531dd6a6dad087f9944190abea7ebd` and `d2412e889fabb0e0b4cf91561f3bfa0cb28d3e3a` matched their public app, Service Worker, agent manifest and dependency-index SHA-256 hashes. Each worker's 25 shell files independently matched its own precache hashes. Both builds use companion source `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b`. Chromium, Firefox and WebKit passed desktop offline upgrade, rollback and fictional note review across the exact pair, 9/9 with one worker and zero retries. The notes case checks that an open review blocks reload, then an explicit Apply and Keep preserve the exact note and Undo.
+
+| Published commit | App SHA-256 | Worker SHA-256 |
+| --- | --- | --- |
+| `f7326df` | `60d3d678db989248b8d5f075f881069c573375a8ef569c9ed51f1542ebecfa35` | `57840030caf177aee55427521d179e8a19862cec4a3d96d8853e7cb0a28099b1` |
+| `d2412e8` | `debeebea937b998b2c3bbfe28286cd04164584535242c9dfb4b0abb3fbbe85ee` | `a06f50d4a11f3adeb4e97af438effcd577feb69d35cd1b275298db0ef844ead8` |
 
 For a supported deployment rollback, record the current and target artifact identities and the runner compatibility before republishing the previously verified bundle. Keep the existing service-worker and recovery workflow in place. If an unsaved-work dialog appears, choose Keep to preserve the draft, or Stay to defer the switch. Verify the active revision, data and pending edits after reload. Use the existing recovery backup path if automatic restoration reports incompatibility. Browser storage deletion is not part of the drill.
