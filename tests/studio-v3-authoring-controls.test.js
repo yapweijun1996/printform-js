@@ -30,8 +30,8 @@ it('inherit clears only the chosen styles, and invalid free CSS never reaches co
   const project = newProject(); project.manifest.studioV3.customer[0].labelStyle = {fontSize:12,bold:true};
   const after = formDesign(project,'customer-bill',form({'labelStyle.fontSize':'','labelStyle.bold':'','labelStyle.color':'','labelStyle.align':''}),'field');
   expect(after.customer[0].labelStyle).toBeUndefined();
-  const invalid = formDesign(project,'customer-bill',form({'labelStyle.fontSize':'12','labelStyle.color':'red;display:none'}),'field');
-  expect(()=>designOperations(project,invalid)).toThrow('hex');
+  const invalid = form({'labelStyle.fontSize':'12','labelStyle.color':'red;display:none'});
+  expect(()=>formDesign(project,'customer-bill',invalid,'field')).toThrow('hex');
 });
 it('paper controls feed typed native page dimensions, with independent page-number typography',()=> {
   const project = newProject();

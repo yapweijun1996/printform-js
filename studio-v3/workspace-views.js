@@ -44,7 +44,7 @@ function fieldProperties(design,selected,focusLabel=false) {
   return `<form data-form="field" class="form-stack">
     ${input('Label','label',field.label,'text','maxlength="100"')}${['image','barcode'].includes(fieldKind(field)) ? '' : formats(field.format)}
     <input type="hidden" name="showLabel-present" value="1">${check('Show label','showLabel',field.showLabel !== false)}
-    ${typographyControls('Label','labelStyle',field.labelStyle,focusLabel)}${['image','barcode'].includes(fieldKind(field)) ? '<p class="hint">Source and dimensions are in Data binding.</p>' : typographyControls('Value','valueStyle',field.valueStyle,!focusLabel)}
+    ${typographyControls('Label','labelStyle',field.labelStyle,focusLabel,'any')}${['image','barcode'].includes(fieldKind(field)) ? '<p class="hint">Source and dimensions are in Data binding.</p>' : typographyControls('Value','valueStyle',field.valueStyle,!focusLabel,'any')}
     ${table ? input('Width (%)','width',field.width,'number','min="1" max="100" step="any"') : ''}
     <p class="hint">Label and appearance. Use Data binding to choose the printed value.</p>${applyRow('Apply field')}
   </form><div class="action-row">${button('move-up','Up','up',index === 0 ? 'disabled' : '')}${button('move-down','Down','down',index === count-1 ? 'disabled' : '')}${button('remove-field','Remove','trash')}</div>`;

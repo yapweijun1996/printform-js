@@ -1,4 +1,5 @@
 import { columnWidthChange } from './column-width.js';
+import { fieldPropertiesChange } from './field-properties.js';
 import { CommandBus } from '../document-core/core/command-bus.js';
 import { compileProject, designOf, selectionField } from './model.js';
 import { validateDesign } from './file-io.js';
@@ -121,12 +122,14 @@ export function formDesign(project, selected, form, kind) {
     if (values.has('pageNumberStyle.fontSize')) d = elementStyleChange(d,'page-number',fieldStyle('pageNumberStyle')).design;
     if (values.has('paper')) { const page = pageFromForm(values); d = pageGeometryChange(d,{...page,printerProfile:page.printerProfile ?? null}).design; }
   } else if (kind === 'field' && selection) {
-    for (const key of ['label','format']) if (values.has(key)) selection.field[key] = text(key);
-    if (isTable(d,selection.block) && values.has('width')) Object.assign(selection.field,columnWidthChange(selection.field,Number(values.get('width'))));
-    if (values.has('showLabel-present')) selection.field.showLabel = checked('showLabel');
-    for (const prefix of ['labelStyle','valueStyle']) if (values.has(`${prefix}.fontSize`)) {
-      const style = fieldStyle(prefix); if (Object.keys(style).length) selection.field[prefix] = style; else delete selection.field[prefix];
+    const patch = {};
+    for (const key of ['label','format']) if (values.has(key)) patch[key] = text(key);
+    if (values.has('showLabel-present')) patch.showLabel = checked('showLabel');
+    for (const prefix of ['labelStyle','valueStyle']) if (values.has(`${prefix}.fontSize`)) patch[prefix] = fieldStyle(prefix);
+    for (const [key,value] of Object.entries(fieldPropertiesChange(selection.field,patch))) {
+      if (value === undefined) delete selection.field[key]; else selection.field[key] = value;
     }
+    if (isTable(d,selection.block) && values.has('width')) Object.assign(selection.field,columnWidthChange(selection.field,Number(values.get('width'))));
   } else if (kind === 'binding' && selection) {
     const mode = text('bindingMode'), f = selection.field;
     if (mode === 'barcode' && protectedBindings(project.manifest.studioV3).some(binding=>binding.block === selection.block && binding.id === f.id && binding.kind !== 'barcode')) throw new Error('Protected financial or canonical supplied facts cannot be replaced by a barcode. Add a separate barcode field.');

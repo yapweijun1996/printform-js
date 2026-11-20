@@ -1,4 +1,5 @@
 import { columnWidthChange } from './column-width.js';
+import { fieldPropertiesChange } from './field-properties.js';
 import { MAX_AUTHORING_OPERATIONS, AUTHORING_CONTRACT, contractError, assertOperationContract } from './ai-authoring-contract.js';
 import { DEMO_BINDING_PATHS } from './demo-binding-paths.js';
 import { BLOCKS, selectionField, defaultDesign } from './model.js';
@@ -73,8 +74,13 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       const financial = financialField(selected.field);
       const suppliedNumber = selected.field.pointer && (['currency','number','percent'].includes(selected.field.format) || financial);
       if (suppliedNumber && (Object.hasOwn(op.patch,'text') || (op.patch.kind !== undefined && op.patch.kind !== 'bound') || (financial && op.patch.pointer !== undefined && op.patch.pointer !== selected.field.pointer) || (op.patch.format !== undefined && op.patch.format !== selected.field.format))) unsafe();
-      for (const [key,value] of Object.entries(op.patch)) {
-        record(op.target,key,selected.field[key],value); if (key === 'width' && isTable(design,selected.block)) Object.assign(selected.field,columnWidthChange(selected.field,value)); else selected.field[key] = structuredClone(value);
+      const properties = fieldPropertiesChange(selected.field,op.patch);
+      for (const [key,requested] of Object.entries(op.patch)) {
+        const value = Object.hasOwn(properties,key) ? properties[key] : requested;
+        record(op.target,key,selected.field[key],value);
+        if (key === 'width' && isTable(design,selected.block)) Object.assign(selected.field,columnWidthChange(selected.field,value));
+        else if (Object.hasOwn(properties,key) && value === undefined) delete selected.field[key];
+        else selected.field[key] = structuredClone(value);
       }
       // Explicit mode transitions cannot retain hidden bound data.
       if ((op.patch.kind === 'static' || op.patch.kind === 'image') && selected.field.pointer) { record(op.target,'pointer',selected.field.pointer,''); selected.field.pointer = ''; }

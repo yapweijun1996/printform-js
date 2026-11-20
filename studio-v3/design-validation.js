@@ -1,5 +1,5 @@
 import { validateColumnWidth } from './column-width.js';
-import { BLOCKS, FIELD_KINDS, FORMATS, validPointer, fieldKind, sectionOrder } from './design-authoring.js';
+import { BLOCKS, FIELD_KINDS, validPointer, fieldKind, sectionOrder } from './design-authoring.js';
 import { validatePageSettings } from './paper-settings.js';
 import { A4_PRESET_IDS } from './a4-presets.js';
 import { validateTableStyle } from './table-style.js';
@@ -7,6 +7,7 @@ import { validateFieldStyle } from './element-style.js';
 import { validateAdditionalTables } from './additional-tables.js';
 import { validateGlobalStyle } from './global-style.js';
 import { validateHeading } from './heading-text.js';
+import { validateFieldProperties } from './field-properties.js';
 import { validateSection } from './section-properties.js';
 import { validateSectionOrder } from './section-order.js';
 import { validateImageReference, validateLogoReference } from './image-reference.js';
@@ -53,14 +54,13 @@ function validateField(f,id,assets,ids,relative = id === 'items') {
   exactDesignKeys(f,['id','label','pointer','lastPointer','format','text','width','kind','labelStyle','valueStyle','showLabel','assetId','height','fit','barcode'],`${id} field`);
   if (!identifier(f.id) || `${id}-${f.id}`.length > 74 || ids.has(`${id}-${f.id}`) || ['header-title','header-logo','items-header','page-number'].includes(`${id}-${f.id}`)) fail('Invalid or duplicate field id.');
   ids.add(`${id}-${f.id}`);
-  if (!text(f.label,100) || !FORMATS.includes(f.format ?? '') || (f.text !== undefined && !text(f.text,10000))) fail('Invalid field label, text or format.');
+  if (f.text !== undefined && !text(f.text,10000)) fail('Invalid field label, text or format.');
   if (f.kind !== undefined && !FIELD_KINDS.includes(f.kind)) fail('Unsupported field kind.');
   if (f.pointer !== undefined && (typeof f.pointer !== 'string' || (f.pointer && !validPointer(f.pointer,relative)))) fail('Use /field for document bindings and ./field for table bindings. Wildcards and prototype paths are not supported.');
   if (f.lastPointer !== undefined && (typeof f.lastPointer !== 'string' || (f.lastPointer && !validPointer(f.lastPointer,relative)))) fail('Invalid saved binding pointer.');
   if (['bound','barcode'].includes(fieldKind(f)) && !f.pointer) fail('A bound field or barcode needs a JSON pointer.');
   if (!['bound','barcode'].includes(fieldKind(f)) && f.pointer) fail('Static text and images cannot have data bindings.');
-  if (f.showLabel !== undefined && typeof f.showLabel !== 'boolean') fail('showLabel must be a boolean.');
-  for (const key of ['labelStyle','valueStyle']) if (f[key] !== undefined) validateFieldStyle(f[key]);
+  validateFieldProperties(f);
   if (fieldKind(f) === 'barcode') {
     validateBarcodeSettings(f.barcode);
     if (f.format || f.text || ['assetId','height','fit'].some(key=>f[key] !== undefined) || (!relative && f.width !== undefined)) fail('Barcodes cannot replace formatted text or image values.');
