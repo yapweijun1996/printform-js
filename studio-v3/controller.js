@@ -23,6 +23,7 @@ import { isSupportedCurrency, projectCurrencyIssue, suppliedPrimaryCurrency } fr
 import { validateBarcode } from '../document-core/core/barcode.js';
 import { resolvePointer } from '../document-core/core/json.js';
 import { protectedBindings } from './agent-binding-invariants.js';
+import { fieldBindingChange } from './field-binding.js';
 
 export function createBus(project, database = null, source = 'builtin-demo') {
   const initial = structuredClone(project);
@@ -133,15 +134,15 @@ export function formDesign(project, selected, form, kind) {
   } else if (kind === 'binding' && selection) {
     const mode = text('bindingMode'), f = selection.field;
     if (mode === 'barcode' && protectedBindings(project.manifest.studioV3).some(binding=>binding.block === selection.block && binding.id === f.id && binding.kind !== 'barcode')) throw new Error('Protected financial or canonical supplied facts cannot be replaced by a barcode. Add a separate barcode field.');
-    const relative = isTable(d,selection.block);
-    f.lastPointer = text('pointer'); f.pointer = ['bound','barcode'].includes(mode) ? text('pointer') : ''; f.kind = mode;
-    if (mode === 'image') { f.assetId = text('assetId'); f.width = Number(values.get('imageWidth')); f.height = Number(values.get('imageHeight')); f.fit = text('imageFit'); f.text = ''; f.format = ''; delete f.barcode; }
-    else {
-      f.text = mode === 'barcode' ? '' : text('text');
-      for (const key of ['assetId','height','fit']) delete f[key]; if (!relative) delete f.width;
-      if (mode === 'barcode') { f.format = ''; f.barcode = {format:text('barcodeFormat'),moduleWidth:Number(values.get('barcodeModuleWidth')),height:Number(values.get('barcodeHeight')),displayValue:checked('barcodeDisplayValue')}; }
-      else delete f.barcode;
-    }
+    const pointer = text('pointer'), active = ['bound','barcode'].includes(mode);
+    const patch = {pointer:active ? pointer : ''};
+    if (mode !== fieldKind(f)) patch.kind = mode;
+    if (f.text !== undefined || text('text')) patch.text = text('text');
+    if (mode === 'image') Object.assign(patch,{assetId:text('assetId'),width:Number(values.get('imageWidth')),height:Number(values.get('imageHeight')),fit:text('imageFit'),text:'',format:''});
+    if (mode === 'barcode') Object.assign(patch,{text:'',format:'',barcode:{format:text('barcodeFormat'),moduleWidth:Number(values.get('barcodeModuleWidth')),height:Number(values.get('barcodeHeight')),displayValue:checked('barcodeDisplayValue')}});
+    const existing = f.pointer || f.lastPointer || form.elements.namedItem('pointer')?.defaultValue;
+    const rememberedPointer = !active && pointer !== existing ? pointer : undefined;
+    fieldRows(d,selection.block)[selection.index] = fieldBindingChange(f,patch,{relative:isTable(d,selection.block),rememberedPointer}).field;
   } else if (kind === 'collection') {
     const table = tableOf(d,selected);
     if (table && table.id !== 'items') table.collection = text('collection'); else d.collection = text('collection');
@@ -180,7 +181,8 @@ export async function importRasterAsset(project,file,target) {
   else {
     const selected = selectionField(d,target);
     if (!selected || isTable(d,selected.block)) throw new Error('Select a non-table field for an image.');
-    const f = selected.field; f.lastPointer = f.pointer || f.lastPointer || ''; Object.assign(f,{kind:'image',pointer:'',text:'',format:'',assetId:id,width:80,height:60,fit:'contain'}); delete f.barcode;
+    const patch = {kind:'image',pointer:'',text:'',format:'',assetId:id,width:80,height:60,fit:'contain'};
+    fieldRows(d,selected.block)[selected.index] = fieldBindingChange(selected.field,patch).field;
   }
   validateDesign(d); return d;
 }

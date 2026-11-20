@@ -18,6 +18,7 @@ import { projectDescriptor } from './dataset-schema.js';
 import { agentPageSettings } from './agent-page-settings.js';
 import { fieldRows, tableOf, tableDefinitions, isTable } from './additional-tables.js';
 import { CURRENCY_CODES } from './currency-catalog.js';
+import { fieldBindingChange } from './field-binding.js';
 
 const unsafe = () => { throw Object.assign(new Error('UNSAFE_PROPOSAL'),{code:'UNSAFE_PROPOSAL'}); };
 const assertFieldWidth = (section,kind,width) => {
@@ -74,20 +75,12 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       const financial = financialField(selected.field);
       const suppliedNumber = selected.field.pointer && (['currency','number','percent'].includes(selected.field.format) || financial);
       if (suppliedNumber && (Object.hasOwn(op.patch,'text') || (op.patch.kind !== undefined && op.patch.kind !== 'bound') || (financial && op.patch.pointer !== undefined && op.patch.pointer !== selected.field.pointer) || (op.patch.format !== undefined && op.patch.format !== selected.field.format))) unsafe();
-      const properties = fieldPropertiesChange(selected.field,op.patch);
-      for (const [key,requested] of Object.entries(op.patch)) {
-        const value = Object.hasOwn(properties,key) ? properties[key] : requested;
-        record(op.target,key,selected.field[key],value);
-        if (key === 'width' && isTable(design,selected.block)) Object.assign(selected.field,columnWidthChange(selected.field,value));
-        else if (Object.hasOwn(properties,key) && value === undefined) delete selected.field[key];
-        else selected.field[key] = structuredClone(value);
-      }
-      // Explicit mode transitions cannot retain hidden bound data.
-      if ((op.patch.kind === 'static' || op.patch.kind === 'image') && selected.field.pointer) { record(op.target,'pointer',selected.field.pointer,''); selected.field.pointer = ''; }
-      if (op.patch.kind && op.patch.kind !== 'image') for (const key of ['assetId','height','fit',...(isTable(design,selected.block) ? [] : ['width'])]) {
-        if (selected.field[key] !== undefined) { record(op.target,key,selected.field[key],undefined); delete selected.field[key]; }
-      }
-      if (op.patch.kind && op.patch.kind !== 'barcode' && selected.field.barcode !== undefined) { record(op.target,'barcode',selected.field.barcode,undefined); delete selected.field.barcode; }
+      const relative = isTable(design,selected.block);
+      const patch = {...op.patch,...fieldPropertiesChange(selected.field,op.patch)};
+      if (relative && Object.hasOwn(patch,'width')) Object.assign(patch,columnWidthChange(selected.field,patch.width));
+      const change = fieldBindingChange(selected.field,patch,{relative});
+      for (const [key,value] of Object.entries(change.changes)) record(op.target,key,selected.field[key],value);
+      fieldList(design,selected.block)[selected.index] = change.field;
     } else if (op.type === 'add_field') {
       object(op,['type','section','field']); object(op.field,['id',...fieldKeys]);
       if (!BLOCKS.includes(op.section)) unsafe();
