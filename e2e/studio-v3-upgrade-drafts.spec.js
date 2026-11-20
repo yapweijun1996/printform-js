@@ -151,6 +151,65 @@ test('pending AI request is cancelled only on confirmed update and never resumes
   }finally{release();await server.close();}
 });
 
+test('an open fictional note review blocks update and an approved edit survives Keep and Undo',async({page,context})=> {
+  const server = await upgradeServer();
+  let fork, providerRequests = 0;
+  const readSource = tab=>tab.locator('#preview-frame').evaluate(frame=> {
+    const html = new DOMParser().parseFromString(frame.srcdoc,'text/html');
+    const read = id=>JSON.parse(html.getElementById(id).textContent);
+    return {data:read('pf-sample-data'),manifest:read('pf-manifest'),schema:read('pf-schema')};
+  });
+  try {
+    await demoMock(context,()=> { providerRequests++; return {status:403,body:{}}; });
+    await start(page,server);
+    const original = await readSource(page);
+    await page.locator('[data-ai-toggle]').click();
+    await page.locator('#ai-prompt').fill('/new delivery');
+    await page.locator('[data-ai-send]').click();
+    const opened = context.waitForEvent('page');
+    await page.getByRole('link',{name:'Apply & open in new tab'}).click();
+    fork = await opened;
+    await ready(fork);
+    const before = await readSource(fork), replacement = 'Fictional note kept through an approved update';
+    expect(before.manifest.documentId).not.toBe(original.manifest.documentId);
+    await fork.locator('[data-mode=data]').click();
+    await fork.getByRole('button',{name:'Review fictional note'}).click();
+    const review = fork.getByRole('dialog',{name:'Review fictional note'});
+    await review.getByRole('textbox',{name:'Replacement note'}).fill(replacement);
+    await review.getByRole('button',{name:'Preview note'}).click();
+    const apply = review.getByRole('button',{name:'Apply to form'});
+    await expect(apply).toBeEnabled();
+    const version = await fork.locator('#app-version').innerText();
+    server.publish();
+    await fork.evaluate(async()=> { const registration = await navigator.serviceWorker.getRegistration(); void registration.update(); });
+    await expect(fork.locator('#update-status')).toContainText('Apply or cancel the fictional note review before updating.');
+    await expect(fork.locator('#app-version')).toHaveText(version);
+    await expect(fork.locator('#update-dialog')).toBeHidden();
+    await expect(review.getByRole('textbox',{name:'Replacement note'})).toHaveValue(replacement);
+    await expect(fork.locator('#revision')).toHaveText('r0');
+    expect(await readSource(fork)).toEqual(before);
+    expect(await fork.evaluate(()=>Object.keys(sessionStorage).filter(key=>key.includes('recovery')))).toEqual([]);
+    await apply.click();
+    await expect(review).toBeHidden();
+    await ready(fork);
+    expect((await readSource(fork)).data).toEqual({...before.data,notes:replacement});
+    await clickHeaderAction(fork,'update');
+    await expect(fork.locator('#update-dialog')).toBeVisible();
+    await fork.locator('[data-update-choice=keep]').click();
+    await expect(fork.locator('#app-version')).toContainText(NEXT.slice(0,12));
+    await ready(fork);
+    await expect(fork.locator('#revision')).toHaveText(/^r1\b/);
+    expect(await readSource(fork)).toEqual({...before,data:{...before.data,notes:replacement}});
+    expect(await fork.evaluate(()=>Object.keys(sessionStorage).filter(key=>key.includes('recovery')))).toEqual([]);
+    await clickHeaderAction(fork,'undo');
+    await ready(fork);
+    await expect(fork.locator('#revision')).toHaveText(/^r2\b/);
+    expect(await readSource(fork)).toEqual(before);
+    expect(await readSource(page)).toEqual(original);
+    expect(providerRequests).toBe(0);
+  } finally { await fork?.close(); await server.close(); }
+});
+
 test('quota failure blocks activation and leaves work and old version usable',async({page})=> {
   const server=await upgradeServer();
   try {
