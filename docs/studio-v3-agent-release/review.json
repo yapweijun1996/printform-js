@@ -26,6 +26,37 @@
     "studio-v3/fictional-note-suggestions.js",
     "studio-v3/index.html"
    ]
+  },
+  {
+   "entries": {
+    "printform.agent.apply_operations": "d5bf7286de56de056bdf245c9d3c7d159a077e55bb18482e56b18125759cbd09"
+   },
+   "disposition": "updated",
+   "justification": "The two parity evaluations retain real UI and Pi assertions while limiting each row-fill case to one form type and measuring computed typography in the native preview render context.",
+   "evidence": [
+    "e2e/studio-v3-element-style-parity.spec.js",
+    "tests/studio-v3-row-fill-parity.test.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.authoring.set_element_style": "130239487645ea2dede1abbb20f3a2d2fa8f55a308c59b58ba00406d371a3384"
+   },
+   "disposition": "updated",
+   "justification": "The parity evaluation reads actual computed font size, weight, color and alignment from the current native preview document and uses a real mouse click to select the rendered target.",
+   "evidence": [
+    "e2e/studio-v3-element-style-parity.spec.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.authoring.set_table_style": "12f0728245b17646e4db946b320702cdccf77caf9da718c3143971f6352237b7"
+   },
+   "disposition": "updated",
+   "justification": "The row-fill parity evaluation retains the form, inspector, stripe and color matrix while giving each form type its own test case.",
+   "evidence": [
+    "tests/studio-v3-row-fill-parity.test.js"
+   ]
   }
  ]
 }
