@@ -164,6 +164,27 @@ describe('G8 CLI explicit corpus/register scope',()=>{
     expect(JSON.parse(rejected.stderr.trim().split('\n').at(-1))).toMatchObject({outcome:'Fail',errors:['INVALID_JSON']});
   });
 
+  it('uses the same wire admission for direct evaluation and indexed preflight',()=>{
+    const root=fs.mkdtempSync(path.join(os.tmpdir(),'g8-cli-wire-unit-'));roots.push(root);
+    const profileFile=jsonFile(root,'profile.json',profile);
+    const indexFile=jsonFile(root,'index.json',{schema:'studio-g8-preflight-index-v1',envelopes:['envelope.json']});
+    const {evidence}=fixture();
+    function check(expected) {
+      const envelopeFile=jsonFile(root,'envelope.json',seal(evidence));
+      const direct=run('evaluate',profileFile,envelopeFile);
+      expect(direct.status).toBe(expected.admissible?0:1);
+      const evaluation=JSON.parse(direct.stdout);
+      const indexed=JSON.parse(run('preflight',profileFile,indexFile).stdout).evidence.results[0];
+      expect(evaluation).toMatchObject(expected);
+      expect(indexed.evaluation).toEqual(evaluation);
+    }
+    check({admissible:true,outcome:'Pass'});
+    const request=evidence.providerBodies[0];
+    request.body=String.raw`{"\u006dodel":"other-model",${request.body.slice(1)}`;
+    request.digest=digest(request.body);
+    check({admissible:false,outcome:'Fail',errors:expect.arrayContaining(['actual provider payload is not unambiguous JSON'])});
+  });
+
   it('keeps held-out inputs gated in the paired scope',()=>{
     const pair=isolatedPair();
     const heldOut=readCorpus(pair.corpus).find(item=>item.holdout);

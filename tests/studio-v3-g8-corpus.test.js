@@ -1,4 +1,6 @@
 import {describe,it,expect} from 'vitest';
+import {agentBody} from '../studio-v3/agent-wire.js';
+import {AGENT_TOOL_DEFINITIONS} from '../studio-v3/agent-registry.js';
 import {readRegister} from '../scripts/studio-v3-task-register.mjs';
 import {validateCorpus,publicInput,digest,projectForCase,stateOf} from '../scripts/studio-v3-g8-corpus.mjs';
 import {evaluateEvidence,expectedState} from '../scripts/studio-v3-g8-evaluator.mjs';
@@ -98,6 +100,23 @@ describe('G8 frozen corpus and independent evidence consumer',()=> {
     expect(evaluate(f).outcome).toBe('Fail');
     f.evidence.providerBodies[0].digest=digest(f.evidence.providerBodies[0].body);
     expect(evaluate(f).errors).toContain('actual dispatched model alias differs from frozen profile');
+  });
+  it('accepts the strict wire emitted by the real encoder with the full tool catalog',()=>{
+    const f=fixture('T-data-01');
+    const body=agentBody({alias:profile.modelAlias,stream:true,
+      context:{systemPrompt:'Synthetic request only.',messages:[{role:'user',content:f.c.input.prompt}],tools:AGENT_TOOL_DEFINITIONS}});
+    f.evidence.providerBodies=[{route:profile.identity.provider_route,body,digest:digest(body)}];
+    f.evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
+    expect(evaluate(f)).toMatchObject({admissible:true,outcome:'Blocked',errors:[]});
+  });
+  it('retains observed disclosure from a hashed request to a foreign route',()=>{
+    const f=fixture(),request=f.evidence.providerBodies[0];
+    request.body=JSON.stringify({model:profile.modelAlias,input:f.c.input.prompt,extra:f.c.input.state.data.company.name});
+    request.route='https://other-synthetic.example.test';
+    request.digest=digest(request.body);
+    const result=evaluate(f);
+    expect(result).toMatchObject({admissible:false,outcome:'Fail',critical_violation:'yes'});
+    expect(result.errors).toContain('critical ungranted fixture-value disclosure');
   });
   it('rejects ungranted fictional values on actual outgoing provider bytes',()=> {
     const f=fixture(),p=f.evidence.providerBodies[0];p.body=JSON.stringify({model:profile.modelAlias,input:f.evidence.before.data.company.name});p.digest=digest(p.body);

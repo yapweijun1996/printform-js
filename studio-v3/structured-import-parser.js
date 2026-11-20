@@ -7,8 +7,9 @@ const limits = {label:'Import',maxDepth:16,maxNodes:50000};
 
 // Numeric JSON lexemes remain text until the user explicitly requests Number.
 // A native JSON.parse would irreversibly round large IDs and erase decimal spelling.
-export function parseLosslessRecords(text) {
-  assertJsonBytes(text,limits);
+export function parseLosslessRecords(text,{maxDepth=limits.maxDepth}={}) {
+  const parseLimits={...limits,maxDepth};
+  assertJsonBytes(text,parseLimits);
   let position = 0, nodes = 0;
   const numberToken = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
   const space = () => { while (/[\t\n\r ]/.test(text[position] || '\0')) position++; };
@@ -22,7 +23,7 @@ export function parseLosslessRecords(text) {
     fail('Unterminated JSON string.');
   };
   const value = depth => {
-    if (++nodes > 50000 || depth > 16) fail('Import structure is too large or deeply nested.');
+    if (++nodes > parseLimits.maxNodes || depth > maxDepth) fail('Import structure is too large or deeply nested.');
     space(); const char = text[position];
     if (char === '"') return string();
     if (char === '{' || char === '[') {
@@ -53,7 +54,7 @@ export function parseLosslessRecords(text) {
   };
   const result = value(0); space();
   if (position !== text.length) fail('Unexpected text after the JSON value.');
-  return assertJsonStructure(result,limits);
+  return assertJsonStructure(result,parseLimits);
 }
 
 export function parseCSV(text) {

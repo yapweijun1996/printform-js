@@ -164,6 +164,26 @@ describe('G8 read-only full-suite preflight',()=>{
     expect(report.evidence.results[0].evaluation).toMatchObject({admissible:true,outcome:'Pass',critical_violation:'no'});
   });
 
+  it.each([
+    ['foreign route', request=>{request.route='https://other-synthetic.example.test';},'missing actual provider payload bytes/custody/route'],
+    ['foreign alias', request=>{request.body=JSON.stringify({...JSON.parse(request.body),model:'other-model'});},'actual dispatched model alias differs from frozen profile'],
+    ['duplicate model key', request=>{request.body=`{"model":"other-model",${request.body.slice(1)}`;},'actual provider payload is not unambiguous JSON'],
+    ['malformed request JSON', request=>{request.body+='}';},'actual provider payload is not unambiguous JSON'],
+    ['overdeep request JSON', request=>{request.body=`{"model":"unit","raw":${'['.repeat(34)}0${']'.repeat(34)}}`;},'actual provider payload is not unambiguous JSON'],
+    ['missing request bytes', request=>{delete request.body;},'missing actual provider payload bytes/custody/route'],
+    ['changed request digest', request=>{request.digest=digest('other request');},'missing actual provider payload bytes/custody/route']
+  ])('excludes a provider request with %s from verified coverage',(_name,change,reason)=>{
+    const {evidence}=fixture('T-data-01');
+    evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
+    const request=evidence.providerBodies[0],before=request.body;
+    change(request);
+    if (typeof request.body==='string' && request.body!==before) request.digest=digest(request.body);
+    const report=runWith([seal(evidence)],[row(evidence,'Fail')]);
+    expect(report.counts).toMatchObject({verifiedSelected:0,missingRegisteredEvidence:1});
+    expect(report.evidence.results[0].evaluation).toMatchObject({admissible:false,outcome:'Fail'});
+    expect(report.evidence.results[0].evaluation.errors).toContain(reason);
+  });
+
   it('rejects signature tampering and altered register metadata',()=>{
     const {evidence}=fixture(),envelope=seal(evidence);envelope.evidence.answer='tampered';
     const rejected=runWith([envelope],[row(evidence)]);
