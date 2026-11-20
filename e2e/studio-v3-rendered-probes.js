@@ -42,6 +42,8 @@ export async function mountNumericProbeModules(page) {
       'model.js':['newProject','designOf','compileProject'],
       'agent-draft.js':['createDraft'],
       'agent-tools.js':['createAgentTools'],
+      'agent-effects.js':['createGrant'],
+      'ai-authoring.js':['shareAuthoring'],
       'preview.js':['PaperPreview'],
       'validation.js':['inspectProject','bindingValidation'],
       'ai-gateway-config.js':['DEMO_CONFIG']
