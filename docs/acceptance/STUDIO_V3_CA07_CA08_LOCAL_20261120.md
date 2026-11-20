@@ -33,6 +33,6 @@ PF_CODING_BROWSER_INTEGRATION=1 npx playwright test e2e/studio-v3-source-artifac
 
 ## 完整验收仍需的证据
 
-- G6 仍需声明负载下至少 100 次取消与状态延迟测量、最坏边界下资源恢复，以及当前已发布的 HTTPS Studio 与本地 companion 的浏览器配对、撤销和网络权限验收。这里完成的是有界 Linux/amd64 和 Chromium 的验证。
+- [本地负载复验](STUDIO_V3_G6_LOAD_20261120.md)完成 100 次运行状态和取消采样。运行状态和独立进程退出达标，最终 HTTP 停止回执超出 p95 目标。还需验证剩余资源边界及当前已发布 HTTPS Studio 与本地 companion 的浏览器配对、撤销和网络权限。这里完成的是有界 Linux/amd64 和 Chromium 的验证。
 - G7 已在有界本地轮次覆盖真实构建、字节/源码身份、类型化私有候选和人工审核提交。更广泛的隔离与恢复矩阵、支持发布平台下的源构建到提交及生产发布身份复验保持开放。模型可写测试或普通退出成功不计入独立验收。
 - 真实模型任务、跨平台/硬件认证及发布决定仍分开记录。未增加正式 G8 attempt。
