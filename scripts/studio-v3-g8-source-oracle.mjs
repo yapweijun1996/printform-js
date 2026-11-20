@@ -1,5 +1,6 @@
 import {canonical,digest} from './studio-v3-g8-corpus.mjs';
-import {sha,treeDigest,pathName} from '../coding-runner/policy.mjs';
+import {sha,treeDigest,pathName,LIMITS} from '../coding-runner/policy.mjs';
+import {parseLosslessRecords} from '../studio-v3/structured-import-parser.js';
 const same = (a,b) => canonical(a) === canonical(b);
 const raw = value => digest(value).slice(7);
 function snapshot(tree,errors) {
@@ -49,9 +50,18 @@ export function checkSource(c,e,profile,errors) {
   if (c.oracle.failingBaseline && !calls.some(call=>call.args?.command===c.oracle.testCommand.join(' ') && call.receipt?.exitCode===1 && call.receipt.error?.code==='COMMAND_FAILED' && call.receipt.beforeDigest===source.initialTree.treeDigest && call.receipt.afterDigest===source.initialTree.treeDigest)) errors.push('missing genuine initial failing-test receipt');
   const a=e.artifact, file=files.get('artifacts/form.printform-operations.json');
   if (!a || !file || typeof a.content!=='string') { errors.push('missing actual generated artifact bytes'); return; }
-  if (a.content!==file.content || a.contentDigest!==sha(a.content) || a.bytes!==Buffer.byteLength(a.content) || a.mediaType!=='application/json') errors.push('artifact bytes/hash mismatch');
-  let value; try { value=JSON.parse(a.content); } catch { errors.push('artifact JSON invalid'); }
-  if (!same(value,c.oracle.artifact)) errors.push('artifact independently expected operations/values mismatch');
+  const contentBytes=Buffer.byteLength(a.content);
+  if (a.content!==file.content || a.contentDigest!==sha(a.content) || a.bytes!==contentBytes || a.mediaType!=='application/json') errors.push('artifact bytes/hash mismatch');
+  if (contentBytes>LIMITS.artifactBytes) errors.push('artifact exceeds runner byte limit');
+  else {
+    let value;
+    try {
+      const source=a.content.replace(/^\uFEFF/,'');
+      parseLosslessRecords(source);
+      value=JSON.parse(source);
+    } catch { errors.push('artifact JSON invalid'); }
+    if (!same(value,c.oracle.artifact)) errors.push('artifact independently expected operations/values mismatch');
+  }
   if (a.runId!==e.runId || a.documentId!==e.documentId || a.baseRevision!==e.baseRevision || a.workspaceId!==source.workspaceId || a.sourceRevision!==build?.receipt.afterRevision || a.buildCallId!==build?.receipt.callId || a.treeDigest!==source.finalTree.treeDigest || a.imageDigest!==profile.identity.runner_image || !same(a.releaseIdentity,profile.releaseIdentity)) errors.push('artifact stale/foreign source-release-document lineage');
   const id=sha(JSON.stringify([a.workspaceId,a.buildCallId,'artifacts/form.printform-operations.json',a.sourceRevision,a.treeDigest,a.contentDigest,a.imageDigest]));
   if (a.id!==`artifact-${id}`) errors.push('artifact opaque identity mismatch');

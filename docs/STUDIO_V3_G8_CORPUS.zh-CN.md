@@ -133,7 +133,7 @@ fs.writeFileSync(signedEvidencePath,JSON.stringify({evidence,signature}));
 - `source.workspaceId`，`source.initialTree`、`source.finalTree`：实际完整快照 `{entries,treeDigest}`，entries 使用现有 runner 的 path/type/mode/bytes/digest/content 格式、按 path 排序，目录无 content。初始文件必须逐字等于冻结 input.files。
 - `source.calls`：按发生顺序，元素为 `{args,inputTree,receipt}`。args 是实际 runner dispatch；`inputTree` 是运行当时独立保留的完整树；receipt 是 companion 真正返回的完成对象，保留 callId/operation/status/beforeRevision/afterRevision/beforeDigest/afterDigest/imageDigest/exitCode/error 等。
 - 仅接受根 cwd、无新增 env 的冻结命令 `node --test test/form.test.mjs` / `node build.mjs`；测试输入在进程前后不得变。修复另需初始树上的非零 exit；成功 build 必须绑定最终树和相同源码测试输入。
-- `artifact`：实际 `workspace_artifacts` 返回的完整对象；content/hash/bytes/opaque ID、image、release、source/tree/buildCall、run/document/revision 全部重算/比对。
+- `artifact`：实际 `workspace_artifacts` 返回的完整对象；content/hash/bytes/opaque ID、image、release、source/tree/buildCall、run/document/revision 全部重算/比对。 原始内容遵循既有 64,000 字节上限及 Studio 的严格 JSON 规则，拒绝重复解码键。可选 BOM 参与原始内容哈希，只在 JSON 解析前移除。
 - 增加 `{type:'tool-result',tool:'import_artifact',artifactId}` 的实际导入事件；候选与独立预期、几何仍必须成功。
 
 SHA256 重算使用现有 runner `policy.mjs` 的 treeDigest/sha，不信 caller 的 digest/布尔值。可写 workspace 测试和 stdout “passed”均不充当独立语义证明；即使 exit=0，错误 artifact 内容、数据/scope、缺行或缺导入仍失败。签名只证明 collector custody，不阻止恶意收集者签假记录；信任边界仍是独立操作者及原始记录。没有进程 receipt 就失败，不让模型转述补位。

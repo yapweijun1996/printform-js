@@ -3,11 +3,47 @@ import {readRegister} from '../scripts/studio-v3-task-register.mjs';
 import {validateCorpus,publicInput,digest,projectForCase,stateOf} from '../scripts/studio-v3-g8-corpus.mjs';
 import {evaluateEvidence,expectedState} from '../scripts/studio-v3-g8-evaluator.mjs';
 import {saveProject} from '../studio-v3/file-io.js';
+import {verifySourceArtifact} from '../studio-v3/source-workspace-artifact.js';
+import {changesBetween,sha,treeDigest,LIMITS} from '../coding-runner/policy.mjs';
 import {corpus,profile,fixture,sourceFixture,geometry,seal} from './support/g8-evidence-fixture.js';
 
 // All signed inputs in this file are synthetic consumer-unit evidence, never real attempts.
 const evaluate = ({c,evidence},p=profile) => evaluateEvidence(c,seal(evidence),p,{corpus});
+function replaceArtifactBytes(evidence,content) {
+  const path='artifacts/form.printform-operations.json', artifact=evidence.artifact, previousId=artifact.id;
+  const tree=evidence.source.finalTree, file=tree.entries.find(entry=>entry.path===path), build=evidence.source.calls.at(-1);
+  Object.assign(file,{content,bytes:Buffer.byteLength(content),digest:sha(content)});
+  tree.treeDigest=treeDigest(tree.entries);
+  Object.assign(build.receipt,{afterDigest:tree.treeDigest,changes:changesBetween(build.inputTree.entries,tree.entries)});
+  Object.assign(artifact,{content,bytes:file.bytes,contentDigest:file.digest,treeDigest:tree.treeDigest});
+  artifact.id=`artifact-${sha(JSON.stringify([artifact.workspaceId,artifact.buildCallId,path,artifact.sourceRevision,artifact.treeDigest,artifact.contentDigest,artifact.imageDigest]))}`;
+  evidence.events.find(event=>event.artifactId===previousId).artifactId=artifact.id;
+}
+
 describe('G8 frozen corpus and independent evidence consumer',()=> {
+  it.each([
+    ['duplicate key',content=>`{"operations":[],${content.slice(1)}`,'artifact JSON invalid'],
+    ['duplicate decoded key',content=>`{"\\u006fperations":[],${content.slice(1)}`,'artifact JSON invalid'],
+    ['over-limit bytes',content=>content+' '.repeat(LIMITS.artifactBytes+1-Buffer.byteLength(content)),'artifact exceeds runner byte limit']
+  ])('rejects independently rebound %s just like the Studio artifact importer',async(_name,mutate,reason)=>{
+    const f=sourceFixture();
+    expect(evaluate(f).outcome).toBe('Pass');
+    replaceArtifactBytes(f.evidence,mutate(f.evidence.artifact.content));
+    await expect(verifySourceArtifact(f.evidence.artifact,f.evidence.artifact)).rejects.toMatchObject({code:'ARTIFACT_REJECTED'});
+    const evaluated=evaluate(f);
+    expect(evaluated.outcome).toBe('Fail');
+    expect(evaluated.errors).toContain(reason);
+  });
+
+  it('retains exact hashing for a valid UTF-8 BOM artifact within the runner limit',async()=>{
+    const f=sourceFixture();
+    const content='\uFEFF'+f.evidence.artifact.content;
+    replaceArtifactBytes(f.evidence,content+' '.repeat(LIMITS.artifactBytes-Buffer.byteLength(content)));
+    await expect(verifySourceArtifact(f.evidence.artifact,f.evidence.artifact)).resolves.toEqual(f.c.oracle.artifact);
+    expect(evaluate(f).outcome).toBe('Pass');
+  });
+
+
   it('binds all sixty actual distinct inputs, twenty holdouts and six essential slots without recording synthetic attempts',()=> {
     expect(validateCorpus(corpus)).toEqual([]);
     expect(corpus).toHaveLength(60);
