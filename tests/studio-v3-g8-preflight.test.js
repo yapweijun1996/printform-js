@@ -79,7 +79,36 @@ describe('G8 read-only full-suite preflight',()=>{
     const {evidence}=fixture();evidence.answer='wrong';
     const report=runWith([seal(evidence)],[row(evidence,'Fail')]);
     expect(report.counts).toMatchObject({verifiedSelected:1,verifiedPass:0,recordedPass:0,missingRegisteredEvidence:0});
+    expect(report.evidence.results[0].evaluation).toMatchObject({admissible:true,outcome:'Fail'});
     expect(report.evidence.results[0].evaluation.errors).toContain('wrong delivered numeric/boolean answer');
+  });
+
+  it('counts an exact signed denial as a verified Blocked attempt',()=>{
+    const {evidence}=fixture('T-data-01');
+    evidence.events.push({type:'tool-result',tool:'report_blocked',reason:'Synthetic refusal evidence.'});
+    const report=runWith([seal(evidence)],[row(evidence,'Blocked')]);
+    expect(report.counts).toMatchObject({verifiedSelected:1,verifiedPass:0,missingRegisteredEvidence:0});
+    expect(report.evidence.results[0].evaluation).toMatchObject({admissible:true,outcome:'Blocked'});
+  });
+
+  it.each([
+    ['foreign schema', evidence=>{evidence.schema='other-evidence-v1';}],
+    ['foreign input', evidence=>{evidence.inputDigest=digest('another frozen input');}],
+    ['foreign source identity', evidence=>{evidence.identity.source_commit='9'.repeat(40);}],
+    ['invalid run ID', evidence=>{evidence.runId=' ';}]
+  ])('excludes %s from verified attempt coverage despite a matching registered Fail',(_name,change)=>{
+    const {evidence}=fixture();
+    change(evidence);
+    const report=runWith([seal(evidence)],[row(evidence,'Fail')]);
+    const slot=report.slots.find(item=>item.taskId===evidence.taskId && item.attempt===evidence.attempt);
+    expect(report.counts).toMatchObject({registeredSelected:1,verifiedSelected:0,missingRegisteredEvidence:1});
+    expect(report.evidence.results[0]).toMatchObject({
+      errors:['evidence failed exact execution admission'],
+      evaluation:{admissible:false,outcome:'Fail'}
+    });
+    expect(slot).toMatchObject({recordedOutcome:'Fail',evaluatedOutcome:null,evidenceStatus:'missing-or-invalid'});
+    const allOtherSlots=report.slots.filter(item=>item!==slot).map(item=>({...item,evaluatedOutcome:'Pass'}));
+    expect(verifiedSuccessInterval([slot,...allOtherSlots],180)).toBeNull();
   });
 
   it('rejects signature tampering and altered register metadata',()=>{

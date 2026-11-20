@@ -84,6 +84,7 @@ export function inspectEvidence({corpus,register,profile,inventory}) {
   for (const item of inventory.envelopes) {
     const envelope=item.value,e=envelope?.evidence,owner=profiles.get(e?.profileDigest);
     const result={path:item.path,taskId:e?.taskId ?? null,attempt:e?.attempt ?? null,profile:owner?.profile ?? null,errors:[]};
+    results.push(result);
     evidenceOf.set(result,e);
     const c=corpus.find(task=>task.id===e?.taskId);
     if (!owner) result.errors.push('missing exact frozen profile for signed evidence');
@@ -100,10 +101,17 @@ export function inspectEvidence({corpus,register,profile,inventory}) {
             errors:oracleErrors.length?['Held-out oracle diagnostics withheld; review original evidence in independent custody.']:[]};
         }
         result.evidenceDigest=evidenceDigest;
-      } catch { result.errors.push('malformed evidence cannot be evaluated'); }
+      } catch {
+        result.errors.push('malformed evidence cannot be evaluated');
+        continue;
+      }
+      if (!result.evaluation.admissible) {
+        result.errors.push('evidence failed exact execution admission');
+        continue;
+      }
       const rows=register.attempts.rows.filter(a=>a.profile===owner.profile && a.task_id===e.taskId && Number(a.attempt)===e.attempt);
       if (rows.length!==1) result.errors.push('evidence must match exactly one registered attempt');
-      else if (result.evaluation) {
+      else {
         const row=rows[0],v=result.evaluation;
         for (const key of IDENTITY) if (row[key]!==owner.identity[key]) result.errors.push(`registered ${key} differs from evidence profile`);
         if (row.evidence_digest!==evidenceDigest || row.outcome!==v.outcome || row.critical_violation!==v.critical_violation || Number(row.duration_ms)!==v.duration_ms || String(row.usage)!==String(e.usage)) result.errors.push('registered digest/outcome/critical/duration/usage differs from evaluated evidence');
@@ -114,7 +122,6 @@ export function inspectEvidence({corpus,register,profile,inventory}) {
         runs.get(runKey).errors.push('runId reused across evidence; repetitions require separate executions');
       } else runs.set(runKey,result);
     }
-    results.push(result);
   }
   // Build the trusted subset only after duplicate-run detection has examined every envelope.
   for (const result of results) {

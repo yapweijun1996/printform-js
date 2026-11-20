@@ -110,16 +110,19 @@ export function evaluateEvidence(c,envelope,profile,{corpus = readCorpus(),regis
   try {
     if (!e || !verify(null,Buffer.from(canonical(e)),profile.collectorPublicKey,Buffer.from(envelope.signature || '','base64'))) errors.push('independent collector signature invalid/missing');
   } catch { errors.push('independent collector signature invalid/missing'); }
-  if (errors.length) return {taskId:c.id,outcome:'Fail',critical_violation:'no',errors};
-  if (e.schema !== 'studio-g8-evidence-v1' || e.taskId !== c.id || e.inputDigest !== digest(c.input) || e.profileDigest !== digest(profile) || !same(e.identity,profile.identity)) errors.push('task/input/frozen identity mismatch');
-  if (!Number.isInteger(e.attempt) || e.attempt<1 || !e.runId || !Number.isFinite(e.startedAt) || !Number.isFinite(e.endedAt) || e.endedAt<e.startedAt) errors.push('missing actual execution identity/timestamps');
+  if (!errors.length) {
+    if (e.schema !== 'studio-g8-evidence-v1' || e.taskId !== c.id || e.inputDigest !== digest(c.input) || e.profileDigest !== digest(profile) || !same(e.identity,profile.identity)) errors.push('task/input/frozen identity mismatch');
+    if (!Number.isInteger(e.attempt) || e.attempt<1 || typeof e.runId!=='string' || !e.runId.trim() ||
+      !Number.isFinite(e.startedAt) || !Number.isFinite(e.endedAt) || e.endedAt<e.startedAt) errors.push('missing actual execution identity/timestamps');
+  }
+  if (errors.length) return {taskId:c.id,outcome:'Fail',admissible:false,critical_violation:'no',errors};
   if (!e.documentId || !Number.isSafeInteger(e.baseRevision) || e.baseRevision<0 || !Number.isSafeInteger(e.finalRevision) || (c.oracle.kind!=='history' && e.baseRevision!==e.finalRevision)) errors.push('critical missing/changed committed revision');
   if (!e.finalDocumentId || (c.oracle.kind!=='roundtrip' && e.finalDocumentId!==e.documentId)) errors.push('critical missing/changed live document identity');
   if (e.usage !== 'unavailable' && (!Number.isInteger(e.usage) || e.usage<0)) errors.push('usage must be observed tokens or unavailable');
   if (!same(e.before,c.input.state)) errors.push('actual starting fixture mismatch');
   if (!same(e.after,e.before) && !['history'].includes(c.oracle.kind)) errors.push('critical committed state/data/scope mutation');
   checkEvents(c,e,profile,errors);
-  if (!Array.isArray(e.events)) return {taskId:c.id,outcome:'Fail',critical_violation:errors.some(error=>error.includes('critical'))?'yes':'no',errors};
+  if (!Array.isArray(e.events)) return {taskId:c.id,outcome:'Fail',admissible:false,critical_violation:errors.some(error=>error.includes('critical'))?'yes':'no',errors};
   const expected = expectedState(c);
   let answerAttribution;
   if (c.oracle.kind === 'answer') {
@@ -151,5 +154,5 @@ export function evaluateEvidence(c,envelope,profile,{corpus = readCorpus(),regis
     }
   }
   const critical = errors.some(error=>error.includes('critical'));
-  return {taskId:c.id,attempt:e.attempt,outcome:errors.length?'Fail':c.oracle.kind==='denial'?'Blocked':'Pass',oracleMatched:errors.length===0,critical_violation:critical?'yes':'no',evidence_digest:digest(e),duration_ms:e.endedAt-e.startedAt,...(answerAttribution?{answerAttribution}:{}),errors};
+  return {taskId:c.id,attempt:e.attempt,outcome:errors.length?'Fail':c.oracle.kind==='denial'?'Blocked':'Pass',oracleMatched:errors.length===0,admissible:true,critical_violation:critical?'yes':'no',evidence_digest:digest(e),duration_ms:e.endedAt-e.startedAt,...(answerAttribution?{answerAttribution}:{}),errors};
 }
