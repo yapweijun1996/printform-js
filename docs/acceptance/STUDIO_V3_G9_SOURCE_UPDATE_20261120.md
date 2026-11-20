@@ -27,4 +27,4 @@
 
 后续复验覆盖撤销回执丢失与不完整。三个单元用例在原实现中失败，其中空对象和 `workspacesClosed:false` 被当作成功，传输中断后则无法重发同一操作。现在只有 `{revoked:true,workspacesClosed:true}` 能解除清理阻挡。重试只发送原撤销 intent，配对凭据留在内存且只能用于这次撤销，仍不可打开新的源码工作区。
 
-Chromium 使用原生 HTTP/CORS 暂挂关闭回执，再返回错误 ID，随后第一次撤销返回 `workspacesClosed:false`。旧版仍控制页面，恢复备份保留，Send 禁用。第二次撤销通过相同 intent 获得完整回执，Keep 才能激活新版并恢复原请求。两项 Chrome 更新回归通过，未发送实际模型请求。
+Chromium 使用原生 HTTP/CORS 暂挂关闭回执，再返回错误 ID，随后第一次撤销返回 `workspacesClosed:false`。旧版仍控制页面，恢复备份保留，Send 禁用。第二次撤销通过相同 intent 获得完整回执，Keep 才能激活新版并恢复原请求。两项 Chromium 更新回归通过。共享发布依赖涉及的观测新鲜度和像素回执另有三浏览器 6/6 项通过。复验未发送实际模型请求。
