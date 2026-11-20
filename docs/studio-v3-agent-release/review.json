@@ -7,47 +7,93 @@
  "dispositions": [
   {
    "entries": {
-    "printform.agent.get_capabilities": "90c01053443b6a5fe2c32c25cfcd89f6bb9b8b4855ad51658f0525691af4fa3e",
-    "printform.agent.read_skill": "547f131f69d11b7f92e7b575298b460239fef02ad3a2f63777a4516366fb6d21",
-    "printform.agent.get_context": "7f6919db48e379c8fa1b8b45f6d05eadbd5f9a9f76f1bce57d008ecf3d01fc0e",
-    "printform.agent.apply_operations": "88e7cdcbc740d1c466945f7776e0ee9d89dfd5aba794849954d139516c214a9a",
-    "printform.agent.inspect_draft": "c3b190954126b9fdbb7b2c343fc3f3362afd648fb913cda8f8d841d297830d1f",
-    "printform.agent.observe_context": "5e78371853b768ca94843bd1542107db96a2bead827ed6e6a5ddc341c929deed",
-    "printform.agent.retrieve_page": "36724d40a7393f09463965575ba7d74f1b89a8ed27023e1c6ad962c64fa95bb0",
-    "printform.agent.validate_scenarios": "c74a72606c52472c36d2246f3f3f590744b749b6609dea393243ac0c9b93664b",
-    "printform.agent.undo_step": "240fe9fe972319635468a6a58434dbed1c6503323f6edde3d48f7c4b822d1938",
-    "printform.agent.take_notes": "022df981437f272aaa73eaf7102b97c26927289d00ca5038e59168f57c851fbf",
-    "printform.agent.finish": "6f4d73674e737cff45d15f8342c22a9017d9b767a08a0c098529032349f2e9ed",
-    "printform.agent.finish_answer": "76b35bb6b84f0675c6e9b590f90a75c0af6d9086dd23be4907291771d27bf4e9",
-    "printform.agent.report_blocked": "b063ccb62a68610f5ed2ee29ee3f7b6d0d3c5ae1bd434dc8f73a51e032a018cf",
-    "printform.knowledge.form-authoring": "b3471487df8099a0855739ae1838cb6814da90c79214ac74fd7eb100c3a76bb2",
+    "printform.agent.get_capabilities": "a15f4f99d035ee06715ff725324db560767ffafa4392c2e73d594da8875f38cc",
+    "printform.agent.read_skill": "2ed2af15a075a557a4e7f51e844cd21386c9b6c57f00ed8d4595df900531371c",
+    "printform.agent.get_context": "38e13ac756a4bca7811d39aa0e921830c99cc869c6c3db4a68926284c8dfee08",
+    "printform.agent.inspect_draft": "beef017f8532600860f10b3036b54c859f2ab518e18e197355b5c95c8cab6923",
+    "printform.agent.observe_context": "2a149168ff5946581cea8fbc6126f7b2ed0287d24cc710c626ad0cb056d8fa17",
+    "printform.agent.retrieve_page": "8ae1da802b4671312eeb341c76cc69177142f52521486c8780c60157d83f3119",
+    "printform.agent.validate_scenarios": "6f55bcd0f62ec1ac2436512d6c449f0558c8f4c232eae02c506fb7656fd75163",
+    "printform.agent.undo_step": "a8ba0603b902bd53680ed3061d0cb4049995afa6f13c5286326cd90a52437101",
+    "printform.agent.take_notes": "2d90d5189ad908de1a6014e1036780fe98f839ff8e02726075bb6847c5cc89f6",
+    "printform.agent.finish": "a754e3c3ad7720a824354e3aadede77c7b17ff95549e9cbcd3ec7c361d3997fe",
+    "printform.agent.finish_answer": "a82f7aac8cad319aed3c550401da3ce7639a70f8e26d68abcc040e37a89f786e",
+    "printform.agent.report_blocked": "dea041d8cf19e099516701c0fab31e4777cb04783eb58d5d92c45fd84a52ecf1",
+    "printform.knowledge.form-authoring": "dceade91f78d219340952bd05eec85d35ccc9a34a6806edc837f17d3ec8b9c63"
+   },
+   "disposition": "updated",
+   "justification": "The registry tracks the native preview helper and stripe restoration test as direct authoring evaluations. The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
+   "evidence": [
+    "studio-v3/agent-registry.js",
+    "studio-v3/agent-source-guide.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.agent.apply_operations": "ec4392b6afa0e9a5320478eaae8ab27b52f4033a4daa45678ae9455445a55d24"
+   },
+   "disposition": "updated",
+   "justification": "Typography parity delegates to the shared sampler and retains its style, real mouse and wire assertions. The test helper reads native computed styles from the same render generation. Stripe restoration checks every native row and cell color and the pre-Apply and reset boundaries without a stale Firefox frame context. The registry tracks the native preview helper and stripe restoration test as direct authoring evaluations. The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
+   "evidence": [
+    "e2e/studio-v3-element-style-parity.spec.js",
+    "e2e/studio-v3-native-preview.js",
+    "e2e/studio-v3-table-style.spec.js",
+    "studio-v3/agent-registry.js",
+    "studio-v3/agent-source-guide.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.agent.workspace_list": "bb6b3607ec38c5cceddd9fc5e92304c09f11da8a24f369bf31764ad41f844e92",
+    "printform.agent.workspace_read": "086181602f547d6f5170aa86037beffac9b6d17ea883a730fd9e7103f324234f",
+    "printform.agent.workspace_search": "96543aeaedc74a464a1698e9df14d59c8b254d0ab31c1a9be54b6c99de3cb358",
+    "printform.agent.workspace_write": "2d3174a07a46a242e96d92267cf4fdf678837804603bbdd83f2a7133c11bde0c",
+    "printform.agent.workspace_patch": "029fc96524398ebb0a57bd95b51fc1fe841ab9a15ddeb4a8713746018002b225",
+    "printform.agent.workspace_run": "fbeda4342307264eea130468cab2ff8f52c032b48da7f3714dc320d47848c72e",
+    "printform.agent.workspace_diff": "b505e17f23083476488fdd4621cb8741420178adfce7f72df576780e85274111",
+    "printform.agent.workspace_artifacts": "93cd736d9eb5334ec5462ee45678ab8fdf70a6c1a28395aee9d31244d632c6f6",
+    "printform.agent.import_artifact": "a09f0a136d6707ac307129acc831efb75f8d00cf541e5d2663846126579a9de6",
+    "printform.knowledge.source-workspace": "b7a1e91bf4530e750ce43d9ebbd091b5e70db43a8603d175b4ab748266dc094a"
+   },
+   "disposition": "updated",
+   "justification": "The new fixture verifies unchanged revision and digest before attach, and fail-closed cleanup when owned removal fails. The companion skips a duplicate snapshot only after owned removal confirms that a cancelled command never attached, while started and unknown effects retain reconciliation. The registry tracks the native preview helper and stripe restoration test as direct authoring evaluations. The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
+   "evidence": [
+    "coding-runner/early-cancel.test.mjs",
+    "coding-runner/workspaces.mjs",
+    "studio-v3/agent-registry.js",
+    "studio-v3/agent-source-guide.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.authoring.set_element_style": "f1e4afef592550ebaa69efa663c031001f4617bb8626858d11532942fb170cb9"
+   },
+   "disposition": "updated",
+   "justification": "Typography parity delegates to the shared sampler and retains its style, real mouse and wire assertions. The test helper reads native computed styles from the same render generation.",
+   "evidence": [
+    "e2e/studio-v3-element-style-parity.spec.js",
+    "e2e/studio-v3-native-preview.js"
+   ]
+  },
+  {
+   "entries": {
+    "printform.authoring.set_table_style": "838227d745da4e5653e241889a8c98fe3c7bfaa15c17502d9b04344bef90ccfa"
+   },
+   "disposition": "updated",
+   "justification": "The test helper reads native computed styles from the same render generation. Stripe restoration checks every native row and cell color and the pre-Apply and reset boundaries without a stale Firefox frame context.",
+   "evidence": [
+    "e2e/studio-v3-native-preview.js",
+    "e2e/studio-v3-table-style.spec.js"
+   ]
+  },
+  {
+   "entries": {
     "printform.knowledge.product-workflows": "d6854eb45d41decf60cef317e14f1ebeb491b81521c966be9d664ab68ce63ef3",
     "printform.knowledge.general-print-authoring": "b5f143e987035d1c1eb9c41c2afb1f21037b48bcdf963691c82b0efaf87f3c40"
    },
    "disposition": "updated",
    "justification": "The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
    "evidence": [
-    "studio-v3/agent-source-guide.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.workspace_list": "e3e882047083636919ff9207fd8ef3c1c657f854f3bc9d9a1650c536adfcd71c",
-    "printform.agent.workspace_read": "6442c4a59e5e565aa8971058fb464ac065bb1a624a32a4d95dc7fafc9d3c87c9",
-    "printform.agent.workspace_search": "3d868546978fdc230576cd3a8870a316897d5feb08cd08c9059667342c4ffdd9",
-    "printform.agent.workspace_write": "f3c14e849c233e99b35e757666eee6632a2dd0c434e8d34e17e012fb8e58d8e2",
-    "printform.agent.workspace_patch": "7c819d9e2a930a8e990fed77a8c5dc83ba3cf8240d2a4d6eae4f8052ba7dfe85",
-    "printform.agent.workspace_run": "455899f28100e3f13a30348c8de4f54dda7fd7fec58f472220f51c15eb13e5d3",
-    "printform.agent.workspace_diff": "401a59d74b57f88444730332a4cf88380d38b5ab49fbab75eb0c90b97e0744d0",
-    "printform.agent.workspace_artifacts": "bbe0f2f72c5abdc2c081299fb82bb4c265380e26b88e27da6d3e1af0ada955e6",
-    "printform.agent.import_artifact": "abeb4833e385dea301b91f5005d0b26d9448507b796ce93f996640d375677c9f",
-    "printform.knowledge.source-workspace": "4befdb0c57188c2c96ab6e0f471b30d4aa75ac7536a7f3fb17d37edd2e23bf3e"
-   },
-   "disposition": "updated",
-   "justification": "The new fixture verifies unchanged revision and digest before attach, and fail-closed cleanup when owned removal fails. The companion skips a duplicate snapshot only after owned removal confirms that a cancelled command never attached, while started and unknown effects retain reconciliation. The source guide tracks the direct cancellation evaluation and its related capability fingerprints.",
-   "evidence": [
-    "coding-runner/early-cancel.test.mjs",
-    "coding-runner/workspaces.mjs",
     "studio-v3/agent-source-guide.js"
    ]
   }
