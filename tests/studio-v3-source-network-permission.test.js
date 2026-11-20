@@ -31,6 +31,7 @@ function companion(onCall = ()=>{}) {
       return json({callId:'call-1',status:'running'});
     }
     if (pathname.endsWith('/calls/call-1')) return json(receipt);
+    if (pathname.endsWith('/close')) return json({id:'workspace-1',closed:true});
     return json({});
   });
   return {paths,transport};
@@ -205,4 +206,21 @@ it.each([false,true])('reports an unconfirmed temporary pairing when revocation 
   expect(pending).toMatchObject({code:'WORKSPACE_PAIRING_REVOKE_UNCONFIRMED'});
   expect(errorMessage(pending)).toMatch(/temporary pairing is unconfirmed.*Ordinary form editing remains available/);
   expect(wire.map(({path})=>path)).toEqual(['/health','/v1/pair','/v1/revoke']);
+});
+
+it.each([{}, {id:'workspace-1',closed:false}, {id:'different-workspace',closed:true}])('rejects an unconfirmed owned close receipt %j',async response=> {
+  const {transport} = companion();
+  const connection = await pairSourceRunner(code,{transport:(url,options)=>url.endsWith('/close') ?
+    Promise.resolve(json(response)) : transport(url,options)});
+  await expect(connection.close('workspace-1')).rejects.toMatchObject({code:'WORKSPACE_CLEANUP_FAILED'});
+});
+
+it.each([{}, {revoked:true,workspacesClosed:true}])('requires acknowledged cleanup when workspace admission lost its receipt %j',async receipt=> {
+  const revoke = vi.fn(async()=>receipt);
+  const connection = {available:true,runnerSourceHash,create:async()=> { throw new Error('Workspace create response unavailable'); },revoke};
+  const workspace = authorizeSourceWorkspace(connection,{fictionalSource:true});
+  await expect(workspace.open(request,new AbortController().signal)).rejects.toThrow('Workspace create response unavailable');
+  if (receipt.revoked) await expect(workspace.close()).resolves.toBeUndefined();
+  else await expect(workspace.close()).rejects.toMatchObject({code:'WORKSPACE_CLEANUP_FAILED'});
+  expect(revoke).toHaveBeenCalledOnce();
 });

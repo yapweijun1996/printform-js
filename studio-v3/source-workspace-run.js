@@ -114,7 +114,10 @@ class SourceWorkspaceRun {
     this.#closing = (async()=> {
       await this.#opening?.catch(()=>{});
       if (this.#id) await this.#connection.close(this.#id);
-      else if (this.#admitted) await this.#connection.revoke();
+      else if (this.#admitted) {
+        const receipt = await this.#connection.revoke();
+        if (receipt?.revoked !== true || receipt?.workspacesClosed !== true) throw fail('WORKSPACE_CLEANUP_FAILED');
+      }
       this.#artifacts.clear();
     })();
     return this.#closing;

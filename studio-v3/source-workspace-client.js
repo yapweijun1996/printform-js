@@ -112,7 +112,12 @@ class SourceConnection {
     return receipt;
   }
   cancel(id) { if (!identifier(id)) throw unavailable(); return this.request(`/v1/workspaces/${id}/cancel`,{body:{}}); }
-  close(id) { if (!identifier(id)) throw unavailable(); return this.request(`/v1/workspaces/${id}/close`,{body:{}}); }
+  async close(id) {
+    if (!identifier(id)) throw unavailable();
+    const receipt = await this.request(`/v1/workspaces/${id}/close`,{body:{}});
+    if (receipt.id !== id || receipt.closed !== true) throw fail('WORKSPACE_CLEANUP_FAILED');
+    return receipt;
+  }
   revoke() {
     if (this.#revoke) return this.#revoke;
     if (this.#dead) return Promise.resolve();

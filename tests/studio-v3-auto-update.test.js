@@ -170,4 +170,56 @@ describe('update approval', () => {
     const work = createUpdateWork(deps({database: {draft: null, busy: false, pending: false, store: {persistent: false}}}));
     await expect(work.prepare()).rejects.toThrow('tab-only');
   });
+
+  it('lets Stay leave the source run alone and waits for acknowledged cleanup before activation',async()=> {
+    const ai = deps().ai;
+    let acknowledge;
+    const closing = new Promise(resolve=> { acknowledge = resolve; });
+    ai.busy = true;
+    ai.sourceWorkspace = {closing,cancelActive:vi.fn(()=>closing)};
+    const {sw,registration} = fakeWorkers(), reload = reloader();
+    const work = createUpdateWork(deps({ai}));
+    setupUpdates(work,{sw,reload});
+    const dialog = document.querySelector('#update-dialog');
+    await vi.waitFor(()=>expect(dialog.open).toBe(true));
+    dialog.querySelector('[data-update-choice=stay]').click();
+    await vi.waitFor(()=>expect(document.querySelector('#update-button').disabled).toBe(false));
+    expect(ai.cancel).not.toHaveBeenCalled();
+    expect(ai.sourceWorkspace.cancelActive).not.toHaveBeenCalled();
+    document.querySelector('#update-button').click();
+    await vi.waitFor(()=>expect(dialog.open).toBe(true));
+    dialog.querySelector('[data-update-choice=discard]').click();
+    await vi.waitFor(()=>expect(ai.sourceWorkspace.cancelActive).toHaveBeenCalledOnce());
+    expect(reload).not.toHaveBeenCalled();
+    expect(sw.controller).toBe(registration.active);
+    expect(document.body.inert).toBe(true);
+    acknowledge(true);
+    await vi.waitFor(()=>expect(reload).toHaveBeenCalledWith(NEXT));
+    expect(sw.controller).toBe(registration.waiting);
+  });
+
+  it('retains the prior backup and interrupted prompt when local cleanup is unconfirmed',async()=> {
+    const ai = deps().ai;
+    const prompt = 'Fictional interrupted prompt';
+    ai.busy = true; ai.pendingMessage = prompt;
+    ai.sourceWorkspace = {cleanupFailed:false,cancelActive:vi.fn(async()=> {
+      ai.sourceWorkspace.cleanupFailed = true;
+      return false;
+    })};
+    ai.cancel.mockImplementation(()=> { ai.pendingMessage = null; ai.busy = false; });
+    sessionStorage.setItem(RECOVERY_KEY,'earlier verified backup');
+    const work = createUpdateWork(deps({ai}));
+    const dialog = document.querySelector('#update-dialog');
+    const attempted = work.prepare();
+    const failure = expect(attempted).rejects.toThrow('Local source cleanup was not acknowledged');
+    await vi.waitFor(()=>expect(dialog.open).toBe(true));
+    dialog.querySelector('[data-update-choice=discard]').click();
+    await failure;
+    expect(document.body.inert).toBe(false);
+    expect(work.leaving()).toBe(false);
+    expect(document.querySelector('#ai-prompt').value).toBe(prompt);
+    expect(sessionStorage.getItem(RECOVERY_KEY)).toBe('earlier verified backup');
+    await expect(work.prepare()).rejects.toThrow('Local source cleanup was not acknowledged');
+    expect(ai.cancel).toHaveBeenCalledOnce();
+  });
 });

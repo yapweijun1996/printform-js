@@ -7,6 +7,7 @@ import { importReviewSnapshot, restoreImportReview } from './structured-import-r
 
 export const RECOVERY_KEY = 'printform-studio-v3:update-recovery';
 const LIMIT = 4 * 1024 * 1024;
+const SOURCE_CLEANUP_ERROR = 'Local source cleanup was not acknowledged. Disconnect or reconcile the local companion before updating. Current work and any recovery backup are retained.';
 const projectRecord = project => ({file:saveProject(project),id:project.manifest.documentId,session:project.studioV3Session});
 function recoveryForm(project,ui,record) {
   const holder = document.createElement('div');
@@ -95,6 +96,7 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     await settle();
     if (recoveryFailed) throw new Error('Protect the retained recovery backup: download it if needed, then explicitly discard that backup to enable Update.');
     const checkBusy = ()=> {
+      if (ai.sourceWorkspace?.cleanupFailed) throw new Error(SOURCE_CLEANUP_ERROR);
       if (noteReviewOpen()) throw new Error('Apply or cancel the fictional note review before updating.');
       if (state.fileReads || database.busy || database.pending || drafts.applying.size || ai.applying) throw new Error('A file read, edit or database save is active. Wait, then retry.');
     };
@@ -111,15 +113,31 @@ export function createUpdateWork({getBus,state,database,drafts,ai,install,render
     }
     if (choice === 'stay') return false;
     document.body.inert = true;
+    let interruptedPrompt;
     try {
       await settle();
       checkBusy();
       if (choice === 'keep') { const snapshot = capture(); decodeRecovery(verifiedWrite(sessionStorage,snapshot,recoveryKey)); }
-      else if (choice === 'discard') sessionStorage.removeItem(recoveryKey);
-      else return false;
+      else if (choice !== 'discard') return false;
       // Cancel only after the user's choice and successful persistence.
-      ai.cancel('Update requested. Network request cancelled.'); updating = true; return true;
-    } finally { if (!updating) document.body.inert = false; }
+      interruptedPrompt = ai.pendingMessage;
+      ai.cancel('Update requested. Network request cancelled.');
+      const source = ai.sourceWorkspace;
+      const cleanup = source?.cancelActive();
+      if (source?.closing) document.querySelector('#update-status').textContent = 'Waiting for the local source workspace to close before updating…';
+      if (await cleanup === false || source?.cleanupFailed) throw new Error(SOURCE_CLEANUP_ERROR);
+      if (choice === 'discard') sessionStorage.removeItem(recoveryKey);
+      updating = true; return true;
+    } finally {
+      if (!updating) {
+        document.body.inert = false;
+        const prompt = document.querySelector('#ai-prompt');
+        if (interruptedPrompt && !prompt.value) {
+          prompt.value = interruptedPrompt;
+          prompt.dispatchEvent(new Event('input',{bubbles:true}));
+        }
+      }
+    }
   }
   const dialog = document.querySelector('#update-dialog');
   dialog.addEventListener('click',event=> { const button = event.target.closest('[data-update-choice]'); if (button) dialog.close(button.dataset.updateChoice); });
