@@ -33,8 +33,18 @@ PF_CODING_BROWSER_INTEGRATION=1 npx playwright test e2e/studio-v3-source-artifac
 
 新的 runner 源码哈希 `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b` 与封存镜像 `sha256:76badd727406b763e562556ba9cf53b1eb642dd9657674904ef7a20fa20b1537` 再次完成上述 Chromium 浏览器用例，1/1 通过、用时 32.1 秒。该轮覆盖同一合成请求下的实际源码操作、独立产物校验、纸面预览和人工 Apply。
 
+## 当前封存 Runner 的构建与产物复验
+
+`97a7d92` 使用相同 runner 源码和封存镜像，在独立的 Chromium 回环请求中通过两项真实 Docker 用例。第一项验证了实际测试失败、原子 patch 拒绝、修复后重跑与构建、完整源码差异、构建成功却未生成字节时拒绝产物、源码写入后非零退出的对账，以及旧产物失效。第二项验证 BOM 文本经过无关的整树 patch 后保持原 UTF-8 字节，同一构建产物重复读取的 ID 与字节摘要一致。2 项通过，另 7 项按测试名筛选跳过，运行约 81 秒。结束后托管容器和卷均为零。另有 47 项产物、源码、生命周期和导入边界单元检查通过。 [实际 Docker 用例](../../coding-runner/docker.integration.test.mjs)
+
+```sh
+PF_CODING_INTEGRATION=1 PF_CODING_IMAGE=printform-coding-runner:early-cancel-probe \
+  npx vitest run coding-runner/docker.integration.test.mjs \
+  -t 'edits, really fails|preserves exact UTF-8 BOM'
+```
+
 ## 完整验收仍需的证据
 
-- [本地负载复验](STUDIO_V3_G6_LOAD_20261120.md)完成 100 次运行状态和取消采样。运行状态和独立进程退出达标，最终 HTTP 停止回执超出 p95 目标。还需验证剩余资源边界及当前已发布 HTTPS Studio 与本地 companion 的浏览器配对、撤销和网络权限。这里完成的是有界 Linux/amd64 和 Chromium 的验证。
+- [本地负载复验](STUDIO_V3_G6_LOAD_20261120.md)完成 100 次运行状态和取消采样。运行状态和独立进程退出达标，最终 HTTP 停止回执超出 p95 目标。[原生 HTTPS 配对复验](STUDIO_V3_COD12_NATIVE_20261120.md)支持有界 Linux/amd64 和 Chromium 配置。其余支持平台、资源边界及性能门槛仍待验收。
 - G7 已在有界本地轮次覆盖真实构建、字节/源码身份、类型化私有候选和人工审核提交。更广泛的隔离与恢复矩阵、支持发布平台下的源构建到提交及生产发布身份复验保持开放。模型可写测试或普通退出成功不计入独立验收。
 - 真实模型任务、跨平台/硬件认证及发布决定仍分开记录。未增加正式 G8 attempt。

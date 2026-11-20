@@ -17,3 +17,7 @@ GitHub Pages 发布 `481e12e78a2e5f3d6a664726cbf52e6043877ce7` 的应用 SHA-256
 | 全新配置直接允许 | 再次验证原生预检、配对、撤销和配对码单次使用 |
 
 这两轮证据的伴随服务源码 SHA-256 为 `b6a89aa87b2f8ae3f17adc436fed6e47ef22c7862599bc3a76b5c509b69ef23b`，镜像为 `sha256:e1e20d5004eb9a5099fee5a1e30c4e5e8168106e39f76927fea8e61f3eddf147`。本地 HTTPS 验证覆盖应用读取浏览器拒绝状态后的拦截。修复版的 GitHub Pages 复验、原生首次授权弹窗、其他平台及剩余 COD-12 控制仍需各自的验证记录。 [COD-12 验收标准](../STUDIO_V3_CODING_AGENT_ACCEPTANCE.md)
+
+## 后续发布版本复验
+
+在公开的 `97a7d92` 上重复原生 Chromium 的拒绝与允许路径，使用已发布配套的 runner 源码 `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b` 和镜像 `sha256:76badd727406b763e562556ba9cf53b1eb642dd9657674904ef7a20fa20b1537`。站点被拒绝时发出的配对请求为零。改为允许后完成配对与撤销。测试保持当前表单，未调用模型。其他平台和原生首次授权弹窗仍待验证。 [公开 Studio](https://yapweijun1996.github.io/printform-js/studio-v3/)
