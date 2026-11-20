@@ -56,6 +56,17 @@ stdout 是完整 JSON。未 qualified 时退出码 **1** 是真实拒绝，不�
 
 可选 `prerequisites` 项格式为 `{id,path,digest}`，digest 为文件**原始 bytes**的 `sha256:` + 64hex，支持的需求 ID 是 `source-runner`、`fixed-upstream`、`g6-g7`、`data-governance`、`g9`、`live-release`。普通文档字节一致只标 `supplied-for-independent-review`；`fixed-upstream` 由[服务方原件消费者](STUDIO_V3_UPSTREAM_EVIDENCE.zh-CN.md)核验，`data-governance` 由[适用范围／原件／逐字段引文消费者](STUDIO_V3_GOVERNANCE_EVIDENCE.zh-CN.md)核验。两者成功仍仅供独立审查并保留 prerequisite blocker：不存在用任意 `{qualified:true}` 文件关闭合同/G6/G9 的新后门。既有独立 gate 与 maintainer 的审查权不变。
 
+## 独立语料目录
+
+默认命令继续读取仓库内历史语料和登记表。经授权准备新档案时，`validate`、`input`、`project`、`profile`、`evaluate`、`preflight`、`upstream` 和 `governance` 可以显式传入一对目录：
+
+```sh
+node scripts/studio-v3-g8.mjs validate --corpus /path/to/new/corpus --register /path/to/new/register
+node scripts/studio-v3-g8.mjs preflight /path/to/new/profile.json --corpus /path/to/new/corpus --register /path/to/new/register
+```
+
+必须同时且各提供一个目录。语料目录包含按家族分开的 JSON，登记目录包含 `tasks.csv` 和 `attempts.csv`。路径缺失、读取失败或 case／input／oracle 摘要不匹配会按现有语料规则报错。显式选定新语料后，旧档案的语料摘要不匹配时会在读取证据前拒绝。留出输入仍需原有的 `--qualification` 参数。目录参数不授权运行模型、写入尝试或变更现有门槛。
+
 ## 当前完整资格前置条件
 
 | 层次 | 可从现有公开档案确认的边界 | 真实补证要求 |
