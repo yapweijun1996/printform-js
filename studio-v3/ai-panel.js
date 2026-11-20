@@ -47,7 +47,7 @@ export class AIPanel {
       if (action === 'models') void this.discover();
       if (action === 'clear') { this.node('.ai-settings').open = false; void this.clear(); }
       if (action === 'retry') this.retry(button.dataset.cardId);
-      if (button?.dataset.prompt) { this.node('#ai-prompt').value = button.dataset.prompt; this.share(); this.node('#ai-prompt').focus(); }
+      if (button?.dataset.prompt) this.fillPrompt(button.dataset.prompt);
     });
     document.addEventListener('click',event=> { const menu = this.node('.ai-settings'); if (menu.open && !menu.contains(event.target)) menu.open = false; });
     document.querySelector('#ai-preview-banner').addEventListener('click',event=> { if (this.applying) return; if (event.target.closest('[data-ai-return]')) this.show(); if (event.target.closest('[data-ai-discard]')) void this.discard(); });
@@ -210,7 +210,8 @@ export class AIPanel {
   }
   canUndo(card) { return card.appliedBus === this.getBus() && card.appliedRevision === this.getBus()?.revision && card.appliedEpoch === this.epoch && this.getBus()?.history.canUndo; }
   async undoCard(id) { const card = this.conversation.messages.find(m=>m.id === id); if (!card || !this.canUndo(card)) throw fail('STALE_PROPOSAL'); await this.undo(()=> { if (!this.canUndo(card)) throw fail('STALE_PROPOSAL'); }); card.status = 'expired'; this.message('Undid this layout edit. Your source data is unchanged.'); this.update(); }
-  retry(id) { if (this.busy || this.applying) return; const card = this.conversation.messages.find(m=>m.id === id); this.node('#ai-prompt').value = card?.request || [...this.conversation.messages].reverse().find(m=>m.role === 'user')?.text || ''; this.share(); this.node('#ai-prompt').focus(); }
+  fillPrompt(value) { const input = this.node('#ai-prompt'); input.value = value; this.share(); this.updateSend(); input.focus(); }
+  retry(id) { if (this.busy || this.applying) return; const card = this.conversation.messages.find(m=>m.id === id); this.fillPrompt(card?.request || [...this.conversation.messages].reverse().find(m=>m.role === 'user')?.text || ''); }
   async clear() {
     if (this.applying || this.restoring || ((this.busy || this.proposal || this.node('#ai-prompt').value) && !confirm('Clear this conversation, input, element comments and unapplied AI suggestion? The form and datasets stay unchanged.'))) return;
     const viewing = this.viewing; this.invalidate('Conversation cleared.'); this.observationAccess.reset(); this.sourceWorkspace?.resetConsent(); this.conversation.messages = []; this.node('#ai-prompt').value = ''; this.elementTags?.clear(false); this.referenceFiles?.clear(); if (viewing) await this.restoreUnapplied(); this.share(); this.update();

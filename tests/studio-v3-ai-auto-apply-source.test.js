@@ -68,6 +68,10 @@ it('keeps model Send blocked after editing the prompt during failed source clean
   finishClose(); expect(await close).toBe(false);
   type('/new blank'); panel.present();
   expect(send.disabled).toBe(false);
+  const card=panel.conversation.add('assistant','Cancelled source request.','cancelled',{request:'Make the header navy.',documentKey:panel.documentKey()});
+  panel.present(); panel.node(`[data-card-id="${card.id}"][data-ai=retry]`).click();
+  expect(input.value).toBe('Make the header navy.'); expect(send.disabled).toBe(true);
+  type('/new blank');
   await panel.send(); expect(prepare).toHaveBeenCalledOnce();
   type('Make the header navy.');
   expect(send.disabled).toBe(true);

@@ -195,6 +195,11 @@ test('model Send stays blocked after failed cleanup while the local new-form pre
     await expect(send).toBeDisabled();
     const afterStop = [...local.calls];
     await input.fill('/new blank');
+    await expect(send).toBeEnabled();
+    await page.getByRole('button',{name:'Edit & resend'}).click();
+    await expect(input).toHaveValue(PROMPT);
+    await expect(send).toBeDisabled();
+    await input.fill('/new blank');
     await page.locator('[data-ai=close]').click();
     await page.locator('[data-ai-toggle]').click();
     await expect(send).toBeEnabled();
