@@ -9,7 +9,7 @@ export const chinese = {
   'hero.title': '表单适合打印，分页清晰可控。',
   'hero.description': '在浏览器中将 HTML 转换为分页的发票、订单和商务文档，让表头、页码和文档区块各就其位。',
   'hero.explore': '浏览模板',
-  'hero.demo': '查看发票演示',
+  'hero.demo': '查看托育发票演示',
   'hero.note': '从可运行的示例开始，调整为你需要的文档。',
   'preview.link': '查看实际销售发票演示',
   'preview.alt': '销售发票演示实际生成的第一页',

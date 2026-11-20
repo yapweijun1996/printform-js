@@ -146,7 +146,7 @@ test('resolves homepage assets and navigation beneath the repository subpath', a
   await expect(page.getByRole('button', { name: '中文', exact: true })).toBeVisible();
   await expect.poll(() => page.locator('.preview img').evaluate(img => img.naturalWidth)).toBe(750);
   const destinations = await page.locator('.primary, .secondary').evaluateAll(links => links.map(link => new URL(link.href).pathname));
-  expect(destinations).toEqual(['/printform-js/gallery/index.html', '/printform-js/demo001.html']);
+  expect(destinations).toEqual(['/printform-js/gallery/index.html', '/printform-js/gallery/designs/preschool-childcare-invoice.html']);
   await page.locator('.primary').click();
   await expect(page).toHaveURL(/\/printform-js\/gallery\/index.html$/);
 });
