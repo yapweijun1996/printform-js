@@ -20,6 +20,10 @@ At that checkpoint, the homepage used the [stable childcare invoice URL](https:/
 
 The [later public Pilot recheck](STUDIO_V3_PILOT_RECHECK_20261120.md) identifies `d978139`, audits the published assets and records desktop/mobile preview and actual HTTPS companion pairing. The physical print, inference and maintainer decision gates remain open.
 
+[Pages run 44739401737](https://github.com/yapweijun1996/printform-js/actions/runs/44739401737) built and deployed `7937c7155d3a80e2bb08093adb9572c36d78d1e5` with 3,472 passing tests and 10 opt-in cases skipped. A fresh Chromium context at 1440px and 390px requested the restored address from the homepage, received HTTP 200 and followed it to the rendered invoice. The same checks opened a separate A4 form and the local note review. `/studio-v2/` returned 404. The live Studio app, worker, Agent manifest and dependency index matched the reconstructed release, including independent hashes for all 25 shell files, six Agent files and the 39-entry index. The published app SHA-256 was `20921d6613a0e817ae9edc8435b45f8e303871af95e1bbdedef12e4579d9055d`.
+
+In native Chromium, the exact HTTPS Studio page respected local permission denial before sending any health or pairing request. With permission granted it paired to the matching sealed companion and revoked successfully. The reused code was rejected, and local form revision stayed at `r0`. The real runner produced and imported a source artifact in the local test using this same rebuilt Studio release and a scripted provider. No live model calls were made. The Pilot evidence remains scoped to the checked runtime, browsers and local image.
+
 ## Rollback drill
 
 Build the site and run:
