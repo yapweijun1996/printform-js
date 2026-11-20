@@ -1,39 +1,8 @@
 {
  "version": 1,
  "baseline": {
-  "release": "8d42c5b911a87ddc2491c42e1622a393f25148de",
-  "packageHash": "9245d42965f492dd1e6dd6e42e831cb34b60e30f3a68d05f2754fa9650de1068"
+  "release": "9d6f992c6e276c7ab6c795c809cfeb121c5c18db",
+  "packageHash": "00957c1d9692b24854556f207d0ead36e8ae0eb016932287ebb87486b821a6a5"
  },
- "dispositions": [
-  {
-   "entries": {
-    "printform.agent.retrieve_page": "e2a562efd1645fb839dd304d6e55055cf828d11d96ca8342c4170c9cdbdf3a1a"
-   },
-   "disposition": "updated",
-   "justification": "The companion transport binds the operation on admission and completion and requires an identical call ID after waiting. An inconsistent receipt stops subsequent effects while preserving close for the owned workspace.",
-   "evidence": [
-    "studio-v3/source-workspace-client.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.workspace_list": "a79f9829cfe4f9a4cd9bd839584cd14f93a10df4d91895e1050151a76994dc09",
-    "printform.agent.workspace_read": "ca2e8b61b708fed5f23fb975b208f031aad93f35d85578595003a135399f04d8",
-    "printform.agent.workspace_search": "b2c58f7812fbb9d7f276370d813f20f3a50ece120f51d97027c6deb5dd2db525",
-    "printform.agent.workspace_write": "8a5f43e78f8dfceca7e301a658b2a49470b0f7fcd03028553a2edfcb0e945922",
-    "printform.agent.workspace_patch": "352eae86a340a8e80ac58facb9c251fd8b3e22e9d8e304f4d6f0bed0ecf1ca3a",
-    "printform.agent.workspace_run": "ce4a8751a22f42420c57887cdf79ac031fc9950b7b19988111abc58558abb584",
-    "printform.agent.workspace_diff": "768b2758904ce87d11d3ab29f9695e57d12f45656c0310f50d6b482122a1a552",
-    "printform.agent.workspace_artifacts": "e4041e010b25da2bee969672e152fbeb3e20fba0e983a5f375bce839a01c2afd",
-    "printform.agent.import_artifact": "4373039121c3fcbd2a11f19bb7de76fc2dbf3636eeaabc02c0584921a0f25a11",
-    "printform.knowledge.source-workspace": "07472eb129048d3e0ef696574b540c608df6edd2b94156856a51960044b55102"
-   },
-   "disposition": "updated",
-   "justification": "The companion transport binds the operation on admission and completion and requires an identical call ID after waiting. An inconsistent receipt stops subsequent effects while preserving close for the owned workspace. Three controlled transport regressions reject mismatched admission or completion receipts at the public client boundary and verify cleanup, while existing checks preserve permission and revocation behavior.",
-   "evidence": [
-    "studio-v3/source-workspace-client.js",
-    "tests/studio-v3-source-network-permission.test.js"
-   ]
-  }
- ]
+ "dispositions": []
 }
