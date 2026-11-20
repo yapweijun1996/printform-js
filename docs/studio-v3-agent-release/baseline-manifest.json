@@ -187,7 +187,7 @@
    "status": "active"
   },
   {
-   "hash": "a37fbb966d07dd3fee0949a9476cde871cdcd06dd73790c0bca2d497dea844da",
+   "hash": "98a4bf34abf79d3c62b7d54ac63f607fceeae5818781497058d933379fc09ded",
    "id": "printform.knowledge.general-print-authoring",
    "status": "active"
   },
@@ -198,7 +198,7 @@
   }
  ],
  "files": {
-  "capabilities.json": "8fe3a6152ea0ba151900f066b102766e5671e4f2f40c7b70e8e29b9213603c9a",
+  "capabilities.json": "c4b66cb2b822ffa6e37688bd8d69efa0d7d5579bb28b6615903c7895e8ff8216",
   "knowledge-index.json": "569100fef2ab41ccdae5e04f93b83a4133b40e99a9a181e233d411ee16bf422a",
   "resources/form-authoring.md": "e9f9eaaba030d7b37a8cc42aa20c61997caf52fee7bc4266a95fcb6775bd0f7b",
   "resources/general-print-authoring.md": "c29ba60f8ff601f5a9f21ef7767d4199d1460700612dbe78e637baa492e92d9c",
@@ -206,8 +206,8 @@
   "resources/source-workspace.md": "ad331a25c5cc9afef84f382cbf830d4b871f3f26eb3df1f1e65075abe64675a8"
  },
  "knowledgeHash": "4814ea037c0577cb593036f567d5da6179d9b57f727b04142023ca82e71ff978",
- "packageHash": "5218cca7d2e71f017e4f2a9d5f159efd495b6a1a4b5b1ade5da64778df2828a8",
- "release": "7937c7155d3a80e2bb08093adb9572c36d78d1e5",
+ "packageHash": "44bb2146f5543b438e6ba82f7696b6074cdc3148dbbef4542ac1e1737f7f782c",
+ "release": "bf0dc5f39185fe085906c914fa7cf125cff644ca",
  "sourceRunnerHash": "78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b",
  "tombstones": [],
  "version": 1
