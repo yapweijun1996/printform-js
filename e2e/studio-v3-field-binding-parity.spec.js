@@ -45,25 +45,47 @@ async function editInspector(page,mode,target) {
   await ready(page);
 }
 
+async function observeRenderedField(page,target) {
+  // Read the rendered-page bridge without asking Firefox for an iframe context
+  // that may have been replaced. The unbound markup is never inspected here.
+  await page.addInitScript(id=>{
+    window.addEventListener('message',event=>{
+      if (event.source !== document.querySelector('#preview-frame')?.contentWindow ||
+          event.data?.source !== 'printform-studio-v3-preview' || event.data.type !== 'rendered') return;
+      const printed = document.createElement('template');
+      printed.innerHTML = event.data.payload.pages[0]?.html || '';
+      window.__bindingParityPrintedText = printed.content.querySelector(`[data-v3-id="${id}"]`)?.textContent;
+    });
+  },target);
+}
+
+const printedText = page=>page.evaluate(()=>window.__bindingParityPrintedText);
+
 async function checkPreview(page,mode,target) {
+  if (mode === 'bound' || mode === 'static') {
+    await expect.poll(()=>printedText(page)).toBe(mode === 'static' ? text : code);
+    return;
+  }
   const value = page.frameLocator('#preview-frame').locator(`[data-v3-id="${target}"]`).first();
   if (mode === 'image') {
     await expect(value).toHaveCSS('width','65.25px');
     await expect(value).toHaveCSS('height','32.5px');
     await expect(value).toHaveCSS('object-fit','contain');
     await expect.poll(()=>value.evaluate(node=>node.complete && node.naturalWidth)).toBe(1);
-  } else if (mode === 'barcode') {
-    await expect(value.locator('svg rect').first()).toBeVisible();
+  } else {
+    await expect(value.locator('svg [data-pf-barcode-bars] rect').first()).toBeVisible();
     await expect(value.locator('svg text')).toHaveText(code);
-  } else await expect(value).toHaveText(mode === 'static' ? text : code);
+  }
 }
 
 for (const [mode,{patch,prompt}] of Object.entries(edits)) {
   test(`field ${mode} Inspector and Pi render equivalent candidates and preserve Undo`,async({page},info)=> {
     const target = mode === 'barcode' ? 'footer-notes' : 'header-number';
+    const textMode = mode === 'bound' || mode === 'static';
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await gateway(page,[['apply_operations',{summary:'Change the selected field',operations:[{type:'set_field',target,patch}]}],['inspect_draft'],['finish',{summary:'Change the selected field'}]]);
+    if (textMode) await observeRenderedField(page,target);
     await page.goto('/studio-v3/');
     await ready(page);
     const project = newProject();
@@ -74,6 +96,7 @@ for (const [mode,{patch,prompt}] of Object.entries(edits)) {
     await expect(page.locator('#status')).toContainText('Opened editable');
     await ready(page);
     const before = normalized((await save(page,info,'before.json')).project);
+    if (textMode) await expect.poll(()=>printedText(page)).toBe(project.sampleData.document.number);
     await editInspector(page,mode,target);
     await checkPreview(page,mode,target);
     const ui = (await save(page,info,'ui.json')).project;
@@ -81,6 +104,7 @@ for (const [mode,{patch,prompt}] of Object.entries(edits)) {
     expect(uiReport.ready).toBe(true);
     await page.locator('[data-action=undo]').click();
     await ready(page);
+    if (textMode) await expect.poll(()=>printedText(page)).toBe(project.sampleData.document.number);
     expect(normalized((await save(page,info,'human-undo.json')).project)).toEqual(before);
 
     await page.locator('[data-ai-toggle]').click();
@@ -99,6 +123,7 @@ for (const [mode,{patch,prompt}] of Object.entries(edits)) {
     expect((await diagnostics(page,pi)).diagnostics).toEqual(uiReport);
     await page.locator('[data-ai=undo]').click();
     await ready(page);
+    if (textMode) await expect.poll(()=>printedText(page)).toBe(project.sampleData.document.number);
     expect(normalized((await save(page,info,'pi-undo.json')).project)).toEqual(before);
     expect(errors).toEqual([]);
   });
