@@ -1,0 +1,22 @@
+# Studio v3 integration checkpoint, 2026-11-20
+
+## Implementation
+
+- CA-04 closes the nine parallel service implementations in the [parity register](../studio-v3-service-parity.json). Field properties and the four source modes, field insertion/removal/order and collection changes now have common transformations with adapter-specific authorization. The baseline and test cases include inherited style, relative column width, explicit binding intent, financial/source-value guards and manual collection approval. The register is 21 shared, zero parallel and 15 agent-only.
+- CA-05 constrains the observation-permission dropdown to the active Studio panel. Existing reference/image disclosure boundaries and wire contracts are preserved.
+- CA-06 preserves pending edits until Open has validated a replacement file, reports save/export/print as browser requests and rejects stale async exports. The [G5 matrix](STUDIO_V3_CA06_WORKFLOWS.md) records remaining workflow and evidence gaps.
+- CA-07/08 require a build call to have generated the claimed artifact bytes, clear terminal workspace receipts and snapshots on successful close, and make the sealed companion executable from a restrictive checkout. See the [runner acceptance record](STUDIO_V3_CA07_CA08_LOCAL_20261120.md) for exact Docker results and limits.
+- CA-09 adds a Wilson 95% interval for an independently checked complete profile. It leaves frozen inputs, recorded outcomes, thresholds and holdouts intact.
+- CA-10 adds a local rollback drill that restores committed edits and unapplied work. The [Pilot release packet](STUDIO_V3_RELEASE_PACKET_20261120.md) records the live homepage verification separately.
+
+## Verification checkpoints
+
+- All eight focused Chromium field and file-handoff cases passed. In the bounded Firefox/WebKit run, all ten field properties, field collection, file handoff and rollback cases passed. The independent WebKit source-mode run passed 4/4. Firefox source-mode coverage passed binding, static text and image; the barcode case remained incomplete at a recreated frame locator after successful Apply. A prior Firefox run timed out while querying recreated preview iframes. The regression fixtures now read the actual rendered page through the existing browser bridge where direct frame access is unstable.
+- The 129 agent contract examples, site assembly and three Studio v3 sample validations passed. In an initial integration run the combined width/binding patch could replay old field values. After correction the six affected field, width and authoring suites passed 97/97.
+- A combined local unit run under concurrent browser and Docker load reported 3,328 passed, nine skipped and one row-fill timeout. The isolated row-fill suite passed 27/27 with the same assertions and a longer test deadline. This recovery is separate from the broad run outcome.
+
+## Verification boundaries
+
+Deterministic tests exercise the native Inspector, Pi harness, local preview, artifact consumer, and host approval. Synthetic provider responses prove the application paths and preserve real-model evidence boundaries. The [qualification recheck](STUDIO_V3_QUALIFICATION_RECHECK_20261120.md) records the three-engine observation and settings results and the proposed blinded-review procedure.
+
+G4 needs a frozen independent human reconstruction review. G5 still has implementation work for a host-approved new-form candidate and a separate data grant. The current design commit replays layout only. A new document requires separately defined identity and cross-document recovery. A data candidate needs its own host-owned authorization, revision/receipt evidence and explicit Apply, with database persistence kept separate. The test-only integration worktree verified a host-side fictional notes candidate in 79 focused tests. The production data grant remains unavailable. Exact supported-profile G6/G7 acceptance needs the full cases and operational evidence. G8 needs an approved coherent scoring profile and funded real inference on that profile. G9 needs the approved provider/OS/browser/printing/retention scope and a release decision. Physical print, historical evidence and published Pilot smoke remain distinct.

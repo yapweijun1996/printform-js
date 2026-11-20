@@ -20,12 +20,12 @@ Gallery code is published in main 1a74845, with the prior browser failures and e
 | CA04-LOGO | Shared existing-asset reference/geometry/remove service, native decimal bounds and Undo | Done; 12 new cases, five files / 94 tests, 2/2 new plus 2/2 adjacent browser cases |
 | CA04-PAGE | Shared page patch normalization, atomic final validation, native geometry, manual Apply and Undo | Done; 15 new cases, five files / 107 tests, 2/2 new plus 8/8 adjacent browser cases |
 | CA04-WIDTH | Shared percentage service, fractional native controls, atomic total constraint and Undo | Done; 15 new cases, four files / 83 tests, 2/2 final plus 2/2 adjacent browser cases |
-| CA04-REMAINING | Each remaining parallel register entry gains real shared service plus independent adapter/effect evidence | Pending; preserve existing human-only routes |
-| CA06-WORKFLOWS | Reconcile eligible feature ledger and actual implementation, then close missing adapters/contracts and workflow cases | Pending after applicable parity |
-| CA05-VISUAL | Preserve existing receipt/PNG wire; obtain required independent frozen-rubric visual comparison | Open |
-| CA07/08-CODING | Verify existing companion/process lifecycle and source-bound candidate pipeline against G6/G7, harden concrete failures | Bounded implementation; full gates open |
+| CA04-REMAINING | Each remaining parallel register entry gains real shared service plus independent adapter/effect evidence | Shared implementation complete on all nine entries; see the [integration checkpoint](acceptance/STUDIO_V3_INTEGRATION_20261120.md) for verification scope. |
+| CA06-WORKFLOWS | Reconcile eligible feature ledger and actual implementation, then close missing adapters/contracts and workflow cases | Partial; [G5 matrix](acceptance/STUDIO_V3_CA06_WORKFLOWS.md) records the current per-workflow evidence and remaining implementation. |
+| CA05-VISUAL | Preserve existing receipt/PNG wire; obtain required independent frozen-rubric visual comparison | [Deterministic three-engine checks](acceptance/STUDIO_V3_QUALIFICATION_RECHECK_20261120.md) recorded; blinded human review and provider qualification remain open. |
+| CA07/08-CODING | Verify existing companion/process lifecycle and source-bound candidate pipeline against G6/G7, harden concrete failures | [Native companion and artifact evidence](acceptance/STUDIO_V3_CA07_CA08_LOCAL_20261120.md) recorded; G6/G7 remain open. |
 | CA09-QUALIFICATION | Approved coherent frozen corpus/profile and full same-profile independent task evidence | Open; existing preflight prevents false success |
-| CA10/V2-RELEASE | Profile-specific provider/platform/printing/retention/rollback evidence and applicable release decision | Open; v2 gates remain separate |
+| CA10-RELEASE | Profile-specific provider/platform/printing/retention/rollback evidence and applicable release decision | [Pilot packet and local rollback](acceptance/STUDIO_V3_RELEASE_PACKET_20261120.md) recorded; G9 open. Studio v2 is retired. |
 
 Each implementation task records commands, exact outcomes, failures/retries and limits here or in a linked acceptance file. Only that task's code and documentation enter its commit. Main pushes do not certify model competence, hardware, third-party retention or production operations.
 
