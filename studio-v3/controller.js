@@ -73,6 +73,22 @@ export async function editProject(bus, operations, reason, dataSession = null) {
   if (dataSession) next.studioV3Session = structuredClone(dataSession);
   return bus.commit(next, reason, {expectedRevision:revision});
 }
+export async function renameTemplate(bus,title,database) {
+  const before = bus.project, review = database.importReview;
+  const mappingState = entry=>JSON.stringify([entry.sourcePointer,entry.targetPointer,entry.mappings,entry.mappingPage]);
+  const ticket = review?.baseProject === before ? {source:review.source,text:review.source.text,preview:review.preview,mapping:mappingState(review)} : null;
+  const revision = await editProject(bus,[{type:'set_manifest_value',path:'/title',value:title}],'template name');
+  if (database.project !== bus.project) return false;
+  // Only this metadata edit can retain a still-current review. Require a new Preview for its new revision.
+  if (ticket && bus.revision === revision && database.importReview === review && review.baseProject === before &&
+      review.source === ticket.source && review.source.text === ticket.text && review.preview === ticket.preview && mappingState(review) === ticket.mapping) {
+    review.baseProject = bus.project;
+    review.preview = null;
+    database.error = '';
+    database.message = 'Template name updated. Preview mapped data again before Apply.';
+  }
+  return true;
+}
 export async function replaceData(bus, data, sample = 'erp', database = undefined, sourceOverride = null, title = undefined, sourceSchema = undefined, localImport = null) {
   const session = bus.project.studioV3Session;
   const names = {'0':'Empty','1':'Single item','45':'Standard','100':'Multi-page','500':'Stress',long:'Long & bilingual'};

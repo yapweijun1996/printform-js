@@ -1,5 +1,5 @@
 import { newProject, designOf, newDemoProject, setupDemoTemplatePicker } from './demo-templates.js';
-import { createBus, editProject, replaceData, designOperations, formDesign, alterFields } from './controller.js';
+import { createBus, editProject, renameTemplate, replaceData, designOperations, formDesign, alterFields } from './controller.js';
 import { icon } from './icons.js';
 import { leftView, rightView } from './views.js';
 import { PaperPreview } from './preview.js';
@@ -284,7 +284,7 @@ setupWorkspaceFileReads({getBus:()=>bus,state,database,queueDatabase,queueEdit,i
   confirmProjectReplacement:()=> !(state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size) ||
     confirm('Open the selected form and discard unsaved form, table and JSON edits? Saved datasets are retained.'),
   draftState:()=>JSON.stringify([...drafts.drafts].filter(([,draft])=>draft.kind !== 'data').map(([key,draft])=>[key,draft.values]))});
-$('#document-name').addEventListener('change', e => { const title = e.target.value.trim(); if (title) queueEdit(() => mutate([{type:'set_manifest_value',path:'/title',value:title}],'template name')); });
+$('#document-name').addEventListener('change', e => { const title = e.target.value.trim(); if (title) queueEdit(async()=> { if (await renameTemplate(bus,title,database)) await changed(); }); });
 $('#zoom').onchange = () => { persistZoom($('#zoom')); resizePaper(); }; window.addEventListener('resize',resizePaper);
 $('#paper-scroll').addEventListener('scroll',()=> {
   const top = $('#paper-scroll').scrollTop/zoom;

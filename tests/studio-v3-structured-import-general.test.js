@@ -1,5 +1,5 @@
 import { it, expect, vi } from 'vitest';
-import { createBus, replaceData } from '../studio-v3/controller.js';
+import { createBus, renameTemplate, replaceData } from '../studio-v3/controller.js';
 import { DemoDatabase } from '../studio-v3/database-controller.js';
 import { createDatabase } from '../studio-v3/database-store.js';
 import { databaseView } from '../studio-v3/database-view.js';
@@ -112,5 +112,31 @@ it('uses the real project portability budget rather than imposing the old datase
     expect(new TextEncoder().encode(portable).length).toBeGreaterThan(2*1024*1024);
     expect(readProject(portable).sampleData.workOrder.instruction).toBe(instruction);
     expect(bus.project.sampleData).not.toHaveProperty('items');
+  } finally { database.store.close(); vi.unstubAllGlobals(); }
+});
+
+
+it('does not rebind a review if its mappings change before the title commit settles',async()=> {
+  vi.stubGlobal('indexedDB',undefined);
+  const {bus,database} = await setup(generalImportProject());
+  try {
+    await database.action('import-file',{source:rows,filename:'overlapping-review.csv'});
+    const review = database.importReview, before = bus.project;
+    review.mappings = rowMappings();
+    await database.action('import-preview',{});
+    const originalCommit = bus.commit.bind(bus);
+    let release;
+    const gate = new Promise(resolve=>release=resolve);
+    vi.spyOn(bus,'commit').mockImplementation(async(...args)=> { await gate; return originalCommit(...args); });
+    const rename = renameTemplate(bus,'Name only',database);
+    review.mappings['/code'] = {source:'/uom',conversion:'preserve'};
+    release();
+    expect(await rename).toBe(true);
+    expect(bus.project.manifest.title).toBe('Name only');
+    expect(bus.project.sampleData).toEqual(before.sampleData);
+    expect(database.importReview).toBe(review);
+    expect(review.baseProject).toBe(before);
+    expect(review.mappings['/code'].source).toBe('/uom');
+    await expect(database.action('import-preview',{})).rejects.toThrow('The form changed after import review began');
   } finally { database.store.close(); vi.unstubAllGlobals(); }
 });
