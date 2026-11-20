@@ -1,6 +1,8 @@
 import {clickHeaderAction} from './header-action.js';
 import {test,expect} from './studio-v3-test.js';
-import {readFile} from 'node:fs/promises';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {expectOfflineStudioConnection,launchOfflineWebKit} from './native-offline-browser.js';
 import {pathToFileURL} from 'node:url';
 import {getDocument} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {newProject,designOf,compileProject} from '../studio-v3/model.js';
@@ -88,7 +90,7 @@ test.beforeEach(async({page})=> {
   });
 });
 
-test('human barcode controls persist and independently decode preview, offline standalone and print media',async({page,browser,browserName},info)=> {
+test('human barcode controls persist and independently decode preview, native offline file and print media',async({page,browser,browserName},info)=> {
   page.on('dialog',dialog=>dialog.accept()); await page.goto('/studio-v3/'); await ready(page);
   const initial = sourceProject(); await load(page,saveProject(initial));
   await bindHumanBarcode(page,'code128','CODE128'); await bindHumanBarcode(page,'ean13','EAN13');
@@ -103,32 +105,80 @@ test('human barcode controls persist and independently decode preview, offline s
   await load(page,source); await assertCodes(page,page.frameLocator('#preview-frame'),info,'json-reopened');
   const exporting = page.waitForEvent('download'); await clickHeaderAction(page,'export');
   const htmlPath = info.outputPath('barcode-offline.html'); await (await exporting).saveAs(htmlPath);
-  const html = await readFile(htmlPath,'utf8');
-  await load(page,html,'barcode.html'); await assertCodes(page,page.frameLocator('#preview-frame'),info,'html-reopened');
-  const offlineContext = await browser.newContext({offline:true});
-  const offline = await offlineContext.newPage(), requests = [];
-  await offline.route(/^https?:/,route=> { requests.push(route.request().url()); return route.abort(); });
-  await offline.goto(pathToFileURL(htmlPath).href);
-  await expect(offline.locator('html')).toHaveAttribute('data-printform-status','ready');
-  await assertCodes(offline,offline,info,'standalone-offline');
-  await offline.emulateMedia({media:'print'}); await assertCodes(offline,offline,info,'print-media');
-  expect(requests).toEqual([]);
-  if (browserName === 'chromium') {
-    const pdfBytes = await offline.pdf({preferCSSPageSize:true,printBackground:true,scale:1});
-    await info.attach('actual-offline-barcode.pdf',{body:pdfBytes,contentType:'application/pdf'});
-    const loading = getDocument({data:new Uint8Array(pdfBytes),isEvalSupported:false});
-    try {
-      const pdf = await loading.promise; expect(pdf.numPages).toBe(1);
-      const text = (await (await pdf.getPage(1)).getTextContent()).items.map(item=>item.str || '').join(' ');
-      expect(text).toContain('0001234567895'); expect(text).toContain('00012.3400');
-    } finally { await loading.destroy(); }
+  const html = await readFile(htmlPath);
+  await load(page,html.toString('utf8'),'barcode.html'); await assertCodes(page,page.frameLocator('#preview-frame'),info,'html-reopened');
+
+  const nativeBrowser = browserName === 'webkit' ? await launchOfflineWebKit(browser.browserType(),info) : browser;
+  test.skip(!nativeBrowser,'Native WebKit offline file acceptance unavailable without an unprivileged Linux network namespace.');
+  const offlineContext = await nativeBrowser.newContext({offline:browserName !== 'webkit'});
+  try {
+    const offline = await offlineContext.newPage(), requests = [];
+    offline.on('request',request=> { if (/^https?:/.test(request.url())) requests.push(request.url()); });
+    offline.on('websocket',socket=>requests.push(socket.url()));
+    const fileUrl = pathToFileURL(htmlPath).href;
+    await offline.goto(fileUrl);
+    expect(offline.url()).toBe(fileUrl);
+    await expect(offline.locator('html')).toHaveAttribute('data-printform-status','ready');
+    await expect(offline.locator('meta[http-equiv=Content-Security-Policy]')).toHaveAttribute('content',/connect-src 'none'/);
+    expect(await offline.locator('#pf-sample-data').evaluate(node=>JSON.parse(node.textContent))).toEqual(initial.sampleData);
+    await assertCodes(offline,offline,info,'standalone-offline');
+    await offline.emulateMedia({media:'print'});
+    expect(await offline.evaluate(()=>matchMedia('print').matches)).toBe(true);
+    await assertCodes(offline,offline,info,'print-media');
+    if (browserName === 'chromium') {
+      const pdfBytes = await offline.pdf({preferCSSPageSize:true,printBackground:true,scale:1});
+      await info.attach('actual-offline-barcode.pdf',{body:pdfBytes,contentType:'application/pdf'});
+      const loading = getDocument({data:new Uint8Array(pdfBytes),isEvalSupported:false});
+      try {
+        const pdf = await loading.promise; expect(pdf.numPages).toBe(1);
+        const text = (await (await pdf.getPage(1)).getTextContent()).items.map(item=>item.str || '').join(' ');
+        expect(text).toContain('0001234567895'); expect(text).toContain('00012.3400');
+      } finally { await loading.destroy(); }
+    }
+    for (const [value,code] of [['000123456789','BARCODE_VALUE'],['0001234567894','BARCODE_CHECKSUM'],[1234567890123,'BARCODE_VALUE']]) {
+      const invalid = structuredClone(initial.sampleData); invalid.codes.ean13 = value;
+      const result = await offline.evaluate(data=>window.PrintFormDocument.render(data),invalid);
+      expect(result.status).toBe('blocked');
+      expect(result.validation.errors).toContainEqual(expect.objectContaining({code,path:'/codes/ean13'}));
+      await expect(offline.locator('#pf-mount svg')).toHaveCount(0);
+    }
+    expect(requests).toEqual([]);
+    expect(await readFile(htmlPath)).toEqual(html);
+    if (browserName === 'webkit') await expectOfflineStudioConnection(offlineContext,page.url());
+    await info.attach('native-offline-file-evidence.json',{contentType:'application/json',body:JSON.stringify({
+      browser:browserName,mode:browserName === 'webkit' ? 'kernel-network-namespace' : 'browser-offline-emulation',
+      url:fileUrl,bytes:html.length,sha256:createHash('sha256').update(html).digest('hex'),outboundRequests:requests,
+      kernelLoopbackBlocked:browserName === 'webkit' ? true : null
+    })});
+  } finally {
+    await offlineContext.close();
+    if (nativeBrowser !== browser) await nativeBrowser.close();
   }
-  for (const [value,code] of [['000123456789','BARCODE_VALUE'],['0001234567894','BARCODE_CHECKSUM'],[1234567890123,'BARCODE_VALUE']]) {
-    const invalid = structuredClone(initial.sampleData); invalid.codes.ean13 = value;
-    const result = await offline.evaluate(data=>window.PrintFormDocument.render(data),invalid);
-    expect(result.status).toBe('blocked');
-    expect(result.validation.errors).toContainEqual(expect.objectContaining({code,path:'/codes/ean13'}));
-    await expect(offline.locator('#pf-mount svg')).toHaveCount(0);
-  }
-  await offlineContext.close();
+});
+
+test('records plain local file behavior under browser offline emulation',async({page,browser,browserName,baseURL},info)=> {
+  const file = info.outputPath('offline-emulation-control.html'), title = 'Plain local file control';
+  await writeFile(file,`<!doctype html><html><title>${title}</title><p>${title}</p></html>`);
+  const url = pathToFileURL(file).href;
+  await page.goto(url);
+  await expect(page).toHaveTitle(title);
+  const emulated = await browser.newContext({offline:true});
+  try {
+    const offline = await emulated.newPage();
+    const failure = await offline.goto(url).then(()=>null,error=>error.message);
+    const navigatorOnline = failure === null ? await offline.evaluate(()=>navigator.onLine) : null;
+    await expectOfflineStudioConnection(emulated,new URL('/studio-v3/',baseURL).href,/ERR_INTERNET_DISCONNECTED|NS_ERROR_OFFLINE|WebKit encountered an internal error/);
+    await info.attach('offline-emulation-control.json',{contentType:'application/json',body:JSON.stringify({
+      browser:browserName,onlineFileOpened:true,offlineFileOpened:failure === null,offlineUrl:offline.url(),
+      failure,navigatorOnline,studioLoopbackBlocked:true
+    })});
+    if (failure !== null) {
+      expect(browserName).toBe('webkit');
+      expect(failure).toMatch(/WebKit encountered an internal error/);
+      expect(offline.url()).toBe('about:blank');
+      info.annotations.push({type:'offline-emulation-limitation',description:'WebKit offline emulation rejected even a plain local file before navigation. This case records the limitation and is not native acceptance.'});
+    } else {
+      await expect(offline).toHaveTitle(title);
+    }
+  } finally { await emulated.close(); }
 });

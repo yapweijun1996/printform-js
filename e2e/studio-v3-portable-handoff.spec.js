@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { spawnSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { clickHeaderAction } from './header-action.js';
+import { expectOfflineStudioConnection, launchOfflineWebKit } from './native-offline-browser.js';
 import { demoStarterRecords } from '../studio-v3/demo-catalog.js';
 
 const ready = page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
@@ -94,19 +94,6 @@ async function checkPdf(bytes,expected) {
   } finally { await loading.destroy(); }
 }
 
-async function launchOfflineWebKit(browserType,info) {
-  const args = ['--user','--map-current-user','--net'];
-  if (process.platform !== 'linux' || spawnSync('unshare',[...args,'--','true'],{stdio:'ignore',timeout:2000}).status !== 0) {
-    info.annotations.push({type:'native-file-control',description:'Linux WebKit needs an available unprivileged network namespace for the offline file check.'});
-    return null;
-  }
-  // WebKit's browser offline mode also rejects native file navigation. Isolate the
-  // whole browser at the kernel boundary while leaving its file support enabled.
-  const executablePath = info.outputPath('webkit-network-namespace');
-  await writeFile(executablePath,`#!/bin/sh\nexec unshare ${args.join(' ')} -- "$PRINTFORM_E2E_WEBKIT_BINARY" "$@"\n`,{mode:0o700});
-  return browserType.launch({executablePath,env:{...process.env,PRINTFORM_E2E_WEBKIT_BINARY:browserType.executablePath()}});
-}
-
 async function checkNativeFile(browser,kind,html,baseline,saved,revised,studioUrl) {
   const context = await browser.newContext({offline:kind !== 'webkit'});
   try {
@@ -121,12 +108,7 @@ async function checkNativeFile(browser,kind,html,baseline,saved,revised,studioUr
     if (kind === 'chromium') {
       const pdf = await filePage.pdf({preferCSSPageSize:true,printBackground:true});
       await checkPdf(pdf,baseline);
-    } else if (kind === 'webkit') {
-      // The normal fixture reached this same Studio server. The file context must
-      // fail its real browser connection to it without request routing or stubs.
-      const canary = await context.newPage();
-      await expect(canary.goto(studioUrl,{waitUntil:'commit',timeout:5000})).rejects.toThrow(/could not connect|network is unreachable|connection refused/i);
-    }
+    } else if (kind === 'webkit') await expectOfflineStudioConnection(context,studioUrl);
   } finally { await context.close(); }
 }
 
