@@ -4,5 +4,16 @@
   "release": "f7326df94f531dd6a6dad087f9944190abea7ebd",
   "packageHash": "4550a9441ee807c9bf7a97101d07727785335747c15b2c71a0f5b1205bf383db"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.knowledge.product-workflows": "01af46dfd8eaef12d72a4edf5c6af4012413022f4051e5c7961f44e96307c0a3"
+   },
+   "disposition": "updated",
+   "justification": "The shared register parser rejects wrong-width CSV records or unclosed quoted fields before qualification. The verified existing register still generates the same workflow guide bytes.",
+   "evidence": [
+    "scripts/studio-v3-task-register.mjs"
+   ]
+  }
+ ]
 }
