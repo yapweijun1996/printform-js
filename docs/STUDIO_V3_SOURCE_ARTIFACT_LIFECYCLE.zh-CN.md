@@ -17,6 +17,8 @@
 
 `SourceConnection.call()`先提交`POST /v1/workspaces/<id>/calls`，若返回running，随后用`GET .../calls/<callId>?wait=1`等待真实终态。服务端`Workspaces.accept()`验证owner、revision、配额及无已有lease；`finally`才释放lease并完成回执。
 
+客户端在接纳回执和终态回执都核对请求的操作名，并要求终态保留同一调用 ID。三项使用同一树摘要和镜像的受控回执复验分别替换接纳操作、完成操作与完成调用 ID，均拒绝回执、禁止该工作区开展后续操作，且仍能关闭已知属主的工作区。 [客户端](../studio-v3/source-workspace-client.js) · [回执复验](../tests/studio-v3-source-network-permission.test.js)
+
 `run`在独立受限容器中执行；回执含实际exit、signal、进程时间、before/after revision/tree及image。只有非零`COMMAND_FAILED`且效果已知时才是可继续修复的失败。未知效果、无效回执或清理不明不能当作成功，也不能盲重试。测试源码及stdout可编辑，不能成为独立资格oracle。
 
 ## 3. 从精确字节到私有draft

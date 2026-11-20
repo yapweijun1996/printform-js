@@ -9,7 +9,7 @@ const treeDigest = 'b'.repeat(64);
 const imageDigest = 'sha256:'+'c'.repeat(64);
 const identity = {release:'local',contractHash:'d',knowledgeHash:'e',packageHash:'f',sourceRunnerHash:runnerSourceHash};
 const request = {identity,project:{manifest:{documentId:'fictional-network-test'}},baseRevision:0,runId:'network-test'};
-const receipt = {callId:'call-1',status:'completed',beforeRevision:0,afterRevision:0,beforeDigest:treeDigest,afterDigest:treeDigest,imageDigest,changes:[]};
+const receipt = {callId:'call-1',operation:'list',status:'completed',beforeRevision:0,afterRevision:0,beforeDigest:treeDigest,afterDigest:treeDigest,imageDigest,changes:[]};
 const json = value=>new Response(JSON.stringify(value));
 
 function permission(query) {
@@ -28,7 +28,7 @@ function companion(onCall = ()=>{}) {
     if (pathname === '/v1/workspaces') return json({id:'workspace-1',revision:0,treeDigest,imageDigest});
     if (pathname.endsWith('/calls')) {
       onCall();
-      return json({callId:'call-1',status:'running'});
+      return json({callId:'call-1',operation:'list',status:'running'});
     }
     if (pathname.endsWith('/calls/call-1')) return json(receipt);
     if (pathname.endsWith('/close')) return json({id:'workspace-1',closed:true});
@@ -119,6 +119,28 @@ it('blocks new workspace effects and preserves already-admitted status, cancel, 
   expect(paths).toEqual(['POST /v1/pair','POST /v1/workspaces','POST /v1/workspaces/workspace-1/calls',
     'GET /v1/workspaces/workspace-1/calls/call-1?wait=1','POST /v1/workspaces/workspace-1/cancel',
     'POST /v1/workspaces/workspace-1/close','POST /v1/revoke']);
+});
+
+it.each([
+  ['admission operation','/calls',{callId:'call-1',operation:'search',status:'running'},false],
+  ['completion operation','/calls/call-1',{...receipt,operation:'search'},true],
+  ['completion call ID','/calls/call-1',{...receipt,callId:'call-2'},true],
+])('rejects a mismatched %s and retains owned cleanup',async(_kind,suffix,value,waited)=> {
+  permission(async ()=> ({state:'granted'}));
+  const {paths,transport}=companion();
+  const connection=await pairSourceRunner(code,{transport:async(url,options)=> {
+    const response=await transport(url,options);
+    return new URL(url).pathname.endsWith(suffix) ? json(value) : response;
+  }});
+  const workspace=authorizeSourceWorkspace(connection,{fictionalSource:true}),signal=new AbortController().signal;
+  await workspace.open(request,signal);
+  await expect(workspace.action('list',{},signal)).rejects.toMatchObject({code:'WORKSPACE_RECEIPT_INVALID'});
+  expect(workspace.active).toBe(false);
+  expect(workspace.denialCode).toBe('EFFECT_UNKNOWN');
+  await expect(workspace.action('list',{},signal)).rejects.toMatchObject({code:'WORKSPACE_UNAVAILABLE'});
+  await workspace.close();
+  expect(paths).toEqual(['POST /v1/pair','POST /v1/workspaces','POST /v1/workspaces/workspace-1/calls',
+    ...(waited ? ['GET /v1/workspaces/workspace-1/calls/call-1?wait=1'] : []),'POST /v1/workspaces/workspace-1/close']);
 });
 
 it('refuses new wire effects if the connection begins revocation while awaiting permission',async()=> {

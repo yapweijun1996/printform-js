@@ -110,8 +110,10 @@ class SourceConnection {
       if (error.httpStatus >= 400 && error.httpStatus < 500 && ['AGENT_ARGUMENTS_INVALID','WORKSPACE_PATH_DENIED','QUOTA_EXCEEDED'].includes(error.code)) error.admissionRejected = true;
       throw error;
     }
-    if (!identifier(receipt.callId)) throw fail('WORKSPACE_RECEIPT_INVALID');
-    if (receipt.status === 'running') receipt = await this.#request(`${root}/calls/${receipt.callId}?wait=1`,{signal,wait:true});
+    const {callId} = receipt;
+    if (!identifier(callId) || receipt.operation !== operation) throw fail('WORKSPACE_RECEIPT_INVALID');
+    if (receipt.status === 'running') receipt = await this.#request(`${root}/calls/${callId}?wait=1`,{signal,wait:true});
+    if (receipt.callId !== callId || receipt.operation !== operation || receipt.status !== 'completed') throw fail('WORKSPACE_RECEIPT_INVALID');
     return receipt;
   }
   cancel(id) { if (!identifier(id)) throw unavailable(); return this.#request(`/v1/workspaces/${id}/cancel`,{body:{}}); }
