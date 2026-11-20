@@ -4,5 +4,16 @@
   "release": "7937c7155d3a80e2bb08093adb9572c36d78d1e5",
   "packageHash": "5218cca7d2e71f017e4f2a9d5f159efd495b6a1a4b5b1ade5da64778df2828a8"
  },
- "dispositions": []
+ "dispositions": [
+  {
+   "entries": {
+    "printform.knowledge.general-print-authoring": "98a4bf34abf79d3c62b7d54ac63f607fceeae5818781497058d933379fc09ded"
+   },
+   "disposition": "updated",
+   "justification": "The evaluation now opens the exact downloaded native file in Linux WebKit with kernel network isolation and records the distinct browser offline-emulation limitation. Chromium, Firefox and WebKit passed the serial barcode and portable-handoff replay, including exact screen and print raster decoding. This changes the test evidence and does not confer physical print qualification.",
+   "evidence": [
+    "e2e/studio-v3-offline-barcode.spec.js"
+   ]
+  }
+ ]
 }
