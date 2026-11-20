@@ -66,6 +66,22 @@ Fresh builds from `f7326df94f531dd6a6dad087f9944190abea7ebd` and `d2412e889fabb0
 | `f7326df` | `60d3d678db989248b8d5f075f881069c573375a8ef569c9ed51f1542ebecfa35` | `57840030caf177aee55427521d179e8a19862cec4a3d96d8853e7cb0a28099b1` |
 | `d2412e8` | `debeebea937b998b2c3bbfe28286cd04164584535242c9dfb4b0abb3fbbe85ee` | `a06f50d4a11f3adeb4e97af438effcd577feb69d35cd1b275298db0ef844ead8` |
 
+### Exact `8d42c5b` and `9d6f992` drill
+
+An independent reconstruction of `8d42c5b` and the retained build of `9d6f992` matched the app, worker, Agent manifest and dependency-index hashes observed from their separate Pages deployments. Both roots matched all 25 shell entries and six Agent files, and both report companion source hash `78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b`. [Observed public fingerprints](STUDIO_V3_ROLLBACK_PINS_8D42_9D6F.json)
+
+Fifteen tests passed across Chromium, Firefox and WebKit. They exercised offline upgrade, rollback, saved Undo/Redo history, recovery of a locally opened source, and recovery of an adopted A4 form with its pending edit, paper and Undo. Two additional Chromium tests used native HTTP and CORS with a controlled companion response to check Stay, Keep, a wrong cleanup receipt, same-intent revocation and retry. The four corresponding Firefox/WebKit cases were skipped by the companion fixture. Production rollback, physical output and live model requests were outside this drill.
+
+```sh
+node scripts/studio-v3-verify-release-pair.mjs OLD_SITE_DIST NEXT_SITE_DIST \
+  docs/acceptance/STUDIO_V3_ROLLBACK_PINS_8D42_9D6F.json
+PRINTFORM_ROLLBACK_OLD=OLD_SITE_DIST PRINTFORM_ROLLBACK_NEXT=NEXT_SITE_DIST \
+  npx playwright test e2e/studio-v3-upgrade.spec.js e2e/studio-v3-upgrade-opened-file.spec.js \
+  e2e/studio-v3-upgrade-adopted-a4.spec.js e2e/studio-v3-source-update.spec.js \
+  --grep 'rollback to a previous|two real builds: desktop|a saved form keeps|a clean locally opened|adopted A4 starter|Studio update with owned source cleanup' \
+  --workers=1 --retries=0
+```
+
 ### Verify archived roots against observed fingerprints
 
 Before serving a prebuilt rollback pair, check both archived or reproducibly rebuilt `site-dist` roots against separately retained observations of those releases. GitHub Pages can stop serving older immutable URLs after deployment. Keep the roots and fingerprint records available locally. Use full releases and do not compute the expected fingerprints from the same roots being checked.
