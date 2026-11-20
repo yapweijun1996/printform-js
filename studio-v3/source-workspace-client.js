@@ -6,6 +6,31 @@ export const SOURCE_PROTOCOL = 'printform-coding-v1';
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const identifier = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 const unavailable = () => fail('WORKSPACE_UNAVAILABLE');
+const rejected = code => Object.assign(fail(code),{admissionRejected:true});
+
+async function loopbackPermission(permissions,signal) {
+  try {
+    return await permissions.query({name:'loopback-network'});
+  } catch (error) {
+    if (signal.aborted || !['TypeError','NotSupportedError'].includes(error?.name)) return;
+  }
+  try { return await permissions.query({name:'local-network-access'}); } catch {}
+}
+
+async function readLoopbackPermission(deadline) {
+  const permissions = globalThis.navigator?.permissions;
+  if (deadline.aborted || typeof permissions?.query !== 'function') return;
+  let abort;
+  const interrupted = new Promise(resolve=> { abort = ()=>resolve(); });
+  deadline.addEventListener('abort',abort,{once:true});
+  try { return await Promise.race([loopbackPermission(permissions,deadline),interrupted]); }
+  finally { deadline.removeEventListener('abort',abort); }
+}
+
+function checkAdmission(status,deadline,signal) {
+  if (deadline.aborted) throw rejected(signal?.aborted ? 'CANCELLED' : 'WORKSPACE_UNAVAILABLE');
+  if (status?.state === 'denied') throw rejected('WORKSPACE_LOCAL_NETWORK_DENIED');
+}
 
 function runnerUrl(value) {
   let url;
@@ -51,9 +76,10 @@ class SourceConnection {
     this.expiresAt = paired.expiresAt; this.profile = paired.profile; this.runnerSourceHash = paired.runnerSourceHash;
   }
   get available() { return !this.#dead && Date.now() < this.expiresAt; }
-  async request(path,{body,signal,intent = crypto.randomUUID(),wait = false} = {}) {
+  async request(path,{body,signal,intent = crypto.randomUUID(),wait = false,admission = false} = {}) {
     if (!this.available) throw fail('WORKSPACE_AUTH_EXPIRED');
     const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(wait ? 65_000 : 15_000)]) : AbortSignal.timeout(wait ? 65_000 : 15_000);
+    if (admission) checkAdmission(await readLoopbackPermission(stop),stop,signal);
     const headers = {Authorization:`Bearer ${this.#token}`};
     if (body !== undefined) Object.assign(headers,{'Content-Type':'application/json','x-pf-intent':intent});
     let response;
@@ -66,12 +92,12 @@ class SourceConnection {
     }
     return responseJson(response);
   }
-  create(metadata,files,signal,intent) { return this.request('/v1/workspaces',{body:{...metadata,files},signal,intent}); }
+  create(metadata,files,signal,intent) { return this.request('/v1/workspaces',{body:{...metadata,files},signal,intent,admission:true}); }
   async call(id,operation,args,expectedRevision,signal) {
     if (!identifier(id)) throw fail('WORKSPACE_UNAVAILABLE');
     const root = `/v1/workspaces/${id}`;
     let receipt;
-    try { receipt = await this.request(`${root}/calls`,{body:{operation,expectedRevision,args},signal}); }
+    try { receipt = await this.request(`${root}/calls`,{body:{operation,expectedRevision,args},signal,admission:true}); }
     catch (error) {
       if (error.httpStatus >= 400 && error.httpStatus < 500 && ['AGENT_ARGUMENTS_INVALID','WORKSPACE_PATH_DENIED','QUOTA_EXCEEDED'].includes(error.code)) error.admissionRejected = true;
       throw error;
@@ -93,10 +119,12 @@ class SourceConnection {
 export async function pairSourceRunner(code,{baseURL = SOURCE_RUNNER_URL,transport = globalThis.fetch.bind(globalThis),signal} = {}) {
   const base = runnerUrl(baseURL);
   if (typeof code !== 'string' || !/^[a-zA-Z0-9_-]{16,128}$/.test(code)) throw fail('WORKSPACE_PAIRING_INVALID');
+  const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000);
+  checkAdmission(await readLoopbackPermission(stop),stop,signal);
   let response;
   try {
     response = await transport(`${base}/v1/pair`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code}),
-      signal:signal ? AbortSignal.any([signal,AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),credentials:'omit',cache:'no-store',redirect:'error',referrerPolicy:'no-referrer'});
+      signal:stop,credentials:'omit',cache:'no-store',redirect:'error',referrerPolicy:'no-referrer'});
   } catch { if (signal?.aborted) throw signal.reason; throw unavailable(); }
   return new SourceConnection(base,transport,await responseJson(response));
 }

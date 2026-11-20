@@ -2,6 +2,7 @@ const entry = (family,category,recoverable,retryAdvice) => Object.freeze({family
 export const sourceFailure = code => Object.assign(new Error(code),{code});
 export const SOURCE_ERROR_CONTRACTS = Object.freeze({
   WORKSPACE_UNAVAILABLE:entry('WORKSPACE_UNAVAILABLE','unavailable',false,'The local companion/workspace is unavailable. Do not invent source results or fall back to a host shell.'),
+  WORKSPACE_LOCAL_NETWORK_DENIED:entry('SCOPE_DENIED','rejected',false,'The browser blocked loopback access. Allow local network access for this Studio in browser site settings, then retry.'),
   WORKSPACE_DISCLOSURE_REQUIRED:entry('APPROVAL_REQUIRED','rejected',false,'A paired local companion and explicit per-run fictional-source permission are required. The model cannot grant either.'),
   WORKSPACE_AUTH_EXPIRED:entry('SCOPE_DENIED','rejected',false,'The local pairing expired or was revoked. Stop; a new human pairing is required.'),
   WORKSPACE_PAIRING_INVALID:entry('APPROVAL_REQUIRED','rejected',false,'Use the current one-use code shown by the locally started companion. Never send it to the model.'),

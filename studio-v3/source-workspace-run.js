@@ -41,7 +41,9 @@ class SourceWorkspaceRun {
     this.#binding = Object.freeze({releaseIdentity:Object.freeze(identityOf(identity)),documentId:project.manifest.documentId,baseRevision,runId});
     this.#opening = (async()=> {
       this.#admitted = true;
-      const value = await this.#connection.create(this.#binding,sourceWorkspaceStarter(),signal);
+      let value;
+      try { value = await this.#connection.create(this.#binding,sourceWorkspaceStarter(),signal); }
+      catch (error) { if (error?.admissionRejected) this.#admitted = false; throw error; }
       if (!id(value.id) || !Number.isSafeInteger(value.revision) || value.revision < 0 || !hash(value.treeDigest) || !imageHash(value.imageDigest)) throw fail('WORKSPACE_RECEIPT_INVALID');
       this.#id = value.id; this.#revision = value.revision; this.#digest = value.treeDigest; this.#image = value.imageDigest;
       signal.throwIfAborted();
