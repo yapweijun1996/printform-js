@@ -1,5 +1,5 @@
 {
- "contractHash": "799c8b5cee4ba9565fd79577213689ac5cfee4d4c31ba7fb9d67e0633c6e7880",
+ "contractHash": "e76c5e2b8fcbb67e2880e420d4690586115ed65181a004109acb26606e0f706e",
  "entries": [
   {
    "hash": "20b226ac1c616cc77ff3d10ddae4c22d1b85804c8600cce17fd69cbb65cfec04",
@@ -32,7 +32,7 @@
    "status": "active"
   },
   {
-   "hash": "f6995d46e558bdd50611c9f2f3bfd20d7627b4677cbd6033253532b155a8ca4d",
+   "hash": "470c75f041030012ee51761f5a72ef5e1eb7379eaa35d87d79c519e888956d00",
    "id": "printform.agent.retrieve_page",
    "status": "active"
   },
@@ -62,52 +62,52 @@
    "status": "active"
   },
   {
-   "hash": "c99dafe09ecaf5f733cd6e7257c4bfba08fcf883c1859a3731006a3842774a4a",
+   "hash": "5226c1260d95c3955fa28e47f442ee9926748a0112ed17b522d839e5b7ad1438",
    "id": "printform.agent.report_blocked",
    "status": "active"
   },
   {
-   "hash": "da636d0277232b9217693b2175c00c77603970d25c68d0d17efffa023ea71f3d",
+   "hash": "c07c06c0f5afdd6fde313a2b40acc4a54f0cd4893d5754c18dec9e6726d6c5dd",
    "id": "printform.agent.workspace_list",
    "status": "active"
   },
   {
-   "hash": "7fd81f0ad54069fd179b40606d93e78464e1151ca7321604e5068a9a6fe7365d",
+   "hash": "dfffe9bd8e875a1b1994270186dade9e4c6ca0b8b8ae07039a27f2adc0d97bf2",
    "id": "printform.agent.workspace_read",
    "status": "active"
   },
   {
-   "hash": "6d5f955fd41db0a38b6a5e74ba288bf2f949a1dfe40197be119c15127d7d38bb",
+   "hash": "48cda509566e6d7729c5f64c6ba87ccedbe674730fced3f9e39006ac9250055d",
    "id": "printform.agent.workspace_search",
    "status": "active"
   },
   {
-   "hash": "4aaf71b15c6af4f78ca4a1437439b5cbeb0987fb2f6fcfc51b9899824e7aa966",
+   "hash": "c0b1a20613ccab7003c08e0739904f2f0597abf96489c59af8daadc801b9d255",
    "id": "printform.agent.workspace_write",
    "status": "active"
   },
   {
-   "hash": "7042562ab7c1e13ec38c76146a2529f014d70943fcacf622e3c07c9073ce8805",
+   "hash": "27b716d2fa984be3d9d4562f00f3830dcf2832beb14e9f29fe6435b84c148a05",
    "id": "printform.agent.workspace_patch",
    "status": "active"
   },
   {
-   "hash": "435e04f40189266d5cc45b3be9ecf4e8de940d265ffb17b47a476157ff7845d3",
+   "hash": "62369e8ab05c9cc2146445c63563f37feb0e08e0c11f711e8e8ea5ae727ce730",
    "id": "printform.agent.workspace_run",
    "status": "active"
   },
   {
-   "hash": "34753601effe26211d61bb1379983cb2ba2b334997ee80f32732db7124d8fd69",
+   "hash": "206c3f93e8fc9475d09e571a7e0206aee6ce2f3b4e02426dde1646180289acec",
    "id": "printform.agent.workspace_diff",
    "status": "active"
   },
   {
-   "hash": "d1532183090ebda9aabc94b91e07acf7cea4df5b4f20f4180c6340a7a0344734",
+   "hash": "5e891f739787ac0ad28767d6613a0310088f0891a6f249ead3e55d9bf850fc8e",
    "id": "printform.agent.workspace_artifacts",
    "status": "active"
   },
   {
-   "hash": "80662b17e2b1f37f562095b67063eca199298f8ee44bb3cef743bd9d59ef5640",
+   "hash": "927e5d13b41ec6ccf6066e30430573d1215de00aa6b8e068bbd0fa08594f0c37",
    "id": "printform.agent.import_artifact",
    "status": "active"
   },
@@ -177,7 +177,7 @@
    "status": "active"
   },
   {
-   "hash": "6fcce8d1f27d8d0740b985f602f4f661440414f7cc77cd29aca3f1aaaf2233fb",
+   "hash": "cb1548c6ed6d00a8e4febf524923f1eb8c358ea35a6aebac2ada4c2de0eab825",
    "id": "printform.knowledge.form-authoring",
    "status": "active"
   },
@@ -192,22 +192,22 @@
    "status": "active"
   },
   {
-   "hash": "256641ba855cd8ea55b943df4a55cb0f0daf9e1e00851cc895b1b1b832cde3d1",
+   "hash": "259be21ad21c803f52f056042728a7d65a1f152225d85be6891e42c2d65b046f",
    "id": "printform.knowledge.source-workspace",
    "status": "active"
   }
  ],
  "files": {
-  "capabilities.json": "0cbbc4103accff9456184e0552f5689f471253a04387d439174541f71a52e9f3",
-  "knowledge-index.json": "98ad82ab7fc48e1e32f503caa660cd21a999cc82c8ae2a04508ece1e43e5ff13",
+  "capabilities.json": "f8e4cd779b3b56c06141f9fb09c8d61c6fdff8e073617c0793095110ab67d043",
+  "knowledge-index.json": "c8766fa342a052584d3eb8b0ba7e6dba2cdf092431870eb8ca212650a066fdcd",
   "resources/form-authoring.md": "e9f9eaaba030d7b37a8cc42aa20c61997caf52fee7bc4266a95fcb6775bd0f7b",
   "resources/general-print-authoring.md": "c29ba60f8ff601f5a9f21ef7767d4199d1460700612dbe78e637baa492e92d9c",
   "resources/product-workflows.md": "b331b7e42e1210848dae7fe881b2743c0885e39d5797840e78e9231e3ca7639c",
   "resources/source-workspace.md": "ad331a25c5cc9afef84f382cbf830d4b871f3f26eb3df1f1e65075abe64675a8"
  },
- "knowledgeHash": "00dacf29885a8a37f2c8f64e0f77e31ece0f99d0214c5f68cbdd201e2316db65",
- "packageHash": "f4f1505c842cc5ebfdaf300665bf49ab64ef20fae437398eea1f8f8fd5b085c7",
- "release": "6e9fd0efaffabdca36ec55b579fc02cdc45e5b37",
+ "knowledgeHash": "bb19241026c27668879929b0c850bc8b5a20457dc631633a0fdd29562a086e90",
+ "packageHash": "4550a9441ee807c9bf7a97101d07727785335747c15b2c71a0f5b1205bf383db",
+ "release": "f7326df94f531dd6a6dad087f9944190abea7ebd",
  "sourceRunnerHash": "78a4664416976fc3d597251efad692c859a4bcecbe8745a671aca0bfbcb6071b",
  "tombstones": [],
  "version": 1

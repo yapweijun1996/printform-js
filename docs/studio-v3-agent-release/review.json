@@ -1,70 +1,8 @@
 {
  "version": 1,
  "baseline": {
-  "release": "6e9fd0efaffabdca36ec55b579fc02cdc45e5b37",
-  "packageHash": "f4f1505c842cc5ebfdaf300665bf49ab64ef20fae437398eea1f8f8fd5b085c7"
+  "release": "f7326df94f531dd6a6dad087f9944190abea7ebd",
+  "packageHash": "4550a9441ee807c9bf7a97101d07727785335747c15b2c71a0f5b1205bf383db"
  },
- "dispositions": [
-  {
-   "entries": {
-    "printform.agent.retrieve_page": "470c75f041030012ee51761f5a72ef5e1eb7379eaa35d87d79c519e888956d00"
-   },
-   "disposition": "updated",
-   "justification": "The unchanged built-in fictional template factory and A4 definitions now enter the local Composer starter dependency graph. The pairing UI reports an unconfirmed provisional revoke without advertising the session as usable. The source setup passes the stamped runner identity to the client before enabling one-request source consent. The existing local new-form controller resolves exact built-in A4 presets through the independently reviewed document flow. Pairing checks the pinned source hash through a permission-gated read-only health request, rechecks the paired identity and revokes a provisional mismatch.",
-   "evidence": [
-    "studio-v3/a4-demo-designs.js",
-    "studio-v3/ai-messages.js",
-    "studio-v3/ai-source-workspace.js",
-    "studio-v3/business-document-demos.js",
-    "studio-v3/business-inspection-handover-demos.js",
-    "studio-v3/business-manufacturing-timesheet-demos.js",
-    "studio-v3/business-requisition-maintenance-demos.js",
-    "studio-v3/business-service-logistics-demos.js",
-    "studio-v3/demo-templates.js",
-    "studio-v3/new-form-workspace.js",
-    "studio-v3/source-workspace-client.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.report_blocked": "5226c1260d95c3955fa28e47f442ee9926748a0112ed17b522d839e5b7ad1438",
-    "printform.knowledge.form-authoring": "cb1548c6ed6d00a8e4febf524923f1eb8c358ea35a6aebac2ada4c2de0eab825"
-   },
-   "disposition": "updated",
-   "justification": "The pairing UI reports an unconfirmed provisional revoke without advertising the session as usable.",
-   "evidence": [
-    "studio-v3/ai-messages.js"
-   ]
-  },
-  {
-   "entries": {
-    "printform.agent.workspace_list": "c07c06c0f5afdd6fde313a2b40acc4a54f0cd4893d5754c18dec9e6726d6c5dd",
-    "printform.agent.workspace_read": "dfffe9bd8e875a1b1994270186dade9e4c6ca0b8b8ae07039a27f2adc0d97bf2",
-    "printform.agent.workspace_search": "48cda509566e6d7729c5f64c6ba87ccedbe674730fced3f9e39006ac9250055d",
-    "printform.agent.workspace_write": "c0b1a20613ccab7003c08e0739904f2f0597abf96489c59af8daadc801b9d255",
-    "printform.agent.workspace_patch": "27b716d2fa984be3d9d4562f00f3830dcf2832beb14e9f29fe6435b84c148a05",
-    "printform.agent.workspace_run": "62369e8ab05c9cc2146445c63563f37feb0e08e0c11f711e8e8ea5ae727ce730",
-    "printform.agent.workspace_diff": "206c3f93e8fc9475d09e571a7e0206aee6ce2f3b4e02426dde1646180289acec",
-    "printform.agent.workspace_artifacts": "5e891f739787ac0ad28767d6613a0310088f0891a6f249ead3e55d9bf850fc8e",
-    "printform.agent.import_artifact": "927e5d13b41ec6ccf6066e30430573d1215de00aa6b8e068bbd0fa08594f0c37",
-    "printform.knowledge.source-workspace": "259be21ad21c803f52f056042728a7d65a1f152225d85be6891e42c2d65b046f"
-   },
-   "disposition": "updated",
-   "justification": "The unchanged built-in fictional template factory and A4 definitions now enter the local Composer starter dependency graph. The pairing UI reports an unconfirmed provisional revoke without advertising the session as usable. The source setup passes the stamped runner identity to the client before enabling one-request source consent. The existing local new-form controller resolves exact built-in A4 presets through the independently reviewed document flow. Pairing checks the pinned source hash through a permission-gated read-only health request, rechecks the paired identity and revokes a provisional mismatch. Transport tests verify no denied or mismatched credential dispatch, matching pairing, and cleanup after a provisional mismatch.",
-   "evidence": [
-    "studio-v3/a4-demo-designs.js",
-    "studio-v3/ai-messages.js",
-    "studio-v3/ai-source-workspace.js",
-    "studio-v3/business-document-demos.js",
-    "studio-v3/business-inspection-handover-demos.js",
-    "studio-v3/business-manufacturing-timesheet-demos.js",
-    "studio-v3/business-requisition-maintenance-demos.js",
-    "studio-v3/business-service-logistics-demos.js",
-    "studio-v3/demo-templates.js",
-    "studio-v3/new-form-workspace.js",
-    "studio-v3/source-workspace-client.js",
-    "tests/studio-v3-source-network-permission.test.js"
-   ]
-  }
- ]
+ "dispositions": []
 }
