@@ -40,3 +40,5 @@ PF_CODING_INTEGRATION=1 PF_CODING_IMAGE=printform-coding-runner:run-create-fence
 共享工作区 `/workspace/scratch/pf-g6-release-prep` 的 `8a189338f9d5b6aea185503d857f877661a4bd15` 将快照响应校验独立成模块，并让同一已撤销凭据的原请求仅能重试原属主清理。该版本 runner 源码哈希为 `5a21c60af7ba45e3538115c4e3252e1451ba5e3a748224d485394d4b76373d36`，封存镜像为 `sha256:c593f24e0c5ffab0ca83a7174e1f08cb5506c99325c8495393b7f2b95a0c41ce`。53 项单元测试通过。
 
 真实本机 Docker 上，受控创建请求在分发前等待约 30,119 毫秒。第一次撤销返回 503，原 anchor 和卷保留，普通请求和新 intent 的撤销均收到 401。夹具随后分发之前捕获的唯一自有创建请求。容器仍为 `created`，未执行源码。同一撤销 intent 重试返回 200，按验证后的不可变 ID 删除该容器，属主资源清零。后续同一 intent 返回已确认回执。没有重新授权原令牌。这与上文 100 个样本使用不同的封存镜像，且仅验证受控延迟。发布版和真实 daemon 重启的门禁保持开放。
+
+同一集成候选另用相同镜像运行仓库 50 轮驱动。本机 Docker Engine 28.4.0 `vfs` 上，两个并发工作区按原满限额夹具共得到 100 个完整 `CANCELLED` 回执，原树和版本一致，所有运行容器已删除。最终回执 p95 为 **1,036.47 毫秒**，超过 1 秒门槛，6 项超过 1 秒，最大 1,406.56 毫秒。运行状态 p95 39.82 毫秒，独立 Docker die p95 160 毫秒、最大 364 毫秒，均符合各自目标。4 次创建和恢复均通过，独立清单确认无托管容器或卷残留。原始 111 行的 SHA-256 为 `745884efdeb40a67c32b4a1d2ce3e2292faa04517a0c501dfe3f1962fc8f23af`。两个封存版本的结果分别保留。 [集成候选原始 JSONL](STUDIO_V3_COD07_RELEASE_PREP_LOAD_20261120.jsonl)
