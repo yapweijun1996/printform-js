@@ -4,6 +4,7 @@ import { responsesReply } from './demo-gateway-fixture.js';
 import { test, expect } from './studio-v3-test.js';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { keepStructureOpen } from './studio-v3-structure.js';
+import {observeNativePreview,readNativePreview} from './studio-v3-native-preview.js';
 import fs from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 
@@ -33,7 +34,31 @@ async function expectYellow(locator){
   await expect(locator.first()).toHaveCSS('background-color','rgb(255, 255, 0)');
   expect(await locator.evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).backgroundColor==='rgb(255, 255, 0)'))).toBe(true);
 }
-test.beforeEach(async({page})=>{page.on('dialog',dialog=>dialog.accept());await keepStructureOpen(page);await page.goto('/studio-v3/');await ready(page);});
+const stripeRestoration = 'table selection permits row fill; manual property clearing restores existing stripes';
+function measureStripeColors() {
+  const colors = selector=>Array.from(document.querySelectorAll(selector),node=>getComputedStyle(node).backgroundColor);
+  return {rows:colors('.prowitem_processed tr'),cells:colors('.prowitem_processed td')};
+}
+async function stripeColors(page,group) {
+  let colors;
+  await expect.poll(async()=>{
+    colors = (await readNativePreview(page))?.[group];
+    return colors?.length || 0;
+  }).toBeGreaterThan(0);
+  return colors;
+}
+async function expectYellowStripe(page,group) {
+  const colors = await stripeColors(page,group);
+  expect(colors[0]).toBe('rgb(255, 255, 0)');
+  expect(colors.every(color=>color === 'rgb(255, 255, 0)')).toBe(true);
+}
+test.beforeEach(async({page},info)=>{
+  page.on('dialog',dialog=>dialog.accept());
+  await keepStructureOpen(page);
+  if (info.title === stripeRestoration) await observeNativePreview(page,measureStripeColors);
+  await page.goto('/studio-v3/');
+  await ready(page);
+});
 test('yellow rows are rendered across pages; automatic apply, Undo and save/reopen retain data and template identity',async({page,context,browserName},info)=>{
   const calls=await mock(page,[fill]);const before=await save(page,info,'before-row-fill.printform.json');
   const totals=await paper(page).locator('[data-v3-id=totals-total]').allTextContents();
@@ -64,15 +89,15 @@ test('yellow rows are rendered across pages; automatic apply, Undo and save/reop
   await expectYellow(paper(page).locator('.prowitem_processed tr'));const reopened=await save(page,info,'reopened-row-fill.printform.json');
   expect(reopened.project.manifest.studioV3).toEqual(authored.project.manifest.studioV3);expect(reopened.project.manifest.title).toBe(authored.project.manifest.title);expect(reopened.project.sampleData).toEqual(authored.project.sampleData);
 });
-test('table selection permits row fill; manual property clearing restores existing stripes',async({page})=>{
+test(stripeRestoration,async({page})=>{
   await mock(page,[fill]);await page.locator('#left-panel [data-select=items]').click();await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
   await page.locator('#ai-prompt').fill(request);await page.locator('[data-ai-send]').click();await expectApplied(page,1);await ready(page);
-  await expectYellow(paper(page).locator('.prowitem_processed tr'));await page.locator('[data-ai=close]').click();
+  await expectYellowStripe(page,'rows');await page.locator('[data-ai=close]').click();
   const field=page.getByLabel('Table row background',{exact:true});await expect(field).toHaveValue('#ffff00');await field.fill('');
-  await expectYellow(paper(page).locator('.prowitem_processed tr'));await page.getByRole('button',{name:'Apply section',exact:true}).click();await ready(page);
-  await expect(paper(page).locator('.prowitem_processed tr').first()).not.toHaveCSS('background-color','rgb(255, 255, 0)');
+  await expectYellowStripe(page,'rows');await page.getByRole('button',{name:'Apply section',exact:true}).click();await ready(page);
+  expect((await stripeColors(page,'rows'))[0]).not.toBe('rgb(255, 255, 0)');
   await page.locator('[data-action=go-style]').click();await expect(page.getByLabel('Table row background',{exact:true})).toHaveValue('');
-  await page.getByLabel('Table row background',{exact:true}).fill('#ffff00');await page.getByRole('button',{name:'Apply style',exact:true}).click();await ready(page);await expectYellow(paper(page).locator('.prowitem_processed td'));
+  await page.getByLabel('Table row background',{exact:true}).fill('#ffff00');await page.getByRole('button',{name:'Apply style',exact:true}).click();await ready(page);await expectYellowStripe(page,'cells');
 });
 test('schema-valid model fill is not repaired by host request-color interpretation and remains undoable',async({page})=>{
  const blue={kind:'proposal',summary:'Light blue data rows',operations:[{type:'set_table_style',target:'items',patch:{rowBackground:'#dbeafe'}}]};

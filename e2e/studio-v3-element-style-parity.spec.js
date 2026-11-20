@@ -2,6 +2,7 @@ import {expectApplied} from './ai-applied.js';
 import {test,expect} from './studio-v3-test.js';
 import {keepStructureOpen} from './studio-v3-structure.js';
 import {limitToSelection,limitToWholeForm} from './studio-v3-scope.js';
+import {observeNativePreview,readNativePreview} from './studio-v3-native-preview.js';
 import {keyFor,typography,completion,normalized,gateway,save,diagnostics,retain} from './studio-v3-element-style.js';
 
 test.use({workInSteps:true});
@@ -10,51 +11,21 @@ const ready = page => expect(page.locator('[data-action=export]')).toBeEnabled({
 const paper = page => page.frameLocator('#preview-frame');
 const send = async(page,text) => { await page.locator('#ai-prompt').fill(text); await page.locator('[data-ai-send]').click(); };
 const select = async(page,target) => { await paper(page).locator(`[data-v3-id="${target}"]`).first().click(); };
-async function observePreviewStyles(page,target) {
-  await page.addInitScript(id=>{
-    if (window !== window.top) return;
-    const source = 'printform-typography-native-test';
-    const state = window.__nativePreviewStyles = {generation:0,snapshot:null};
-    const capture = (target,generation,source) => {
-      window.addEventListener('printform:rendered',()=>{
-        const nodes = [...document.querySelectorAll(`[data-v3-id="${target}"]`)];
-        const styles = nodes.map(node=>{
-          const {fontSize,fontWeight,color,textAlign} = getComputedStyle(node);
-          return {fontSize,fontWeight,color,textAlign};
-        });
-        const rect = nodes[0]?.getBoundingClientRect();
-        const point = rect && rect.width > 0 && rect.height > 0 ?
-          {x:rect.left + rect.width / 2,y:rect.top + rect.height / 2} : null;
-        parent.postMessage({source,generation,styles,point},'*');
-      },{once:true});
-    };
-    window.addEventListener('message',event=>{
-      const frame = document.querySelector('#preview-frame'), report = event.data;
-      if (event.source === frame?.contentWindow && report?.source === source && report.generation === state.generation) {
-        state.snapshot = {styles:report.styles,point:report.point};
-      }
-    });
-    // Install a read-only listener in each actual preview document. Firefox's
-    // Playwright execution context can vanish on a later srcdoc replacement.
-    const prototype = HTMLIFrameElement.prototype, descriptor = Object.getOwnPropertyDescriptor(prototype,'srcdoc');
-    Object.defineProperty(prototype,'srcdoc',{...descriptor,set(html) {
-      if (this.id !== 'preview-frame') return descriptor.set.call(this,html);
-      state.generation += 1;
-      state.snapshot = null;
-      const nonce = html.match(/<script\b[^>]*\bnonce="([A-Za-z0-9+/=]+)"/)?.[1];
-      const end = html.lastIndexOf('</body>');
-      if (nonce && end !== -1 && html.includes("source:'printform-studio-v3-preview'")) {
-        const observer = `<script nonce="${nonce}">(${capture})(${JSON.stringify(id)},${state.generation},${JSON.stringify(source)});</script>`;
-        html = html.slice(0,end) + observer + html.slice(end);
-      }
-      return descriptor.set.call(this,html);
-    }});
-  },target);
+function measurePreviewStyles(target) {
+  const nodes = [...document.querySelectorAll(`[data-v3-id="${target}"]`)];
+  const styles = nodes.map(node=>{
+    const {fontSize,fontWeight,color,textAlign} = getComputedStyle(node);
+    return {fontSize,fontWeight,color,textAlign};
+  });
+  const rect = nodes[0]?.getBoundingClientRect();
+  const point = rect && rect.width > 0 && rect.height > 0 ?
+    {x:rect.left + rect.width / 2,y:rect.top + rect.height / 2} : null;
+  return {styles,point};
 }
 async function nativePreviewSnapshot(page) {
   let snapshot;
   await expect.poll(async()=>{
-    snapshot = await page.evaluate(()=>window.__nativePreviewStyles.snapshot);
+    snapshot = await readNativePreview(page);
     return snapshot?.styles.length || 0;
   }).toBeGreaterThan(0);
   return snapshot;
@@ -94,7 +65,7 @@ test.beforeEach(async({page})=> { page.on('dialog',dialog=>dialog.accept()); awa
 
 for (const target of ['header-title','page-number']) test(`real ${target} inspector and Pi wire agree on typography, diagnostics, reset and automatic apply`,async({page},info)=> {
   const errors = []; page.on('pageerror',error=>errors.push(error.message));
-  await observePreviewStyles(page,target);
+  await observeNativePreview(page,measurePreviewStyles,target);
   const patch = {fontSize:target === 'header-title' ? 20.25 : 9.25,bold:false,color:'#163a5D',align:'center'};
   const reordered = {align:patch.align,color:patch.color,bold:patch.bold,fontSize:patch.fontSize}, increased = {...reordered,fontSize:patch.fontSize+.25};
   await gateway(page,[...completion(target,patch),...completion(target,{}),['apply_operations',typography(target,reordered)],...completion(target,increased)]);
