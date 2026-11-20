@@ -179,3 +179,60 @@ test('Cancel New and Stay preserve a reviewed CSV and only confirmed replacement
   await expect(page.locator('#revision')).toHaveText('r0');
   await expect(page.locator('#preview-frame')).not.toHaveAttribute('srcdoc',before);
 });
+
+
+test('unavailable Undo and Redo shortcuts leave clean forms clean while available history still works',async({page})=> {
+  const revision = page.locator('#revision'), name = page.locator('#document-name');
+  const undo = page.locator('[data-action=undo]'), redo = page.locator('[data-action=redo]');
+  const toolbar = page.locator('[data-action=new]');
+  const initial = await name.inputValue(), frame = page.locator('#preview-frame');
+  const original = await frame.getAttribute('srcdoc');
+  await toolbar.focus();
+  await expect(undo).toBeDisabled();
+  await page.keyboard.press('Control+z');
+  await expect(revision).toHaveText('r0');
+  await expect(frame).toHaveAttribute('srcdoc',original);
+
+  await name.fill('Saved shortcut form');
+  await name.press('Tab');
+  const download = page.waitForEvent('download');
+  await clickHeaderAction(page,'save');
+  await download;
+  await ready(page);
+  await expect(revision).toHaveText('r1');
+  const saved = await frame.getAttribute('srcdoc');
+  await expect(redo).toBeDisabled();
+  await toolbar.focus();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(revision).toHaveText('r1');
+  await expect(frame).toHaveAttribute('srcdoc',saved);
+
+  await page.keyboard.press('Control+z');
+  await expect(name).toHaveValue(initial);
+  await expect(revision).toHaveText(/^r2\b/);
+  await ready(page);
+  await toolbar.focus();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(name).toHaveValue('Saved shortcut form');
+  await expect(revision).toHaveText(/^r3\b/);
+});
+
+test('an unavailable history shortcut leaves the inspector draft and native editing alone',async({page})=> {
+  await page.locator('#left-panel [data-select=items-sku]').click();
+  const field = label(page);
+  await field.fill('Pending shortcut edit');
+  await expect(page.locator('#draft-state')).toContainText('1 unapplied');
+  await page.locator('[data-action=new]').focus();
+  await page.keyboard.press('Control+z');
+  await page.keyboard.press('Control+Shift+z');
+  await expect(page.locator('#draft-dialog')).toBeHidden();
+  await expect(page.locator('#revision')).toHaveText('r0');
+  await expect(field).toHaveValue('Pending shortcut edit');
+  await field.evaluate(input=>document.addEventListener('keydown',event=> {
+    if (event.target === input && event.ctrlKey && event.key.toLowerCase() === 'z') window.nativeUndoPrevented = event.defaultPrevented;
+  }));
+  await field.press('Control+z');
+  expect(await page.evaluate(()=>window.nativeUndoPrevented)).toBe(false);
+  await expect(page.locator('#draft-dialog')).toBeHidden();
+  await expect(page.locator('#revision')).toHaveText('r0');
+});

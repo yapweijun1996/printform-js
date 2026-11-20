@@ -31,7 +31,7 @@ import { setupNewFormWorkspace } from './new-form-workspace.js';
 import { setupNewTemplateDialog } from './new-template-dialog.js';
 import { setupFictionalNoteReview } from './fictional-note-review.js';
 import { adoptPrivateDraft } from './new-form-draft.js';
-import { setupWorkspaceShortcuts } from './workspace-shortcuts.js';
+import { navigateWorkspaceHistory, setupWorkspaceShortcuts } from './workspace-shortcuts.js';
 const $ = selector => document.querySelector(selector); setupDemoTemplatePicker();
 const state = {mode:'design',selected:'items',tab:'properties',sample:'erp',report:null,matrix:{},dirty:false,dataDraft:null,running:false,runId:0,collapsed:{},search:'',jsonError:'',fileReads:0};
 let bus, displayed, zoom = 1, pageIndex = 0, editQueue = Promise.resolve();
@@ -179,7 +179,7 @@ async function switchSample(id) {
 const validateAll = createValidateAll({state,project:() => bus.project,render:project => render(project),stopRun,cancelPaper:() => paper.cancel(),invalidateAI:() => ai.invalidate(),renderPanels:() => renderPanels(),syncControls:() => syncControls()});
 async function action(name) {
   if (newForms.blockedAction(name)) return;
-  if (name === 'undo' || name === 'redo') { if (!database.guardDraft()) return; await bus.navigateHistory(name,bus.revision); state.dataDraft = null; await changed(); }
+  if (name === 'undo' || name === 'redo') return navigateWorkspaceHistory(name,{bus,database,state,changed});
   else if (name === 'new') { $('#new-warning').textContent = state.dirty || database.draft || database.importReview || state.dataDraft !== null || drafts.drafts.size ? 'Choosing a new form replaces this tab. Cancel to keep working on the current form.' : 'Choose a complete starter or a blank form.'; $('#new-dialog').showModal(); }
   else if (name === 'cancel-new') $('#new-dialog').close();
   else if (name === 'open') $('#open-file').click();
