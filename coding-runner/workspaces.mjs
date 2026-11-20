@@ -65,7 +65,8 @@ export class Workspaces {
       }
       return receipt;
     });
-    return receipt;
+    // Replay the admission ID only. Full results live in the bounded workspace receipt store.
+    return { ...receipt };
   }
   reconcile(workspace, receipt, tree) {
     receipt.changes = changesBetween(workspace.tree.entries, tree.entries);
@@ -85,12 +86,14 @@ export class Workspaces {
     if (output.exitCode !== 0) throw new RunnerError('COMMAND_FAILED', 409);
   }
   getCall(owner, id, callId) {
-    const workspace = this.owned(owner, id, false); const receipt = workspace.calls.get(callId);
+    const workspace = this.owned(owner, id, false); check(workspace.state !== 'closed', 'WORKSPACE_CLOSED', 409);
+    const receipt = workspace.calls.get(callId);
     check(receipt, 'CALL_NOT_FOUND', 404); return { workspace, receipt };
   }
   async status(owner, id, callId, wait) {
     const { workspace, receipt } = this.getCall(owner, id, callId);
     if (wait && workspace.lease?.callId === callId) await workspace.lease.promise;
+    check(workspace.state !== 'closed', 'WORKSPACE_CLOSED', 409);
     return receipt;
   }
   async cancel(owner, id) {
@@ -110,7 +113,14 @@ export class Workspaces {
       workspace.state = 'closing';
       if (workspace.lease?.operation === 'run') await this.cancel(owner, id).catch(() => {});
       if (workspace.lease) await workspace.lease.promise;
-      try { await this.docker.destroy(workspace); workspace.state = 'closed'; workspace.tree = null; workspace.base = null; return { id, closed: true }; }
+      try {
+        await this.docker.destroy(workspace);
+        workspace.state = 'closed'; workspace.tree = null; workspace.base = null;
+        workspace.calls.clear();
+        // The initialization promise would otherwise keep the original source snapshot alive.
+        workspace.initialization = null;
+        return { id, closed: true };
+      }
       catch (error) { workspace.state = 'quarantined'; workspace.closingPromise = null; throw error; }
     });
     return workspace.closingPromise;

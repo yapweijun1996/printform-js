@@ -60,6 +60,9 @@ export function artifact(workspace, args, limits, imageDigest) {
   check(args.path.endsWith('.json'), 'ARTIFACT_TYPE');
   const entry = workspace.tree.entries.find((candidate) => candidate.path === args.path);
   check(entry?.type === 'file', 'FILE_NOT_FOUND', 404); check(entry.bytes <= limits.artifactBytes, 'ARTIFACT_TOO_LARGE', 413);
+  const generated = call.changes?.find((change) => change.path === args.path);
+  check(generated?.afterType === 'file' && generated.afterDigest === entry.digest &&
+    generated.beforeDigest !== entry.digest, 'ARTIFACT_NOT_PRODUCED', 409);
   let json; try { json = JSON.parse(entry.content.replace(/^\uFEFF/, '')); } catch { check(false, 'ARTIFACT_JSON'); }
   keys(json, ['format', 'version', 'summary', 'operations'], ['format', 'version', 'summary', 'operations']);
   check(json.format === 'printform-operation-artifact' && json.version === 1 && Array.isArray(json.operations) && json.operations.length > 0 && json.operations.length <= 64, 'ARTIFACT_SCHEMA');

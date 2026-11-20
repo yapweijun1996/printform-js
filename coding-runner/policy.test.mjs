@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { pathName, validateFiles, LIMITS, normalizeLimits, runArgs, sha, treeDigest } from './policy.mjs';
 import { Pairing, hostGuard, configuredOrigin } from './security.mjs';
 import { artifact, diff, read, validatePatch } from './operations.mjs';
+import { Workspaces } from './workspaces.mjs';
 
 const origin = 'https://yapweijun1996.github.io';
 function navigation() {
@@ -88,9 +89,41 @@ describe('pairing, owner credentials and intents', () => {
 it('derives artifact provenance outside the source and invalidates old build identities', () => {
   const content = JSON.stringify({ format: 'printform-operation-artifact', version: 1, summary: 'Synthetic operation', operations: [{ type: 'example' }] });
   const source = tree(content, 'build/operations.json'), callId = randomUUID();
-  const workspace = { id: randomUUID(), revision: 2, tree: source, calls: new Map([[callId, { callId, operation: 'run', status: 'completed', exitCode: 0, afterRevision: 2, afterDigest: source.treeDigest }]]),
+  const receipt = { callId, operation: 'run', status: 'completed', exitCode: 0, afterRevision: 2, afterDigest: source.treeDigest, changes: [] };
+  const workspace = { id: randomUUID(), revision: 2, tree: source, calls: new Map([[callId, receipt]]),
     context: { releaseIdentity: { release: 'owned' }, documentId: 'doc', baseRevision: 7, runId: 'run' } };
-  const value = artifact(workspace, { callId, path: 'build/operations.json' }, LIMITS, 'sha256:owned');
+  const args = { callId, path: 'build/operations.json' };
+  expect(() => artifact(workspace, args, LIMITS, 'sha256:owned')).toThrow('ARTIFACT_NOT_PRODUCED');
+  receipt.changes = [{ path: args.path, afterType: 'file', beforeDigest: sha(content), afterDigest: sha(content) }];
+  expect(() => artifact(workspace, args, LIMITS, 'sha256:owned')).toThrow('ARTIFACT_NOT_PRODUCED');
+  receipt.changes[0].beforeDigest = null;
+  const value = artifact(workspace, args, LIMITS, 'sha256:owned');
   expect(value.documentId).toBe('doc'); expect(value.sourceRevision).toBe(2); expect(value.contentDigest).toBe(sha(content));
   workspace.revision++; expect(() => artifact(workspace, { callId, path: 'build/operations.json' }, LIMITS, 'sha256:owned')).toThrow('STALE_ARTIFACT');
+});
+
+it('discards source receipts and snapshots on close without changing the original intent identity', async () => {
+  const { pairing, request, principal } = paired(async () => {});
+  const source = tree('fictional source receipt');
+  const destroy = vi.fn(async () => {});
+  const workspaces = new Workspaces({ createWorkspace: async () => source, destroy }, LIMITS);
+  try {
+    const { id } = await workspaces.create(principal, { files: [{ path: 'main.js', content: 'fictional source receipt' }],
+      releaseIdentity: { release: 'owned', contractHash: 'contract', knowledgeHash: 'knowledge', packageHash: 'package' },
+      documentId: 'doc', baseRevision: 0, runId: 'run' });
+    const body = { operation: 'read', expectedRevision: 0, args: { path: 'main.js' } };
+    request.url = `/v1/workspaces/${id}/calls`;
+    const admission = await pairing.accept(principal, request, body, () => workspaces.accept(principal, id, body));
+    const status = await workspaces.status(principal, id, admission.callId, true);
+    expect(status.result.content).toBe('fictional source receipt');
+    expect(admission).not.toHaveProperty('result');
+    const workspace = workspaces.owned(principal, id);
+    await workspaces.close(principal, id);
+    expect(workspace).toMatchObject({ tree: null, base: null, initialization: null });
+    expect(workspace.calls.size).toBe(0);
+    await expect(workspaces.status(principal, id, admission.callId)).rejects.toThrow('WORKSPACE_CLOSED');
+    expect(await pairing.accept(principal, request, body, () => workspaces.accept(principal, id, body))).toEqual(admission);
+    expect(await workspaces.close(principal, id)).toEqual({ id, closed: true });
+    expect(destroy).toHaveBeenCalledOnce();
+  } finally { pairing.clear(); }
 });

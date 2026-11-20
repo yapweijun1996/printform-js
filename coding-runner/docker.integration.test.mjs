@@ -67,8 +67,17 @@ integration('isolated Node source companion', () => {
       const passed = await api.call(ws, 'run', { command: `node --input-type=module -e "import {answer} from './main.mjs';import assert from 'node:assert/strict';assert.equal(answer,42)" && node build.mjs` });
       expect(passed.exitCode).toBe(0); expect(passed.error).toBeUndefined();
       const artifact = await api.call(ws, 'artifacts', { callId: passed.callId, path: 'build/operations.json' });
+      expect(artifact.result.contentDigest).toBe(sha(artifact.result.content));
+      expect(artifact.result.buildCallId).toBe(passed.callId);
+      const unchanged = await api.call(ws, 'run', { command: 'printf unchanged' });
+      expect((await api.call(ws, 'artifacts', { callId: unchanged.callId, path: 'build/operations.json' })).error.code).toBe('ARTIFACT_NOT_PRODUCED');
       const changes = await api.call(ws, 'diff', {}); expect(changes.result.changes.some((entry) => entry.path === 'main.mjs' && entry.after.includes('42'))).toBe(true);
-      await api.call(ws, 'write', { path: 'new.txt', expectedDigest: null, content: 'changed' });
+      const failedMutation = await api.call(ws, 'run', { command: 'printf changed > new.txt; exit 1' });
+      expect(failedMutation.exitCode).toBe(1);
+      expect(failedMutation.error.code).toBe('COMMAND_FAILED');
+      expect(failedMutation.afterRevision).toBe(failedMutation.beforeRevision + 1);
+      expect(failedMutation.changes).toEqual([expect.objectContaining({ path: 'new.txt', afterDigest: sha('changed') })]);
+      expect((await api.call(ws, 'read', { path: 'new.txt' })).result.content).toBe('changed');
       expect((await api.call(ws, 'artifacts', { callId: passed.callId, path: 'build/operations.json' })).error.code).toBe('STALE_ARTIFACT');
     } finally { await api.close(); }
   }, 180000);
@@ -106,6 +115,10 @@ integration('isolated Node source companion', () => {
       expect(receipt.body.error.code).toBe('CANCELLED'); expect(receipt.body.exitCode).not.toBe(0); ws.revision = receipt.body.afterRevision;
       expect((await api.call(ws, 'run', { command: 'printf recovered' })).stdout).toBe('recovered');
       expect((await api.call(ws, 'list', {})).result.entries).toEqual([]);
+      const closed = await api.request(api.token, `/v1/workspaces/${ws.id}/close`, {});
+      expect(closed.body.closed).toBe(true);
+      const oldReceipt = await api.request(api.token, `/v1/workspaces/${ws.id}/calls/${accepted.body.callId}`);
+      expect(oldReceipt.body.error.code).toBe('WORKSPACE_CLOSED');
     } finally { await api.close(); }
   }, 180000);
 
