@@ -50,6 +50,17 @@ const REQUIRED_EVIDENCE=Object.freeze({
   history:['signed UI/wire before-after custody','private candidate and DOM geometry','human Apply/Undo/Redo events and actual states']
 });
 
+// The interval describes the fixed corpus only. Missing attempts are not observed failures.
+export function verifiedSuccessInterval(slots, required) {
+  if (required < 1 || slots.length !== required || slots.some(slot => !['Pass','Fail','Blocked'].includes(slot.evaluatedOutcome))) return null;
+  const pass=slots.filter(slot=>slot.evaluatedOutcome==='Pass').length;
+  const proportion=pass/required, z=1.959963984540054, zSquared=z*z;
+  const denominator=1+zSquared/required;
+  const center=(proportion+zSquared/(2*required))/denominator;
+  const margin=z*Math.sqrt(proportion*(1-proportion)/required+zSquared/(4*required*required))/denominator;
+  return {method:'Wilson score',level:0.95,pass,attempts:required,lower:pass===0?0:center-margin,upper:pass===required?1:center+margin};
+}
+
 // Offline consumer only. This function never schedules calls, acquires grants, writes attempts,
 // treats signatures as truth, or interprets review documents as newly invented gate authority.
 export function preflight({corpus,register,profile,inventory={profiles:[],envelopes:[],prerequisites:[],errors:[]}}) {
@@ -105,6 +116,7 @@ export function preflight({corpus,register,profile,inventory={profiles:[],envelo
     profile:profile.profile,profileDigest:digest(profile),identity:profile.identity,releaseIdentity:profile.releaseIdentity,
     corpus:{tasks:corpus.length,holdout:corpus.filter(c=>c.holdout).length,digest:digest(corpus),unsupportedTasks:unsupported.length,maxPass:ceiling,minPass:TARGET.minPass},
     counts:{required:recorded.required,registeredTotal:register.attempts.rows.length,registeredSelected:mine.length,recordedSlots:slots.filter(s=>s.registeredRows>0).length,missingSlots:slots.filter(s=>s.registeredRows===0).length,recordedPass:recorded.pass,verifiedSelected:checked,verifiedPass:verified.pass,missingRegisteredEvidence:evidence.missing.length,providedEnvelopes:inventory.envelopes.length,knownEvidenceProfiles:evidence.profiles},
+    verifiedSuccessInterval:validation.corpus.length || validation.profile.length ? null : verifiedSuccessInterval(slots,recorded.required),
     actualProfiles,families,essential:recorded.essential.map(item=>({...item,required:TARGET.repetitions,verifiedPass:verified.essential.find(v=>v.slot===item.slot).pass})),
     unsupported,slots,prerequisites,liveRelease,evidence:{results:evidence.results,missing:evidence.missing,errors:evidence.errors},validation,blockers,
     limitations:['Preflight is not 180 model executions or a production approval.','Prerequisite documents are byte-checked review inputs, never automatic G6/G7/G9/DPA qualification.','Recorded Pass is separate from signed evidence re-evaluated against its exact frozen profile.','Current broker availability/source lease is unobserved offline; historical runner evidence is not a current lease.']};

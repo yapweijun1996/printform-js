@@ -55,7 +55,9 @@ Essential slots, each owned by exactly one task and required to pass 3/3: `ESS-Q
 
 `qualification(register, profile, options?)` calls `validateRegister` itself; any register error appears in `reasons` with `invalid register:` and blocks qualification. Optional `capabilityIds` is forwarded to the validator. It reports `qualified: true` only when the valid register also has 60 frozen tasks with 6 per family; holdout at least 20%; exactly 180 unique counted attempts; at least 162 passes; at least 16/18 per family; every essential slot 3/3; zero critical violations across the profile. The empty register reports `frozen tasks 0/60` and `attempts 0/180`.
 
-Not covered yet: binomial confidence intervals, paired built-in-advantage comparison, blinded-reviewer agreement for reference reconstruction, and cost reporting. They belong to later CA-09 work.
+The [preflight consumer](STUDIO_V3_G8_PREFLIGHT.zh-CN.md) reports a 95% Wilson score interval when all 180 slots have been checked against the independent oracle for the selected profile. A correct refusal is a `Blocked` outcome in the denominator, with no success credit. The interval describes the fixed corpus under a binomial approximation. Repeated tasks may be correlated, so the interval does not establish reliability outside this corpus. Missing or invalid outcomes leave the interval unavailable.
+
+Paired built-in-advantage comparison, blinded-reviewer agreement for reference reconstruction and cost reporting remain open.
 
 2026-10-15历史：direct qualification consumers修复重复行和缺执行证据；[当时guard smoke](acceptance/STUDIO_V3_QUALIFICATION_GUARD_20261015.json)为零网络/模型，彼时CSV为0/60任务、0/180尝试。元数据校验本身不证明原始证据、合同或模型身份。
 

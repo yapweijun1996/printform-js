@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {preflight} from '../scripts/studio-v3-g8-preflight.mjs';
+import {preflight,verifiedSuccessInterval} from '../scripts/studio-v3-g8-preflight.mjs';
 import {readInventory} from '../scripts/studio-v3-g8-inventory.mjs';
 import {readRegister,ATTEMPT_COLUMNS} from '../scripts/studio-v3-task-register.mjs';
 import {digest} from '../scripts/studio-v3-g8-corpus.mjs';
@@ -47,10 +47,23 @@ describe('G8 read-only full-suite preflight',()=>{
     expect(report.slots.find(s=>s.family==='source-repair').requiredEvidence).toContain('actual test/build process receipts');
   });
 
+  it('reports a 95% Wilson interval only for a complete set of independent slot outcomes',()=>{
+    const completed=Array.from({length:180},(_,index)=>({evaluatedOutcome:index<162?'Pass':index<179?'Fail':'Blocked'}));
+    const interval=verifiedSuccessInterval(completed,180);
+    expect(interval).toMatchObject({method:'Wilson score',level:0.95,pass:162,attempts:180});
+    expect(interval.lower).toBeCloseTo(0.8475,4);
+    expect(interval.upper).toBeCloseTo(0.9358,4);
+    expect(verifiedSuccessInterval(completed.slice(1),180)).toBeNull();
+    expect(verifiedSuccessInterval([{evaluatedOutcome:null},...completed.slice(1)],180)).toBeNull();
+    expect(verifiedSuccessInterval([{evaluatedOutcome:'Fail'}],1).lower).toBe(0);
+    expect(verifiedSuccessInterval([{evaluatedOutcome:'Pass'}],1).upper).toBe(1);
+  });
+
   it('re-evaluates a signed synthetic envelope rather than trusting a recorded Pass',()=>{
     const {evidence}=fixture(),saved=structuredClone(evidence);
     const report=runWith([seal(evidence)],[row(evidence)]);
     expect(report.counts).toMatchObject({registeredSelected:1,recordedPass:1,verifiedSelected:1,verifiedPass:1,missingRegisteredEvidence:0});
+    expect(report.verifiedSuccessInterval).toBeNull();
     expect(report.evidence.results[0].evaluation.outcome).toBe('Pass');
     expect(evidence).toEqual(saved);
     expect(report.qualified).toBe(false);
