@@ -18,7 +18,7 @@ export function comparisonFixture(defect) {
 }
 // Serialized into the actual preview frame by Playwright; no app measurement helper is reused.
 export function observeComparisonDom(root) {
-  const doc=root.ownerDocument || root;
+  const doc=root?.ownerDocument || root || document;
   return {pages:[...doc.querySelectorAll('.printform_page')].map(page=> {
     const bounds=page.getBoundingClientRect();
     const nodes=[...page.querySelectorAll('[data-v3-id]')].filter(node=>!node.closest('[data-v3-selection]')).map(node=> {

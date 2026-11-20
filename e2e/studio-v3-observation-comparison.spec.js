@@ -2,12 +2,17 @@ import {test,expect} from './studio-v3-test.js';
 import {createHash} from 'node:crypto';
 import {comparisonFixture,COMPARISON_DEFECTS,observeComparisonDom,checkComparison,FICTIONAL_RUBRIC} from '../tests/support/observation-comparison.js';
 import {openSharing,closeSettings} from './ai-sharing.js';
+import {observeNativePreview,readNativePreview} from './studio-v3-native-preview.js';
 test.use({workInSteps:true});
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const expected={'missing-section':'MISSING_SECTION','wrong-text':'TEXT_MISMATCH',width:'WIDTH',alignment:'ALIGNMENT',pagination:'PAGINATION'};
 test('OBS-05 frozen fictional rubric detects native defects; actual completion cites latest receipt and rejects wrong receipts',async({page,browser},testInfo)=> {
   test.setTimeout(240000);const errors=[],cases=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.exposeBinding('__readFictionalGeometry',async()=>page.frameLocator('#preview-frame').locator('body').evaluate(observeComparisonDom));
+  await observeNativePreview(page,observeComparisonDom);
+  await page.exposeBinding('__readFictionalGeometry',async()=> {
+    await expect.poll(()=>readNativePreview(page)).not.toBeNull();
+    return readNativePreview(page);
+  });
   await page.addInitScript(()=> {
     const original=window.fetch.bind(window),json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
     let turn=0,foreign='observation-unowned-fictional';window.__comparisonWire=[];window.__comparisonSnapshots=[];
