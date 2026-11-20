@@ -1,5 +1,5 @@
 import { newProject, designOf, newDemoProject, setupDemoTemplatePicker } from './demo-templates.js';
-import { createBus, editProject, replaceData, designOperations, formDesign, alterFields, importRasterAsset } from './controller.js';
+import { createBus, editProject, replaceData, designOperations, formDesign, alterFields } from './controller.js';
 import { icon } from './icons.js';
 import { leftView, rightView } from './views.js';
 import { PaperPreview } from './preview.js';
@@ -15,6 +15,7 @@ import { FormDrafts } from './form-drafts.js';
 import { sourceLabel } from './data-provenance.js';
 import { parseSampleJSON } from './json-error.js';
 import { CanvasControls } from './canvas-controls.js';
+import { setupRasterUpload } from './raster-upload.js';
 import { AIPanel } from './ai-panel.js';
 import { AIElementTags } from './ai-element-tags.js';
 import { restoreZoom, persistZoom } from './zoom-preference.js';
@@ -74,7 +75,8 @@ const paper = new PaperPreview($('#preview-frame'), (report,view) => {
 }, selection => {
   drafts.guard(() => { state.selected = selection.id; goPage(Math.max(0,selection.page),false); renderPanels(); canvas.selectionMade(); }).catch(e=>status(e.message));
 });
-const canvas = new CanvasControls({mode:()=>state.mode,resize:resizePaper,guard:work => drafts.guard(work),report:status,context:()=>bus,upload:(file,target)=> {const context = bus; ++state.fileReads; return queueEdit(async()=> {const design = await importRasterAsset(context.project,file,target); if (bus !== context) throw new Error('The document changed. Upload the image again.'); await mutate(designOperations(bus.project,design),'embedded image');}).finally(()=>--state.fileReads);}});
+const canvas = new CanvasControls({mode:()=>state.mode,resize:resizePaper,guard:work=>drafts.guard(work),report:status});
+setupRasterUpload({getBus:()=>bus,state,guard:work=>drafts.guard(work),queueEdit,mutate,status});
 const elementTags = new AIElementTags({bus:()=>bus,selection:()=>state.selected,guard:work=>drafts.guard(work),report:status,onChange:()=>ai.contextChanged(true),open:()=> {canvas.close(false); ai.show();},highlight:id=>canvas.highlightElement(paper,id || state.selected),select:id=> {state.selected = id; state.mode = 'design'; renderPanels(); goPage(canvas.elementPage(paper,id)); canvas.highlightElement(paper,id); if (innerWidth <= 900) ai.suspend();}});
 const newForms = setupNewFormWorkspace({getBus:()=>bus,pending:()=>updateWork.pending(),adopt:options=>adoptPrivateDraft(options,{
   getBus:()=>bus,state,drafts,ai,settle:()=>editQueue,ready:()=>inspectProject(bus.project,state.report).ready,

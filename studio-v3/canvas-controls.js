@@ -3,7 +3,7 @@ import { labelSelection } from './design-authoring.js';
 import { restoreStructureOpen, persistStructureOpen } from './structure-preference.js';
 import { installPaperControls } from './paper-controls.js';
 export class CanvasControls {
-  constructor({resize,guard,upload=()=>{},report=()=>{},context=()=>null,mode=()=> 'design'}) {
+  constructor({resize,guard,report=()=>{},mode=()=> 'design'}) {
     this.resize = resize; this.guard = guard; this.drawer = null; this.returnFocus = null; this.mode = mode; this.lastMode = null; this.structureOpen = restoreStructureOpen();
     installPaperControls(report);
     this.backdrop = document.querySelector('#drawer-backdrop');
@@ -16,12 +16,6 @@ export class CanvasControls {
       else this.guard(()=>this.toggle(name,button)).catch(()=>{});
     });
     this.backdrop.addEventListener('click',()=>this.close());
-    document.addEventListener('change',event=> {
-      const input = event.target.closest('[data-image-target]');
-      if (!input || !input.files?.length) return;
-      const file = input.files[0], target = input.dataset.imageTarget, original = context(); input.value = '';
-      void Promise.resolve().then(()=>this.guard(()=> { if (context() !== original) throw new Error('The document changed. Upload the image again.'); return upload(file,target); })).catch(error=>report(error.message));
-    });
     document.addEventListener('keydown',event=> {
       if (!this.drawer || document.querySelector('dialog[open]')) return;
       if (event.key === 'Escape') { event.preventDefault(); this.close(); }
