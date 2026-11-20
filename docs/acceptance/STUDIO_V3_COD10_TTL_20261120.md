@@ -19,4 +19,16 @@
 
 复验使用 [Chromium 本地传输夹具](../../tests/support/source-runner-browser.mjs)、[伴随服务](../../coding-runner/server.mjs)、[配对过期与撤销](../../coding-runner/security.mjs)和[工作区关闭](../../coding-runner/workspaces.mjs)。本机探针在 `/workspace/scratch/pf-g6-ttl-probe.mjs`，结果在 `/workspace/scratch/pf-g6-ttl-probe.log`。
 
+## 仓库复验
+
+[可选集成测试](../../tests/coding-runner-retention.integration.test.mjs)复用实际 Chromium 和 Docker，保留 15 秒空闲周期，将测试配对期设为 60 秒，为工作区初始化及实际构建预留时间。还核对生成命令的 stdout，并在 A 清理后查询其旧构建回执。测试从当前伴随服务重算源码哈希并校验镜像身份。上表保留原探针 48 秒配对期的实际观测。
+
+```sh
+npx playwright install chromium
+docker build --tag printform-coding-runner:local coding-runner
+PF_CODING_INTEGRATION=1 PF_CODING_IMAGE=printform-coding-runner:local npx vitest run tests/coding-runner-retention.integration.test.mjs --maxWorkers=1 --no-file-parallelism
+```
+
+同一封存镜像上实际复跑，1 项通过，测试耗时 79.98 秒。默认运行时该项按开关跳过。
+
 这组证据覆盖运行中的 broker 自动清除受测的短期工作区和回执。显式 Close/撤销仍由[上一轮 Docker 复验](STUDIO_V3_COD07_COMBINED_HELPER_REVIEW_20261120.md#cod-10-所属资源关闭复验)覆盖。默认周期的全时长运行、异常退出残留处理、宿主或持久化介质的留存/删除仍待各自验证。当前编码伴随服务没有持久化恢复功能。COD-07 仍以原始负载测量为准。
