@@ -80,6 +80,7 @@ test('G5 STU-05 checks the repaired draft and preserves every supplied bilingual
   expect(wire).toHaveLength(4);
   const result = JSON.parse(wire[2].input.filter(item=>item.type === 'function_call_output').at(-1).output);
   expect(result.scenarios.map(entry=>entry.id)).toEqual(scenarios);
+  expect(result.scenarios.map(entry=>entry.metrics.rows)).toEqual([0,1,45,100,500,45]);
   expect(result.ready).toBe(true);
   await page.locator('[data-ai=preview]').click();
   await expect(page.locator('[data-ai=apply]')).toBeEnabled();
