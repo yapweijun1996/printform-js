@@ -24,6 +24,13 @@ On the later published `d2412e8` identity, read-only indexed preflight again exi
 - Commit `f00edf7` caps the scrollable dropdown using the panel's actual height and adds a regression assertion for the panel boundary. An independent Firefox bounds check moved the dropdown end to 661 px at the prior failing viewport. The rebuilt site passed all 12 composer viewport checks across Chromium 151, Firefox 153 and WebKit 26.5. WebKit initially failed to launch on missing host libraries and ran after those libraries were supplied from isolated local storage. This run used package hash `8a5eba9fc787f0747c44001dc05a6c8d9f6984e4fb3a1a2a45985812be8c7fe5`.
 - `node scripts/studio-v3-physical-check.mjs inventory` reported `CUPS_INVENTORY_UNAVAILABLE` and `USB_INVENTORY_UNAVAILABLE`.
 
+The later local site rebuilt with `64af34a` and the restored homepage link passed all 42 scripted G4 browser cases across Chromium, Firefox and WebKit with one worker and zero retries. This includes the previous Firefox 1280×720 case, all five injected comparison defects, receipt freshness, synthetic page and crop wire, image and scanned PDF scope, permission revocation and Stop. The route fixtures use fictional input. Live provider conformance and the independent blinded human review remain open.
+
+```sh
+npx playwright test e2e/studio-v3-observation e2e/studio-v3-pixel-observation \
+  e2e/studio-v3-semantic-observation e2e/studio-v3-visual-capability --workers=1 --retries=0
+```
+
 ## Draft G4 human review procedure
 
 This procedure is preparation for the existing [G4/G8 gates](../STUDIO_V3_CODING_AGENT_ACCEPTANCE.md). It has no reviewer ratings or approved human rubric. Keep the existing [fictional deterministic comparison](STUDIO_V3_CA05_OBS05.md) and historical observations intact.
