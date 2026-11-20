@@ -182,6 +182,21 @@ describe('physical evidence consumer boundaries',()=> {
     const f=fixture(); f.bundle.symbols[0].scan=f.ref('wrong.txt',value,'text/plain');
     expect(f.check().errors).toContain('SCANNER_VALUE_MISMATCH');
   });
+  it('requires a separate scanner capture for each symbol even when raw scan bytes match',()=>{
+    const f=fixture(),digits='0001234567895';
+    f.bundle.source=f.ref('equal-values.json',{sampleData:{codes:{code128:digits,ean13:digits}}},'application/json');
+    f.measurements.sourceDigest=f.bundle.source.digest;
+    const [code128,ean13]=f.bundle.symbols;
+    code128.scan=ean13.scan;
+    f.measurements.symbols[0].scanDigest=ean13.scan.digest;
+    expect(f.check()).toMatchObject({status:'invalid',physicalGate:'missing',certified:false,errors:['SCANNER_CAPTURE_REUSED']});
+
+    code128.scan=f.ref('separate-code128.txt',`${digits}\r\n`,'text/plain');
+    expect(code128.scan.digest).toBe(ean13.scan.digest);
+    const result=f.check();
+    expect(result).toMatchObject({status:'supplied-for-independent-review',physicalGate:'independent-review-required',certified:false});
+    expect(result.observations.map(row=>row.format)).toEqual(['CODE128','EAN13']);
+  });
   it('does not coerce numeric source values to barcode strings',()=> {
     const f=fixture(); f.bundle.source=f.ref('numeric.json',{sampleData:{codes:{code128:123,ean13:'0001234567895'}}},'application/json');
     f.measurements.sourceDigest=f.bundle.source.digest;

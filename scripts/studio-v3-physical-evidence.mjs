@@ -43,7 +43,7 @@ function requireSnapshot(base,file,expected,opened) {
   if (actual.length!==expected.length || actual.some((stat,index)=>!sameFile(stat,expected[index])) ||
     (opened && !sameFile(actual.at(-1),opened))) fail('ARTIFACT_PATH_CHANGED');
 }
-function readRegular(file,maxBytes=LIMIT,base=path.dirname(file)) {
+function readRegular(file,maxBytes=LIMIT,base=path.dirname(file),checkFile) {
   const expected=pathSnapshot(base,file);
   const fd = fs.openSync(file,fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
   try {
@@ -53,6 +53,7 @@ function readRegular(file,maxBytes=LIMIT,base=path.dirname(file)) {
     if (!sameFile(expected.at(-1),stat)) fail('ARTIFACT_PATH_CHANGED');
     requireSingleLink(stat);
     requireSnapshot(base,file,expected,stat);
+    checkFile?.(file,stat);
     const bytes = Buffer.allocUnsafe(stat.size+1);
     let count=0,read;
     while (count<bytes.length && (read=fs.readSync(fd,bytes,count,bytes.length-count,null))>0) count+=read;
@@ -71,7 +72,7 @@ export function parsePhysicalJson(bytes) {
 }
 function reader(base) {
   let total=0;
-  return ref => {
+  return (ref,checkFile) => {
     shape(ref,['path','digest','mediaType'],'ARTIFACT_REFERENCE');
     if (!digest(ref.digest) || typeof ref.path!=='string' || ref.path.length>240 ||
       !ref.path.split('/').every(part=>/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(part) && part!=='.' && part!=='..')) fail('ARTIFACT_PATH_OR_DIGEST');
@@ -80,7 +81,7 @@ function reader(base) {
       file=path.join(file,part);
       if (fs.lstatSync(file).isSymbolicLink()) fail('ARTIFACT_SYMLINK');
     }
-    const bytes=readRegular(file,LIMIT,base);
+    const bytes=readRegular(file,LIMIT,base,checkFile);
     total+=bytes.length;
     if (total>80*1024*1024) fail('BUNDLE_SIZE_LIMIT');
     if (physicalDigest(bytes)!==ref.digest) fail('ARTIFACT_DIGEST_MISMATCH');
@@ -135,13 +136,20 @@ function inspectBundle(bundle,load,inventory) {
   if (!positive(measured.mediaWidthMm) || !positive(measured.mediaHeightMm) || measured.clipped!==false) fail('MEASUREMENT_GEOMETRY');
   if (!Array.isArray(bundle.symbols) || bundle.symbols.length<2 || bundle.symbols.length>16 || !Array.isArray(measured.symbols) || measured.symbols.length!==bundle.symbols.length) fail('SYMBOL_COVERAGE');
   const seen=new Set(),formats=new Set(),observations=[];
+  const scanPaths=new Set(),scanInodes=new Set();
+  const checkScanFile=(file,stat)=>{
+    const identity=`${stat.dev}:${stat.ino}`;
+    if (scanPaths.has(file) || scanInodes.has(identity)) fail('SCANNER_CAPTURE_REUSED');
+    scanPaths.add(file);
+    scanInodes.add(identity);
+  };
   for (const symbol of bundle.symbols) {
     shape(symbol,['id','format','pointer','scan','terminator'],'SYMBOL_FIELDS');
     if (!text(symbol.id) || seen.has(symbol.id) || !['CODE128','EAN13'].includes(symbol.format) || !['none','LF','CRLF','CR'].includes(symbol.terminator)) fail('SYMBOL_IDENTITY');
     seen.add(symbol.id); formats.add(symbol.format);
     const expected=sourceValue(source,symbol.pointer); validateBarcode(expected,{format:symbol.format});
     referenceType(symbol.scan,'text/plain');
-    const raw=load(symbol.scan),suffix={none:'',LF:'\n',CRLF:'\r\n',CR:'\r'}[symbol.terminator];
+    const raw=load(symbol.scan,checkScanFile),suffix={none:'',LF:'\n',CRLF:'\r\n',CR:'\r'}[symbol.terminator];
     if (!raw.equals(Buffer.from(expected+suffix,'utf8'))) fail('SCANNER_VALUE_MISMATCH');
     const rows=measured.symbols.filter(item=>item?.id===symbol.id);
     if (rows.length!==1) fail('MEASURED_SYMBOL_MISSING_OR_DUPLICATE');

@@ -85,7 +85,7 @@ node scripts/studio-v3-physical-check.mjs check /absolute/local-bundle/bundle.js
 每个 `symbols` 元素恰好 `{id,format,pointer,scan,terminator}`：
 
 - format 只 CODE128／EAN13；pointer 是严格 RFC6901 绝对 pointer，从实际 source bytes 解析，值必须为符合现有条码规则的字符串；不修剪／补零／计算 check digit／转换数字。
-- scan 是硬件扫描器实际输出的 `text/plain` 原始捕获文件，不是人抄写期望值、截图 OCR、SVG 几何 oracle 或由 source 复制的文件。
+- 每个 symbol 使用独立的 scan 捕获文件。工具拒绝重复引用路径或文件身份，允许不同捕获文件包含相同字节。scan 是硬件扫描器实际输出的 `text/plain` 原始捕获文件，不是人抄写期望值、截图 OCR、SVG 几何 oracle 或由 source 复制的文件。
 - terminator 显式指定 `none`／`LF`／`CRLF`／`CR`；文件必须**逐字节等于**供应字符串＋该 terminator，不允许额外前缀／后缀／第二条读数／前导零丢失。捕获应使用独立终端记录并保留硬件、模式、时间与操作者的外部保管证据；本 CLI 不自行发起扫描。
 
 测量文件恰好含：
