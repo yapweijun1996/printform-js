@@ -1,0 +1,17 @@
+{
+  "schema": "studio-v3-rollback-pins-v1",
+  "old": {
+    "release": "f7326df94f531dd6a6dad087f9944190abea7ebd",
+    "appSHA256": "60d3d678db989248b8d5f075f881069c573375a8ef569c9ed51f1542ebecfa35",
+    "workerSHA256": "57840030caf177aee55427521d179e8a19862cec4a3d96d8853e7cb0a28099b1",
+    "manifestSHA256": "2ca51a9b7fa1426226b761318edba321aef3ddacfdf9b7f4c9e535521ab84a32",
+    "dependencyIndexSHA256": "b099ffc83b02af45fd9cdbda1cbc69151618ecb89888206bd2c630261d52ffd1"
+  },
+  "next": {
+    "release": "d2412e889fabb0e0b4cf91561f3bfa0cb28d3e3a",
+    "appSHA256": "debeebea937b998b2c3bbfe28286cd04164584535242c9dfb4b0abb3fbbe85ee",
+    "workerSHA256": "a06f50d4a11f3adeb4e97af438effcd577feb69d35cd1b275298db0ef844ead8",
+    "manifestSHA256": "214aa073347142e3bcfa460db66a7b43ad53e3b810ea3a299235b2ee53d1e56d",
+    "dependencyIndexSHA256": "54d9a65d4c7749fe5e9d94a60a20cf8b2cc9ba3bc61bd7467499241f3a537084"
+  }
+}
