@@ -50,6 +50,7 @@ export function setupFictionalNoteReview({getBus,state,database,drafts,ai,queueE
       return;
     }
     baseline = {bus,documentId:bus.project.manifest.documentId,revision:bus.revision};
+    stopSuggestion();
     resetPreview();
     input.value = bus.project.sampleData.notes;
     notice.textContent = '';
@@ -60,8 +61,15 @@ export function setupFictionalNoteReview({getBus,state,database,drafts,ai,queueE
     resetPreview();
     notice.textContent = '';
   });
-  cancel.addEventListener('click',()=>{ if (!applying) dialog.close(); });
-  dialog.addEventListener('cancel',event=>{ if (applying) event.preventDefault(); });
+  cancel.addEventListener('click',()=> {
+    if (applying) return;
+    stopSuggestion();
+    dialog.close();
+  });
+  dialog.addEventListener('cancel',event=> {
+    if (applying) event.preventDefault();
+    else stopSuggestion();
+  });
   dialog.addEventListener('close',()=> {
     if (dialog.open) return;
     stopSuggestion();
@@ -74,6 +82,7 @@ export function setupFictionalNoteReview({getBus,state,database,drafts,ai,queueE
     if (suggestion || applying) return;
     const bus = getBus();
     if (!dialog.open || !baseline || baseline.bus !== bus || baseline.revision !== bus.revision ||
+        baseline.documentId !== bus.project.manifest.documentId ||
         hasConflicts() || !canStageFictionalNote(bus)) {
       notice.textContent = errors.DATA_DRAFT_STALE;
       return;

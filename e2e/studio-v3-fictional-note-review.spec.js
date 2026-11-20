@@ -139,8 +139,9 @@ test('fictional note previews, applies once and undoes without writing a dataset
 
 test('an opt-in AI choice receives only fictional enums and still requires local Preview and Apply',async({page,context})=>{
   const wire = [];
-  let release;
-  const waiting = new Promise(resolve=>{release=resolve;});
+  let releaseEdit, releaseCancel;
+  const editing = new Promise(resolve=>{releaseEdit=resolve;});
+  const cancelling = new Promise(resolve=>{releaseCancel=resolve;});
   await context.route('https://gpt.yapweijun1996.com/**',async route=>{
     const url = new URL(route.request().url());
     if (url.pathname === '/demo/session') {
@@ -153,10 +154,11 @@ test('an opt-in AI choice receives only fictional enums and still requires local
     }
     wire.push(route.request().postDataJSON());
     const turn = wire.length;
-    if (turn === 2) await waiting;
+    if (turn === 2) await editing;
+    if (turn === 3) await cancelling;
     const text = turn === 1 ? '{"noteId":"delivery-review","value":"UNREVIEWED_PROVIDER_TEXT"}' : '{"noteId":"delivery-review"}';
     try { await route.fulfill({json:{status:'completed',output:[{type:'message',content:[{type:'output_text',text}]}]}}); }
-    catch (error) { if (turn !== 2) throw error; }
+    catch (error) { if (turn !== 2 && turn !== 3) throw error; }
   });
   try {
     await page.goto('/studio-v3/'); await ready(page);
@@ -193,11 +195,21 @@ test('an opt-in AI choice receives only fictional enums and still requires local
     await expect(suggest).toBeDisabled();
     await suggest.dispatchEvent('click');
     await note.fill('Human edit supersedes the held result');
-    release();
+    releaseEdit();
     await expect(suggest).toBeEnabled();
     await expect(note).toHaveValue('Human edit supersedes the held result');
     await expect(apply).toBeDisabled();
     expect(wire).toHaveLength(2);
+
+    await suggest.click();
+    await expect.poll(()=>wire.length).toBe(3);
+    await dialog.getByRole('button',{name:'Cancel'}).click();
+    await expect(dialog).toBeHidden();
+    await openReview(fork).click();
+    releaseCancel();
+    await expect(note).toHaveValue(baseline.data.notes);
+    await expect(suggest).toBeEnabled();
+    await expect(apply).toBeDisabled();
 
     await suggest.click();
     const expected = 'Please review the fictional delivery details before using this sample.';
@@ -206,7 +218,7 @@ test('an opt-in AI choice receives only fictional enums and still requires local
     await expect(apply).toBeDisabled();
     await expect(fork.locator('#revision')).toHaveText('r0');
     expect(await activeSource(fork)).toEqual(baseline);
-    expect(wire).toHaveLength(3);
+    expect(wire).toHaveLength(4);
     for (const body of wire) {
       expect(Object.keys(body).sort()).toEqual(['input','model','stream']);
       expect(body.stream).toBe(false);
@@ -238,6 +250,6 @@ test('an opt-in AI choice receives only fictional enums and still requires local
     expect((await activeSource(fork)).data).toEqual(baseline.data);
     await expect(fork.locator('#data-source')).toContainText('Built-in demo');
     expect(await savedRecords(fork)).toEqual(records);
-    expect(wire).toHaveLength(3);
-  } finally { release(); }
+    expect(wire).toHaveLength(4);
+  } finally { releaseEdit(); releaseCancel(); }
 });
