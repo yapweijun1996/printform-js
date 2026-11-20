@@ -118,3 +118,26 @@ it('blocks new workspace effects and preserves already-admitted status, cancel, 
     'GET /v1/workspaces/workspace-1/calls/call-1?wait=1','POST /v1/workspaces/workspace-1/cancel',
     'POST /v1/workspaces/workspace-1/close','POST /v1/revoke']);
 });
+
+it('refuses new wire effects if the connection begins revocation while awaiting permission',async()=> {
+  let releasePermission, releaseRevoke;
+  const query = permission(async ()=> ({state:'granted'}));
+  const {paths,transport} = companion();
+  const connection = await pairSourceRunner(code,{transport:async (url,options)=> {
+    const response = await transport(url,options);
+    if (url.endsWith('/v1/revoke')) await new Promise(resolve=> { releaseRevoke = resolve; });
+    return response;
+  }});
+  query.mockImplementationOnce(()=>new Promise(resolve=> { releasePermission = resolve; }));
+  const pending = connection.create({},[]);
+  const revoking = connection.revoke();
+  await vi.waitFor(()=>expect(releaseRevoke).toBeTypeOf('function'));
+  try {
+    expect(connection.available).toBe(true);
+    releasePermission({state:'granted'});
+    await expect(pending).rejects.toMatchObject({code:'WORKSPACE_AUTH_EXPIRED',admissionRejected:true});
+    expect(paths).toEqual(['POST /v1/pair','POST /v1/revoke']);
+  } finally { releaseRevoke(); }
+  await revoking;
+  expect(connection.available).toBe(false);
+});

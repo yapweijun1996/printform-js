@@ -79,7 +79,11 @@ class SourceConnection {
   async request(path,{body,signal,intent = crypto.randomUUID(),wait = false,admission = false} = {}) {
     if (!this.available) throw fail('WORKSPACE_AUTH_EXPIRED');
     const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(wait ? 65_000 : 15_000)]) : AbortSignal.timeout(wait ? 65_000 : 15_000);
-    if (admission) checkAdmission(await readLoopbackPermission(stop),stop,signal);
+    if (admission) {
+      const status = await readLoopbackPermission(stop);
+      if (!this.available || this.#revoke) throw rejected('WORKSPACE_AUTH_EXPIRED');
+      checkAdmission(status,stop,signal);
+    }
     const headers = {Authorization:`Bearer ${this.#token}`};
     if (body !== undefined) Object.assign(headers,{'Content-Type':'application/json','x-pf-intent':intent});
     let response;
