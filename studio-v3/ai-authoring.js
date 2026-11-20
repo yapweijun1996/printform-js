@@ -74,7 +74,7 @@ export function applyAuthoring(design,operations,project,explicitPointers=[]) {
       if (suppliedNumber && (Object.hasOwn(op.patch,'text') || (op.patch.kind !== undefined && op.patch.kind !== 'bound') || (financial && op.patch.pointer !== undefined && op.patch.pointer !== selected.field.pointer) || (op.patch.format !== undefined && op.patch.format !== selected.field.format))) unsafe();
       const relative = isTable(design,selected.block);
       const patch = {...op.patch,...fieldPropertiesChange(selected.field,op.patch)};
-      if (relative && Object.hasOwn(patch,'width')) Object.assign(patch,columnWidthChange(selected.field,patch.width));
+      if (relative && Object.hasOwn(patch,'width')) patch.width = columnWidthChange(selected.field,patch.width).width;
       const change = fieldBindingChange(selected.field,patch,{relative});
       for (const [key,value] of Object.entries(change.changes)) record(op.target,key,selected.field[key],value);
       fieldList(design,selected.block)[selected.index] = change.field;
