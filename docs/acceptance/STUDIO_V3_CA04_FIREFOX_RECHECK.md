@@ -66,3 +66,17 @@ The prior full unit suite passes 206 files / 1773 tests; the final site build in
 CA-04/COV-03 remains Partial: 4 shared / 16 parallel / 12 agent-only. The bounded Firefox gap and other workflows remain open. CA-05/G4 and its separate blinded/human qualification are unchanged. Further review should inspect the missing-context protocol sequence before selecting a prerequisite fix or another controlled execution environment.
 
 Fresh follow-up metadata checks pass 2 files / 9 tests, and the agent gate passes 76 examples / 28 reviewed changes after the notes are written. Their command exits are zero; these passes do not override the failed Firefox qualification.
+
+## 2026-11-20 focused native typography recheck
+
+On main `63e4c85`, an unchanged Firefox 153.0 run reproduced the heading timeout after revision 6 rendered, saved, and matched the expected content. The trace stops at the cross-frame computed-style query. Page number, row fill, and comments-only table selection passed. A repeated heading case again stopped at the same query after revision 3 and was interrupted. The remaining three planned repetitions were left unrun.
+
+On `da4fc42` with the test-only instrument, the first Firefox attempt confirmed that the existing style assertions passed through the actual preview's rendered event. It then timed out at the cross-frame click following Undo. The final test instrument adds a read-only listener to each actual preview document under the fixture's existing script nonce. It reads all four original computed style values during the document's render event. It requires a nonempty result from the current iframe generation. The browser translates the measured first target into viewport coordinates and uses the mouse to select it after a top-level hit test. The preview renderer, stylesheet, provider fixture, and original typography, saved-content, and wire assertions were preserved.
+
+| Engine | Heading title | Page number |
+| --- | --- | --- |
+| Chromium | Pass (25.4s) | Pass (20.1s) |
+| Firefox 153.0 | Pass (43.2s) | Pass (58.5s) |
+| WebKit 26.5 | Pass (29.7s) | Pass (26.5s) |
+
+Chromium and Firefox ran in 2.6 minutes. WebKit ran in 1.0 minute after two attempts stopped before the case bodies. The host library preflight first reported six missing libraries. The extracted user-space library directory resolved five, and `ldd` confirmed the remaining GLES library could resolve its dependencies. The successful run used that library directory and the documented Playwright host preflight override. All runs used official Playwright 1.62.0 browsers, one worker, no retries, and the existing assertion and case timeouts. The two affected test dependency digests were refreshed in the isolated build review. This focused 6/6 result leaves the historical complete-matrix outcomes intact. The complete matrix and the browser's underlying frame-context behavior remain unqualified.
