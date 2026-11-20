@@ -23,3 +23,5 @@ Chromium `151.0.7922.173` 使用正常沙箱和原生浏览器网络，在 `http
 同一构建随后通过实际的新版伴随服务复验。封存镜像为 `sha256:76badd727406b763e562556ba9cf53b1eb642dd9657674904ef7a20fa20b1537`，源码哈希与 Studio 要求的 `78a4664…` 一致。真实健康检查、配对和撤销均为 200，原生预检为 204，重复使用配对码为 403。
 
 37 项相关单元测试通过。以上覆盖本地 HTTPS 构建和配对阶段的版本切换。GitHub Pages 修复版和完整生产发布门禁须分别验收。
+
+The integrated site also passed the opt-in Chromium sealed artifact test in 24.9 seconds. It used the matched image above and the new health-before-pair path, then exercised the actual fictional source build, artifact inspection, independent preview and human Apply. The companion source and protocol remain those already proven by the close and revoke controls.
