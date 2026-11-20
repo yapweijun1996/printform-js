@@ -16,7 +16,7 @@ const RECOVERY = 'printform-studio-v3:update-recovery';
 async function companion(origin,runnerSourceHash) {
   let acknowledge;
   const heldClose = new Promise(resolve=> { acknowledge=resolve; });
-  const calls = [];
+  const calls = [], revokeIntents = [];
   const server = createServer(async (request,response)=> {
     const {method,url} = request;
     const json = (body,status=200)=> {
@@ -43,11 +43,12 @@ async function companion(origin,runnerSourceHash) {
     } else if (url === CLOSE_PATH) {
       json(await heldClose);
     } else if (url === '/v1/revoke') {
-      json({revoked:true,workspacesClosed:true});
+      revokeIntents.push(request.headers['x-pf-intent']);
+      json({revoked:true,workspacesClosed:revokeIntents.length > 1});
     } else json({},404);
   });
   await new Promise((resolve,reject)=>server.listen(0,'127.0.0.1',resolve).once('error',reject));
-  return {url:`http://127.0.0.1:${server.address().port}`,calls,acknowledge,close:async()=> {
+  return {url:`http://127.0.0.1:${server.address().port}`,calls,revokeIntents,acknowledge,close:async()=> {
     acknowledge({id:OWNED,closed:true});
     server.closeAllConnections();
     await new Promise(resolve=>server.close(resolve));
@@ -148,9 +149,16 @@ for (const wrongId of [false,true]) {
         await expect(page.locator('#ai-prompt')).toHaveValue(PROMPT);
         expect(await savedPrompt(page)).toBe(PROMPT);
         await page.locator('.ai-settings > summary').click();
-        await page.locator('[data-source-disconnect]').click();
+        const disconnect = page.locator('[data-source-disconnect]');
+        await disconnect.click();
+        await expect(page.locator('[data-source-status]')).toContainText('Revocation/cleanup was not acknowledged');
+        await expect(page.locator('[data-ai-send]')).toBeDisabled();
+        await expectBuild(page,OLD);
+        expect(await savedPrompt(page)).toBe(PROMPT);
+        await disconnect.click();
         await expect(page.locator('[data-source-status]')).toContainText('Pairing revoked and owned workspaces closed');
-        expect(local.calls).toContain('POST /v1/revoke');
+        expect(local.revokeIntents[0]).toMatch(/^[\da-f-]{36}$/);
+        expect(local.revokeIntents).toEqual([local.revokeIntents[0],local.revokeIntents[0]]);
         await closeSettings(page);
         await chooseUpdate(page,'keep');
       }

@@ -69,20 +69,23 @@ class SourceConnection {
   #token;
   #fetch;
   #revoke;
-  #dead = false;
+  #revokeIntent;
   constructor(base,transport,paired) {
     if (paired.protocol !== SOURCE_PROTOCOL || paired.profile !== 'local-docker-node24-source-json-v1' || paired.responseBytes !== MAX_RESPONSE_BYTES ||
       typeof paired.token !== 'string' || paired.token.length < 24 || paired.token.length > 256 || !Number.isFinite(paired.expiresAt) || paired.expiresAt <= Date.now()) throw unavailable();
     this.base = base; this.#fetch = transport; this.#token = paired.token;
     this.expiresAt = paired.expiresAt; this.profile = paired.profile; this.runnerSourceHash = paired.runnerSourceHash;
   }
-  get available() { return !this.#dead && Date.now() < this.expiresAt; }
-  async request(path,{body,signal,intent = crypto.randomUUID(),wait = false,admission = false} = {}) {
-    if (!this.available) throw fail('WORKSPACE_AUTH_EXPIRED');
+  #hasCredential() { return Boolean(this.#token) && Date.now() < this.expiresAt; }
+  get available() { return !this.#revokeIntent && this.#hasCredential(); }
+  async #request(path,{body,signal,intent = crypto.randomUUID(),wait = false,admission = false,revocation = false} = {}) {
+    if (!(revocation ? this.#hasCredential() : this.available)) {
+      throw admission ? rejected('WORKSPACE_AUTH_EXPIRED') : fail('WORKSPACE_AUTH_EXPIRED');
+    }
     const stop = signal ? AbortSignal.any([signal,AbortSignal.timeout(wait ? 65_000 : 15_000)]) : AbortSignal.timeout(wait ? 65_000 : 15_000);
     if (admission) {
       const status = await readLoopbackPermission(stop);
-      if (!this.available || this.#revoke) throw rejected('WORKSPACE_AUTH_EXPIRED');
+      if (!this.available) throw rejected('WORKSPACE_AUTH_EXPIRED');
       checkAdmission(status,stop,signal);
     }
     const headers = {Authorization:`Bearer ${this.#token}`};
@@ -97,31 +100,38 @@ class SourceConnection {
     }
     return responseJson(response);
   }
-  create(metadata,files,signal,intent) { return this.request('/v1/workspaces',{body:{...metadata,files},signal,intent,admission:true}); }
+  create(metadata,files,signal,intent) { return this.#request('/v1/workspaces',{body:{...metadata,files},signal,intent,admission:true}); }
   async call(id,operation,args,expectedRevision,signal) {
     if (!identifier(id)) throw fail('WORKSPACE_UNAVAILABLE');
     const root = `/v1/workspaces/${id}`;
     let receipt;
-    try { receipt = await this.request(`${root}/calls`,{body:{operation,expectedRevision,args},signal,admission:true}); }
+    try { receipt = await this.#request(`${root}/calls`,{body:{operation,expectedRevision,args},signal,admission:true}); }
     catch (error) {
       if (error.httpStatus >= 400 && error.httpStatus < 500 && ['AGENT_ARGUMENTS_INVALID','WORKSPACE_PATH_DENIED','QUOTA_EXCEEDED'].includes(error.code)) error.admissionRejected = true;
       throw error;
     }
     if (!identifier(receipt.callId)) throw fail('WORKSPACE_RECEIPT_INVALID');
-    if (receipt.status === 'running') receipt = await this.request(`${root}/calls/${receipt.callId}?wait=1`,{signal,wait:true});
+    if (receipt.status === 'running') receipt = await this.#request(`${root}/calls/${receipt.callId}?wait=1`,{signal,wait:true});
     return receipt;
   }
-  cancel(id) { if (!identifier(id)) throw unavailable(); return this.request(`/v1/workspaces/${id}/cancel`,{body:{}}); }
+  cancel(id) { if (!identifier(id)) throw unavailable(); return this.#request(`/v1/workspaces/${id}/cancel`,{body:{}}); }
   async close(id) {
     if (!identifier(id)) throw unavailable();
-    const receipt = await this.request(`/v1/workspaces/${id}/close`,{body:{}});
+    const receipt = await this.#request(`/v1/workspaces/${id}/close`,{body:{}});
     if (receipt.id !== id || receipt.closed !== true) throw fail('WORKSPACE_CLEANUP_FAILED');
     return receipt;
   }
   revoke() {
     if (this.#revoke) return this.#revoke;
-    if (this.#dead) return Promise.resolve();
-    this.#revoke = this.request('/v1/revoke',{body:{}}).finally(()=> { this.#dead = true; this.#token = ''; });
+    // A dropped response may follow successful server cleanup. The same intent
+    // can retrieve that receipt, with the credential restricted to revocation.
+    this.#revokeIntent ??= crypto.randomUUID();
+    if (!this.#hasCredential()) this.#token = '';
+    this.#revoke = this.#request('/v1/revoke',{body:{},intent:this.#revokeIntent,revocation:true}).then(receipt=> {
+      if (receipt.revoked !== true || receipt.workspacesClosed !== true) throw fail('WORKSPACE_CLEANUP_FAILED');
+      this.#token = '';
+      return receipt;
+    }).catch(error=> { this.#revoke = null; throw error; });
     return this.#revoke;
   }
 }
@@ -150,8 +160,7 @@ export async function pairSourceRunner(code,{baseURL = SOURCE_RUNNER_URL,transpo
   if (expectedRunnerSourceHash !== undefined && connection.runnerSourceHash !== expectedRunnerSourceHash) {
     // The runtime changed after the health check. Revoke the provisional pairing
     // without returning it to the UI or creating any source workspace.
-    const receipt = await connection.revoke().catch(()=>null);
-    if (receipt?.revoked !== true || receipt?.workspacesClosed !== true) throw fail('WORKSPACE_PAIRING_REVOKE_UNCONFIRMED');
+    await connection.revoke().catch(()=> { throw fail('WORKSPACE_PAIRING_REVOKE_UNCONFIRMED'); });
     throw fail('WORKSPACE_RUNTIME_MISMATCH');
   }
   if (typeof connection.runnerSourceHash !== 'string' || !runnerHash.test(connection.runnerSourceHash)) throw unavailable();

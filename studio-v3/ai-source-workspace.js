@@ -58,11 +58,11 @@ export class AISourceWorkspace {
   }
   cancelActive() { return this.active ? this.release(this.active) : this.closing || Promise.resolve(true); }
   async disconnect() {
-    if (this.disconnecting || this.pairing || this.panel.applying) return;
+    if (this.disconnecting || this.pairing || this.panel.applying || !this.connection) return;
     this.disconnecting = true; this.resetConsent(); this.update();
     try {
       await this.cancelActive();
-      await this.connection?.revoke();
+      await this.connection.revoke();
       this.connection = null; this.cleanupFailed = false;
       this.status.textContent = 'Pairing revoked and owned workspaces closed. Ordinary form editing remains available.';
     } catch { this.cleanupFailed = true; this.status.textContent = 'Revocation/cleanup was not acknowledged. Reconcile the locally started companion before source use.'; }

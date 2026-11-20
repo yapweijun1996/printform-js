@@ -32,6 +32,7 @@ function companion(onCall = ()=>{}) {
     }
     if (pathname.endsWith('/calls/call-1')) return json(receipt);
     if (pathname.endsWith('/close')) return json({id:'workspace-1',closed:true});
+    if (pathname === '/v1/revoke') return json({revoked:true,workspacesClosed:true});
     return json({});
   });
   return {paths,transport};
@@ -134,7 +135,7 @@ it('refuses new wire effects if the connection begins revocation while awaiting 
   const revoking = connection.revoke();
   await vi.waitFor(()=>expect(releaseRevoke).toBeTypeOf('function'));
   try {
-    expect(connection.available).toBe(true);
+    expect(connection.available).toBe(false);
     releasePermission({state:'granted'});
     await expect(pending).rejects.toMatchObject({code:'WORKSPACE_AUTH_EXPIRED',admissionRejected:true});
     expect(paths).toEqual(['POST /v1/pair','POST /v1/revoke']);
@@ -157,6 +158,28 @@ function pairingFixture({healthHash = runnerSourceHash,pairedHash = runnerSource
   });
   return {wire,transport,expectedRunnerSourceHash:runnerSourceHash};
 }
+
+it.each([{}, {revoked:true,workspacesClosed:false}, 'lost response'])('keeps new effects blocked and replays the same revoke intent after %j',async first=> {
+  permission(async ()=> ({state:'granted'}));
+  const retry = vi.fn(async()=>json({revoked:true,workspacesClosed:true}));
+  retry.mockImplementationOnce(async()=> {
+    if (first === 'lost response') throw new TypeError('Connection dropped');
+    return json(first);
+  });
+  const {wire,...options} = pairingFixture({revoke:retry});
+  const connection = await pairSourceRunner(code,options);
+  await expect(connection.revoke()).rejects.toMatchObject({code:first === 'lost response' ? 'WORKSPACE_UNAVAILABLE' : 'WORKSPACE_CLEANUP_FAILED'});
+  expect(connection.available).toBe(false);
+  await expect(connection.create({},[])).rejects.toMatchObject({code:'WORKSPACE_AUTH_EXPIRED'});
+  const confirmed = {revoked:true,workspacesClosed:true};
+  await expect(connection.revoke()).resolves.toEqual(confirmed);
+  await expect(connection.revoke()).resolves.toEqual(confirmed);
+  const attempts = wire.filter(entry=>entry.path === '/v1/revoke');
+  expect(attempts).toHaveLength(2);
+  expect(attempts[1].headers).toEqual(attempts[0].headers);
+  expect(attempts[1].body).toBe(attempts[0].body);
+  expect(wire.map(({path})=>path)).toEqual(['/health','/v1/pair','/v1/revoke','/v1/revoke']);
+});
 
 it('stops the exact-release health check and pair request when permission is denied',async()=> {
   permission(async ()=> ({state:'denied'}));
