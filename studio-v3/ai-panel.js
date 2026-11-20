@@ -1,7 +1,7 @@
 import { AIReferenceFiles } from './ai-reference-files.js';
 import { sendPanelMessage } from './ai-panel-run.js';
 import { readNewFormCommand } from './new-form-workspace.js';
-import { agentEnabled,setAgentEnabled } from './agent-preference.js';
+import { agentEnabled,setAgentEnabled,answerOnlyEnabled,setAnswerOnlyEnabled } from './agent-preference.js';
 import { stepLabel } from './agent-step-labels.js';
 import { createDemoTransport } from './ai-demo-transport.js';
 import { assertProposalCurrent, fail } from './ai-edits.js';
@@ -25,8 +25,10 @@ export class AIPanel {
     this.node('[data-ai-commit-help]').textContent = COMMIT_POLICY_HELP;
     this.root.addEventListener('submit',event=> { event.preventDefault(); void this.send(); });
     this.node('#ai-agent').checked = agentEnabled();
+    this.node('#ai-answer-only').checked = answerOnlyEnabled();
     this.root.addEventListener('change',event=> { if (event.target.id === 'ai-agent') { setAgentEnabled(event.target.checked); this.agentUnavailable = false; }
       if (event.target.id === 'ai-answer-only') {
+        setAnswerOnlyEnabled(event.target.checked);
         this.sourceWorkspace?.resetConsent(); this.showScopeHint();
         void this.discard().catch(error=>this.error(error));
       }
@@ -216,7 +218,10 @@ export class AIPanel {
   }
   snapshot() { return {open:Boolean(this.open),prompt:this.node('#ai-prompt').value || this.pendingMessage || '',alias:this.node('#ai-model').value,answerOnly:this.grantProfile() === 'read-only',messages:this.conversation.snapshot(),references:this.elementTags?.snapshot() || []}; }
   restoreSnapshot(saved) {
-    this.node('#ai-answer-only').checked = saved.answerOnly === true;
+    if (typeof saved.answerOnly === 'boolean') {
+      this.node('#ai-answer-only').checked = saved.answerOnly;
+      setAnswerOnlyEnabled(saved.answerOnly);
+    }
     this.showScopeHint();
     this.observationAccess.reset();
     this.sourceWorkspace?.resetConsent();

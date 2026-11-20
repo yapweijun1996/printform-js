@@ -10,6 +10,7 @@ import {createGrant,allows} from '../studio-v3/agent-effects.js';
 import {AGENT_TOOL_DEFINITIONS} from '../studio-v3/agent-registry.js';
 import {newProject} from '../studio-v3/demo-templates.js';
 import {DEMO_CONFIG} from '../studio-v3/ai-gateway-config.js';
+import {ANSWER_ONLY_KEY} from '../studio-v3/agent-preference.js';
 
 const WRITE = ['apply_operations','undo_step','finish'];
 const digest = project => createHash('sha256').update(JSON.stringify(project)).digest('hex');
@@ -18,7 +19,7 @@ const navy = {type:'set_style',patch:{color:'#163a65'}};
 const ask = (panel,text) => { panel.node('#ai-prompt').value = text; panel.share(); };
 
 beforeEach(()=> {document.documentElement.innerHTML = html.replace(/<!doctype html>/i,'');document.body.inert = false;localStorage.clear();});
-afterEach(()=> localStorage.clear());
+afterEach(()=> {localStorage.clear();sessionStorage.removeItem(ANSWER_ONLY_KEY);});
 
 async function run(script,{profile = 'read-only',scope,request = 'What is in the footer?'} = {}) {
   const faux = fauxProvider({provider:'grant-faux',models:[{id:'grant-faux'}]}), project = newProject(), before = digest(project), seen = [];
@@ -70,6 +71,18 @@ describe('Studio v3 read-only answers (RUN-01)', () => {
 });
 
 describe('Studio v3 effect grants (RUN-02)', () => {
+  it('keeps the tab restriction on initialization and when reading a legacy snapshot', () => {
+    sessionStorage.setItem(ANSWER_ONLY_KEY,'on');
+    const {panel}=setup({transport:scriptedGateway().transport});
+    const choice=panel.node('#ai-answer-only');
+    expect(panel.grantProfile()).toBe('read-only');
+    panel.restoreSnapshot({open:false,prompt:'Legacy unsent question.',messages:[]});
+    expect(panel.grantProfile()).toBe('read-only');
+    choice.checked=false;
+    choice.dispatchEvent(new Event('change',{bubbles:true}));
+    expect(sessionStorage.getItem(ANSWER_ONLY_KEY)).toBeNull();
+    expect(panel.grantProfile()).toBe('design');
+  });
   it('restores the explicit answer restriction with an unsent request after an update', () => {
     const {panel} = setup({transport:scriptedGateway().transport});
     panel.node('#ai-answer-only').checked = true;

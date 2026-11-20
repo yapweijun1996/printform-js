@@ -53,3 +53,9 @@ The focused unit suite passed 42 cases. A [Chromium browser suite](../../e2e/stu
 The forced-write and missing-tool-capability cases also passed Firefox and WebKit on the final build. WebKit initially failed Playwright host preflight. The retry used the installed shared libraries with the same browser binary and passed both cases. I inspected Chromium screenshots at 1440 and 390 px and verified the checked control and its read-only hint.
 
 Live-model and deployment-profile qualification remain open. Dataset writes still require a separate host grant and review flow.
+
+## STU-08 independent-tab update and Undo
+
+A compiled A-to-B regression reproduced a clean independent tab losing the Answer only restriction during an automatic worker update. The tab had no unsaved work, so a project recovery snapshot was correctly unnecessary. The restriction now uses a tab-local preference. Legacy recovery snapshots that lack the setting retain the current tab choice. Source sharing and other permissions retain their existing per-run controls.
+
+The Chromium regression opened an independent purchase form, selected Answer only, and verified automatic activation retained the same form and read-only restriction at revision zero. The original tab separately chose Stay and kept its title, revision, edit history and own mode. Undo there restored the original title. An earlier retry reached the correct child setting but encountered the original tab's expected update dialog before Undo. The final test resolves the real dialog explicitly. Site and 129 agent contracts passed after local digest review. Five focused unit suites passed 79 cases. Seven existing Chromium cases passed the latest main build before the fix, covering forced-write rejection, independent blank/starter tabs, obsolete launch links, pending native reads, pending AI cancellation and conversation recovery. All six Answer only wire cases also passed with the fix.
