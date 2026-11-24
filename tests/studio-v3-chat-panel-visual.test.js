@@ -4,8 +4,8 @@ import {setAgentEnabled} from '../studio-v3/agent-preference.js';
 // These tests are about the single-step image flow and a gateway that only answers in one step.
 beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html>/i,'');document.body.inert=false;setAgentEnabled(false);});
 afterEach(()=> localStorage.clear());
-it.each(['image','pdf'])('keeps discovered image permission after token cleanup and sends a %s reference only after fresh discovery',async kind=>{
- const {panel,transport,calls}=visualPanel(kind);
+it('keeps discovered image permission after token cleanup and sends an image only after fresh discovery',async()=>{
+ const {panel,transport,calls}=visualPanel('image');
  expect(panel.node('[data-ai-send]').disabled).toBe(true);await panel.discover();
  expect(transport.supportsImages('demo-fast')).toBe(true);expect(panel.node('[data-ai-send]').disabled).toBe(false);
  expect(panel.referenceFiles.capability.textContent).toContain('Images available');expect(panel.referenceFiles.diagnosticText.textContent).toContain('capabilities.multimodal');
@@ -25,8 +25,8 @@ it('failed rediscovery closes image Send until a later successful check',async()
  state.status=200;await panel.discover();expect(panel.node('[data-ai-send]').disabled).toBe(false);
 });
 
-it.each(['image','pdf'])('offers a metadata-only image support check beside a newly attached %s',async kind=>{
- const {panel,calls}=visualPanel(kind),button=panel.referenceFiles.checkSupport,send=vi.spyOn(panel,'send');
+it('offers a metadata-only image support check beside a newly attached image',async()=>{
+ const {panel,calls}=visualPanel('image'),button=panel.referenceFiles.checkSupport,send=vi.spyOn(panel,'send');
  expect(calls).toEqual([]);expect(button.textContent).toBe('Check image support');expect(button.type).toBe('button');expect(button.hidden).toBe(false);expect(button.disabled).toBe(false);expect(panel.referenceFiles.root.open).toBe(true);
  button.click();expect(button.disabled).toBe(true);expect(panel.referenceFiles.capability.textContent).toContain('Checking image support');
  await vi.waitFor(()=>expect(button.hidden).toBe(true));

@@ -1,7 +1,7 @@
 import {referenceError} from './reference-limits.js';
 
 // Compatibility guard for pinned PDF.js 6.3.289: its display layer may resolve
-// render before surfacing a failed operator-list stream. This is an owned-worker
+// a request before surfacing a failed worker stream. This is an owned-worker
 // wire contract, not a general public PDF.js API; upgrades must rerun real PDF CI.
 // A failure that names a missing function or global (e.g. Map.getOrInsertComputed on an older browser) is the
 // browser's gap, not a damaged file. Errors about the file itself (FormatError, InvalidPDFException, bad data

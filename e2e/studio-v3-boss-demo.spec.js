@@ -111,20 +111,11 @@ test('PDF text extraction ignores raster content without decoding or advertising
  expect(inference(calls)).toHaveLength(0);
 });
 
-test('visual PDF mode renders fictional JPEG, PNG-style Flate, masks and multiple images locally',async({page},info)=>{
- const {rasterPdf}=await import('./fixtures/raster-reference-documents.js');const calls=await mockProvider(page);await openReferences(page);await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');
- for(const kind of ['jpeg','png','mask','multiple']) {
-  await attach(page,rasterPdf(kind,{text:kind!=='jpeg'}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('.ai-reference-card img')).toHaveJSProperty('complete',true);expect(await page.locator('.ai-reference-card img').evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
-  await expect(page.locator('.ai-reference-card')).toContainText('best-effort controls');await expect(page.locator('[data-ai-send]')).toBeDisabled();await page.screenshot({path:info.outputPath(`local-${kind}-pdf-reference.png`)});await page.locator('.ai-reference-card button').click();
- }
- await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('oversized'));await expect(page.locator('.ai-reference-files')).toContainText('12-million-pixel limit');await expect(page.locator('.ai-reference-card')).toHaveCount(0);expect(inference(calls)).toHaveLength(0);
- await attach(page,syntheticPdf({pages:1,text:false,blank:true}));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(inference(calls)).toHaveLength(0);
-});
-test('cancelled visual PDF worker can be replaced by a successful fresh read',async({page})=>{
- const {rasterPdf}=await import('./fixtures/raster-reference-documents.js');const calls=await mockProvider(page);await openReferences(page);await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');let release;const held=new Promise(resolve=>release=resolve);
- await page.route('**/pdf.worker*.js',async route=>{await held;await route.continue().catch(()=>{});});
- await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(rasterPdf('jpeg'));await page.getByRole('button',{name:'Cancel reading',exact:true}).click();await expect(page.locator('.ai-reference-files')).toContainText('reading cancelled');release();await page.unroute('**/pdf.worker*.js');await expect(page.getByRole('button',{name:'Cancel reading',exact:true})).toBeHidden();
- await attach(page,rasterPdf('png'));await expect(page.locator('.ai-reference-card img')).toHaveCount(1);expect(inference(calls)).toHaveLength(0);
+test('PDF visual pages stay unavailable while bounded raster references remain usable',async({page})=>{
+ const calls=await mockProvider(page);await openReferences(page);
+ await expect(page.getByLabel('PDF reading for new attachments',{exact:true})).toHaveCount(0);
+ await attach(page,syntheticPng());await expect(page.locator('.ai-reference-card img')).toHaveCount(1);
+ await expect(page.locator('[data-ai-send]')).toBeDisabled();expect(inference(calls)).toHaveLength(0);
 });
 
 

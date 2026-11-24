@@ -1,4 +1,4 @@
-import { REFERENCE_LIMITS as L,referenceError,previewSize,encodePreview } from './reference-limits.js';
+import { REFERENCE_LIMITS as L,referenceError } from './reference-limits.js';
 import { isEngineFailure } from './reference-pdf-errors.js';
 
 function geometry(item,viewport,util) {
@@ -31,12 +31,14 @@ async function extractText(page,viewport,pdfjs,budget,scope) {
   return {text,textItems,truncated};
 }
 export async function parseReferencePdf(bytes,scope,{mode='text'}={}) {
-  if(!['text','visual'].includes(mode))throw referenceError('PDF_MODE');
+  // PDF.js has no reliable pre-decode aggregate image budget. Keep untrusted PDFs on
+  // the text-only path; callers must attach bounded raster exports for visual analysis.
+  if(mode!=='text')throw referenceError('PDF_MODE');
   const {createPdfRuntime}=await scope.wait(import('./reference-pdf-runtime.js')); scope.check();
-  let runtime,loading,render,canvas,destroyed=false,blockedResource=false;
+  let runtime,loading,destroyed=false,blockedResource=false;
   try { runtime=createPdfRuntime(); } catch { throw referenceError('PDF_WORKER'); }
   const stop=()=> {
-    if (destroyed) return; destroyed=true; render?.cancel();
+    if (destroyed) return; destroyed=true;
     try { const closing=loading?.destroy(); closing?.catch(()=>{}); } catch { /* already destroyed */ }
     runtime.destroy();
   };
@@ -50,7 +52,7 @@ export async function parseReferencePdf(bytes,scope,{mode='text'}={}) {
       data:bytes,worker:runtime.worker,verbosity:0,stopAtErrors:true,isEvalSupported:false,
       enableXfa:false,disableAutoFetch:true,disableStream:true,disableRange:true,
       useWorkerFetch:false,useWasm:false,BinaryDataFactory:LocalOnlyDataFactory,
-      useSystemFonts:true,maxImageSize:mode==='visual'?L.maxPdfImagePixels:0,canvasMaxAreaInBytes:L.maxPreviewPixels*4,
+      useSystemFonts:true,maxImageSize:0,canvasMaxAreaInBytes:L.maxPreviewPixels*4,
       isOffscreenCanvasSupported:false,isImageDecoderSupported:false
     });
     const passwordError=new Promise((_,reject)=> { loading.onPassword=()=>reject(referenceError('PDF_ENCRYPTED')); });
@@ -66,24 +68,13 @@ export async function parseReferencePdf(bytes,scope,{mode='text'}={}) {
       runtime.errors.check();
       if (blockedResource) throw referenceError('PDF_UNSUPPORTED');
       if (extracted.truncated&&!warnings.includes('Text and geometry were truncated to the safe extraction limit.')) warnings.push('Text and geometry were truncated to the safe extraction limit.');
-      if(mode==='text') {
-        pages.push({number,width,height,rotation:page.rotate,coordinateSystem:'pdf-viewport-points',text:extracted.text,textItems:extracted.textItems,preview:null});page.cleanup();continue;
-      }
-      const size=previewSize(width*2,height*2),renderViewport=page.getViewport({scale:size.scale*2});
-      canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.floor(renderViewport.width)); canvas.height=Math.max(1,Math.floor(renderViewport.height));
-      render=page.render({canvas,viewport:renderViewport,background:'#fff',annotationMode:runtime.pdfjs.AnnotationMode.DISABLE});
-      await scope.wait(Promise.race([render.promise,workerError])); scope.check();
-      runtime.errors.check();
-      if (blockedResource) throw referenceError('PDF_UNSUPPORTED');
-      pages.push({number,width,height,rotation:page.rotate,coordinateSystem:'pdf-viewport-points',text:extracted.text,textItems:extracted.textItems,preview:encodePreview(canvas)});
-      canvas.width=canvas.height=0; canvas=null; render=null; page.cleanup();
+      pages.push({number,width,height,rotation:page.rotate,coordinateSystem:'pdf-viewport-points',text:extracted.text,textItems:extracted.textItems,preview:null});page.cleanup();
     }
     const text=pages.map(page=>page.text).filter(Boolean).join('\n\n').slice(0,L.maxTextChars);
-    if (!text && mode==='text')throw referenceError('PDF_NO_TEXT');
-    if (!text) warnings.push('Image-only or outlined-text PDF. No OCR was performed; visual interpretation requires verified model image support.');
+    if (!text)throw referenceError('PDF_NO_TEXT');
     if (budget.geometrySkipped) warnings.push('Invalid or out-of-range text geometry was omitted.');
-    warnings.push(mode==='text'?'PDF text and approximate positions only. PDF appearance, embedded images and annotations are not rendered, inspected or sent. For visual analysis, attach again using Visual pages mode.':'Local PDF page previews. Input/page/per-image/output limits and worker timeout are best-effort controls, not a browser memory sandbox or an aggregate decoded-image guarantee. Annotations are not rendered.');
-    return {kind:'pdf',processing:mode,pageCount:pages.length,sourcePixels:0,pages,text,warnings};
+    warnings.push('PDF text and approximate positions only. PDF appearance, embedded images and annotations are not rendered, inspected or sent. Export pages as PNG/JPEG/WebP for visual analysis.');
+    return {kind:'pdf',processing:'text',pageCount:pages.length,sourcePixels:0,pages,text,warnings};
   } catch (error) {
     scope.check();
     if (error.code) throw error;
@@ -91,5 +82,5 @@ export async function parseReferencePdf(bytes,scope,{mode='text'}={}) {
     if (error.name==='PasswordException') throw referenceError('PDF_ENCRYPTED');
     if (blockedResource) throw referenceError('PDF_UNSUPPORTED');
     throw referenceError(isEngineFailure(error) ? 'PDF_ENGINE' : 'FILE_CORRUPT');
-  } finally { remove(); stop(); if (canvas) canvas.width=canvas.height=0; }
+  } finally { remove(); stop(); }
 }

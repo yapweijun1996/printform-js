@@ -8,16 +8,18 @@ At 23:21 UTC on 2026-10-02, the registered public Studio origin's normal **Disco
 
 The public release passed synthetic catalogue/A5 (45 rows, four pages, RM12,150, zero quality issues), text PDF extraction, oversized embedded image rejection, visual PDF cancellation/retry and JPEG scanned-page local preview checks. Images were not sent. The cloud-browser download event timed out despite a Save toast, so that observation alone was not a pass. A separate isolated Air Chromium check on the exact public revision subsequently closed the gap: 14,656 downloaded bytes, switch to blank, Open restored 45 rows/three pages, and re-save differed only in documentId. It reported no runtime/console/HTTP errors and closed its isolated browser. The earlier cloud timeout was not reproduced and its cause is unknown; it is not an established product defect. Exact-main CI also covers saved-byte parsing/reopen. Physical printing remains untested.
 
+Current source disables visual PDF rendering because PDF.js cannot enforce a reliable aggregate pre-decode image budget. PDFs now provide text and positions only; visual references use separately validated PNG/JPEG/WebP attachments.
+
 ## Narrow change
 
 Accept image eligibility only from strict boolean `true` on both `capabilities.responses` and `capabilities.multimodal` for an existing allowlisted Demo alias. Missing, false, string-valued, inferred and historical metadata remains insufficient. No endpoint, origin registration, credential, privilege or parser-limit changes are included.
 
-The existing bounded Responses route sends only explicitly attached local image/page previews alongside reviewed context. Existing selected-scope, protected financial binding/value, untrusted-reference, Preview/Apply/Undo and cancellation boundaries remain applicable. Discovery is renewed before inference; revoked capability must prevent dispatch.
+The existing bounded Responses route sends only explicitly attached local image previews alongside reviewed context. Existing selected-scope, protected financial binding/value, untrusted-reference, Preview/Apply/Undo and cancellation boundaries remain applicable. Discovery is renewed before inference; revoked capability must prevent dispatch.
 
 ## Required evidence and gates
 
 - Unit: exact contract, malformed/absent/revoked capabilities, failed discovery, clearing and cancellation races, bounded Responses payload and no remote images.
-- Hosted Chromium/Firefox/WebKit: actual PNG and scanned-PDF parsing, capability discovery, explicit Send to a controlled provider, selected-label Preview/Apply/Undo, unchanged supplied totals, unsupported/revoked capability, late reply after Stop, rejected financial mutation. These prove application behavior, not model perception.
+- Hosted Chromium/Firefox/WebKit: actual PNG parsing, capability discovery, explicit Send to a controlled provider, selected-label Preview/Apply/Undo, unchanged supplied totals, unsupported/revoked capability, late reply after Stop, rejected financial mutation. These prove application behavior, not model perception.
 - Independent exact-head source review and full build/check/protocol validation before Draft PR publication.
 - Actual live visual interpretation is still OPEN until this reviewed code is available through the registered public origin. Use one fictional geometric/color reference, no customer records. Ask the model to identify visual content not supplied as text, then validate a bounded layout edit with Preview/Apply/Undo and unchanged data. Never bypass the denied local origin or enable arbitrary URLs/tools/files.
 - A Draft PR is not authorization to merge or manually deploy. No physical-print or universal PDF memory-sandbox claim is made.

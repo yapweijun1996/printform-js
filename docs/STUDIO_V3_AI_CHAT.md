@@ -108,11 +108,11 @@ survive folded results and dropped turns. When the request grows past 400,000 ch
 by one message carrying the notes and the step list, and only the newest four turns stay; a call is never left without
 its result.
 
-Reference images (and the pages of a visual PDF) go with non-streaming requests on the first four turns only, because the gateway
-keeps no state and every turn would resend them; after that a line says they are gone and the model works from its
-notes. They need the same confirmed image support as the single-step flow. A PDF's extracted text and positions reach
-the agent through `get_context`. Designing a new form from an image or PDF is not done here: the agent amends the
-current form.
+Reference images go with non-streaming requests on the first four turns only, because the gateway keeps no state and
+every turn would resend them; after that a line says they are gone and the model works from its notes. They need the
+same confirmed image support as the single-step flow. PDFs contribute extracted text and positions only; export pages
+as PNG/JPEG/WebP references when visual analysis is needed. Designing a new form from an image or PDF is not done
+here: the agent amends the current form.
 
 ## AI first (owner decision 2026-10-21)
 
