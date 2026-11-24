@@ -1,6 +1,6 @@
 # 演示页目录
 
-> 这些 HTML 文件都在**仓库根目录**（本文件只是导航索引，未移动任何文件——部分页面可能被外部 ERP 项目直接引用其现有路径）。本地起服务后在浏览器打开即可：`node scripts/serve-site.mjs .` 然后访问 `http://127.0.0.1:4174/<文件名>`。
+> 这些 HTML 源文件位于**仓库根目录**，构建时会按白名单复制到独立的 `site-dist/`。运行 `npm run build:site` 后执行 `node scripts/serve-site.mjs`，再访问 `http://127.0.0.1:4174/<文件名>`；源文件变化后需要重新构建快照。
 >
 > 每行只写这个页面**用来验证什么特性**；配置项含义见 [docs/CONFIGURATION.md](../docs/CONFIGURATION.md)。
 

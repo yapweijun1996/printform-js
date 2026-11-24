@@ -238,7 +238,7 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 **踩坑记录**：
 - 设计阶段曾估计"500 行样本渲染约 1 秒"，属于未经实测的乐观数字——真实测量下，500 行 + 较大字号（13pt）的候选渲染在本地沙箱浏览器里跑到 47 秒以上（`PrintForm.formatAll()` 自身的 clone/measure/place 尚未做 P2/E9 计划中的行高预测量缓存优化，见 ROADMAP.md）。候选渲染的超时不能按这个乐观估计设置——最终定为 30 秒的宽松兜底（current constant: `CANDIDATE_TIMEOUT` in `ui/render-controller.js`），只用来兜"确实卡死了"，不是性能预算；现有已提交状态的 `schedulePreview()` 路径本来就没有超时。500 行默认 9pt 场景仍稳定符合 `100/500-row render budgets` 测试的既有预算（`durationMs ≤ 5000`），说明变慢的是"大字号+大行数"这个不常见组合，不是回归。
 - `preview.js` 的 `bridge()` 改名并导出为 `buildPreviewBridge()`，只是为了能脱离 `createStandaloneHtml()`（需要真实 `fetch` 加载 `dist/` runtime，jsdom 单测环境无法解析相对 URL）单独对 token 回显逻辑做单测——纯字符串模板，无 DOM/网络依赖。
-- `playwright.config.js` 的 `webServer.command` 是不带参数的 `node scripts/serve-site.mjs`，其默认根目录是 `site-dist/`——一份 `npm run build:site` 生成的**构建快照**，不是 `studio-v2/` 实时源码（对比 `.claude/launch.json` 传了显式的 `"."` 参数，服务仓库根目录实时源码）。`package.json` 的 `test:e2e` 脚本有 `pretest:e2e` 钩子会自动先跑 `build:site`，所以正常用 `npm run test:e2e`（CI 也这样跑）不受影响；只有像调试时那样图快直接执行 `npx playwright test`（跳过 pretest 钩子）才会踩坑——此时只跑 `build:assets` 不够，必须重新跑完整的 `npm run build:site` 让 `site-dist/` 同步，否则 Playwright 测的是修改前的旧代码，且不会有任何明显报错、只是行为对不上（本次意外获得的教训：新功能的 candidateHash 用 `npx playwright test` 直接跑稳定复现 `undefined`，而同一段代码在直接服务仓库根目录的浏览器里工作正常，最终定位到这个快照陈旧问题）。
+- `playwright.config.js` 与 `.claude/launch.json` 都使用不带目录参数的 `node scripts/serve-site.mjs`；服务器只接受 `npm run build:site` 生成的 `site-dist/` **构建快照**，不再服务仓库实时源码。`package.json` 的 `test:e2e` 脚本有 `pretest:e2e` 钩子会自动先跑 `build:site`，所以正常用 `npm run test:e2e`（CI 也这样跑）不受影响；直接执行 `npx playwright test` 会跳过该钩子，必须先运行完整的 `npm run build:site`，否则测试仍会读取旧快照。
 
 ### 4.5 渲染内容完整性——数量校验（Current，P0-B 部分实现）
 
@@ -289,9 +289,7 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 - **语言菜单**：`#ui-locale-button` 只显示 globe SVG，`#ui-locale-menu` 使用 `listbox/option` 语义；点击、方向键、Home/End、Esc 和外点关闭均可用，菜单固定定位在按钮下方。隐藏的 `#ui-locale-select` 仅作为现有 UI i18n/change contract 的同步源，不改变五种语言与持久化行为。**`⋯ More`** 弹出菜单只放 `Import HTML`；**`▾`** 拆分箭头弹出 `Export Untrusted`（同一个"其他导出方式"入口，不在 `⋯ More` 里重复）。两个菜单用原生 HTML Popover API（`popover` + `popovertarget`），顶层渲染绕开 `.topbar`/`.actions` 的 overflow 裁剪，Esc / 外点关闭；`ui/app.js` 的 `bindTopbarMenu` 只做定位（fixed，贴触发器下方右对齐）+ 同步 `aria-expanded` + Esc 后回焦。
 - **`#export-readiness`** 就绪芯片复用 `.status` / `.status.ready` / `.status.blocked`，由 `status-view.js` 的 `renderQualityView` 在 `#export-button.disabled` 之后同步（`● Ready` / `⚠ Blocked`）；文案刻意区别于预览区的 `#render-status`（"Printable"/"Blocked"），后者位置/文案不变。
 - **横向滚动**：`.actions` 的 `overflow-x:auto` + `bindHorizontalWheel` 保留，但 ≥1081px 不再溢出；721–1080px 及移动端作为兜底。`e2e/studio-v2-topbar.spec.js` 断言 1440px 无滚动 + 主动作可见 + `inspectorIndex === 1` + 菜单开合。
-
 ---
-
 ## 5. 构建与部署
 
 - `npm run build` = 测试 → Vite 打包 `dist/printform.js` → 构建 `dist/printform-document.js`（v2 文档 runtime）→ 生成预览页。
@@ -299,4 +297,4 @@ Current behavior: the candidate flag is independent of the pending-request map. 
 - `npm run doctor`：一条命令跑AGRUN integrity + unit/build:site + 三个试点样本 `validate:v2`（5 steps），结尾一页 PASS/FAIL 汇总（`scripts/doctor.mjs`，2026-07-31）；刻意不含 e2e，那是 CI 每次 push 都跑的三引擎慢检查。
 - `dist/` 不进 git（`.gitignore`），由本地 `npm run build` 构建；项目不再使用 GitHub Actions，验证统一走本地 `npm run verify`（全部三引擎）或 `npm run verify:quick`（仅 Chromium）。
 - 已移除的 `.github/workflows/browser-matrix.yml`（当时为 `workflow_dispatch` 手动触发，2026-07-31；现改为本地运行 `node scripts/browser-matrix.mjs`）：在 GitHub Actions 的 Ubuntu runner 上按需复现 `scripts/browser-matrix.mjs` 的完整 88 格矩阵，用于验证发布前的跨引擎收敛在 Linux 上同样成立（已实测 88/88 通过），不进 push/PR 常规门槛。
-- 本地开发服务器：`node scripts/serve-site.mjs .`（`.claude/launch.json` 已配置，端口 4174）。
+- 本地预览服务器：先运行 `npm run build:site`，再执行 `node scripts/serve-site.mjs`（`.claude/launch.json` 已配置，端口 4174）；服务器不接受自定义根目录。
