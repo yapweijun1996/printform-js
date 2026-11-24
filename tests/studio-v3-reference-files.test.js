@@ -14,10 +14,10 @@ function png(width=200,height=100) {
 }
 const pdfBytes=()=>new TextEncoder().encode('%PDF-1.7\nsynthetic-test');
 const textItem=(str='Invoice')=>({str,width:42,height:12,transform:[12,0,0,12,10,40],dir:'ltr',hasEOL:true});
-function pdfRuntime({items=[textItem()],width=200,height=300,pages=1,permissions=null,loadingError=null,renderError=null}={}) {
+function pdfRuntime({items=[textItem()],width=200,height=300,pages=1,permissions=null,loadingError=null}={}) {
   const page={rotate:0,getViewport:({scale})=>({width:width*scale,height:height*scale,transform:[scale,0,0,-scale,0,height*scale]}),
     streamTextContent:()=> { let read=false; return {getReader:()=>({read:async()=>read ? {done:true} : (read=true,{done:false,value:{items}}),cancel:vi.fn(async()=>{})})}; },
-    render:vi.fn(()=>({promise:renderError ? Promise.reject(renderError) : Promise.resolve(),cancel:vi.fn()})),cleanup:vi.fn()};
+    render:vi.fn(()=>({promise:Promise.resolve(),cancel:vi.fn()})),cleanup:vi.fn()};
   const pdf={numPages:pages,getPermissions:vi.fn(async()=>permissions),getPage:vi.fn(async()=>page)};
   const loading={promise:loadingError ? Promise.reject(loadingError) : Promise.resolve(pdf),destroy:vi.fn(async()=>{})};
   const runtime={worker:{},port:new EventTarget(),destroy:vi.fn(),pdfjs:{getDocument:vi.fn(()=>loading),AnnotationMode:{DISABLE:0},Util:{transform:(a,b)=>[a[0]*b[0],0,0,a[3]*b[3],a[0]*b[4]+a[4],a[3]*b[5]+a[5]]}}};
@@ -124,10 +124,10 @@ describe('isolated PDF parsing contract',()=> {
       pdfRuntime(options); await expect(parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'))).rejects.toMatchObject({code});
     }
   });
-  it('reports a missing browser feature during visual rendering as the browser, not a damaged file',async()=> {
-    pdfRuntime({renderError:new TypeError('this[#t].getOrInsertComputed is not a function')});
-    const failure=await parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'),{pdfMode:'visual'}).catch(error=>error);
-    expect(failure.code).toBe('PDF_ENGINE');expect(failure.message).toContain('browser');expect(failure.message).not.toContain('damaged');expect(failure.message).not.toContain('getOrInsertComputed');
+  it('rejects visual PDF mode before starting PDF.js',async()=> {
+    const {runtime}=pdfRuntime();
+    await expect(parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'),{pdfMode:'visual'})).rejects.toMatchObject({code:'PDF_MODE'});
+    expect(runtime.pdfjs.getDocument).not.toHaveBeenCalled();expect(runtime.destroy).not.toHaveBeenCalled();
   });
   it('rejects password requests instead of asking for or retaining credentials',async()=> {
     const {loading}=pdfRuntime(); loading.promise=new Promise(()=>{});
@@ -151,26 +151,8 @@ describe('isolated PDF parsing contract',()=> {
   });
 });
 
-it('visual PDF mode renders sequentially without pretending to budget all embedded decode pixels',async()=>{
- const {runtime,page}=pdfRuntime({items:[],pages:2});const result=await parseReferenceFile(file(pdfBytes(),'scan.pdf','application/pdf'),{pdfMode:'visual'});
- expect(runtime.pdfjs.getDocument.mock.calls[0][0].maxImageSize).toBe(L.maxPdfImagePixels);expect(page.render).toHaveBeenCalledTimes(2);expect(result.sourcePixels).toBe(0);expect(result.processing).toBe('visual');expect(result.pages[0].preview.mime).toBe('image/jpeg');expect(result.warnings.join(' ')).toContain('not a browser memory sandbox');
-});
-it('visual PDF per-image failures reject instead of silently dropping an image',async()=>{
- pdfRuntime({renderError:new Error('Image exceeded maximum allowed size and was removed.')});await expect(parseReferenceFile(file(pdfBytes(),'x.pdf','application/pdf'),{pdfMode:'visual'})).rejects.toMatchObject({code:'PDF_IMAGE_LIMIT'});
-});
-
-it.each(['text','visual'])('rejects swallowed external-resource fallback before accepting %s PDF output',async(pdfMode)=>{
+it('rejects swallowed external-resource fallback before accepting PDF text',async()=>{
  const {runtime,page}=pdfRuntime(),original=page.streamTextContent;
  page.streamTextContent=()=>{const Factory=runtime.pdfjs.getDocument.mock.calls[0][0].BinaryDataFactory;void new Factory().fetch().catch(()=>{});return original();};
- await expect(parseReferenceFile(file(pdfBytes(),'needs-font.pdf','application/pdf'),{pdfMode})).rejects.toMatchObject({code:'PDF_UNSUPPORTED'});expect(page.render).not.toHaveBeenCalled();expect(runtime.destroy).toHaveBeenCalled();
-});
-
-
-it.each([['Image exceeded maximum allowed size and was removed.','PDF_IMAGE_LIMIT'],['Malformed image data','FILE_CORRUPT'],['e.getOrInsertComputed is not a function','PDF_ENGINE']])('rejects worker stream failure even if PDF.js resolves render: %s',async(message,code)=>{
- const {runtime,page}=pdfRuntime();const removed=vi.spyOn(runtime.port,'removeEventListener');
- page.render.mockImplementation(()=>{runtime.port.dispatchEvent(new MessageEvent('message',{data:{stream:5,reason:{name:'UnknownErrorException',message}}}));return {promise:Promise.resolve(),cancel:vi.fn()};});
- await expect(parseReferenceFile(file(pdfBytes(),'broken-image.pdf','application/pdf'),{pdfMode:'visual'})).rejects.toMatchObject({code});expect(runtime.destroy).toHaveBeenCalled();expect(removed).toHaveBeenCalledWith('message',expect.any(Function));
-});
-it('accepts a genuinely blank visual PDF without fabricating a worker error',async()=>{
- pdfRuntime({items:[]});const result=await parseReferenceFile(file(pdfBytes(),'blank.pdf','application/pdf'),{pdfMode:'visual'});expect(result.text).toBe('');expect(result.pages[0].preview).toBeTruthy();
+ await expect(parseReferenceFile(file(pdfBytes(),'needs-font.pdf','application/pdf'))).rejects.toMatchObject({code:'PDF_UNSUPPORTED'});expect(page.render).not.toHaveBeenCalled();expect(runtime.destroy).toHaveBeenCalled();
 });

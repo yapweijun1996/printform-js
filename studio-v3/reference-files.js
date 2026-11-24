@@ -20,7 +20,7 @@ async function readBytes(file,scope) {
     })));
   } finally { remove(); }
 }
-// sourcePixels counts only standalone image decodes, never PDF embedded images.
+// Only standalone raster attachments are decoded; PDF embedded images stay on the text-only path.
 export function referenceTotals(references=[]) {
   return references.reduce((total,attachment)=> {
     total.bytes+=attachment.bytes; total.pages+=attachment.pageCount;

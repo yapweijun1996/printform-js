@@ -28,7 +28,7 @@ test('a text-only PDF keeps its name readable and its excerpt available on deman
 test('an image is compact until its preview is requested, and has no PDF selector',async({page})=> {
   await attach(page,syntheticPng());await expand(page,true);
   await expect(page.locator('.ai-reference-thumbnails img')).toBeVisible();
-  await expect(page.getByLabel('PDF reading for new attachments',{exact:true})).toBeHidden();
+  await expect(page.getByLabel('PDF reading for new attachments',{exact:true})).toHaveCount(0);
   const image=await page.locator('.ai-reference-thumbnails img').boundingBox();expect(image.height).toBeLessThanOrEqual(64);
   const {card,name,remove}=await widths(page);expect(name).toBeGreaterThan(card*.5);expect(remove).toBeLessThan(card*.3);
 });

@@ -1,7 +1,7 @@
 // All attachment data stays in memory. Limits also apply to programmatic callers.
 export const REFERENCE_LIMITS = Object.freeze({
   maxFiles:4, maxFileBytes:10*1024*1024, maxTotalBytes:20*1024*1024,
-  maxPdfPages:4,maxPdfFileBytes:5*1024*1024,maxPdfImagePixels:12_000_000, maxTotalPages:12, maxImageEdge:8192, maxImagePixels:24_000_000,
+  maxPdfPages:4,maxPdfFileBytes:5*1024*1024,maxTotalPages:12,maxImageEdge:8192,maxImagePixels:24_000_000,
   maxTotalSourcePixels:48_000_000, maxPdfPageEdge:2000, maxPdfPageArea:4_000_000,
   maxPreviewEdge:1280, maxPreviewPixels:1_000_000, maxTotalPreviewPixels:8_000_000,
   maxPreviewBytes:1024*1024, maxTotalPreviewBytes:6*1024*1024,
@@ -24,10 +24,10 @@ const MESSAGES = {
   PDF_PAGE_COUNT:'A PDF reference may contain no more than 4 pages.',
   PDF_PAGE_SIZE:'PDF pages must be no larger than 2000 points per side.',
   PDF_UNSUPPORTED:'This PDF needs unsupported resources. Export its pages as PNG/JPEG/WebP references.',
-  PDF_NO_TEXT:'No extractable PDF text was found. Choose Visual pages mode and attach again, or use PNG/JPEG/WebP. No OCR is performed.',
-  PDF_MODE:'Choose Text & positions or Visual pages for PDF reading.',
+  PDF_NO_TEXT:'No extractable PDF text was found. Export its pages as PNG/JPEG/WebP references. No OCR is performed.',
+  PDF_MODE:'PDF references support text and positions only. Export pages as PNG/JPEG/WebP for visual analysis.',
   PDF_TOO_LARGE:'PDF references must be 5 MiB or smaller.',
-  PDF_IMAGE_LIMIT:'An embedded PDF image exceeds the 12-million-pixel limit. Use Text & positions mode or a lower-resolution PDF.',
+  PDF_IMAGE_LIMIT:'An embedded PDF image could not be processed safely. Export pages as PNG/JPEG/WebP references.',
   PDF_WORKER:'The local PDF worker could not start. Reload the page and retry.',
   PDF_ENGINE:'This browser cannot run the PDF reader. Update the browser or try another one. PNG/JPEG/WebP references still work.',
   REFERENCE_BUDGET:'The references exceed the combined page, text, image or output budget.',

@@ -20,7 +20,6 @@ it('untrusted reference instructions cannot expand scope, expose current values 
  expect(p.sampleData.summary.total).toBe(987654.32);
 });
 
-it('shares reviewed visual-PDF previews only for an explicitly visual processing result',()=>{
- const pdf=file('pdf','');pdf.processing='visual';const result=referenceProjection([pdf]);expect(result.media).toHaveLength(1);expect(result.references[0].mode).toBe('visual-pages');
- expect(()=>referenceProjection(Array.from({length:4},()=>({...pdf,pageCount:2,pages:[...pdf.pages,...pdf.pages]})))).toThrow('at most four');
+it('rejects legacy visual-PDF objects at the sharing boundary',()=>{
+ const pdf=file('pdf','');pdf.processing='visual';expect(()=>referenceProjection([pdf])).toThrow('visual previews are unavailable');
 });

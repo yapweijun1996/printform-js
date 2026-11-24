@@ -5,18 +5,17 @@ beforeEach(()=> {document.documentElement.innerHTML=html.replace(/<!doctype html
 afterEach(()=> localStorage.clear());
 
 
-it('shows PDF choices only while choosing a file or when a PDF is present',()=> {
+it('does not expose PDF visual mode and directs visual work to bounded raster files',()=> {
  const {panel}=setup(),files=panel.referenceFiles;vi.spyOn(files.input,'click').mockImplementation(()=>{});
- expect(files.root.hidden).toBe(true);expect(files.modeLabel.hidden).toBe(true);
- files.pick();expect(files.modeLabel.hidden).toBe(false);expect(files.root.hidden).toBe(false);
- const image=visualPanel('image').panel.referenceFiles;expect(image.modeLabel.hidden).toBe(true);
- image.clear();expect(image.modeLabel.hidden).toBe(true);expect(image.root.hidden).toBe(true);
- expect(visualPanel('pdf').panel.referenceFiles.modeLabel.hidden).toBe(false);
+ expect(files.root.hidden).toBe(true);files.pick();expect(files.root.hidden).toBe(false);
+ expect(files.root.querySelector('[aria-label="PDF reading for new attachments"]')).toBeNull();
+ expect(files.notice.textContent).toContain('Export PDF pages as PNG/JPEG/WebP');
+ const image=visualPanel('image').panel.referenceFiles;image.clear();expect(image.root.hidden).toBe(true);
 });
 
 
 it('removes a reference explicitly without retaining its shared context',()=> {
- const {panel}=visualPanel('pdf'),files=panel.referenceFiles;
+ const {panel}=visualPanel('image'),files=panel.referenceFiles;
  files.list.querySelector('button').click();
  expect(files.files).toEqual([]);expect(files.projection().references).toEqual([]);expect(files.root.hidden).toBe(true);
 });

@@ -3,9 +3,10 @@ export function referenceProjection(files=[],visual=false) {
   if (files.length > 4) throw new Error('Use at most four reference files.');
   let remaining=MAX_TEXT, mediaBytes=0, remainingItems=MAX_ITEMS;
   const media=[], references=files.map(file=>{
-    if(file.kind==='pdf' && file.processing!=='visual' && !file.text?.trim()) throw new Error('PDF references need extractable text. Export scanned pages as separate images.');
-    if (file.kind==='pdf' && file.processing!=='visual' && visual) throw new Error('PDF references support text and positions only. Export page images separately for visual analysis.');
-    const useImages=file.kind==='image' || file.processing==='visual';
+    if(file.kind==='pdf' && file.processing==='visual') throw new Error('PDF visual previews are unavailable. Export page images separately for visual analysis.');
+    if(file.kind==='pdf' && !file.text?.trim()) throw new Error('PDF references need extractable text. Export scanned pages as separate images.');
+    if (file.kind==='pdf' && visual) throw new Error('PDF references support text and positions only. Export page images separately for visual analysis.');
+    const useImages=file.kind==='image';
     const pages=file.pages.map(page=>{
       const text=String(page.text || '').slice(0,remaining); remaining-=text.length;
       const items=(page.textItems || []).slice(0,remainingItems); remainingItems-=items.length;

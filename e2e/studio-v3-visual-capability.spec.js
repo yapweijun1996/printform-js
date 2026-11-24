@@ -3,7 +3,6 @@ import { test, expect } from './studio-v3-test.js';
 import { limitToSelection, limitToWholeForm } from './studio-v3-scope.js';
 import { clickPaper } from './studio-v3-paper-click.js';
 import {syntheticPng} from './fixtures/reference-documents.js';
-import {rasterPdf} from './fixtures/raster-reference-documents.js';
 test.setTimeout(90000);
 const ready=page=>expect(page.locator('[data-action=export]')).toBeEnabled({timeout:30000});
 const paper=page=>page.frameLocator('#preview-frame');
@@ -28,7 +27,6 @@ async function prepare(page,fixture=syntheticPng()) {
  await clickPaper(page,paper(page).locator('[data-v3-id=label-customer-ship]').first());
  await page.locator('[data-ai-toggle]').click();await limitToSelection(page);
  await page.locator('[data-ai=attach]').click();
- if(fixture.mimeType==='application/pdf')await page.getByLabel('PDF reading for new attachments',{exact:true}).selectOption('visual');
  await page.getByLabel('Add reference PDF or image',{exact:true}).setInputFiles(fixture);
  await expect(page.locator('.ai-reference-card')).toHaveCount(1,{timeout:30000});await expect(page.locator('.ai-reference-files')).toContainText('Ready locally');
  await page.locator('#ai-prompt').fill('Only make the selected Ship to label 12pt bold, using this fictional visual reference.');
@@ -36,11 +34,11 @@ async function prepare(page,fixture=syntheticPng()) {
  await expect(page.locator('.ai-reference-files')).toContainText('Images available');await expect(page.locator('[data-ai-send]')).toBeEnabled();
 }
 test.beforeEach(async({page})=>{page.on('dialog',d=>d.accept());await page.goto('/studio-v3/');await ready(page);});
-for(const kind of ['image','scanned-pdf'])test(`verified ${kind} uses bounded Responses and preserves selected scope through automatic apply and Undo`,async({page},info)=>{
+test('verified image uses bounded Responses and preserves selected scope through automatic apply and Undo',async({page},info)=>{
  const {calls}=await provider(page);const total=await paper(page).locator('[data-v3-id=totals-total]').textContent();
  const node=()=>paper(page).locator('[data-v3-id=label-customer-ship]').first();
  const before=await node().evaluate(n=>({font:getComputedStyle(n).fontSize,weight:getComputedStyle(n).fontWeight}));
- await prepare(page,kind==='image'?syntheticPng():rasterPdf('jpeg',{text:false}));
+ await prepare(page,syntheticPng());
  expect(calls.some(c=>c.path.endsWith('/responses'))).toBe(false);await page.locator('[data-ai-send]').click();
  await expectApplied(page,1);
  const inference=calls.filter(c=>c.path.endsWith('/responses'));expect(inference).toHaveLength(1);expect(calls.some(c=>c.path.endsWith('/chat/completions'))).toBe(false);
@@ -51,7 +49,7 @@ for(const kind of ['image','scanned-pdf'])test(`verified ${kind} uses bounded Re
  await expect(page.locator('[data-ai=apply]')).toHaveCount(0);await ready(page);await expect(page.locator('#revision')).toHaveText('r1 · unsaved template');
  expect(await rendered(page).locator('[data-v3-id=totals-total]').first().textContent()).toBe(total);
  await expect.poll(()=>renderedStyle(page)).toEqual({font:'16px',weight:'700'});
- await page.screenshot({path:info.outputPath(`${kind}-selected-label-applied.png`)});
+ await page.screenshot({path:info.outputPath('image-selected-label-applied.png')});
  await page.locator('[data-ai=undo]').click();await ready(page);await expect(page.locator('#revision')).toHaveText('r2 · unsaved template');
  await expect.poll(()=>renderedStyle(page)).toEqual(before);
 });
